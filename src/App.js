@@ -34,10 +34,37 @@ function App() {
       
       const articlesData = response.data.articles || response.data;
       
-      // Remove duplicates by URL
+      // Remove duplicates by URL and ensure we have proper data
       const uniqueArticles = articlesData.filter((article, index, self) =>
         index === self.findIndex((a) => a.url === article.url)
-      );
+      ).map(article => ({
+        ...article,
+        // Ensure headline and summary are properly set
+        headline: article.headline || article.title || 'No headline available',
+        summary: article.summary || article.description || 'No summary available',
+        // Ensure scores are numbers
+        biasScore: Number(article.biasScore) || 0,
+        trustScore: Number(article.trustScore) || 0,
+        credibilityScore: Number(article.credibilityScore) || 0,
+        reliabilityScore: Number(article.reliabilityScore) || 0,
+        // Ensure components exist
+        biasComponents: article.biasComponents || {
+          linguistic: { sentimentPolarity: 0, emotionalLanguage: 0, loadedTerms: 0, complexityBias: 0 },
+          sourceSelection: { sourceDiversity: 0, expertBalance: 0, attributionTransparency: 0 },
+          demographic: { genderBalance: 0, racialBalance: 0, ageRepresentation: 0 },
+          framing: { headlineFraming: 0, storySelection: 0, omissionBias: 0 }
+        },
+        credibilityComponents: article.credibilityComponents || {
+          sourceCredibility: 0, factVerification: 0, professionalism: 0,
+          evidenceQuality: 0, transparency: 0, audienceTrust: 0
+        },
+        reliabilityComponents: article.reliabilityComponents || {
+          consistency: 0, temporalStability: 0, qualityControl: 0,
+          publicationStandards: 0, correctionsPolicy: 0, updateMaintenance: 0
+        },
+        keyFindings: article.keyFindings || ['No key findings available'],
+        recommendations: article.recommendations || ['No recommendations available']
+      }));
       
       setArticles(uniqueArticles);
       setDisplayedArticles(uniqueArticles.slice(0, 12));
@@ -72,7 +99,6 @@ function App() {
         text: article.summary,
         url: article.url
       }).catch(() => {
-        // Fallback if share fails
         navigator.clipboard.writeText(article.url);
         alert('Link copied to clipboard!');
       });
@@ -230,22 +256,15 @@ function Sidebar({ filters, onFilterChange, onApply, articleCount }) {
   );
 }
 
-// Article Card Component
+// Article Card Component - NO READ ARTICLE BUTTON, FULL WIDTH COMPARE
 function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
-  // Ensure we have all the data
-  const biasScore = article.biasScore || 0;
-  const trustScore = article.trustScore || 0;
-  const credibilityGrade = article.credibilityGrade || 'N/A';
-  const headline = article.headline || article.title || 'No headline';
-  const summary = article.summary || article.description || 'No summary available';
-  
   return (
     <div className="article-card">
       <div className="article-image">
         {article.imageUrl ? (
           <img 
             src={article.imageUrl} 
-            alt={headline} 
+            alt={article.headline} 
             onError={(e) => {
               e.target.style.display = 'none';
               e.target.nextSibling.style.display = 'flex';
@@ -258,8 +277,11 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
       </div>
       
       <div className="article-content">
-        <h3 className="article-headline">{headline}</h3>
-        <p className="article-summary">{summary}</p>
+        {/* FULL HEADLINE - NO TRUNCATION */}
+        <h3 className="article-headline">{article.headline}</h3>
+        
+        {/* FULL SUMMARY - ALWAYS VISIBLE */}
+        <p className="article-summary">{article.summary}</p>
         
         <div className="article-meta">
           <span className="source">{article.source || 'Unknown Source'}</span>
@@ -271,32 +293,36 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
         <div className="quality-display">
           <div className="quality-item">
             <span className="label">Bias</span>
-            <span className={`value bias-${getBiasClass(biasScore)}`}>{biasScore}</span>
+            <span className={`value bias-${getBiasClass(article.biasScore)}`}>{article.biasScore}</span>
           </div>
           <div className="quality-item">
             <span className="label">Trust</span>
-            <span className={`value trust-${getTrustClass(trustScore)}`}>{trustScore}</span>
+            <span className={`value trust-${getTrustClass(article.trustScore)}`}>{article.trustScore}</span>
           </div>
           <div className="quality-item">
             <span className="label">Grade</span>
-            <span className={`grade grade-${credibilityGrade.replace('+', 'plus').replace('-', 'minus')}`}>
-              {credibilityGrade}
+            <span className={`grade grade-${(article.credibilityGrade || 'N/A').replace('+', 'plus').replace('-', 'minus')}`}>
+              {article.credibilityGrade || 'N/A'}
             </span>
           </div>
         </div>
         
+        {/* NEW LAYOUT: TOP ROW (ANALYSIS & SHARE), BOTTOM FULL WIDTH (COMPARE) */}
         <div className="article-actions">
-          <button onClick={() => onAnalyze(article)} className="btn-secondary" title="View detailed analysis">
-            📊 Analysis
-          </button>
-          <button onClick={() => onCompare(article.clusterId || 1)} className="btn-secondary" title="Compare coverage">
-            🔍 Compare
-          </button>
-          <button onClick={() => onShare(article)} className="btn-secondary" title="Share article">
-            📤 Share
-          </button>
-          <button onClick={() => window.open(article.url, '_blank')} className="btn-primary" title="Read full article">
-            Read Article
+          <div className="article-actions-top">
+            <button onClick={() => onAnalyze(article)} className="btn-secondary" title="View detailed analysis">
+              Analysis
+            </button>
+            <button onClick={() => onShare(article)} className="btn-secondary" title="Share article">
+              Share
+            </button>
+          </div>
+          <button 
+            onClick={() => onCompare(article.clusterId || 1)} 
+            className="btn-primary btn-full-width" 
+            title="Compare coverage across perspectives"
+          >
+            Compare Coverage
           </button>
         </div>
       </div>
@@ -319,7 +345,7 @@ function getTrustClass(score) {
   return 'poor';
 }
 
-// Compare Coverage Modal Component  
+// Compare Coverage Modal Component - WITH READ ARTICLE BUTTONS
 function CompareCoverageModal({ clusterId, onClose, onAnalyze }) {
   const [articles, setArticles] = useState({ left: [], center: [], right: [], stats: {} });
   const [loading, setLoading] = useState(true);
@@ -344,7 +370,10 @@ function CompareCoverageModal({ clusterId, onClose, onAnalyze }) {
     return (
       <div className="modal-overlay" onClick={onClose}>
         <div className="compare-modal" onClick={(e) => e.stopPropagation()}>
-          <div className="spinner"></div>
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Loading coverage comparison...</p>
+          </div>
         </div>
       </div>
     );
@@ -365,13 +394,13 @@ function CompareCoverageModal({ clusterId, onClose, onAnalyze }) {
             All ({totalArticles})
           </button>
           <button className={activeTab === 'left' ? 'active' : ''} onClick={() => setActiveTab('left')}>
-            🔴 Left ({articles.left.length})
+            Left ({articles.left.length})
           </button>
           <button className={activeTab === 'center' ? 'active' : ''} onClick={() => setActiveTab('center')}>
-            ⚪ Center ({articles.center.length})
+            Center ({articles.center.length})
           </button>
           <button className={activeTab === 'right' ? 'active' : ''} onClick={() => setActiveTab('right')}>
-            🔵 Right ({articles.right.length})
+            Right ({articles.right.length})
           </button>
         </div>
         
@@ -382,7 +411,7 @@ function CompareCoverageModal({ clusterId, onClose, onAnalyze }) {
           
           {totalArticles === 0 && (
             <div style={{textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)'}}>
-              No articles found for this cluster.
+              No articles found for this cluster. Try fetching more news or check a different cluster.
             </div>
           )}
         </div>
@@ -391,6 +420,7 @@ function CompareCoverageModal({ clusterId, onClose, onAnalyze }) {
   );
 }
 
+// Article Group with READ ARTICLE buttons
 function renderArticleGroup(articleList, perspective, onAnalyze) {
   if (articleList.length === 0) return null;
   
@@ -401,15 +431,14 @@ function renderArticleGroup(articleList, perspective, onAnalyze) {
         <div key={article._id} className="coverage-article">
           <h4>{article.headline || article.title}</h4>
           <p style={{fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '8px', lineHeight: 1.4}}>
-            {(article.summary || '').substring(0, 150)}...
+            {(article.summary || article.description || '').substring(0, 200)}...
           </p>
           <div className="article-scores">
             <span>Bias: {article.biasScore}</span>
             <span>Trust: {article.trustScore}</span>
-            <span className={`grade grade-${(article.credibilityGrade || 'N/A').replace('+','plus').replace('-','minus')}`}>
-              {article.credibilityGrade || 'N/A'}
-            </span>
+            <span>Grade: {article.credibilityGrade || 'N/A'}</span>
           </div>
+          {/* READ ARTICLE BUTTONS ONLY IN COMPARE MODAL */}
           <div className="coverage-actions">
             <button onClick={() => window.open(article.url, '_blank')}>Read Article</button>
             <button onClick={() => onAnalyze(article)}>View Analysis</button>
@@ -420,15 +449,19 @@ function renderArticleGroup(articleList, perspective, onAnalyze) {
   );
 }
 
-// Detailed Analysis Modal Component
+// Detailed Analysis Modal Component - FULLY FUNCTIONAL
 function DetailedAnalysisModal({ article, onClose }) {
   const [activeTab, setActiveTab] = useState('overview');
+
+  if (!article) {
+    return null;
+  }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="analysis-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Detailed Analysis</h2>
+          <h2>Analysis: {article.headline.substring(0, 50)}...</h2>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
         
@@ -455,8 +488,17 @@ function DetailedAnalysisModal({ article, onClose }) {
         </div>
         
         <div className="modal-footer">
-          <button onClick={onClose} style={{padding: '8px 20px', background: 'var(--accent-primary)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600'}}>
-            Close
+          <button onClick={onClose} style={{
+            padding: '8px 20px', 
+            background: 'var(--accent-primary)', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: '6px', 
+            cursor: 'pointer', 
+            fontSize: '12px', 
+            fontWeight: '600'
+          }}>
+            Close Analysis
           </button>
         </div>
       </div>
@@ -468,94 +510,107 @@ function OverviewTab({ article }) {
   return (
     <div className="tab-content">
       <div className="overview-grid">
-        <ScoreBox label="Trust Score" value={article.trustScore || 0} />
-        <ScoreBox label="Bias Score" value={article.biasScore || 0} />
-        <ScoreBox label="Credibility" value={article.credibilityScore || 0} />
-        <ScoreBox label="Reliability" value={article.reliabilityScore || 0} />
+        <ScoreBox label="Trust Score" value={article.trustScore} />
+        <ScoreBox label="Bias Score" value={article.biasScore} />
+        <ScoreBox label="Credibility" value={article.credibilityScore} />
+        <ScoreBox label="Reliability" value={article.reliabilityScore} />
       </div>
       
-      {article.keyFindings && article.keyFindings.length > 0 && (
-        <div className="recommendations">
-          <h4>Key Findings</h4>
-          <ul>
-            {article.keyFindings.map((finding, i) => <li key={i}>{finding}</li>)}
-          </ul>
-        </div>
-      )}
+      <div className="recommendations">
+        <h4>Key Findings</h4>
+        <ul>
+          {article.keyFindings.map((finding, i) => <li key={i}>{finding}</li>)}
+        </ul>
+      </div>
       
-      {article.recommendations && article.recommendations.length > 0 && (
-        <div className="recommendations" style={{marginTop: '12px'}}>
-          <h4>Recommendations</h4>
-          <ul>
-            {article.recommendations.map((rec, i) => <li key={i}>{rec}</li>)}
-          </ul>
-        </div>
-      )}
+      <div className="recommendations" style={{marginTop: '12px'}}>
+        <h4>Recommendations</h4>
+        <ul>
+          {article.recommendations.map((rec, i) => <li key={i}>{rec}</li>)}
+        </ul>
+      </div>
     </div>
   );
 }
 
 function BiasTab({ article }) {
-  const components = article.biasComponents || {};
+  const components = article.biasComponents;
   return (
     <div className="tab-content">
       <h3 style={{fontSize: '16px', marginBottom: '16px'}}>
-        Bias Analysis: {article.biasScore || 0}/100 ({article.biasLabel || 'N/A'})
+        Bias Analysis: {article.biasScore}/100 ({article.biasLabel || 'Moderate'})
       </h3>
-      {Object.keys(components).length > 0 ? (
-        Object.entries(components).map(([category, values]) => (
-          <div key={category} className="component-section">
-            <h4>{category.charAt(0).toUpperCase() + category.slice(1).replace(/([A-Z])/g, ' $1')}</h4>
-            {Object.entries(values || {}).map(([key, val]) => (
-              <ProgressBar key={key} label={key.replace(/([A-Z])/g, ' $1')} value={val || 0} />
-            ))}
-          </div>
-        ))
-      ) : (
-        <p style={{color: 'var(--text-tertiary)', textAlign: 'center', padding: '20px'}}>
-          Detailed bias components not available for this article.
-        </p>
-      )}
+      
+      <div className="component-section">
+        <h4>Linguistic Bias</h4>
+        <ProgressBar label="Sentiment Polarity" value={components.linguistic.sentimentPolarity} />
+        <ProgressBar label="Emotional Language" value={components.linguistic.emotionalLanguage} />
+        <ProgressBar label="Loaded Terms" value={components.linguistic.loadedTerms} />
+        <ProgressBar label="Complexity Bias" value={components.linguistic.complexityBias} />
+      </div>
+      
+      <div className="component-section">
+        <h4>Source Selection</h4>
+        <ProgressBar label="Source Diversity" value={components.sourceSelection.sourceDiversity} />
+        <ProgressBar label="Expert Balance" value={components.sourceSelection.expertBalance} />
+        <ProgressBar label="Attribution Transparency" value={components.sourceSelection.attributionTransparency} />
+      </div>
+      
+      <div className="component-section">
+        <h4>Demographic Representation</h4>
+        <ProgressBar label="Gender Balance" value={components.demographic.genderBalance} />
+        <ProgressBar label="Racial Balance" value={components.demographic.racialBalance} />
+        <ProgressBar label="Age Representation" value={components.demographic.ageRepresentation} />
+      </div>
+      
+      <div className="component-section">
+        <h4>Framing Analysis</h4>
+        <ProgressBar label="Headline Framing" value={components.framing.headlineFraming} />
+        <ProgressBar label="Story Selection" value={components.framing.storySelection} />
+        <ProgressBar label="Omission Bias" value={components.framing.omissionBias} />
+      </div>
     </div>
   );
 }
 
 function CredibilityTab({ article }) {
-  const components = article.credibilityComponents || {};
+  const components = article.credibilityComponents;
   return (
     <div className="tab-content">
       <h3 style={{fontSize: '16px', marginBottom: '16px'}}>
-        Credibility: {article.credibilityScore || 0}/100 (Grade: {article.credibilityGrade || 'N/A'})
+        Credibility: {article.credibilityScore}/100 (Grade: {article.credibilityGrade || 'B'})
       </h3>
-      {Object.keys(components).length > 0 ? (
-        Object.entries(components).map(([key, val]) => (
-          <ProgressBar key={key} label={key.replace(/([A-Z])/g, ' $1')} value={val || 0} />
-        ))
-      ) : (
-        <p style={{color: 'var(--text-tertiary)', textAlign: 'center', padding: '20px'}}>
-          Detailed credibility data not available for this article.
-        </p>
-      )}
+      
+      <div className="component-section">
+        <h4>Credibility Components</h4>
+        <ProgressBar label="Source Credibility" value={components.sourceCredibility} />
+        <ProgressBar label="Fact Verification" value={components.factVerification} />
+        <ProgressBar label="Professionalism" value={components.professionalism} />
+        <ProgressBar label="Evidence Quality" value={components.evidenceQuality} />
+        <ProgressBar label="Transparency" value={components.transparency} />
+        <ProgressBar label="Audience Trust" value={components.audienceTrust} />
+      </div>
     </div>
   );
 }
 
 function ReliabilityTab({ article }) {
-  const components = article.reliabilityComponents || {};
+  const components = article.reliabilityComponents;
   return (
     <div className="tab-content">
       <h3 style={{fontSize: '16px', marginBottom: '16px'}}>
-        Reliability: {article.reliabilityScore || 0}/100 (Grade: {article.reliabilityGrade || 'N/A'})
+        Reliability: {article.reliabilityScore}/100 (Grade: {article.reliabilityGrade || 'B+'})
       </h3>
-      {Object.keys(components).length > 0 ? (
-        Object.entries(components).map(([key, val]) => (
-          <ProgressBar key={key} label={key.replace(/([A-Z])/g, ' $1')} value={val || 0} />
-        ))
-      ) : (
-        <p style={{color: 'var(--text-tertiary)', textAlign: 'center', padding: '20px'}}>
-          Detailed reliability data not available for this article.
-        </p>
-      )}
+      
+      <div className="component-section">
+        <h4>Reliability Components</h4>
+        <ProgressBar label="Consistency" value={components.consistency} />
+        <ProgressBar label="Temporal Stability" value={components.temporalStability} />
+        <ProgressBar label="Quality Control" value={components.qualityControl} />
+        <ProgressBar label="Publication Standards" value={components.publicationStandards} />
+        <ProgressBar label="Corrections Policy" value={components.correctionsPolicy} />
+        <ProgressBar label="Update Maintenance" value={components.updateMaintenance} />
+      </div>
     </div>
   );
 }

@@ -42,11 +42,19 @@ function App() {
         // Ensure headline and summary are properly set
         headline: article.headline || article.title || 'No headline available',
         summary: article.summary || article.description || 'No summary available',
+        
+        // --- UPDATED: Add new fields with defaults ---
+        analysisType: article.analysisType || 'Full',
+        sentiment: article.sentiment || 'Neutral',
+        politicalLean: article.politicalLean || 'Center',
+        // --- End Update ---
+        
         // Ensure scores are numbers
         biasScore: Number(article.biasScore) || 0,
         trustScore: Number(article.trustScore) || 0,
         credibilityScore: Number(article.credibilityScore) || 0,
         reliabilityScore: Number(article.reliabilityScore) || 0,
+        
         // Ensure components exist
         biasComponents: article.biasComponents || {
           linguistic: { sentimentPolarity: 0, emotionalLanguage: 0, loadedTerms: 0, complexityBias: 0 },
@@ -256,8 +264,12 @@ function Sidebar({ filters, onFilterChange, onApply, articleCount }) {
   );
 }
 
-// Article Card Component - NO READ ARTICLE BUTTON, FULL WIDTH COMPARE
+// --- UPDATED ArticleCard Component ---
 function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
+  
+  // Check if this is a review/opinion piece
+  const isReview = article.analysisType === 'SentimentOnly';
+  
   return (
     <div className="article-card">
       <div className="article-image">
@@ -277,50 +289,73 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
       </div>
       
       <div className="article-content">
-        {/* FULL HEADLINE - NO TRUNCATION */}
         <h3 className="article-headline">{article.headline}</h3>
-        
-        {/* FULL SUMMARY - ALWAYS VISIBLE */}
         <p className="article-summary">{article.summary}</p>
         
         <div className="article-meta">
           <span className="source">{article.source || 'Unknown Source'}</span>
-          <span className={`lean-badge lean-${(article.politicalLean || 'center').toLowerCase().replace(' ', '-')}`}>
-            {article.politicalLean || 'Center'}
+          
+          {/* NEW: Show Sentiment Badge */}
+          <span className={`sentiment-badge sentiment-${article.sentiment.toLowerCase()}`}>
+            {article.sentiment}
           </span>
+          
+          {/* Only show political lean if it's NOT a review */}
+          {!isReview && (
+            <span className={`lean-badge lean-${(article.politicalLean || 'center').toLowerCase().replace(' ', '-')}`}>
+              {article.politicalLean || 'Center'}
+            </span>
+          )}
         </div>
         
         <div className="quality-display">
-          <div className="quality-item">
-            <span className="label">Bias</span>
-            <span className={`value bias-${getBiasClass(article.biasScore)}`}>{article.biasScore}</span>
-          </div>
-          <div className="quality-item">
-            <span className="label">Trust</span>
-            <span className={`value trust-${getTrustClass(article.trustScore)}`}>{article.trustScore}</span>
-          </div>
-          <div className="quality-item">
-            <span className="label">Grade</span>
-            <span className={`grade grade-${(article.credibilityGrade || 'N/A').replace('+', 'plus').replace('-', 'minus')}`}>
-              {article.credibilityGrade || 'N/A'}
-            </span>
-          </div>
+          {isReview ? (
+            // Show this if it's a review
+            <div className="review-placeholder">
+              This is a review/opinion piece. Bias analysis does not apply.
+            </div>
+          ) : (
+            // Show this if it's a 'Full' news article
+            <>
+              <div className="quality-item">
+                <span className="label">Bias</span>
+                <span className={`value bias-${getBiasClass(article.biasScore)}`}>{article.biasScore}</span>
+              </div>
+              <div className="quality-item">
+                <span className="label">Trust</span>
+                <span className={`value trust-${getTrustClass(article.trustScore)}`}>{article.trustScore}</span>
+              </div>
+              <div className="quality-item">
+                <span className="label">Grade</span>
+                <span className={`grade grade-${(article.credibilityGrade || 'N/A').replace('+', 'plus').replace('-', 'minus')}`}>
+                  {article.credibilityGrade || 'N/A'}
+                </span>
+              </div>
+            </>
+          )}
         </div>
         
-        {/* NEW LAYOUT: TOP ROW (ANALYSIS & SHARE), BOTTOM FULL WIDTH (COMPARE) */}
         <div className="article-actions">
           <div className="article-actions-top">
-            <button onClick={() => onAnalyze(article)} className="btn-secondary" title="View detailed analysis">
+            {/* UPDATED: Disable Analysis button for reviews */}
+            <button 
+              onClick={() => onAnalyze(article)} 
+              className="btn-secondary" 
+              title={isReview ? "Analysis not applicable for reviews" : "View detailed analysis"}
+              disabled={isReview}
+            >
               Analysis
             </button>
             <button onClick={() => onShare(article)} className="btn-secondary" title="Share article">
               Share
             </button>
           </div>
+          {/* UPDATED: Disable Compare button for reviews */}
           <button 
             onClick={() => onCompare(article.clusterId || 1)} 
             className="btn-primary btn-full-width" 
-            title="Compare coverage across perspectives"
+            title={isReview ? "Comparison not applicable for reviews" : "Compare coverage across perspectives"}
+            disabled={isReview}
           >
             Compare Coverage
           </button>
@@ -329,6 +364,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
     </div>
   );
 }
+// --- END of UPDATED ArticleCard Component ---
+
 
 function getBiasClass(score) {
   if (score < 30) return 'low';
@@ -451,7 +488,7 @@ function renderArticleGroup(articleList, perspective, onAnalyze) {
 
 // Detailed Analysis Modal Component - FULLY FUNCTIONAL
 function DetailedAnalysisModal({ article, onClose }) {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = 'overview';
 
   if (!article) {
     return null;

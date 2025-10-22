@@ -928,3 +928,46 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==================== NEW STYLES FOR SENTIMENT & REVIEWS ==================== */
+
+.article-meta {
+  /* Added to make sure all badges fit */
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sentiment-badge {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: white;
+  /* Make it take priority in the flex row */
+  order: -1;
+}
+
+.sentiment-positive { background: linear-gradient(135deg, #10b981, #059669); }
+.sentiment-negative { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.sentiment-neutral { background: linear-gradient(135deg, #6b7280, #4b5563); }
+
+.review-placeholder {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-style: italic;
+  padding: 10px;
+}
+
+button:disabled,
+button:disabled:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  border-color: var(--border-light);
+}

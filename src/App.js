@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './App.css';
+import './App.css'; // Ensure App.css is imported
 
+// Use environment variable for API URL, fallback to localhost for local dev
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 function App() {
   const [articles, setArticles] = useState([]);
   const [displayedArticles, setDisplayedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true); // Track initial load
   const [theme, setTheme] = useState('dark');
   const [filters, setFilters] = useState({
     category: 'All Categories',
@@ -15,79 +17,105 @@ function App() {
     quality: 'All Quality Levels',
     sort: 'Latest First'
   });
-  const [compareModal, setCompareModal] = useState({ open: false, clusterId: null });
+  const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '' }); // Added title
   const [analysisModal, setAnalysisModal] = useState({ open: false, article: null });
+  const [totalArticlesCount, setTotalArticlesCount] = useState(0); // Track total count from API
 
+  // Effect to set initial theme from localStorage
   useEffect(() => {
-    fetchArticles();
     const savedTheme = localStorage.getItem('theme') || 'dark';
     setTheme(savedTheme);
     document.body.className = savedTheme + '-mode';
   }, []);
 
-  const fetchArticles = async () => {
+  // Effect to fetch articles when filters change or on initial load
+  useEffect(() => {
+    fetchArticles();
+  }, [filters]); // Re-fetch when filters change
+
+  const fetchArticles = async (loadMore = false) => {
     try {
-      setLoading(true);
+      if (!loadMore) {
+        setLoading(true); // Show loading spinner only on filter change/initial load
+        setInitialLoad(true);
+      }
+      const limit = 12; // Articles per page/load
+      const offset = loadMore ? displayedArticles.length : 0;
+
+      console.log(`Fetching articles with filters: ${JSON.stringify(filters)}, Limit: ${limit}, Offset: ${offset}`);
+
       const response = await axios.get(`${API_URL}/articles`, {
-        params: { ...filters, limit: 100 }
+        params: { ...filters, limit, offset }
       });
-      
-      const articlesData = response.data.articles || response.data;
-      
-      // Remove duplicates by URL and ensure we have proper data
-      const uniqueArticles = articlesData.filter((article, index, self) =>
-        index === self.findIndex((a) => a.url === article.url)
-      ).map(article => ({
-        ...article,
-        // Ensure headline and summary are properly set
-        headline: article.headline || article.title || 'No headline available',
-        summary: article.summary || article.description || 'No summary available',
-        
-        // --- UPDATED: Add new fields with defaults ---
-        analysisType: article.analysisType || 'Full',
-        sentiment: article.sentiment || 'Neutral',
-        politicalLean: article.politicalLean || 'Center',
-        // --- End Update ---
-        
-        // Ensure scores are numbers
-        biasScore: Number(article.biasScore) || 0,
-        trustScore: Number(article.trustScore) || 0,
-        credibilityScore: Number(article.credibilityScore) || 0,
-        reliabilityScore: Number(article.reliabilityScore) || 0,
-        
-        // Ensure components exist
-        biasComponents: article.biasComponents || {
-          linguistic: { sentimentPolarity: 0, emotionalLanguage: 0, loadedTerms: 0, complexityBias: 0 },
-          sourceSelection: { sourceDiversity: 0, expertBalance: 0, attributionTransparency: 0 },
-          demographic: { genderBalance: 0, racialBalance: 0, ageRepresentation: 0 },
-          framing: { headlineFraming: 0, storySelection: 0, omissionBias: 0 }
-        },
-        credibilityComponents: article.credibilityComponents || {
-          sourceCredibility: 0, factVerification: 0, professionalism: 0,
-          evidenceQuality: 0, transparency: 0, audienceTrust: 0
-        },
-        reliabilityComponents: article.reliabilityComponents || {
-          consistency: 0, temporalStability: 0, qualityControl: 0,
-          publicationStandards: 0, correctionsPolicy: 0, updateMaintenance: 0
-        },
-        keyFindings: article.keyFindings || ['No key findings available'],
-        recommendations: article.recommendations || ['No recommendations available']
-      }));
-      
-      setArticles(uniqueArticles);
-      setDisplayedArticles(uniqueArticles.slice(0, 12));
+
+      console.log("API Response:", response.data); // Log API response
+
+      const articlesData = response.data.articles || [];
+      const paginationData = response.data.pagination || { total: 0 };
+      setTotalArticlesCount(paginationData.total || 0);
+
+      // --- Data Cleaning and Defaulting (Important) ---
+      const uniqueNewArticles = articlesData
+        .filter(article => article && article.url) // Ensure article and URL exist
+        .map(article => ({
+            _id: article._id || article.url, // Use URL as fallback key if _id missing
+            headline: article.headline || article.title || 'No Headline Available',
+            summary: article.summary || article.description || 'No summary available.',
+            source: article.source || 'Unknown Source',
+            category: article.category || 'General',
+            politicalLean: article.politicalLean || 'Center',
+            url: article.url,
+            imageUrl: article.imageUrl || null, // Default to null if missing
+            publishedAt: article.publishedAt || new Date().toISOString(),
+            analysisType: ['Full', 'SentimentOnly'].includes(article.analysisType) ? article.analysisType : 'Full', // Validate or default
+            sentiment: ['Positive', 'Negative', 'Neutral'].includes(article.sentiment) ? article.sentiment : 'Neutral',
+            // Scores (ensure they are numbers, default 0)
+            biasScore: Number(article.biasScore) || 0,
+            trustScore: Number(article.trustScore) || 0,
+            credibilityScore: Number(article.credibilityScore) || 0,
+            reliabilityScore: Number(article.reliabilityScore) || 0,
+            // Grades/Labels (default if missing)
+            credibilityGrade: article.credibilityGrade || null,
+            // Components (ensure they exist as objects)
+            biasComponents: article.biasComponents && typeof article.biasComponents === 'object' ? article.biasComponents : {},
+            credibilityComponents: article.credibilityComponents && typeof article.credibilityComponents === 'object' ? article.credibilityComponents : {},
+            reliabilityComponents: article.reliabilityComponents && typeof article.reliabilityComponents === 'object' ? article.reliabilityComponents : {},
+            // Arrays (ensure they exist)
+            keyFindings: Array.isArray(article.keyFindings) ? article.keyFindings : [],
+            recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
+            // Cluster ID
+            clusterId: article.clusterId || null // Use null if missing
+        }));
+      // --- End Data Cleaning ---
+
+
+      if (loadMore) {
+        // Append new articles, preventing duplicates based on URL
+         const currentUrls = new Set(displayedArticles.map(a => a.url));
+         const trulyNewArticles = uniqueNewArticles.filter(a => !currentUrls.has(a.url));
+         setDisplayedArticles(prev => [...prev, ...trulyNewArticles]);
+      } else {
+         // Replace articles on filter change/initial load
+         setDisplayedArticles(uniqueNewArticles);
+      }
+
       setLoading(false);
+      setInitialLoad(false);
+
     } catch (error) {
-      console.error('Error fetching articles:', error);
-      setLoading(false);
+      console.error('❌ Error fetching articles:', error.response ? error.response.data : error.message);
+      setLoading(false); // Ensure loading stops on error
+      setInitialLoad(false);
+      // Optionally: Add user-facing error message state here
     }
   };
 
   const loadMoreArticles = () => {
-    const currentLength = displayedArticles.length;
-    const moreArticles = articles.slice(currentLength, currentLength + 12);
-    setDisplayedArticles([...displayedArticles, ...moreArticles]);
+    // Prevent loading more if already loading or no more articles
+    if (loading || displayedArticles.length >= totalArticlesCount) return;
+    fetchArticles(true); // Pass flag indicating this is a "load more" action
   };
+
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -96,79 +124,107 @@ function App() {
     localStorage.setItem('theme', newTheme);
   };
 
-  const applyFilters = () => {
-    fetchArticles();
+  const handleFilterChange = (newFilters) => {
+      setFilters(newFilters);
+      // Fetching is handled by the useEffect watching filters
   };
+
+  // Debounced scroll handler (optional optimization)
+  useEffect(() => {
+    let timeoutId;
+    const handleScroll = () => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            // Check if user is near the bottom
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 800) {
+                // Check if not loading, and if there are more articles to load
+                if (!loading && displayedArticles.length < totalArticlesCount) {
+                    console.log("Scroll near bottom detected, loading more...");
+                    loadMoreArticles();
+                }
+            }
+        }, 150); // Adjust debounce delay as needed
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    // Cleanup function
+    return () => {
+        clearTimeout(timeoutId);
+        window.removeEventListener('scroll', handleScroll);
+    };
+}, [loading, displayedArticles, totalArticlesCount]); // Dependencies for the scroll effect
+
 
   const shareArticle = (article) => {
     if (navigator.share) {
       navigator.share({
         title: article.headline,
-        text: article.summary,
+        text: `Check out this analysis: ${article.headline}`, // Shorter text
         url: article.url
-      }).catch(() => {
-        navigator.clipboard.writeText(article.url);
-        alert('Link copied to clipboard!');
+      }).then(() => {
+        console.log('Article shared successfully');
+      }).catch((error) => {
+        console.error('Share failed:', error);
+        // Fallback to copy link if share fails (e.g., user cancels)
+        navigator.clipboard.writeText(article.url).then(() => alert('Link copied to clipboard!'));
       });
     } else {
-      navigator.clipboard.writeText(article.url);
-      alert('Link copied to clipboard!');
+      // Fallback for browsers without navigator.share
+      navigator.clipboard.writeText(article.url).then(() => alert('Link copied to clipboard!'));
     }
   };
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000) {
-        if (displayedArticles.length < articles.length && !loading) {
-          loadMoreArticles();
-        }
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [displayedArticles, articles, loading]);
 
   return (
     <div className="app">
       <Header theme={theme} toggleTheme={toggleTheme} />
-      
+
       <div className="main-container">
-        <Sidebar 
+        <Sidebar
           filters={filters}
-          onFilterChange={setFilters}
-          onApply={applyFilters}
-          articleCount={articles.length}
+          onFilterChange={handleFilterChange} // Use handler to potentially debounce/manage filter state
+          // onApply={fetchArticles} // Replaced by useEffect on filters
+          articleCount={totalArticlesCount} // Use total count from API
         />
-        
+
         <main className="content">
           <div className="content-header">
             <h2>Latest News Analysis</h2>
-            <p className="subtitle">{articles.length} articles analyzed with AI</p>
+            <p className="subtitle">{totalArticlesCount} articles analyzed</p>
           </div>
-          
-          {loading ? (
+
+          {(loading && initialLoad) ? ( // Show loading only on initial/filter load
             <div className="loading-container">
               <div className="spinner"></div>
               <p>Loading articles...</p>
             </div>
           ) : (
             <>
-              <div className="articles-grid">
-                {displayedArticles.map((article, index) => (
-                  <ArticleCard
-                    key={article._id || index}
-                    article={article}
-                    onCompare={(clusterId) => setCompareModal({ open: true, clusterId })}
-                    onAnalyze={(article) => setAnalysisModal({ open: true, article })}
-                    onShare={shareArticle}
-                  />
-                ))}
-              </div>
-              
-              {displayedArticles.length < articles.length && (
+              {displayedArticles.length > 0 ? (
+                 <div className="articles-grid">
+                  {displayedArticles.map((article) => ( // Use unique _id or url
+                    <ArticleCard
+                      key={article._id || article.url}
+                      article={article}
+                      onCompare={(clusterId, title) => setCompareModal({ open: true, clusterId, articleTitle: title })}
+                      onAnalyze={(article) => setAnalysisModal({ open: true, article })}
+                      onShare={shareArticle}
+                    />
+                  ))}
+                 </div>
+              ) : (
+                // Show message if no articles match filters (and not loading)
+                 <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
+                    <p>No articles found matching your current filters.</p>
+                 </div>
+              )}
+
+
+              {/* Show Load More button only if there are more articles */}
+              {!loading && displayedArticles.length < totalArticlesCount && (
                 <div className="load-more">
                   <button onClick={loadMoreArticles} className="load-more-btn">
-                    Load More Articles ({articles.length - displayedArticles.length} remaining)
+                    Load More ({totalArticlesCount - displayedArticles.length} remaining)
                   </button>
                 </div>
               )}
@@ -176,18 +232,19 @@ function App() {
           )}
         </main>
       </div>
-      
+
       {compareModal.open && (
         <CompareCoverageModal
           clusterId={compareModal.clusterId}
-          onClose={() => setCompareModal({ open: false, clusterId: null })}
+          articleTitle={compareModal.articleTitle} // Pass title
+          onClose={() => setCompareModal({ open: false, clusterId: null, articleTitle: '' })}
           onAnalyze={(article) => {
-            setCompareModal({ open: false, clusterId: null });
-            setAnalysisModal({ open: true, article });
+            setCompareModal({ open: false, clusterId: null, articleTitle: '' }); // Close compare modal
+            setAnalysisModal({ open: true, article }); // Open analysis modal
           }}
         />
       )}
-      
+
       {analysisModal.open && (
         <DetailedAnalysisModal
           article={analysisModal.article}
@@ -198,17 +255,19 @@ function App() {
   );
 }
 
-// Header Component
+// === Sub-Components ===
+
+// --- Header ---
 function Header({ theme, toggleTheme }) {
   return (
     <header className="header">
       <div className="header-left">
         <h1>The Narrative</h1>
-        <p>Multi-Perspective News Analysis</p>
+        <p>Refined Multi-Perspective Analysis</p>
       </div>
-      
+
       <div className="header-right">
-        <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme">
+        <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
       </div>
@@ -216,45 +275,54 @@ function Header({ theme, toggleTheme }) {
   );
 }
 
-// Sidebar Component
-function Sidebar({ filters, onFilterChange, onApply, articleCount }) {
-  const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports'];
-  const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right'];
+// --- Sidebar ---
+function Sidebar({ filters, onFilterChange, articleCount }) {
+  // Define options directly in the component
+  const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
+  const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
   const qualityLevels = ['All Quality Levels', 'A+ Premium (90-100)', 'A High (80-89)', 'B Professional (70-79)', 'C Acceptable (60-69)', 'D-F Poor (0-59)'];
   const sortOptions = ['Latest First', 'Highest Quality', 'Most Covered', 'Lowest Bias'];
+
+  // Handle individual filter changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    onFilterChange({ ...filters, [name]: value });
+  };
 
   return (
     <aside className="sidebar">
       <div className="filter-section">
-        <h3>Categories</h3>
-        <select value={filters.category} onChange={(e) => onFilterChange({ ...filters, category: e.target.value })}>
+        <h3>Category</h3>
+        <select name="category" value={filters.category} onChange={handleChange}>
           {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
         </select>
       </div>
-      
+
       <div className="filter-section">
         <h3>Political Leaning</h3>
-        <select value={filters.lean} onChange={(e) => onFilterChange({ ...filters, lean: e.target.value })}>
+        <select name="lean" value={filters.lean} onChange={handleChange}>
           {leans.map(lean => <option key={lean} value={lean}>{lean}</option>)}
         </select>
       </div>
-      
+
       <div className="filter-section">
         <h3>Quality Level</h3>
-        <select value={filters.quality} onChange={(e) => onFilterChange({ ...filters, quality: e.target.value })}>
+        <select name="quality" value={filters.quality} onChange={handleChange}>
           {qualityLevels.map(level => <option key={level} value={level}>{level}</option>)}
         </select>
       </div>
-      
+
       <div className="filter-section">
         <h3>Sort By</h3>
-        <select value={filters.sort} onChange={(e) => onFilterChange({ ...filters, sort: e.target.value })}>
+        <select name="sort" value={filters.sort} onChange={handleChange}>
           {sortOptions.map(sort => <option key={sort} value={sort}>{sort}</option>)}
         </select>
       </div>
-      
-      <button className="apply-filters-btn" onClick={onApply}>Apply Filters</button>
-      
+
+      {/* Apply button removed - filtering happens onChange via useEffect in App */}
+      {/* <button className="apply-filters-btn" onClick={onApply}>Apply Filters</button> */}
+
+      {/* Show count only if > 0 */}
       {articleCount > 0 && (
         <div className="filter-results">
           <p>Showing {articleCount} articles</p>
@@ -264,98 +332,90 @@ function Sidebar({ filters, onFilterChange, onApply, articleCount }) {
   );
 }
 
+
 // --- UPDATED ArticleCard Component ---
 function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
-  
-  // Check if this is a review/opinion piece
+
+  // Determine if it's a review/opinion piece
   const isReview = article.analysisType === 'SentimentOnly';
-  
+
+  // Fallback image handler
+  const handleImageError = (e) => {
+    e.target.style.display = 'none'; // Hide the broken image
+    // Find the sibling placeholder and display it
+    const placeholder = e.target.nextElementSibling;
+    if (placeholder && placeholder.classList.contains('image-placeholder')) {
+      placeholder.style.display = 'flex';
+    }
+  };
+
   return (
     <div className="article-card">
       <div className="article-image">
         {article.imageUrl ? (
-          <img 
-            src={article.imageUrl} 
-            alt={article.headline} 
-            onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'flex';
-            }} 
+          <img
+            src={article.imageUrl}
+            alt={`Image for ${article.headline}`} // More descriptive alt text
+            onError={handleImageError}
+            loading="lazy" // Lazy load images
           />
         ) : null}
-        <div className="image-placeholder" style={{display: article.imageUrl ? 'none' : 'flex'}}>
-          📰
+         {/* Placeholder is always rendered but hidden by default if imageUrl exists */}
+        <div className="image-placeholder" style={{ display: article.imageUrl ? 'none' : 'flex' }}>
+          📰 {/* Or use a more abstract icon */}
         </div>
       </div>
-      
+
       <div className="article-content">
-        <h3 className="article-headline">{article.headline}</h3>
+        {/* Use link for headline */}
+         <a href={article.url} target="_blank" rel="noopener noreferrer" className="article-headline-link">
+             <h3 className="article-headline">{article.headline}</h3>
+         </a>
+
         <p className="article-summary">{article.summary}</p>
-        
+
         <div className="article-meta">
-          <span className="source">{article.source || 'Unknown Source'}</span>
-          
-          {/* NEW: Show Sentiment Badge */}
-          <span className={`sentiment-badge sentiment-${article.sentiment.toLowerCase()}`}>
-            {article.sentiment}
-          </span>
-          
-          {/* Only show political lean if it's NOT a review */}
-          {!isReview && (
-            <span className={`lean-badge lean-${(article.politicalLean || 'center').toLowerCase().replace(' ', '-')}`}>
-              {article.politicalLean || 'Center'}
-            </span>
-          )}
+          <span className="source">{article.source}</span>
+          {/* Optionally add published date here */}
+          {/* <span className="date">{new Date(article.publishedAt).toLocaleDateString()}</span> */}
         </div>
-        
+
+        {/* --- NEW Simplified Quality Display --- */}
         <div className="quality-display">
-          {isReview ? (
-            // Show this if it's a review
-            <div className="review-placeholder">
-              This is a review/opinion piece. Bias analysis does not apply.
-            </div>
-          ) : (
-            // Show this if it's a 'Full' news article
-            <>
-              <div className="quality-item">
-                <span className="label">Bias</span>
-                <span className={`value bias-${getBiasClass(article.biasScore)}`}>{article.biasScore}</span>
-              </div>
-              <div className="quality-item">
-                <span className="label">Trust</span>
-                <span className={`value trust-${getTrustClass(article.trustScore)}`}>{article.trustScore}</span>
-              </div>
-              <div className="quality-item">
-                <span className="label">Grade</span>
-                <span className={`grade grade-${(article.credibilityGrade || 'N/A').replace('+', 'plus').replace('-', 'minus')}`}>
-                  {article.credibilityGrade || 'N/A'}
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-        
+             {isReview ? (
+                 <span className="quality-grade-text">Review / Opinion Piece</span>
+             ) : article.credibilityGrade ? (
+                 <span className="quality-grade-text">Quality Grade: {article.credibilityGrade}</span>
+             ) : (
+                 <span className="quality-grade-text">Quality Grade: N/A</span> // Handle missing grade
+             )}
+         </div>
+         {/* --- End Simplified Display --- */}
+
+
         <div className="article-actions">
           <div className="article-actions-top">
-            {/* UPDATED: Disable Analysis button for reviews */}
-            <button 
-              onClick={() => onAnalyze(article)} 
-              className="btn-secondary" 
-              title={isReview ? "Analysis not applicable for reviews" : "View detailed analysis"}
-              disabled={isReview}
+            <button
+              onClick={() => onAnalyze(article)}
+              className="btn-secondary"
+              title={isReview ? "Detailed analysis not applicable for reviews" : "View Detailed Analysis"}
+              disabled={isReview} // Disable button if it's a review
             >
               Analysis
             </button>
-            <button onClick={() => onShare(article)} className="btn-secondary" title="Share article">
+            <button
+              onClick={() => onShare(article)}
+              className="btn-secondary"
+              title="Share article link"
+            >
               Share
             </button>
           </div>
-          {/* UPDATED: Disable Compare button for reviews */}
-          <button 
-            onClick={() => onCompare(article.clusterId || 1)} 
-            className="btn-primary btn-full-width" 
-            title={isReview ? "Comparison not applicable for reviews" : "Compare coverage across perspectives"}
-            disabled={isReview}
+          <button
+            onClick={() => onCompare(article.clusterId, article.headline)} // Pass headline too
+            className="btn-primary btn-full-width"
+            title={isReview ? "Coverage comparison not applicable for reviews" : "Compare Coverage Across Perspectives"}
+            disabled={isReview || !article.clusterId} // Disable if review OR no clusterId
           >
             Compare Coverage
           </button>
@@ -367,117 +427,141 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
 // --- END of UPDATED ArticleCard Component ---
 
 
-function getBiasClass(score) {
-  if (score < 30) return 'low';
-  if (score < 60) return 'moderate';
-  if (score < 80) return 'high';
-  return 'extreme';
-}
+// --- Modal Components ---
 
-function getTrustClass(score) {
-  if (score >= 90) return 'excellent';
-  if (score >= 80) return 'high';
-  if (score >= 70) return 'good';
-  if (score >= 60) return 'acceptable';
-  return 'poor';
-}
-
-// Compare Coverage Modal Component - WITH READ ARTICLE BUTTONS
-function CompareCoverageModal({ clusterId, onClose, onAnalyze }) {
-  const [articles, setArticles] = useState({ left: [], center: [], right: [], stats: {} });
+// Compare Coverage Modal
+function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze }) {
+  const [clusterData, setClusterData] = useState({ left: [], center: [], right: [], stats: {} });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('all'); // Default to 'all'
 
   useEffect(() => {
+    const fetchCluster = async () => {
+      if (!clusterId) {
+          setLoading(false); // No ID, nothing to fetch
+          return;
+      }
+      try {
+        setLoading(true);
+        console.log(`Fetching cluster data for ID: ${clusterId}`);
+        const response = await axios.get(`${API_URL}/cluster/${clusterId}`);
+        console.log("Cluster Response:", response.data);
+        setClusterData({
+            left: response.data.left || [],
+            center: response.data.center || [],
+            right: response.data.right || [],
+            stats: response.data.stats || {}
+        });
+        setLoading(false);
+      } catch (error) {
+        console.error(`❌ Error fetching cluster ${clusterId}:`, error.response ? error.response.data : error.message);
+        setLoading(false);
+        // Optionally set an error state to display to the user
+      }
+    };
+
     fetchCluster();
-  }, [clusterId]);
+  }, [clusterId]); // Refetch only when clusterId changes
 
-  const fetchCluster = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/cluster/${clusterId}`);
-      setArticles(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching cluster:', error);
-      setLoading(false);
-    }
-  };
+   // Calculate total once data is loaded
+   const totalArticles = clusterData.left.length + clusterData.center.length + clusterData.right.length;
 
-  if (loading) {
-    return (
-      <div className="modal-overlay" onClick={onClose}>
-        <div className="compare-modal" onClick={(e) => e.stopPropagation()}>
-          <div className="loading-container">
-            <div className="spinner"></div>
-            <p>Loading coverage comparison...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const totalArticles = articles.left.length + articles.center.length + articles.right.length;
+   // Handle click outside modal to close
+   const handleOverlayClick = (e) => {
+       if (e.target === e.currentTarget) {
+           onClose();
+       }
+   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="compare-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={handleOverlayClick}>
+      <div className="compare-modal" onClick={(e) => e.stopPropagation()}> {/* Prevent clicks inside modal from closing it */}
         <div className="modal-header">
-          <h2>Compare Coverage - Cluster {clusterId}</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
+          {/* Display original article title for context */}
+          <h2>Compare Coverage: "{articleTitle.substring(0, 40)}..."</h2>
+          <button className="close-btn" onClick={onClose} title="Close comparison">×</button>
         </div>
-        
-        <div className="modal-tabs">
+
+        {/* Tabs */}
+         <div className="modal-tabs">
           <button className={activeTab === 'all' ? 'active' : ''} onClick={() => setActiveTab('all')}>
             All ({totalArticles})
           </button>
           <button className={activeTab === 'left' ? 'active' : ''} onClick={() => setActiveTab('left')}>
-            Left ({articles.left.length})
+            Left ({clusterData.left.length})
           </button>
           <button className={activeTab === 'center' ? 'active' : ''} onClick={() => setActiveTab('center')}>
-            Center ({articles.center.length})
+            Center ({clusterData.center.length})
           </button>
           <button className={activeTab === 'right' ? 'active' : ''} onClick={() => setActiveTab('right')}>
-            Right ({articles.right.length})
+            Right ({clusterData.right.length})
           </button>
         </div>
-        
+
+
         <div className="modal-body">
-          {(activeTab === 'all' || activeTab === 'left') && renderArticleGroup(articles.left, 'Left', onAnalyze)}
-          {(activeTab === 'all' || activeTab === 'center') && renderArticleGroup(articles.center, 'Center', onAnalyze)}
-          {(activeTab === 'all' || activeTab === 'right') && renderArticleGroup(articles.right, 'Right', onAnalyze)}
-          
-          {totalArticles === 0 && (
-            <div style={{textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)'}}>
-              No articles found for this cluster. Try fetching more news or check a different cluster.
+          {loading ? (
+            <div className="loading-container" style={{ minHeight: '200px' }}>
+              <div className="spinner"></div>
+              <p>Loading coverage comparison...</p>
             </div>
+          ) : totalArticles === 0 ? (
+             <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}>
+                <p>No other articles found covering this specific topic.</p>
+             </div>
+          ) : (
+            <>
+              {(activeTab === 'all' || activeTab === 'left') && renderArticleGroup(clusterData.left, 'Left', onAnalyze)}
+              {(activeTab === 'all' || activeTab === 'center') && renderArticleGroup(clusterData.center, 'Center', onAnalyze)}
+              {(activeTab === 'all' || activeTab === 'right') && renderArticleGroup(clusterData.right, 'Right', onAnalyze)}
+
+              {/* Message if a specific tab has no articles */}
+              {activeTab !== 'all' && clusterData[activeTab]?.length === 0 && (
+                 <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}>
+                    <p>No articles found for the '{activeTab}' perspective in this cluster.</p>
+                 </div>
+              )}
+            </>
           )}
         </div>
+         {/* Optional Footer */}
+         {/* <div className="modal-footer">
+             <button onClick={onClose}>Close</button>
+         </div> */}
       </div>
     </div>
   );
 }
 
-// Article Group with READ ARTICLE buttons
+// Helper function to render article groups in Compare Modal
 function renderArticleGroup(articleList, perspective, onAnalyze) {
-  if (articleList.length === 0) return null;
-  
+  if (!articleList || articleList.length === 0) return null; // Don't render if empty
+
   return (
     <div className="perspective-section">
       <h3 className={`perspective-title ${perspective.toLowerCase()}`}>{perspective} Perspective</h3>
       {articleList.map(article => (
-        <div key={article._id} className="coverage-article">
-          <h4>{article.headline || article.title}</h4>
-          <p style={{fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '8px', lineHeight: 1.4}}>
-            {(article.summary || article.description || '').substring(0, 200)}...
-          </p>
+        <div key={article._id || article.url} className="coverage-article">
+          <a href={article.url} target="_blank" rel="noopener noreferrer">
+             <h4>{article.headline || 'No Headline'}</h4>
+          </a>
+           {/* Display a snippet of the summary */}
+           <p>
+             {(article.summary || '').substring(0, 150)}{article.summary && article.summary.length > 150 ? '...' : ''}
+           </p>
+
+           {/* Simplified scores */}
           <div className="article-scores">
-            <span>Bias: {article.biasScore}</span>
-            <span>Trust: {article.trustScore}</span>
+            <span>Bias: {article.biasScore ?? 'N/A'}</span>
+            <span>Trust: {article.trustScore ?? 'N/A'}</span>
             <span>Grade: {article.credibilityGrade || 'N/A'}</span>
           </div>
-          {/* READ ARTICLE BUTTONS ONLY IN COMPARE MODAL */}
           <div className="coverage-actions">
-            <button onClick={() => window.open(article.url, '_blank')}>Read Article</button>
+            {/* Direct link to read article */}
+            <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1}}>
+                 <button style={{width: '100%'}}>Read Article</button>
+            </a>
+            {/* Button to view analysis within the app */}
             <button onClick={() => onAnalyze(article)}>View Analysis</button>
           </div>
         </div>
@@ -486,22 +570,45 @@ function renderArticleGroup(articleList, perspective, onAnalyze) {
   );
 }
 
-// Detailed Analysis Modal Component - FULLY FUNCTIONAL
-function DetailedAnalysisModal({ article, onClose }) {
-  const [activeTab, setActiveTab] = 'overview';
 
+// Detailed Analysis Modal
+function DetailedAnalysisModal({ article, onClose }) {
+  const [activeTab, setActiveTab] = useState('overview'); // Default tab
+
+   // Handle click outside modal to close
+   const handleOverlayClick = (e) => {
+       if (e.target === e.currentTarget) {
+           onClose();
+       }
+   };
+
+  // Basic check if article data is missing
   if (!article) {
-    return null;
+    return (
+        <div className="modal-overlay" onClick={handleOverlayClick}>
+          <div className="analysis-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Analysis Unavailable</h2>
+              <button className="close-btn" onClick={onClose}>×</button>
+            </div>
+            <div className="modal-content" style={{textAlign: 'center', padding: '50px'}}>
+                 <p style={{color: 'var(--text-tertiary)'}}>Article data is missing or corrupted.</p>
+            </div>
+          </div>
+        </div>
+    );
   }
 
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="analysis-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Analysis: {article.headline.substring(0, 50)}...</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
+          {/* Use the article headline in the title */}
+          <h2>Analysis: "{article.headline.substring(0, 50)}{article.headline.length > 50 ? '...' : ''}"</h2>
+          <button className="close-btn" onClick={onClose} title="Close analysis">×</button>
         </div>
-        
+
         <div className="modal-tabs">
           <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>
             Overview
@@ -516,108 +623,127 @@ function DetailedAnalysisModal({ article, onClose }) {
             Reliability
           </button>
         </div>
-        
+
         <div className="modal-content">
+          {/* Conditionally render tab content */}
           {activeTab === 'overview' && <OverviewTab article={article} />}
           {activeTab === 'bias' && <BiasTab article={article} />}
           {activeTab === 'credibility' && <CredibilityTab article={article} />}
           {activeTab === 'reliability' && <ReliabilityTab article={article} />}
         </div>
-        
+
         <div className="modal-footer">
-          <button onClick={onClose} style={{
-            padding: '8px 20px', 
-            background: 'var(--accent-primary)', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '6px', 
-            cursor: 'pointer', 
-            fontSize: '12px', 
-            fontWeight: '600'
-          }}>
-            Close Analysis
-          </button>
+          <button onClick={onClose}>Close Analysis</button>
         </div>
       </div>
     </div>
   );
 }
 
+// --- Analysis Tab Components ---
+
 function OverviewTab({ article }) {
   return (
     <div className="tab-content">
+      {/* Grid for main scores */}
       <div className="overview-grid">
         <ScoreBox label="Trust Score" value={article.trustScore} />
         <ScoreBox label="Bias Score" value={article.biasScore} />
         <ScoreBox label="Credibility" value={article.credibilityScore} />
         <ScoreBox label="Reliability" value={article.reliabilityScore} />
       </div>
-      
-      <div className="recommendations">
-        <h4>Key Findings</h4>
-        <ul>
-          {article.keyFindings.map((finding, i) => <li key={i}>{finding}</li>)}
-        </ul>
-      </div>
-      
-      <div className="recommendations" style={{marginTop: '12px'}}>
-        <h4>Recommendations</h4>
-        <ul>
-          {article.recommendations.map((rec, i) => <li key={i}>{rec}</li>)}
-        </ul>
-      </div>
+
+       {/* Key Findings Section */}
+       {article.keyFindings && article.keyFindings.length > 0 && (
+         <div className="recommendations"> {/* Reusing style */}
+            <h4>Key Findings</h4>
+            <ul>
+                {article.keyFindings.map((finding, i) => <li key={`kf-${i}`}>{finding}</li>)}
+            </ul>
+         </div>
+       )}
+
+       {/* Recommendations Section */}
+       {article.recommendations && article.recommendations.length > 0 && (
+         <div className="recommendations" style={{ marginTop: '20px' }}> {/* Add margin if both sections show */}
+            <h4>Recommendations</h4>
+            <ul>
+                {article.recommendations.map((rec, i) => <li key={`rec-${i}`}>{rec}</li>)}
+            </ul>
+         </div>
+       )}
+
+        {/* Message if no findings/recommendations */}
+        {(!article.keyFindings || article.keyFindings.length === 0) &&
+         (!article.recommendations || article.recommendations.length === 0) && (
+            <p style={{color: 'var(--text-tertiary)', textAlign: 'center', marginTop: '30px'}}>
+                No specific key findings or recommendations were generated for this article.
+            </p>
+         )}
     </div>
   );
 }
 
+// Helper to safely get nested properties
+const getNested = (obj, path, defaultValue = 0) => {
+    return path.split('.').reduce((acc, part) => acc && acc[part] !== undefined ? acc[part] : defaultValue, obj);
+};
+
+
 function BiasTab({ article }) {
-  const components = article.biasComponents;
+  // Use helper to safely access potentially missing nested components
+  const components = article.biasComponents || {};
+  const linguistic = components.linguistic || {};
+  const sourceSelection = components.sourceSelection || {};
+  const demographic = components.demographic || {};
+  const framing = components.framing || {};
+
   return (
     <div className="tab-content">
-      <h3 style={{fontSize: '16px', marginBottom: '16px'}}>
-        Bias Analysis: {article.biasScore}/100 ({article.biasLabel || 'Moderate'})
+      <h3 style={{ fontSize: '18px', marginBottom: '20px', fontWeight: 600 }}>
+        Bias Analysis: {article.biasScore ?? 'N/A'}/100 ({article.biasLabel || 'Not Available'})
       </h3>
-      
+
       <div className="component-section">
         <h4>Linguistic Bias</h4>
-        <ProgressBar label="Sentiment Polarity" value={components.linguistic.sentimentPolarity} />
-        <ProgressBar label="Emotional Language" value={components.linguistic.emotionalLanguage} />
-        <ProgressBar label="Loaded Terms" value={components.linguistic.loadedTerms} />
-        <ProgressBar label="Complexity Bias" value={components.linguistic.complexityBias} />
+        <ProgressBar label="Sentiment Polarity" value={linguistic.sentimentPolarity} />
+        <ProgressBar label="Emotional Language" value={linguistic.emotionalLanguage} />
+        <ProgressBar label="Loaded Terms" value={linguistic.loadedTerms} />
+        <ProgressBar label="Complexity Bias" value={linguistic.complexityBias} />
       </div>
-      
+
       <div className="component-section">
         <h4>Source Selection</h4>
-        <ProgressBar label="Source Diversity" value={components.sourceSelection.sourceDiversity} />
-        <ProgressBar label="Expert Balance" value={components.sourceSelection.expertBalance} />
-        <ProgressBar label="Attribution Transparency" value={components.sourceSelection.attributionTransparency} />
+        <ProgressBar label="Source Diversity" value={sourceSelection.sourceDiversity} />
+        <ProgressBar label="Expert Balance" value={sourceSelection.expertBalance} />
+        <ProgressBar label="Attribution Transparency" value={sourceSelection.attributionTransparency} />
       </div>
-      
+
       <div className="component-section">
         <h4>Demographic Representation</h4>
-        <ProgressBar label="Gender Balance" value={components.demographic.genderBalance} />
-        <ProgressBar label="Racial Balance" value={components.demographic.racialBalance} />
-        <ProgressBar label="Age Representation" value={components.demographic.ageRepresentation} />
+        <ProgressBar label="Gender Balance" value={demographic.genderBalance} />
+        <ProgressBar label="Racial Balance" value={demographic.racialBalance} />
+        <ProgressBar label="Age Representation" value={demographic.ageRepresentation} />
       </div>
-      
+
       <div className="component-section">
         <h4>Framing Analysis</h4>
-        <ProgressBar label="Headline Framing" value={components.framing.headlineFraming} />
-        <ProgressBar label="Story Selection" value={components.framing.storySelection} />
-        <ProgressBar label="Omission Bias" value={components.framing.omissionBias} />
+        <ProgressBar label="Headline Framing" value={framing.headlineFraming} />
+        <ProgressBar label="Story Selection" value={framing.storySelection} />
+        <ProgressBar label="Omission Bias" value={framing.omissionBias} />
       </div>
     </div>
   );
 }
 
 function CredibilityTab({ article }) {
-  const components = article.credibilityComponents;
+  const components = article.credibilityComponents || {};
   return (
     <div className="tab-content">
-      <h3 style={{fontSize: '16px', marginBottom: '16px'}}>
-        Credibility: {article.credibilityScore}/100 (Grade: {article.credibilityGrade || 'B'})
+      <h3 style={{ fontSize: '18px', marginBottom: '20px', fontWeight: 600 }}>
+        Credibility Score: {article.credibilityScore ?? 'N/A'}/100 (Grade: {article.credibilityGrade || 'N/A'})
       </h3>
-      
+
       <div className="component-section">
         <h4>Credibility Components</h4>
         <ProgressBar label="Source Credibility" value={components.sourceCredibility} />
@@ -632,13 +758,13 @@ function CredibilityTab({ article }) {
 }
 
 function ReliabilityTab({ article }) {
-  const components = article.reliabilityComponents;
+  const components = article.reliabilityComponents || {};
   return (
     <div className="tab-content">
-      <h3 style={{fontSize: '16px', marginBottom: '16px'}}>
-        Reliability: {article.reliabilityScore}/100 (Grade: {article.reliabilityGrade || 'B+'})
+      <h3 style={{ fontSize: '18px', marginBottom: '20px', fontWeight: 600 }}>
+        Reliability Score: {article.reliabilityScore ?? 'N/A'}/100 (Grade: {article.reliabilityGrade || 'N/A'})
       </h3>
-      
+
       <div className="component-section">
         <h4>Reliability Components</h4>
         <ProgressBar label="Consistency" value={components.consistency} />
@@ -652,23 +778,30 @@ function ReliabilityTab({ article }) {
   );
 }
 
+// --- Reusable UI Components ---
+
+// Score Box for Overview Tab
 function ScoreBox({ label, value }) {
   return (
-    <div className="score-circle">
-      <div className="score-value">{value}</div>
+    <div className="score-circle"> {/* Keep class name for now, but it's a box */}
+      <div className="score-value">{value ?? 'N/A'}</div> {/* Handle null/undefined */}
       <div className="score-label">{label}</div>
     </div>
   );
 }
 
+// Progress Bar for Analysis Tabs
 function ProgressBar({ label, value }) {
+   // Ensure value is a number between 0 and 100
+   const numericValue = Math.max(0, Math.min(100, Number(value) || 0));
   return (
     <div className="progress-bar-container">
       <span className="progress-label">{label}</span>
       <div className="progress-bar">
-        <div className="progress-fill" style={{ width: `${value}%` }}></div>
+        {/* Animate width change */}
+        <div className="progress-fill" style={{ width: `${numericValue}%` }}></div>
       </div>
-      <span className="progress-value">{value}</span>
+      <span className="progress-value">{numericValue}</span>
     </div>
   );
 }

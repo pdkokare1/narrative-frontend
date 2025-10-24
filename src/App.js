@@ -222,7 +222,7 @@ function App() {
     let timeoutId;
     // Get the scrollable element (content area on mobile, window on desktop)
     const scrollableElement = window.innerWidth <= 768 ? document.querySelector('.content') : window;
-    
+
     if (!scrollableElement) return; // Exit if element not found yet
 
     const handleScroll = () => {
@@ -283,15 +283,15 @@ function App() {
         y={tooltip.y}
       />
 
-      <Header 
-        theme={theme} 
-        toggleTheme={toggleTheme} 
+      <Header
+        theme={theme}
+        toggleTheme={toggleTheme}
         onToggleSidebar={() => setIsSidebarOpen(true)} // Pass correct function
       />
 
       <div className="main-container">
         {/* --- NEW: Mobile Sidebar Overlay --- */}
-        <div 
+        <div
           className={`sidebar-mobile-overlay ${isSidebarOpen ? 'open' : ''}`}
           onClick={() => setIsSidebarOpen(false)}
         ></div>
@@ -391,7 +391,7 @@ function CustomTooltip({ visible, text, x, y }) {
         left: `${x}px`,
         top: `${y}px`,
         // Position centered horizontally, above the touch point
-        transform: 'translate(-50%, -100%)', 
+        transform: 'translate(-50%, -100%)',
       }}
     >
       {text}
@@ -539,10 +539,10 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
       </div>
 
       <div className="article-content">
-         <a 
-            href={article.url} 
-            target="_blank" 
-            rel="noopener noreferrer" 
+         <a
+            href={article.url}
+            target="_blank"
+            rel="noopener noreferrer"
             className="article-headline-link"
             onTouchStart={stopTouch} // NEW: Prevent scroll on tap
          >
@@ -558,8 +558,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
           {!isReview && (
             <>
               <span className="meta-divider">|</span>
-              <span 
-                className="bias-score-card" 
+              <span
+                className="bias-score-card"
                 title="Bias Score (0-100). Less is better."
                 onTouchStart={(e) => showTooltip("Bias Score (0-100). Less is better.", e)}
                 onTouchEnd={hideTooltip}
@@ -567,8 +567,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                 Bias: {article.biasScore}
               </span>
                <span className="meta-divider">|</span>
-               <span 
-                className="political-lean-card" 
+               <span
+                className="political-lean-card"
                 title="Detected political leaning."
                 onTouchStart={(e) => showTooltip("Detected political leaning.", e)}
                 onTouchEnd={hideTooltip}
@@ -583,8 +583,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
         {/* --- Quality Display (v2.8) --- */}
         <div className="quality-display-v2">
              {isReview ? (
-                 <span 
-                    className="quality-grade-text" 
+                 <span
+                    className="quality-grade-text"
                     title="This article is an opinion, review, or summary."
                     onTouchStart={(e) => showTooltip("This article is an opinion, review, or summary.", e)}
                     onTouchEnd={hideTooltip}
@@ -592,8 +592,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                    Review / Opinion
                  </span>
              ) : article.credibilityGrade ? (
-                 <span 
-                    className="quality-grade-text" 
+                 <span
+                    className="quality-grade-text"
                     title="This grade (A+ to F) is based on the article's Credibility and Reliability."
                     onTouchStart={(e) => showTooltip("This grade (A+ to F) is based on the article's Credibility and Reliability.", e)}
                     onTouchEnd={hideTooltip}
@@ -601,8 +601,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                    Grade: {article.credibilityGrade}
                  </span>
              ) : (
-                 <span 
-                    className="quality-grade-text" 
+                 <span
+                    className="quality-grade-text"
                     title="Quality grade not available."
                     onTouchStart={(e) => showTooltip("Quality grade not available.", e)}
                     onTouchEnd={hideTooltip}
@@ -813,17 +813,17 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip, hi
             </p>
 
             <div className="article-scores">
-              <span 
+              <span
                 title="Bias Score (0-100, lower is less biased)"
                 onTouchStart={(e) => showTooltip("Bias Score (0-100, lower is less biased)", e)}
                 onTouchEnd={hideTooltip}
               >Bias: {article.biasScore ?? 'N/A'}</span>
-              <span 
+              <span
                 title="Overall Trust Score (0-100, higher is more trustworthy)"
                 onTouchStart={(e) => showTooltip("Overall Trust Score (0-100, higher is more trustworthy)", e)}
                 onTouchEnd={hideTooltip}
               >Trust: {article.trustScore ?? 'N/A'}</span>
-              <span 
+              <span
                 title="Credibility Grade (A+ to F)"
                 onTouchStart={(e) => showTooltip("Credibility Grade (A+ to F)", e)}
                 onTouchEnd={hideTooltip}
@@ -1113,8 +1113,8 @@ function ScoreBox({ label, value, showTooltip, hideTooltip }) {
   }
 
   return (
-    <div 
-      className="score-circle" 
+    <div
+      className="score-circle"
       title={tooltip}
       onTouchStart={(e) => showTooltip(tooltip, e)}
       onTouchEnd={hideTooltip}
@@ -1137,8 +1137,8 @@ function CircularProgressBar({ label, value, tooltip, showTooltip, hideTooltip }
   const finalTooltip = tooltip || `${label}: ${numericValue}/100`;
 
   return (
-    <div 
-      className="circle-progress-container" 
+    <div
+      className="circle-progress-container"
       title={finalTooltip}
       onTouchStart={(e) => showTooltip(finalTooltip, e)}
       onTouchEnd={hideTooltip}

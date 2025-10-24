@@ -67,14 +67,13 @@ function App() {
     x: 0,
     y: 0,
   });
-  // Removed tooltipTimeout
   const isMobile = () => window.innerWidth <= 768;
 
-  // --- NEW: Custom Tooltip Handlers ---
+  // --- NEW: Custom Tooltip Handlers (Simplified) ---
   const showTooltip = (text, e) => {
     if (!isMobile() || !text) return; // Only run on mobile
     e.stopPropagation(); // Stop tap from triggering scroll
-    
+
     // Get touch position
     const touch = e.touches[0];
     // Position tooltip above the finger
@@ -83,12 +82,10 @@ function App() {
 
     // Show tooltip immediately
     setTooltip({ visible: true, text, x, y });
-    // Removed setTimeout
   };
 
   const hideTooltip = (e) => {
     if (!isMobile()) return;
-     // Removed timeout clearing logic
     if (tooltip.visible) {
       setTooltip({ ...tooltip, visible: false });
     }

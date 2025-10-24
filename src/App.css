@@ -238,7 +238,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(5px);
-  z-index: 1100;
+  z-index: 1100; /* NEW: Lower than sidebar */
   opacity: 0;
   transition: opacity 0.3s ease-in-out;
 }
@@ -1005,8 +1005,8 @@ button:disabled, button:disabled:hover {
     display: flex; /* NEW: Use flex for simpler stacking */
     flex-direction: column; /* NEW: Stack vertically */
     gap: 0; 
-    padding: 0 16px; /* NEW: Side padding only */
-    /* REMOVED: padding-top/bottom */
+    padding: 16px 16px 60vh 16px; /* NEW: Add side padding, top padding for centering, bottom for scroll */
+    /* REMOVED: padding-top: 16px */
   }
   .article-card { 
     /* --- REMOVED: position: sticky --- */
@@ -1020,17 +1020,16 @@ button:disabled, button:disabled:hover {
     max-width: 500px; /* Optional: Limit max width on wider mobile */
     margin-left: auto;
     margin-right: auto;
-     /* NEW: Add padding inside the card for content spacing */
-    padding: 16px; /* Adjust as needed */
+     /* REMOVED: padding: 16px; Adjust as needed */
   }
   /* Re-add padding specifically to the content *inside* the card */
   .article-card .article-content {
       padding: 16px; /* Keep internal padding */
   }
-  /* Add spacing only *between* cards */
-  .article-card:not(:last-child) {
-      margin-bottom: 16px; /* Add space below each card */
-  }
+  /* REMOVED: Spacing between cards (handled by snap) */
+  /* .article-card:not(:last-child) {
+      margin-bottom: 16px; 
+  } */
 
   
   .load-more {

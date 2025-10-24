@@ -989,8 +989,8 @@ button:disabled, button:disabled:hover {
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
 
-    /* --- FIXED: Changed snap to 'proximity' --- */
-    scroll-snap-type: y proximity;
+    /* --- BUG FIX: REMOVED SCROLL-SNAP --- */
+    /* scroll-snap-type: y proximity; */
 
     /* --- NEW: Hide Scrollbar --- */
     -ms-overflow-style: none;  /* IE and Edge */
@@ -1012,7 +1012,9 @@ button:disabled, button:disabled:hover {
     position: sticky;
     top: 16px; /* Stick near the top */
 
-    scroll-snap-align: start; /* Snap to top */
+    /* --- BUG FIX: REMOVED SCROLL-SNAP --- */
+    /* scroll-snap-align: start; */
+    
     margin-bottom: 16px; /* NEW: Create space for stacking effect */
     box-shadow: var(--shadow-md);
     background: var(--bg-card-flat); /* Use solid background */

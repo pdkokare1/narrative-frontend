@@ -285,7 +285,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   background-position: right 10px center;
   background-size: 18px;
 }
-.light-mode .filter-section select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23888888' height='24' viewBox='0 0 24 24' width='24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3Examplesvg%3E"); }
+.light-mode .filter-section select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23888888' height='24' viewBox='0 0 24 24' width='24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3C/svg%3E"); }
 
 
 .filter-section select:hover,
@@ -989,8 +989,8 @@ button:disabled, button:disabled:hover {
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
 
-    /* --- BUG FIX: REMOVED SCROLL-SNAP --- */
-    /* scroll-snap-type: y proximity; */
+    /* --- ADDED BACK: Scroll Snap --- */
+    scroll-snap-type: y mandatory;
 
     /* --- NEW: Hide Scrollbar --- */
     -ms-overflow-style: none;  /* IE and Edge */
@@ -1002,21 +1002,25 @@ button:disabled, button:disabled:hover {
 
   /* --- NEW: Card Stack & Snap --- */
   .articles-grid {
-    /* --- BUG FIX: Changed from flex to block --- */
-    display: block; 
-    /* flex-direction: column; <--- REMOVED */
-    gap: 0;
-    padding: 16px 16px 60vh 16px; /* NEW: Add top padding back */
+    /* --- Reverted to flex for scroll-snap container --- */
+    display: flex; 
+    flex-direction: column;
+    /* --- Set card spacing with gap --- */
+    gap: 16px;
+    /* --- Removed 60vh bottom padding, just use 16px all around --- */
+    padding: 16px;
   }
   .article-card {
-     /* --- RE-ADD: Sticky Positioning for Stacking --- */
-    position: sticky;
-    top: 16px; /* Stick near the top */
+     /* --- REMOVED STICKY --- */
+    /* position: sticky; */
+    /* top: 16px; */
 
-    /* --- BUG FIX: REMOVED SCROLL-SNAP --- */
-    /* scroll-snap-align: start; */
+    /* --- ADDED BACK: Snap Align --- */
+    scroll-snap-align: start; 
     
-    margin-bottom: 16px; /* NEW: Create space for stacking effect */
+    /* --- REMOVED: Margin bottom handled by gap --- */
+    /* margin-bottom: 16px; */
+    
     box-shadow: var(--shadow-md);
     background: var(--bg-card-flat); /* Use solid background */
     border-bottom: 1px solid var(--border-color); /* Separate cards */
@@ -1026,10 +1030,11 @@ button:disabled, button:disabled:hover {
     margin-left: auto;
     margin-right: auto;
   }
-   /* Remove margin from the last card */
-  .article-card:last-child {
+   /* --- REMOVED: No longer needed --- */
+  /* .article-card:last-child {
       margin-bottom: 0;
-  }
+  } */
+  
   /* Re-add padding specifically to the content *inside* the card */
   .article-card .article-content {
       padding: 16px; /* Keep internal padding */
@@ -1038,6 +1043,8 @@ button:disabled, button:disabled:hover {
 
   .load-more {
     padding: 30px 16px; /* NEW: Add padding */
+    /* --- ADDED: Snap align for load more button --- */
+    scroll-snap-align: start;
   }
 
   .article-headline { font-size: 16px; } .article-summary { font-size: 12px; line-height: 1.5; } .article-image { height: 160px; }

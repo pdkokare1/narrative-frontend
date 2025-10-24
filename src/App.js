@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css'; // Ensure App.css is imported
 
@@ -110,7 +110,7 @@ function App() {
     if (isSidebarOpen) {
       setIsSidebarOpen(false);
     }
-  }, [filters]); // <--- FIXED: Removed 'isSidebarOpen' dependency
+  }, [filters]); 
 
   const fetchArticles = async (loadMore = false) => {
     try {
@@ -233,8 +233,13 @@ function App() {
             const scrollTop = isWindow ? window.scrollY : scrollableElement.scrollTop;
             const clientHeight = isWindow ? window.innerHeight : scrollableElement.clientHeight;
 
-            // Check if user is near the bottom
-            if (clientHeight + scrollTop >= scrollHeight - 800) {
+            // --- UPDATED Infinite Scroll Logic ---
+            // On mobile, clientHeight is fixed. Check if we are on the *last snap item*.
+            // The scrollHeight will be (Num Cards + Load More Button) * clientHeight
+            // We want to load when we are on the *second to last* item.
+            const triggerPoint = isMobile() ? (scrollHeight - clientHeight * 1.5) : (scrollHeight - 800);
+
+            if (clientHeight + scrollTop >= triggerPoint) {
                 // Check if not loading, and if there are more articles to load
                 if (!loading && displayedArticles.length < totalArticlesCount) {
                     // console.log("Scroll near bottom detected, loading more...");
@@ -430,12 +435,70 @@ function Header({ theme, toggleTheme, onToggleSidebar }) {
   );
 }
 
+// --- NEW: Custom Select Component ---
+function CustomSelect({ name, value, options, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
+
+  // Handle click outside to close
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [ref]);
+
+  const handleSelect = (optionValue) => {
+    onChange({ target: { name, value: optionValue } });
+    setIsOpen(false);
+  };
+  
+  // Find the label for the currently selected value
+  const selectedLabel = options.find(opt => (opt.value || opt) === value)?.label || value;
+
+  return (
+    <div className="custom-select-container" ref={ref}>
+      <button
+        type="button"
+        className="custom-select-trigger"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+      >
+        <span>{selectedLabel}</span>
+        <span className="custom-select-arrow" />
+      </button>
+      {isOpen && (
+        <ul className="custom-select-options" role="listbox">
+          {options.map((option) => {
+            const optionValue = option.value || option;
+            const optionLabel = option.label || option;
+            return (
+              <li
+                key={optionValue}
+                className={`custom-select-option ${optionValue === value ? 'selected' : ''}`}
+                onClick={() => handleSelect(optionValue)}
+                role="option"
+                aria-selected={optionValue === value}
+              >
+                {optionLabel}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 // --- Sidebar (Updated Quality Options, NEW mobile props) ---
 function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
   const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
 
-  // --- FIXED: Quality Level Options (v2.11) ---
   const qualityLevels = [
     { value: 'All Quality Levels', label: 'All Quality Levels' },
     { value: 'A+ Excellent (90-100)', label: 'A+ : Excellent' },
@@ -461,37 +524,45 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
           <button className="sidebar-close-btn" onClick={onClose} title="Close Filters">×</button>
         </div>
 
+        {/* --- FIXED: Replaced all <select> with <CustomSelect> --- */}
         <div className="filter-section">
           <h3>Category</h3>
-          <select name="category" value={filters.category} onChange={handleChange}>
-            {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-          </select>
+          <CustomSelect
+            name="category"
+            value={filters.category}
+            options={categories}
+            onChange={handleChange}
+          />
         </div>
 
         <div className="filter-section">
           <h3>Political Leaning</h3>
-          <select name="lean" value={filters.lean} onChange={handleChange}>
-            {leans.map(lean => <option key={lean} value={lean}>{lean}</option>)}
-          </select>
+          <CustomSelect
+            name="lean"
+            value={filters.lean}
+            options={leans}
+            onChange={handleChange}
+          />
         </div>
 
         <div className="filter-section">
           <h3>Quality Level</h3>
-          <select name="quality" value={filters.quality} onChange={handleChange}>
-            {/* --- FIXED: Updated map to only show label --- */}
-            {qualityLevels.map(level => (
-              <option key={level.value} value={level.value}>
-                {level.label}
-              </option>
-            ))}
-          </select>
+          <CustomSelect
+            name="quality"
+            value={filters.quality}
+            options={qualityLevels}
+            onChange={handleChange}
+          />
         </div>
 
         <div className="filter-section">
           <h3>Sort By</h3>
-          <select name="sort" value={filters.sort} onChange={handleChange}>
-            {sortOptions.map(sort => <option key={sort} value={sort}>{sort}</option>)}
-          </select>
+          <CustomSelect
+            name="sort"
+            value={filters.sort}
+            options={sortOptions}
+            onChange={handleChange}
+          />
         </div>
       </div>
 
@@ -990,7 +1061,7 @@ function OverviewBreakdownTab({ article, showTooltip, hideTooltip }) {
   const allReliabilityComponents = [
     { label: "Consistency", value: relComps.consistency },
     { label: "Temporal Stability", value: relComps.temporalStability },
-    { label: "Quality Control", value: relComps.qualityControl }, // <--- FIXED TYPO HERE
+    { label: "Quality Control", value: relComps.qualityControl },
     { label: "Publication Standards", value: relComps.publicationStandards },
     { label: "Corrections Policy", value: relComps.correctionsPolicy },
     { label: "Update Maintenance", value: relComps.updateMaintenance },

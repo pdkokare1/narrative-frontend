@@ -110,7 +110,7 @@ function App() {
     if (isSidebarOpen) {
       setIsSidebarOpen(false);
     }
-  }, [filters]); 
+  }, [filters]);
 
   const fetchArticles = async (loadMore = false) => {
     try {
@@ -322,8 +322,8 @@ function App() {
               {displayedArticles.length > 0 ? (
                  <div className="articles-grid">
                   {/* --- FIXED: Added card-snap-container wrapper --- */}
-                  {displayedArticles.map((article) => ( 
-                    <div key={article._id || article.url} className="card-snap-container"> 
+                  {displayedArticles.map((article) => (
+                    <div key={article._id || article.url} className="card-snap-container">
                       <ArticleCard
                         article={article}
                         onCompare={(clusterId, title) => setCompareModal({ open: true, clusterId, articleTitle: title })}
@@ -347,7 +347,7 @@ function App() {
               {/* Show Load More button only if there are more articles */}
               {!loading && displayedArticles.length < totalArticlesCount && (
                  {/* --- FIXED: Added card-snap-container wrapper --- */}
-                <div className="card-snap-container load-more-container"> 
+                <div className="card-snap-container load-more-container">
                     <div className="load-more">
                         <button onClick={loadMoreArticles} className="load-more-btn">
                             Load More ({totalArticlesCount - displayedArticles.length} remaining)
@@ -460,7 +460,7 @@ function CustomSelect({ name, value, options, onChange }) {
     onChange({ target: { name, value: optionValue } });
     setIsOpen(false);
   };
-  
+
   // Find the label for the currently selected value
   const selectedLabel = options.find(opt => (opt.value || opt) === value)?.label || value;
 
@@ -499,19 +499,19 @@ function CustomSelect({ name, value, options, onChange }) {
   );
 }
 
-// --- Sidebar (Updated Quality Options, NEW mobile props) ---
+// --- Sidebar (Corrected) ---
 function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
   const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
 
-  // --- FIXED: Added missing comma ---
+  // --- CORRECTED qualityLevels array ---
   const qualityLevels = [
     { value: 'All Quality Levels', label: 'All Quality Levels' },
     { value: 'A+ Excellent (90-100)', label: 'A+ : Excellent' },
     { value: 'A High (80-89)', label: 'A : High' },
     { value: 'B Professional (70-79)', label: 'B : Professional' },
     { value: 'C Acceptable (60-69)', label: 'C : Acceptable' },
-    { value: 'D-F Poor (0-59)', label: 'D-F : Poor' }, // Comma was missing here
+    { value: 'D-F Poor (0-59)', label: 'D-F : Poor' }, // Ensured comma is here
     { value: 'Review / Opinion', label: 'Review / Opinion' },
   ];
 
@@ -523,14 +523,14 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
   };
 
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : ''}`}> {/* NEW: conditional class */}
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div> {/* Filters Wrapper */}
-        <div className="sidebar-header-mobile"> {/* NEW: Mobile header in sidebar */}
+        <div className="sidebar-header-mobile">
           <h3>Filters</h3>
           <button className="sidebar-close-btn" onClick={onClose} title="Close Filters">×</button>
         </div>
 
-        {/* --- FIXED: Replaced all <select> with <CustomSelect> --- */}
+        {/* --- Using CustomSelect --- */}
         <div className="filter-section">
           <h3>Category</h3>
           <CustomSelect
@@ -556,7 +556,7 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
           <CustomSelect
             name="quality"
             value={filters.quality}
-            options={qualityLevels}
+            options={qualityLevels} // Uses the corrected array
             onChange={handleChange}
           />
         </div>

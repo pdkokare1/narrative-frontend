@@ -5,7 +5,7 @@ import './App.css'; // Ensure App.css is imported
 // Use environment variable for API URL, fallback to localhost for local dev
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
-// --- NEW Tooltip Helper ---
+// --- Tooltip Helper ---
 const getBreakdownTooltip = (label) => {
   const tooltips = {
     // Bias Linguistic
@@ -291,17 +291,14 @@ function App() {
 
 // === Sub-Components ===
 
-// --- Header (UPDATED with SVG Logo) ---
+// --- Header (Text Logo, Toggle Fix) ---
 function Header({ theme, toggleTheme }) {
   return (
     <header className="header">
       <div className="header-left">
-        {/* --- SVG Logo --- */}
+        {/* --- Text Logo --- */}
         <div className="logo-container">
-          <svg className="logo-svg" width="160" height="40" viewBox="0 0 160 40" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12.38 29.86H8.76V13.3H12.38V29.86ZM10.57 11.2C9.47 11.2 8.58 10.79 7.9 10.01C7.22 9.22 6.88 8.24 6.88 7.07C6.88 5.9 7.22 4.93 7.9 4.16C8.58 3.38 9.47 3 10.57 3C11.67 3 12.55 3.38 13.23 4.16C13.91 4.93 14.25 5.9 14.25 7.07C14.25 8.24 13.91 9.22 13.23 10.01C12.55 10.79 11.67 11.2 10.57 11.2ZM32.33 29.86H28.71V13.3H32.33V29.86ZM30.52 11.2C29.42 11.2 28.53 10.79 27.85 10.01C27.17 9.22 26.83 8.24 26.83 7.07C26.83 5.9 27.17 4.93 27.85 4.16C28.53 3.38 29.42 3 30.52 3C31.62 3 32.5 3.38 33.18 4.16C33.86 4.93 34.2 5.9 34.2 7.07C34.2 8.24 33.86 9.22 33.18 10.01C32.5 10.79 31.62 11.2 30.52 11.2ZM53.68 21.61C53.68 20.08 53.3 18.82 52.54 17.83C51.8 16.83 50.76 16.14 49.42 15.76L46.99 15.01C46.06 14.74 45.32 14.42 44.77 14.05C44.22 13.68 43.94 13.2 43.94 12.61C43.94 11.89 44.23 11.33 44.81 10.93C45.39 10.52 46.16 10.32 47.12 10.32C48.01 10.32 48.75 10.51 49.34 10.89C49.93 11.27 50.36 11.78 50.64 12.42L53.77 10.9C53.33 9.94 52.61 9.14 51.61 8.5C50.62 7.86 49.4 7.54 47.95 7.54C46.33 7.54 44.97 7.9 43.87 8.62C42.78 9.33 42.02 10.23 41.59 11.32C41.16 12.4 40.94 13.56 40.94 14.8C40.94 16.42 41.31 17.75 42.05 18.79C42.79 19.82 43.81 20.57 45.11 21.04L47.54 21.84C48.56 22.15 49.35 22.48 49.91 22.83C50.47 23.18 50.75 23.67 50.75 24.3C50.75 25.04 50.45 25.62 49.85 26.04C49.25 26.46 48.42 26.67 47.36 26.67C46.19 26.67 45.24 26.42 44.51 25.92C43.79 25.41 43.27 24.7 42.95 23.78L39.73 25.15C40.23 26.54 41.07 27.67 42.25 28.54C43.44 29.4 44.93 29.83 46.72 29.83C48.31 29.83 49.67 29.49 50.8 28.81C51.94 28.12 52.78 27.18 53.32 25.99C53.86 24.79 54.13 23.36 54.13 21.69L53.68 21.61ZM70.47 30.13C68.99 30.13 67.73 29.74 66.69 28.96C65.65 28.17 64.88 27.1 64.38 25.75L67.69 24.46C67.97 25.4 68.46 26.12 69.16 26.62C69.86 27.12 70.68 27.37 71.62 27.37C72.68 27.37 73.49 27.1 74.05 26.56C74.61 26.01 74.89 25.26 74.89 24.31V13.3H78.51V23.95C78.51 25.74 78.02 27.13 77.04 28.12C76.06 29.1 74.7 29.59 72.96 29.59C72.01 29.59 71.17 29.45 70.44 29.17L70.47 30.13ZM89.98 29.86H86.85L81.76 17.59V29.86H78.14V7.84H81.27L86.36 20.11V7.84H89.98V29.86ZM102.77 30.13C101.3 30.13 100.03 29.74 98.96 28.96C97.91 28.17 97.14 27.1 96.65 25.75L99.96 24.46C100.23 25.4 100.72 26.12 101.43 26.62C102.13 27.12 102.95 27.37 103.89 27.37C104.95 27.37 105.75 27.1 106.31 26.56C106.87 26.01 107.15 25.26 107.15 24.31V13.3H110.77V23.95C110.77 25.74 110.28 27.13 109.3 28.12C108.33 29.1 106.97 29.59 105.23 29.59C104.28 29.59 103.44 29.45 102.71 29.17L102.77 30.13ZM128.87 29.86H125.3V19.78C125.3 18.68 125.04 17.82 124.52 17.2C123.99 16.57 123.23 16.25 122.24 16.25C121.32 16.25 120.57 16.54 119.99 17.12C119.41 17.69 119.12 18.49 119.12 19.52V29.86H115.5V7.84H119.12V14.11C119.98 12.98 121.01 12.18 122.21 11.71C123.41 11.23 124.7 11 126.08 11C127.87 11 129.28 11.45 130.31 12.35C131.34 13.25 131.85 14.54 131.85 16.22V29.86H128.87Z" />
-              <path d="M149.37 29.86H145.75V13.3H149.37V29.86ZM147.56 11.2C146.46 11.2 145.57 10.79 144.89 10.01C144.21 9.22 143.87 8.24 143.87 7.07C143.87 5.9 144.21 4.93 144.89 4.16C145.57 3.38 146.46 3 147.56 3C148.66 3 149.54 3.38 150.22 4.16C150.9 4.93 151.24 5.9 151.24 7.07C151.24 8.24 150.9 9.22 150.22 10.01C149.54 10.79 148.66 11.2 147.56 11.2Z" />
-          </svg>
+          <h1 className="logo-text">The Gamut</h1>
           <p className="tagline">Analyse The Full Spectrum</p>
         </div>
       </div>
@@ -315,15 +312,23 @@ function Header({ theme, toggleTheme }) {
   );
 }
 
-// --- Sidebar ---
+// --- Sidebar (Updated Quality Options) ---
 function Sidebar({ filters, onFilterChange, articleCount }) {
-  // Define options directly in the component
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
   const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
-  const qualityLevels = ['All Quality Levels', 'A+ Premium (90-100)', 'A High (80-89)', 'B Professional (70-79)', 'C Acceptable (60-69)', 'D-F Poor (0-59)'];
+  
+  // --- UPDATED Quality Level Options ---
+  const qualityLevels = [
+    { value: 'All Quality Levels', label: 'All Quality Levels' },
+    { value: 'A+ Premium (90-100)', label: 'A+ Premium', range: '90-100' },
+    { value: 'A High (80-89)', label: 'A High', range: '80-89' },
+    { value: 'B Professional (70-79)', label: 'B Professional', range: '70-79' },
+    { value: 'C Acceptable (60-69)', label: 'C Acceptable', range: '60-69' },
+    { value: 'D-F Poor (0-59)', label: 'D-F Poor', range: '0-59' },
+  ];
+  
   const sortOptions = ['Latest First', 'Highest Quality', 'Most Covered', 'Lowest Bias'];
 
-  // Handle individual filter changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     onFilterChange({ ...filters, [name]: value });
@@ -331,7 +336,7 @@ function Sidebar({ filters, onFilterChange, articleCount }) {
 
   return (
     <aside className="sidebar">
-      <div> {/* Added wrapper div to control flex */}
+      <div> {/* Filters Wrapper */}
         <div className="filter-section">
           <h3>Category</h3>
           <select name="category" value={filters.category} onChange={handleChange}>
@@ -349,7 +354,17 @@ function Sidebar({ filters, onFilterChange, articleCount }) {
         <div className="filter-section">
           <h3>Quality Level</h3>
           <select name="quality" value={filters.quality} onChange={handleChange}>
-            {qualityLevels.map(level => <option key={level} value={level}>{level}</option>)}
+            {qualityLevels.map(level => (
+              <option key={level.value} value={level.value}>
+                {level.range ? (
+                  <>
+                    {level.label} <span className="quality-range">({level.range})</span>
+                  </>
+                ) : (
+                  level.label
+                )}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -361,7 +376,7 @@ function Sidebar({ filters, onFilterChange, articleCount }) {
         </div>
       </div>
 
-      {/* --- MOVED to bottom --- */}
+      {/* Article Count */}
       {articleCount > 0 && (
         <div className="filter-results">
           <p>{articleCount} articles analyzed</p>
@@ -372,8 +387,8 @@ function Sidebar({ filters, onFilterChange, articleCount }) {
 }
 
 
-// --- UPDATED ArticleCard Component (v2.9) ---
-// --- Button symmetry for reviews ---
+// --- UPDATED ArticleCard Component (v2.10) ---
+// --- Stacked buttons for reviews, updated grade tooltip ---
 function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
 
   const isReview = article.analysisType === 'SentimentOnly';
@@ -420,7 +435,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
                    Review / Opinion
                  </span>
              ) : article.credibilityGrade ? (
-                 <span className="quality-grade-text" title={`Overall Trust Score: ${article.trustScore}/100. This grade (A+ to F) is based on the article's combined Credibility and Reliability.`}>
+                 <span className="quality-grade-text" title="This grade (A+ to F) is based on the article's Credibility and Reliability."> {/* UPDATED TOOLTIP */}
                    Grade: {article.credibilityGrade}
                  </span>
              ) : (
@@ -439,31 +454,30 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
          {/* --- End Simplified Display --- */}
 
 
-        {/* --- Actions (v2.9 Button Symmetry) --- */}
+        {/* --- Actions (v2.10 Stacked Buttons) --- */}
         <div className="article-actions">
           {isReview ? (
-            // --- UI for SentimentOnly (SYMMETRIC BUTTONS) ---
+            // --- UI for SentimentOnly (STACKED BUTTONS) ---
             <>
-              <div className="article-actions-top">
-                <button
-                  onClick={() => onShare(article)}
-                  className="btn-secondary" /* Share is secondary style */
-                  title="Share article link"
-                >
-                  Share
-                </button>
-                <a 
-                  href={article.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="btn-primary" /* Read is primary style */
-                  style={{ textDecoration: 'none', textAlign: 'center' }}
-                  title="Read the full article on the source's website"
-                >
-                  Read Article
-                </a>
-              </div>
-              {/* No bottom button needed */}
+              {/* Share button takes full width in its own row */}
+              <button
+                onClick={() => onShare(article)}
+                className="btn-secondary btn-full-width"
+                title="Share article link"
+              >
+                Share
+              </button>
+              {/* Read Article button takes full width in the row below */}
+              <a 
+                href={article.url} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="btn-primary btn-full-width" 
+                style={{ textDecoration: 'none', textAlign: 'center' }}
+                title="Read the full article on the source's website"
+              >
+                Read Article
+              </a>
             </>
           ) : (
             // --- UI for Full Analysis (Standard) ---
@@ -607,7 +621,7 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze }) {
   );
 }
 
-// --- Helper function to render article groups (ADDED Image) ---
+// --- Helper function to render article groups ---
 function renderArticleGroup(articleList, perspective, onAnalyze) {
   if (!articleList || articleList.length === 0) return null;
 
@@ -653,7 +667,7 @@ function renderArticleGroup(articleList, perspective, onAnalyze) {
 }
 
 
-// --- UPDATED Detailed Analysis Modal (New Tabs) ---
+// --- Detailed Analysis Modal ---
 function DetailedAnalysisModal({ article, onClose }) {
   const [activeTab, setActiveTab] = useState('overview'); // Default tab
 
@@ -752,7 +766,7 @@ function OverviewTab({ article }) {
   );
 }
 
-// --- NEW Consolidated Breakdown Tab (v2.9) ---
+// --- NEW Consolidated Breakdown Tab (v2.10) ---
 function OverviewBreakdownTab({ article }) {
   const [showZeroScores, setShowZeroScores] = useState(false);
 
@@ -820,60 +834,65 @@ function OverviewBreakdownTab({ article }) {
                 </label>
             </div>
         </div>
-
+        <div className="divider" /> {/* Added Divider */}
+        
         {/* --- Grid --- */}
-        {visibleBias.length > 0 ? (
-          <div className="component-grid-v2">
-            {visibleBias.map(comp => (
-              <CircularProgressBar 
-                 key={comp.label} 
-                 label={comp.label} 
-                 value={comp.value} 
-                 tooltip={getBreakdownTooltip(comp.label)} 
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="zero-score-note">All bias components scored 0. Enable the toggle above to see them.</p>
-        )}
+        <div className="component-grid-v2 section-spacing"> {/* Added Spacing */}
+            {visibleBias.length > 0 ? (
+                visibleBias.map(comp => (
+                  <CircularProgressBar 
+                    key={comp.label} 
+                    label={comp.label} 
+                    value={comp.value} 
+                    tooltip={getBreakdownTooltip(comp.label)} 
+                  />
+                ))
+            ) : (
+              <p className="zero-score-note">All bias components scored 0. Enable the toggle above to see them.</p>
+            )}
+        </div>
       </div>
 
       {/* --- Credibility Section --- */}
       <div className="component-section">
         <h4>Credibility Details ({article.credibilityScore ?? 'N/A'}/100)</h4>
-        {visibleCredibility.length > 0 ? (
-          <div className="component-grid-v2">
-            {visibleCredibility.map(comp => (
-              <CircularProgressBar 
-                 key={comp.label} 
-                 label={comp.label} 
-                 value={comp.value} 
-                 tooltip={getBreakdownTooltip(comp.label)}
-               />
-            ))}
-          </div>
-        ) : (
-          <p className="zero-score-note">All credibility components scored 0. Enable the toggle above to see them.</p>
-        )}
+         <div className="divider" /> {/* Added Divider */}
+        
+        <div className="component-grid-v2 section-spacing"> {/* Added Spacing */}
+            {visibleCredibility.length > 0 ? (
+                visibleCredibility.map(comp => (
+                  <CircularProgressBar 
+                    key={comp.label} 
+                    label={comp.label} 
+                    value={comp.value} 
+                    tooltip={getBreakdownTooltip(comp.label)}
+                  />
+                ))
+            ) : (
+              <p className="zero-score-note">All credibility components scored 0. Enable the toggle above to see them.</p>
+            )}
+        </div>
       </div>
 
       {/* --- Reliability Section --- */}
       <div className="component-section">
         <h4>Reliability Details ({article.reliabilityScore ?? 'N/A'}/100)</h4>
-        {visibleReliability.length > 0 ? (
-          <div className="component-grid-v2">
-            {visibleReliability.map(comp => (
-              <CircularProgressBar 
-                 key={comp.label} 
-                 label={comp.label} 
-                 value={comp.value} 
-                 tooltip={getBreakdownTooltip(comp.label)}
-               />
-            ))}
-          </div>
-        ) : (
-          <p className="zero-score-note">All reliability components scored 0. Enable the toggle above to see them.</p>
-        )}
+         <div className="divider" /> {/* Added Divider */}
+        
+        <div className="component-grid-v2 section-spacing"> {/* Added Spacing */}
+            {visibleReliability.length > 0 ? (
+                visibleReliability.map(comp => (
+                  <CircularProgressBar 
+                    key={comp.label} 
+                    label={comp.label} 
+                    value={comp.value} 
+                    tooltip={getBreakdownTooltip(comp.label)}
+                  />
+                ))
+            ) : (
+              <p className="zero-score-note">All reliability components scored 0. Enable the toggle above to see them.</p>
+            )}
+        </div>
       </div>
 
     </div>
@@ -911,19 +930,18 @@ function ScoreBox({ label, value }) {
   );
 }
 
-// --- UPDATED Circular Progress Bar Component (Donut) ---
-function CircularProgressBar({ label, value, tooltip }) { // Added tooltip prop
+// --- Circular Progress Bar Component (Donut) ---
+function CircularProgressBar({ label, value, tooltip }) {
   const numericValue = Math.max(0, Math.min(100, Number(value) || 0));
   const strokeWidth = 8;
   const radius = 40;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (numericValue / 100) * circumference;
   
-  // Use accent color consistently
-  const strokeColor = 'var(--accent-primary)'; 
+  const strokeColor = 'var(--accent-primary)'; // Consistent accent color
 
   return (
-    <div className="circle-progress-container" title={tooltip || `${label}: ${numericValue}/100`}> {/* Use provided tooltip */}
+    <div className="circle-progress-container" title={tooltip || `${label}: ${numericValue}/100`}>
       <svg className="circle-progress-svg" width="100" height="100" viewBox="0 0 100 100">
         <circle
           className="circle-progress-bg"

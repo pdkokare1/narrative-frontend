@@ -437,6 +437,7 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
 
 // --- UPDATED ArticleCard Component (v2.11) ---
 // --- Show Bias/Lean, updated grade tooltip ---
+// --- NEW: Added onTouchStart={(e) => e.stopPropagation()} to all interactive elements ---
 function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
 
   const isReview = article.analysisType === 'SentimentOnly';
@@ -466,7 +467,13 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
       </div>
 
       <div className="article-content">
-         <a href={article.url} target="_blank" rel="noopener noreferrer" className="article-headline-link">
+         <a 
+            href={article.url} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="article-headline-link"
+            onTouchStart={(e) => e.stopPropagation()} // NEW: Prevent scroll on tap
+         >
              <h3 className="article-headline">{article.headline}</h3>
          </a>
 
@@ -524,6 +531,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
             <>
               <button
                 onClick={() => onShare(article)}
+                onTouchStart={(e) => e.stopPropagation()} // NEW: Prevent scroll on tap
                 className="btn-secondary btn-full-width"
                 title="Share article link"
               >
@@ -536,6 +544,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
                 className="btn-primary btn-full-width"
                 style={{ textDecoration: 'none', textAlign: 'center' }}
                 title="Read the full article on the source's website"
+                onTouchStart={(e) => e.stopPropagation()} // NEW: Prevent scroll on tap
               >
                 Read Article
               </a>
@@ -546,6 +555,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
               <div className="article-actions-top">
                 <button
                   onClick={() => onAnalyze(article)}
+                  onTouchStart={(e) => e.stopPropagation()} // NEW: Prevent scroll on tap
                   className="btn-secondary"
                   title="View Detailed Analysis"
                 >
@@ -553,6 +563,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
                 </button>
                 <button
                   onClick={() => onShare(article)}
+                  onTouchStart={(e) => e.stopPropagation()} // NEW: Prevent scroll on tap
                   className="btn-secondary"
                   title="Share article link"
                 >
@@ -561,6 +572,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
               </div>
               <button
                 onClick={() => onCompare(article.clusterId, article.headline)} // Pass headline too
+                onTouchStart={(e) => e.stopPropagation()} // NEW: Prevent scroll on tap
                 className="btn-primary btn-full-width"
                 title="Compare Coverage Across Perspectives"
                 disabled={!article.clusterId} // Disable if no clusterId
@@ -1023,7 +1035,7 @@ function CircularProgressBar({ label, value, tooltip }) { // Added tooltip prop
             strokeLinecap="round"
             fill="transparent"
             r={radius}
-            cx="50"
+            cx="5Tox"
             cy="50"
             transform="rotate(-90 50 50)" // Start from the top
           />
@@ -1044,3 +1056,4 @@ function CircularProgressBar({ label, value, tooltip }) { // Added tooltip prop
 }
 
 export default App;
+

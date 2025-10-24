@@ -233,13 +233,13 @@ function App() {
             const scrollTop = isWindow ? window.scrollY : scrollableElement.scrollTop;
             const clientHeight = isWindow ? window.innerHeight : scrollableElement.clientHeight;
 
-            // --- UPDATED Infinite Scroll Logic ---
-            // On mobile, clientHeight is fixed. Check if we are on the *last snap item*.
-            // The scrollHeight will be (Num Cards + Load More Button) * clientHeight
-            // We want to load when we are on the *second to last* item.
-            const triggerPoint = isMobile() ? (scrollHeight - clientHeight * 1.5) : (scrollHeight - 800);
+            // --- UPDATED Infinite Scroll Logic for Snap ---
+            // On mobile, clientHeight is fixed (viewport height).
+            // scrollHeight will be approx (Num Snap Containers * clientHeight)
+            // Load when the user scrolls past the *second to last* snap container.
+            const triggerPoint = isMobile() ? (scrollHeight - clientHeight * 1.5) : (scrollHeight - 800); // Desktop unchanged
 
-            if (clientHeight + scrollTop >= triggerPoint) {
+            if (scrollTop + clientHeight >= triggerPoint) {
                 // Check if not loading, and if there are more articles to load
                 if (!loading && displayedArticles.length < totalArticlesCount) {
                     // console.log("Scroll near bottom detected, loading more...");
@@ -321,17 +321,19 @@ function App() {
             <>
               {displayedArticles.length > 0 ? (
                  <div className="articles-grid">
-                  {displayedArticles.map((article) => ( // Use unique _id or url
-                    <ArticleCard
-                      key={article._id || article.url}
-                      article={article}
-                      onCompare={(clusterId, title) => setCompareModal({ open: true, clusterId, articleTitle: title })}
-                      onAnalyze={(article) => setAnalysisModal({ open: true, article })}
-                      onShare={shareArticle}
-                      // --- NEW: Tooltip props ---
-                      showTooltip={showTooltip}
-                      hideTooltip={hideTooltip}
-                    />
+                  {/* --- FIXED: Added card-snap-container wrapper --- */}
+                  {displayedArticles.map((article) => ( 
+                    <div key={article._id || article.url} className="card-snap-container"> 
+                      <ArticleCard
+                        article={article}
+                        onCompare={(clusterId, title) => setCompareModal({ open: true, clusterId, articleTitle: title })}
+                        onAnalyze={(article) => setAnalysisModal({ open: true, article })}
+                        onShare={shareArticle}
+                        // --- NEW: Tooltip props ---
+                        showTooltip={showTooltip}
+                        hideTooltip={hideTooltip}
+                      />
+                    </div>
                   ))}
                  </div>
               ) : (
@@ -344,10 +346,13 @@ function App() {
 
               {/* Show Load More button only if there are more articles */}
               {!loading && displayedArticles.length < totalArticlesCount && (
-                <div className="load-more">
-                  <button onClick={loadMoreArticles} className="load-more-btn">
-                    Load More ({totalArticlesCount - displayedArticles.length} remaining)
-                  </button>
+                 {/* --- FIXED: Added card-snap-container wrapper --- */}
+                <div className="card-snap-container load-more-container"> 
+                    <div className="load-more">
+                        <button onClick={loadMoreArticles} className="load-more-btn">
+                            Load More ({totalArticlesCount - displayedArticles.length} remaining)
+                        </button>
+                    </div>
                 </div>
               )}
             </>

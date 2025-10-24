@@ -167,8 +167,8 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  position: relative; /* NEW: z-index fix */
-  z-index: 1001; /* NEW: z-index fix */
+  position: relative; /* Ensure it can have z-index */
+  z-index: 1201; /* NEW: Above overlay and sidebar */
 }
 .hamburger-btn:hover {
   color: var(--accent-primary);
@@ -433,7 +433,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 }
 
 .article-headline {
-  font-size: 14px; /* SCALED: Was 15px, then 14px. Stays 14px. */
+  font-size: 14px; /* SCALED: Was 15px, then 14px. Corrected here. */
   font-weight: 600;
   line-height: 1.4;
   color: var(--text-primary);
@@ -451,7 +451,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 
 
 .article-summary {
-  font-size: 11.5px; /* SCALED: Was 12px */
+  font-size: 11.5px; /* SCALED: Was 12px. Corrected here. */
   line-height: 1.6;
   color: var(--text-secondary);
   margin-bottom: 15px;
@@ -932,7 +932,7 @@ button:disabled, button:disabled:hover {
     left: 0; 
     height: 100vh; 
     width: 280px; /* Fixed width for slide-out */
-    z-index: 1200; 
+    z-index: 1200; /* NEW: Higher z-index */
     transform: translateX(-100%); 
     transition: transform 0.3s ease-in-out;
     background: var(--bg-secondary); 
@@ -1002,9 +1002,11 @@ button:disabled, button:disabled:hover {
   
   /* --- NEW: Card Stack & Snap --- */
   .articles-grid { 
-    grid-template-columns: 1fr; 
+    display: flex; /* NEW: Use flex for simpler stacking */
+    flex-direction: column; /* NEW: Stack vertically */
     gap: 0; 
-    padding: 16px 16px 60vh 16px; /* NEW: Add side padding, keep top/bottom */
+    padding: 0 16px; /* NEW: Side padding only */
+    /* REMOVED: padding-top/bottom */
   }
   .article-card { 
     /* --- REMOVED: position: sticky --- */
@@ -1013,7 +1015,23 @@ button:disabled, button:disabled:hover {
     box-shadow: var(--shadow-md);
     background: var(--bg-card-flat); /* NEW: Use solid background */
     border-bottom: 1px solid var(--border-color); /* NEW: Separate cards */
+    /* NEW: Center the card */
+    width: 100%; /* Take full width of parent */
+    max-width: 500px; /* Optional: Limit max width on wider mobile */
+    margin-left: auto;
+    margin-right: auto;
+     /* NEW: Add padding inside the card for content spacing */
+    padding: 16px; /* Adjust as needed */
   }
+  /* Re-add padding specifically to the content *inside* the card */
+  .article-card .article-content {
+      padding: 16px; /* Keep internal padding */
+  }
+  /* Add spacing only *between* cards */
+  .article-card:not(:last-child) {
+      margin-bottom: 16px; /* Add space below each card */
+  }
+
   
   .load-more {
     padding: 30px 16px; /* NEW: Add padding */

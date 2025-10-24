@@ -989,8 +989,8 @@ button:disabled, button:disabled:hover {
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
 
-    /* --- RE-ADD: Snap scroll for stability --- */
-    scroll-snap-type: y mandatory;
+    /* --- FIXED: Changed snap to 'proximity' --- */
+    scroll-snap-type: y proximity;
 
     /* --- NEW: Hide Scrollbar --- */
     -ms-overflow-style: none;  /* IE and Edge */
@@ -1064,4 +1064,3 @@ button:disabled, button:disabled:hover {
 ::-webkit-scrollbar-track { background: var(--bg-secondary); }
 ::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
-

@@ -990,7 +990,7 @@ function OverviewBreakdownTab({ article, showTooltip, hideTooltip }) {
   const allReliabilityComponents = [
     { label: "Consistency", value: relComps.consistency },
     { label: "Temporal Stability", value: relComps.temporalStability },
-    { label:Validation: "Quality Control", value: relComps.qualityControl },
+    { label: "Quality Control", value: relComps.qualityControl }, // <--- FIXED TYPO HERE
     { label: "Publication Standards", value: relComps.publicationStandards },
     { label: "Corrections Policy", value: relComps.correctionsPolicy },
     { label: "Update Maintenance", value: relComps.updateMaintenance },

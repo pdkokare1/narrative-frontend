@@ -252,13 +252,13 @@ function App() {
 
 // === Sub-Components ===
 
-// --- Header ---
+// --- Header (REBRANDED) ---
 function Header({ theme, toggleTheme }) {
   return (
     <header className="header">
       <div className="header-left">
-        <h1>The Narrative</h1>
-        <p>Refined Multi-Perspective Analysis</p>
+        <h1>The Gamut</h1>
+        <p>Analyse The Full Spectrum</p>
       </div>
 
       <div className="header-right">
@@ -271,7 +271,6 @@ function Header({ theme, toggleTheme }) {
 }
 
 // --- Sidebar ---
-// --- MOVED articleCount to the bottom ---
 function Sidebar({ filters, onFilterChange, articleCount }) {
   // Define options directly in the component
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
@@ -328,8 +327,8 @@ function Sidebar({ filters, onFilterChange, articleCount }) {
 }
 
 
-// --- UPDATED ArticleCard Component (v2.7) ---
-// --- Adds Sentiment to quality display ---
+// --- UPDATED ArticleCard Component (v2.8) ---
+// --- No Emojis, simplified tooltips, no-scroll CSS fix ---
 function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
 
   const isReview = article.analysisType === 'SentimentOnly';
@@ -339,26 +338,6 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
     const placeholder = e.target.nextElementSibling;
     if (placeholder && placeholder.classList.contains('image-placeholder')) {
       placeholder.style.display = 'flex';
-    }
-  };
-  
-  // Get sentiment-based tooltip
-  const getSentimentTooltip = (sentiment) => {
-    switch(sentiment) {
-      case 'Positive': return 'The article has a positive sentiment towards its subject.';
-      case 'Negative': return 'The article has a negative sentiment towards its subject.';
-      case 'Neutral': return 'The article has a neutral sentiment towards its subject.';
-      default: return 'Sentiment analysis';
-    }
-  };
-  
-  // Get sentiment-based icon
-  const getSentimentIcon = (sentiment) => {
-    switch(sentiment) {
-      case 'Positive': return '😊';
-      case 'Negative': return '😠';
-      case 'Neutral': return '😐';
-      default: return '😐';
     }
   };
 
@@ -389,14 +368,14 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
           <span className="source">{article.source}</span>
         </div>
 
-        {/* --- NEW Quality Display (with Grade and Sentiment) --- */}
+        {/* --- NEW Quality Display (v2.8) --- */}
         <div className="quality-display-v2">
              {isReview ? (
                  <span className="quality-grade-text" title="This article is an opinion, review, or summary.">
                    Review / Opinion
                  </span>
              ) : article.credibilityGrade ? (
-                 <span className="quality-grade-text" title={`Overall Trust Score: ${article.trustScore}/100`}>
+                 <span className="quality-grade-text" title={`Overall Trust Score: ${article.trustScore}/100. This grade (A+ to F) is based on the article's combined Credibility and Reliability.`}>
                    Grade: {article.credibilityGrade}
                  </span>
              ) : (
@@ -405,12 +384,12 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
                  </span>
              )}
              
-             {/* --- ADDED SENTIMENT --- */}
+             {/* --- UPDATED SENTIMENT --- */}
              <span 
                 className="sentiment-text" 
-                title={getSentimentTooltip(article.sentiment)}
+                title="The article's overall sentiment towards its main subject."
              >
-                {getSentimentIcon(article.sentiment)} {article.sentiment}
+                Sentiment: {article.sentiment}
              </span>
          </div>
          {/* --- End Simplified Display --- */}
@@ -481,7 +460,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
 
 // --- Modal Components ---
 
-// --- Compare Coverage Modal (REMOVED 'All' Tab) ---
+// --- Compare Coverage Modal ---
 function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze }) {
   const [clusterData, setClusterData] = useState({ left: [], center: [], right: [], stats: {} });
   const [loading, setLoading] = useState(true);
@@ -630,7 +609,7 @@ function renderArticleGroup(articleList, perspective, onAnalyze) {
 }
 
 
-// Detailed Analysis Modal
+// --- UPDATED Detailed Analysis Modal (New Tabs) ---
 function DetailedAnalysisModal({ article, onClose }) {
   const [activeTab, setActiveTab] = useState('overview'); // Default tab
 
@@ -665,26 +644,20 @@ function DetailedAnalysisModal({ article, onClose }) {
           <button className="close-btn" onClick={onClose} title="Close analysis">×</button>
         </div>
 
+        {/* --- UPDATED Tabs --- */}
         <div className="modal-tabs">
           <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>
             Overview
           </button>
-          <button className={activeTab === 'bias' ? 'active' : ''} onClick={() => setActiveTab('bias')}>
-            Bias Details
-          </button>
-          <button className={activeTab === 'credibility' ? 'active' : ''} onClick={() => setActiveTab('credibility')}>
-            Credibility
-          </button>
-          <button className={activeTab === 'reliability' ? 'active' : ''} onClick={() => setActiveTab('reliability')}>
-            Reliability
+          <button className={activeTab === 'breakdown' ? 'active' : ''} onClick={() => setActiveTab('breakdown')}>
+            Overview Breakdown
           </button>
         </div>
 
         <div className="modal-content">
+          {/* Conditionally render tab content */}
           {activeTab === 'overview' && <OverviewTab article={article} />}
-          {activeTab === 'bias' && <BiasTab article={article} />}
-          {activeTab === 'credibility' && <CredibilityTab article={article} />}
-          {activeTab === 'reliability' && <ReliabilityTab article={article} />}
+          {activeTab === 'breakdown' && <OverviewBreakdownTab article={article} />}
         </div>
 
         <div className="modal-footer">
@@ -735,77 +708,115 @@ function OverviewTab({ article }) {
   );
 }
 
-function BiasTab({ article }) {
-  const components = article.biasComponents || {};
-  const linguistic = components.linguistic || {};
-  const sourceSelection = components.sourceSelection || {};
-  const demographic = components.demographic || {};
-  const framing = components.framing || {};
+// --- NEW Consolidated Breakdown Tab ---
+function OverviewBreakdownTab({ article }) {
+  const [showZeroScores, setShowZeroScores] = useState(false);
+
+  // --- Bias Components ---
+  const biasComps = article.biasComponents || {};
+  const allBiasComponents = [
+    { label: "Sentiment Polarity", value: biasComps.linguistic?.sentimentPolarity },
+    { label: "Emotional Language", value: biasComps.linguistic?.emotionalLanguage },
+    { label: "Loaded Terms", value: biasComps.linguistic?.loadedTerms },
+    { label: "Complexity Bias", value: biasComps.linguistic?.complexityBias },
+    { label: "Source Diversity", value: biasComps.sourceSelection?.sourceDiversity },
+    { label: "Expert Balance", value: biasComps.sourceSelection?.expertBalance },
+    { label: "Attribution Transparency", value: biasComps.sourceSelection?.attributionTransparency },
+    { label: "Gender Balance", value: biasComps.demographic?.genderBalance },
+    { label: "Racial Balance", value: biasComps.demographic?.racialBalance },
+    { label: "Age Representation", value: biasComps.demographic?.ageRepresentation },
+    { label: "Headline Framing", value: biasComps.framing?.headlineFraming },
+    { label: "Story Selection", value: biasComps.framing?.storySelection },
+    { label: "Omission Bias", value: biasComps.framing?.omissionBias },
+  ].map(c => ({ ...c, value: Number(c.value) || 0 })); // Ensure value is a number
+
+  // --- Credibility Components ---
+  const credComps = article.credibilityComponents || {};
+  const allCredibilityComponents = [
+    { label: "Source Credibility", value: credComps.sourceCredibility },
+    { label: "Fact Verification", value: credComps.factVerification },
+    { label: "Professionalism", value: credComps.professionalism },
+    { label: "Evidence Quality", value: credComps.evidenceQuality },
+    { label: "Transparency", value: credComps.transparency },
+    { label: "Audience Trust", value: credComps.audienceTrust },
+  ].map(c => ({ ...c, value: Number(c.value) || 0 }));
+
+  // --- Reliability Components ---
+  const relComps = article.reliabilityComponents || {};
+  const allReliabilityComponents = [
+    { label: "Consistency", value: relComps.consistency },
+    { label: "Temporal Stability", value: relComps.temporalStability },
+    { label: "Quality Control", value: relComps.qualityControl },
+    { label: "Publication Standards", value: relComps.publicationStandards },
+    { label: "Corrections Policy", value: relComps.correctionsPolicy },
+    { label: "Update Maintenance", value: relComps.updateMaintenance },
+  ].map(c => ({ ...c, value: Number(c.value) || 0 }));
+
+  // --- Filtered Lists ---
+  const visibleBias = allBiasComponents.filter(c => c.value > 0 || showZeroScores);
+  const visibleCredibility = allCredibilityComponents.filter(c => c.value > 0 || showZeroScores);
+  const visibleReliability = allReliabilityComponents.filter(c => c.value > 0 || showZeroScores);
 
   return (
     <div className="tab-content">
-      <h3 style={{ fontSize: '18px', marginBottom: '20px', fontWeight: 600 }}>
-        Bias Analysis: {article.biasScore ?? 'N/A'}/100 ({article.biasLabel || 'Not Available'})
-      </h3>
-
-      <div className="component-grid">
-        <SemiCircleProgressBar label="Sentiment Polarity" value={linguistic.sentimentPolarity} />
-        <SemiCircleProgressBar label="Emotional Language" value={linguistic.emotionalLanguage} />
-        <SemiCircleProgressBar label="Loaded Terms" value={linguistic.loadedTerms} />
-        <SemiCircleProgressBar label="Complexity Bias" value={linguistic.complexityBias} />
-        <SemiCircleProgressBar label="Source Diversity" value={sourceSelection.sourceDiversity} />
-        <SemiCircleProgressBar label="Expert Balance" value={sourceSelection.expertBalance} />
-        <SemiCircleProgressBar label="Attribution Transparency" value={sourceSelection.attributionTransparency} />
-        <SemiCircleProgressBar label="Gender Balance" value={demographic.genderBalance} />
-        <SemiCircleProgressBar label="Racial Balance" value={demographic.racialBalance} />
-        <SemiCircleProgressBar label="Age Representation" value={demographic.ageRepresentation} />
-        <SemiCircleProgressBar label="Headline Framing" value={framing.headlineFraming} />
-        <SemiCircleProgressBar label="Story Selection" value={framing.storySelection} />
-        <SemiCircleProgressBar label="Omission Bias" value={framing.omissionBias} />
+      {/* --- Toggle Switch --- */}
+      <div className="toggle-zero-scores">
+        <label>
+          <input 
+            type="checkbox" 
+            checked={showZeroScores} 
+            onChange={() => setShowZeroScores(!showZeroScores)} 
+          />
+          Show All Parameters (incl. 0 scores)
+        </label>
       </div>
+
+      {/* --- Bias Section --- */}
+      <div className="component-section">
+        <h4>Bias Details ({article.biasScore ?? 'N/A'}/100)</h4>
+        {visibleBias.length > 0 ? (
+          <div className="component-grid-v2">
+            {visibleBias.map(comp => (
+              <CircularProgressBar key={comp.label} label={comp.label} value={comp.value} />
+            ))}
+          </div>
+        ) : (
+          <p className="zero-score-note">All bias components scored 0.</p>
+        )}
+      </div>
+
+      {/* --- Credibility Section --- */}
+      <div className="component-section">
+        <h4>Credibility Details ({article.credibilityScore ?? 'N/A'}/100)</h4>
+        {visibleCredibility.length > 0 ? (
+          <div className="component-grid-v2">
+            {visibleCredibility.map(comp => (
+              <CircularProgressBar key={comp.label} label={comp.label} value={comp.value} />
+            ))}
+          </div>
+        ) : (
+          <p className="zero-score-note">All credibility components scored 0.</p>
+        )}
+      </div>
+
+      {/* --- Reliability Section --- */}
+      <div className="component-section">
+        <h4>Reliability Details ({article.reliabilityScore ?? 'N/A'}/100)</h4>
+        {visibleReliability.length > 0 ? (
+          <div className="component-grid-v2">
+            {visibleReliability.map(comp => (
+              <CircularProgressBar key={comp.label} label={comp.label} value={comp.value} />
+            ))}
+          </div>
+        ) : (
+          <p className="zero-score-note">All reliability components scored 0.</p>
+        )}
+      </div>
+
     </div>
   );
 }
 
-function CredibilityTab({ article }) {
-  const components = article.credibilityComponents || {};
-  return (
-    <div className="tab-content">
-      <h3 style={{ fontSize: '18px', marginBottom: '20px', fontWeight: 600 }}>
-        Credibility Score: {article.credibilityScore ?? 'N/A'}/100 (Grade: {article.credibilityGrade || 'N/A'})
-      </h3>
-
-      <div className="component-grid">
-        <SemiCircleProgressBar label="Source Credibility" value={components.sourceCredibility} />
-        <SemiCircleProgressBar label="Fact Verification" value={components.factVerification} />
-        <SemiCircleProgressBar label="Professionalism" value={components.professionalism} />
-        <SemiCircleProgressBar label="Evidence Quality" value={components.evidenceQuality} />
-        <SemiCircleProgressBar label="Transparency" value={components.transparency} />
-        <SemiCircleProgressBar label="Audience Trust" value={components.audienceTrust} />
-      </div>
-    </div>
-  );
-}
-
-function ReliabilityTab({ article }) {
-  const components = article.reliabilityComponents || {};
-  return (
-    <div className="tab-content">
-      <h3 style={{ fontSize: '18px', marginBottom: '20px', fontWeight: 600 }}>
-        Reliability Score: {article.reliabilityScore ?? 'N/A'}/100 (Grade: {article.reliabilityGrade || 'N/A'})
-      </h3>
-
-      <div className="component-grid">
-        <SemiCircleProgressBar label="Consistency" value={components.consistency} />
-        <SemiCircleProgressBar label="Temporal Stability" value={components.temporalStability} />
-        <SemiCircleProgressBar label="Quality Control" value={components.qualityControl} />
-        <SemiCircleProgressBar label="Publication Standards" value={components.publicationStandards} />
-        <SemiCircleProgressBar label="Corrections Policy" value={components.correctionsPolicy} />
-        <SemiCircleProgressBar label="Update Maintenance" value={components.updateMaintenance} />
-      </div>
-    </div>
-  );
-}
 
 // --- Reusable UI Components ---
 
@@ -814,16 +825,16 @@ function ScoreBox({ label, value }) {
   let tooltip = '';
   switch(label) {
     case 'Trust Score':
-      tooltip = 'Overall Trust Score (0-100) = sqrt(Credibility * Reliability). Higher is better.';
+      tooltip = 'Overall Trust Score (0-100). A combined measure of Credibility and Reliability. Higher is better.';
       break;
     case 'Bias Score':
       tooltip = 'Overall Bias Score (0-100). 0 is least biased, 100 is most biased.';
       break;
     case 'Credibility':
-      tooltip = 'Credibility Score (UCS, 0-100). Based on source, verification, professionalism, evidence, transparency, and audience trust.';
+      tooltip = 'Credibility Score (0-100). Measures the article\'s trustworthiness based on sources, facts, and professionalism.';
       break;
     case 'Reliability':
-      tooltip = 'Reliability Score (URS, 0-100). Based on consistency, stability, quality control, standards, and corrections policy.';
+      tooltip = 'Reliability Score (0-100). Measures the source\'s consistency, standards, and corrections policy over time.';
       break;
     default:
       tooltip = `${label} (0-100)`;
@@ -837,21 +848,59 @@ function ScoreBox({ label, value }) {
   );
 }
 
-// --- NEW Semi-Circular Progress Bar Component ---
-function SemiCircleProgressBar({ label, value }) {
+// --- NEW Circular Progress Bar Component (Donut) ---
+function CircularProgressBar({ label, value }) {
   const numericValue = Math.max(0, Math.min(100, Number(value) || 0));
-  // Map value (0-100) to rotation (0-180 degrees)
-  const rotation = (numericValue / 100) * 180;
+  const strokeWidth = 8;
+  const radius = 40;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (numericValue / 100) * circumference;
   
+  // Determine color based on value
+  const getColor = (val) => {
+    if (val > 75) return '#4fd1c5'; // High
+    if (val > 40) return 'var(--accent-primary)'; // Medium
+    if (val > 0) return '#dc2626'; // Low (Red)
+    return 'var(--border-color)'; // Zero
+  };
+  const strokeColor = getColor(numericValue);
+
   return (
-    <div className="semicircle-container" title={`${label}: ${numericValue}/100`}>
-      <div className="semicircle">
-        <div className="semicircle-mask">
-          <div className="semicircle-fill" style={{ transform: `rotate(${rotation}deg)` }}></div>
-        </div>
-      </div>
-      <div className="semicircle-label">{label}</div>
-      <div className="semicircle-value">{numericValue}</div>
+    <div className="circle-progress-container" title={`${label}: ${numericValue}/100`}>
+      <svg className="circle-progress-svg" width="100" height="100" viewBox="0 0 100 100">
+        <circle
+          className="circle-progress-bg"
+          stroke="var(--bg-elevated)"
+          strokeWidth={strokeWidth}
+          fill="transparent"
+          r={radius}
+          cx="50"
+          cy="50"
+        />
+        <circle
+          className="circle-progress-bar"
+          stroke={strokeColor}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          fill="transparent"
+          r={radius}
+          cx="50"
+          cy="50"
+          transform="rotate(-90 50 50)" // Start from the top
+        />
+        <text
+          x="50"
+          y="50"
+          className="circle-progress-text-value"
+          dominantBaseline="middle"
+          textAnchor="middle"
+        >
+          {numericValue}
+        </text>
+      </svg>
+      <div className="circle-progress-label">{label}</div>
     </div>
   );
 }

@@ -67,7 +67,7 @@ function App() {
     x: 0,
     y: 0,
   });
-  let tooltipTimeout = null;
+  // Removed tooltipTimeout
   const isMobile = () => window.innerWidth <= 768;
 
   // --- NEW: Custom Tooltip Handlers ---
@@ -81,19 +81,14 @@ function App() {
     const x = touch.clientX;
     const y = touch.clientY - 40; // 40px above finger
 
-    // Set a timeout to show tooltip (long-press effect)
-    tooltipTimeout = setTimeout(() => {
-        setTooltip({ visible: true, text, x, y });
-    }, 500); // 500ms for a "long press"
+    // Show tooltip immediately
+    setTooltip({ visible: true, text, x, y });
+    // Removed setTimeout
   };
 
   const hideTooltip = (e) => {
     if (!isMobile()) return;
-    // Clear timeout if finger lifted early
-    if (tooltipTimeout) {
-      clearTimeout(tooltipTimeout);
-      tooltipTimeout = null;
-    }
+     // Removed timeout clearing logic
     if (tooltip.visible) {
       setTooltip({ ...tooltip, visible: false });
     }
@@ -294,7 +289,7 @@ function App() {
       <Header 
         theme={theme} 
         toggleTheme={toggleTheme} 
-        onToggleSidebar={() => setIsSidebarOpen(true)} // NEW Prop
+        onToggleSidebar={() => setIsSidebarOpen(true)} // Pass correct function
       />
 
       <div className="main-container">

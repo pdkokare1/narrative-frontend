@@ -60,6 +60,47 @@ function App() {
   const [totalArticlesCount, setTotalArticlesCount] = useState(0); // Track total count from API
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // NEW: State for mobile sidebar
 
+  // --- NEW: Custom Tooltip State ---
+  const [tooltip, setTooltip] = useState({
+    visible: false,
+    text: '',
+    x: 0,
+    y: 0,
+  });
+  let tooltipTimeout = null;
+  const isMobile = () => window.innerWidth <= 768;
+
+  // --- NEW: Custom Tooltip Handlers ---
+  const showTooltip = (text, e) => {
+    if (!isMobile() || !text) return; // Only run on mobile
+    e.stopPropagation(); // Stop tap from triggering scroll
+    
+    // Get touch position
+    const touch = e.touches[0];
+    // Position tooltip above the finger
+    const x = touch.clientX;
+    const y = touch.clientY - 40; // 40px above finger
+
+    // Set a timeout to show tooltip (long-press effect)
+    tooltipTimeout = setTimeout(() => {
+        setTooltip({ visible: true, text, x, y });
+    }, 500); // 500ms for a "long press"
+  };
+
+  const hideTooltip = (e) => {
+    if (!isMobile()) return;
+    // Clear timeout if finger lifted early
+    if (tooltipTimeout) {
+      clearTimeout(tooltipTimeout);
+      tooltipTimeout = null;
+    }
+    if (tooltip.visible) {
+      setTooltip({ ...tooltip, visible: false });
+    }
+  };
+  // --- End Tooltip Handlers ---
+
+
   // Effect to set initial theme from localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -242,6 +283,14 @@ function App() {
 
   return (
     <div className="app">
+      {/* --- NEW: Custom Tooltip Render --- */}
+      <CustomTooltip
+        visible={tooltip.visible}
+        text={tooltip.text}
+        x={tooltip.x}
+        y={tooltip.y}
+      />
+
       <Header 
         theme={theme} 
         toggleTheme={toggleTheme} 
@@ -282,6 +331,9 @@ function App() {
                       onCompare={(clusterId, title) => setCompareModal({ open: true, clusterId, articleTitle: title })}
                       onAnalyze={(article) => setAnalysisModal({ open: true, article })}
                       onShare={shareArticle}
+                      // --- NEW: Tooltip props ---
+                      showTooltip={showTooltip}
+                      hideTooltip={hideTooltip}
                     />
                   ))}
                  </div>
@@ -315,6 +367,9 @@ function App() {
             setCompareModal({ open: false, clusterId: null, articleTitle: '' }); // Close compare modal
             setAnalysisModal({ open: true, article }); // Open analysis modal
           }}
+          // --- NEW: Tooltip props ---
+          showTooltip={showTooltip}
+          hideTooltip={hideTooltip}
         />
       )}
 
@@ -322,6 +377,9 @@ function App() {
         <DetailedAnalysisModal
           article={analysisModal.article}
           onClose={() => setAnalysisModal({ open: false, article: null })}
+          // --- NEW: Tooltip props ---
+          showTooltip={showTooltip}
+          hideTooltip={hideTooltip}
         />
       )}
     </div>
@@ -329,6 +387,26 @@ function App() {
 }
 
 // === Sub-Components ===
+
+// --- NEW: Custom Tooltip Component ---
+function CustomTooltip({ visible, text, x, y }) {
+  if (!visible) return null;
+
+  return (
+    <div
+      className="tooltip-custom"
+      style={{
+        left: `${x}px`,
+        top: `${y}px`,
+        // Position centered horizontally, above the touch point
+        transform: 'translate(-50%, -100%)', 
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
 
 // --- Header (Text Logo, Toggle Fix, NEW Hamburger) ---
 function Header({ theme, toggleTheme, onToggleSidebar }) {
@@ -437,8 +515,8 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
 
 // --- UPDATED ArticleCard Component (v2.11) ---
 // --- Show Bias/Lean, updated grade tooltip ---
-// --- NEW: Added onTouchStart={(e) => e.stopPropagation()} to all interactive elements ---
-function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
+// --- NEW: Added onTouchStart/End={(e) => e.stopPropagation()} to all interactive elements ---
+function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hideTooltip }) {
 
   const isReview = article.analysisType === 'SentimentOnly';
 
@@ -449,6 +527,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
       placeholder.style.display = 'flex';
     }
   };
+
+  const stopTouch = (e) => e.stopPropagation();
 
   return (
     <div className="article-card">
@@ -472,7 +552,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
             target="_blank" 
             rel="noopener noreferrer" 
             className="article-headline-link"
-            onTouchStart={(e) => e.stopPropagation()} // NEW: Prevent scroll on tap
+            onTouchStart={stopTouch} // NEW: Prevent scroll on tap
          >
              <h3 className="article-headline">{article.headline}</h3>
          </a>
@@ -486,11 +566,21 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
           {!isReview && (
             <>
               <span className="meta-divider">|</span>
-              <span className="bias-score-card" title="Bias Score (0-100). Less is better.">
+              <span 
+                className="bias-score-card" 
+                title="Bias Score (0-100). Less is better."
+                onTouchStart={(e) => showTooltip("Bias Score (0-100). Less is better.", e)}
+                onTouchEnd={hideTooltip}
+              >
                 Bias: {article.biasScore}
               </span>
                <span className="meta-divider">|</span>
-               <span className="political-lean-card" title="Detected political leaning.">
+               <span 
+                className="political-lean-card" 
+                title="Detected political leaning."
+                onTouchStart={(e) => showTooltip("Detected political leaning.", e)}
+                onTouchEnd={hideTooltip}
+               >
                  {article.politicalLean}
                </span>
             </>
@@ -501,15 +591,30 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
         {/* --- Quality Display (v2.8) --- */}
         <div className="quality-display-v2">
              {isReview ? (
-                 <span className="quality-grade-text" title="This article is an opinion, review, or summary.">
+                 <span 
+                    className="quality-grade-text" 
+                    title="This article is an opinion, review, or summary."
+                    onTouchStart={(e) => showTooltip("This article is an opinion, review, or summary.", e)}
+                    onTouchEnd={hideTooltip}
+                 >
                    Review / Opinion
                  </span>
              ) : article.credibilityGrade ? (
-                 <span className="quality-grade-text" title="This grade (A+ to F) is based on the article's Credibility and Reliability."> {/* UPDATED TOOLTIP */}
+                 <span 
+                    className="quality-grade-text" 
+                    title="This grade (A+ to F) is based on the article's Credibility and Reliability."
+                    onTouchStart={(e) => showTooltip("This grade (A+ to F) is based on the article's Credibility and Reliability.", e)}
+                    onTouchEnd={hideTooltip}
+                 > {/* UPDATED TOOLTIP */}
                    Grade: {article.credibilityGrade}
                  </span>
              ) : (
-                 <span className="quality-grade-text" title="Quality grade not available.">
+                 <span 
+                    className="quality-grade-text" 
+                    title="Quality grade not available."
+                    onTouchStart={(e) => showTooltip("Quality grade not available.", e)}
+                    onTouchEnd={hideTooltip}
+                 >
                    Grade: N/A
                  </span>
              )}
@@ -517,6 +622,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
              <span
                 className="sentiment-text"
                 title="The article's overall sentiment towards its main subject."
+                onTouchStart={(e) => showTooltip("The article's overall sentiment towards its main subject.", e)}
+                onTouchEnd={hideTooltip}
              >
                 Sentiment: {article.sentiment}
              </span>
@@ -531,7 +638,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
             <>
               <button
                 onClick={() => onShare(article)}
-                onTouchStart={(e) => e.stopPropagation()} // NEW: Prevent scroll on tap
+                onTouchStart={stopTouch} // NEW: Prevent scroll on tap
                 className="btn-secondary btn-full-width"
                 title="Share article link"
               >
@@ -544,7 +651,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
                 className="btn-primary btn-full-width"
                 style={{ textDecoration: 'none', textAlign: 'center' }}
                 title="Read the full article on the source's website"
-                onTouchStart={(e) => e.stopPropagation()} // NEW: Prevent scroll on tap
+                onTouchStart={stopTouch} // NEW: Prevent scroll on tap
               >
                 Read Article
               </a>
@@ -555,7 +662,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
               <div className="article-actions-top">
                 <button
                   onClick={() => onAnalyze(article)}
-                  onTouchStart={(e) => e.stopPropagation()} // NEW: Prevent scroll on tap
+                  onTouchStart={stopTouch} // NEW: Prevent scroll on tap
                   className="btn-secondary"
                   title="View Detailed Analysis"
                 >
@@ -563,7 +670,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
                 </button>
                 <button
                   onClick={() => onShare(article)}
-                  onTouchStart={(e) => e.stopPropagation()} // NEW: Prevent scroll on tap
+                  onTouchStart={stopTouch} // NEW: Prevent scroll on tap
                   className="btn-secondary"
                   title="Share article link"
                 >
@@ -572,7 +679,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
               </div>
               <button
                 onClick={() => onCompare(article.clusterId, article.headline)} // Pass headline too
-                onTouchStart={(e) => e.stopPropagation()} // NEW: Prevent scroll on tap
+                onTouchStart={stopTouch} // NEW: Prevent scroll on tap
                 className="btn-primary btn-full-width"
                 title="Compare Coverage Across Perspectives"
                 disabled={!article.clusterId} // Disable if no clusterId
@@ -592,7 +699,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
 // --- Modal Components ---
 
 // --- Compare Coverage Modal ---
-function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze }) {
+function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, showTooltip, hideTooltip }) {
   const [clusterData, setClusterData] = useState({ left: [], center: [], right: [], stats: {} });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(null); // Set to null initially
@@ -676,9 +783,9 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze }) {
           ) : (
             <>
               {/* --- Logic updated to NOT show all by default --- */}
-              {activeTab === 'left' && renderArticleGroup(clusterData.left, 'Left', onAnalyze)}
-              {activeTab === 'center' && renderArticleGroup(clusterData.center, 'Center', onAnalyze)}
-              {activeTab === 'right' && renderArticleGroup(clusterData.right, 'Right', onAnalyze)}
+              {activeTab === 'left' && renderArticleGroup(clusterData.left, 'Left', onAnalyze, showTooltip, hideTooltip)}
+              {activeTab === 'center' && renderArticleGroup(clusterData.center, 'Center', onAnalyze, showTooltip, hideTooltip)}
+              {activeTab === 'right' && renderArticleGroup(clusterData.right, 'Right', onAnalyze, showTooltip, hideTooltip)}
 
               {/* Message if a specific tab has no articles */}
               {activeTab && clusterData[activeTab]?.length === 0 && (
@@ -695,8 +802,9 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze }) {
 }
 
 // --- Helper function to render article groups ---
-function renderArticleGroup(articleList, perspective, onAnalyze) {
+function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip, hideTooltip) {
   if (!articleList || articleList.length === 0) return null;
+  const stopTouch = (e) => e.stopPropagation();
 
   return (
     <div className="perspective-section">
@@ -705,7 +813,7 @@ function renderArticleGroup(articleList, perspective, onAnalyze) {
         <div key={article._id || article.url} className="coverage-article">
           {/* --- Content Wrapper --- */}
           <div className="coverage-content">
-            <a href={article.url} target="_blank" rel="noopener noreferrer">
+            <a href={article.url} target="_blank" rel="noopener noreferrer" onTouchStart={stopTouch}>
               <h4>{article.headline || 'No Headline'}</h4>
             </a>
             <p>
@@ -713,15 +821,27 @@ function renderArticleGroup(articleList, perspective, onAnalyze) {
             </p>
 
             <div className="article-scores">
-              <span title="Bias Score (0-100, lower is less biased)">Bias: {article.biasScore ?? 'N/A'}</span>
-              <span title="Overall Trust Score (0-100, higher is more trustworthy)">Trust: {article.trustScore ?? 'N/A'}</span>
-              <span title="Credibility Grade (A+ to F)">Grade: {article.credibilityGrade || 'N/A'}</span>
+              <span 
+                title="Bias Score (0-100, lower is less biased)"
+                onTouchStart={(e) => showTooltip("Bias Score (0-100, lower is less biased)", e)}
+                onTouchEnd={hideTooltip}
+              >Bias: {article.biasScore ?? 'N/A'}</span>
+              <span 
+                title="Overall Trust Score (0-100, higher is more trustworthy)"
+                onTouchStart={(e) => showTooltip("Overall Trust Score (0-100, higher is more trustworthy)", e)}
+                onTouchEnd={hideTooltip}
+              >Trust: {article.trustScore ?? 'N/A'}</span>
+              <span 
+                title="Credibility Grade (A+ to F)"
+                onTouchStart={(e) => showTooltip("Credibility Grade (A+ to F)", e)}
+                onTouchEnd={hideTooltip}
+              >Grade: {article.credibilityGrade || 'N/A'}</span>
             </div>
             <div className="coverage-actions">
-              <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1}}>
-                  <button style={{width: '100%'}}>Read Article</button>
+              <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1}} onTouchStart={stopTouch}>
+                  <button style={{width: '100%'}} onTouchStart={stopTouch}>Read Article</button>
               </a>
-              <button onClick={() => onAnalyze(article)}>View Analysis</button>
+              <button onClick={() => onAnalyze(article)} onTouchStart={stopTouch}>View Analysis</button>
             </div>
           </div>
 
@@ -741,7 +861,7 @@ function renderArticleGroup(articleList, perspective, onAnalyze) {
 
 
 // --- Detailed Analysis Modal ---
-function DetailedAnalysisModal({ article, onClose }) {
+function DetailedAnalysisModal({ article, onClose, showTooltip, hideTooltip }) {
   const [activeTab, setActiveTab] = useState('overview'); // Default tab
 
    const handleOverlayClick = (e) => {
@@ -787,8 +907,8 @@ function DetailedAnalysisModal({ article, onClose }) {
 
         <div className="modal-content">
           {/* Conditionally render tab content */}
-          {activeTab === 'overview' && <OverviewTab article={article} />}
-          {activeTab === 'breakdown' && <OverviewBreakdownTab article={article} />}
+          {activeTab === 'overview' && <OverviewTab article={article} showTooltip={showTooltip} hideTooltip={hideTooltip} />}
+          {activeTab === 'breakdown' && <OverviewBreakdownTab article={article} showTooltip={showTooltip} hideTooltip={hideTooltip} />}
         </div>
 
         <div className="modal-footer">
@@ -801,14 +921,14 @@ function DetailedAnalysisModal({ article, onClose }) {
 
 // --- Analysis Tab Components ---
 
-function OverviewTab({ article }) {
+function OverviewTab({ article, showTooltip, hideTooltip }) {
   return (
     <div className="tab-content">
       <div className="overview-grid">
-        <ScoreBox label="Trust Score" value={article.trustScore} />
-        <ScoreBox label="Bias Score" value={article.biasScore} />
-        <ScoreBox label="Credibility" value={article.credibilityScore} />
-        <ScoreBox label="Reliability" value={article.reliabilityScore} />
+        <ScoreBox label="Trust Score" value={article.trustScore} showTooltip={showTooltip} hideTooltip={hideTooltip} />
+        <ScoreBox label="Bias Score" value={article.biasScore} showTooltip={showTooltip} hideTooltip={hideTooltip} />
+        <ScoreBox label="Credibility" value={article.credibilityScore} showTooltip={showTooltip} hideTooltip={hideTooltip} />
+        <ScoreBox label="Reliability" value={article.reliabilityScore} showTooltip={showTooltip} hideTooltip={hideTooltip} />
       </div>
 
        {article.keyFindings && article.keyFindings.length > 0 && (
@@ -840,7 +960,7 @@ function OverviewTab({ article }) {
 }
 
 // --- UPDATED Consolidated Breakdown Tab (v2.11 Spacing) ---
-function OverviewBreakdownTab({ article }) {
+function OverviewBreakdownTab({ article, showTooltip, hideTooltip }) {
   const [showZeroScores, setShowZeroScores] = useState(false);
 
   // --- Bias Components ---
@@ -915,6 +1035,8 @@ function OverviewBreakdownTab({ article }) {
                     label={comp.label}
                     value={comp.value}
                     tooltip={getBreakdownTooltip(comp.label)}
+                    showTooltip={showTooltip}
+                    hideTooltip={hideTooltip}
                   />
                 ))
             ) : (
@@ -937,6 +1059,8 @@ function OverviewBreakdownTab({ article }) {
                     label={comp.label}
                     value={comp.value}
                     tooltip={getBreakdownTooltip(comp.label)}
+                    showTooltip={showTooltip}
+                    hideTooltip={hideTooltip}
                    />
                 ))
             ) : (
@@ -959,6 +1083,8 @@ function OverviewBreakdownTab({ article }) {
                     label={comp.label}
                     value={comp.value}
                     tooltip={getBreakdownTooltip(comp.label)}
+                    showTooltip={showTooltip}
+                    hideTooltip={hideTooltip}
                    />
                 ))
             ) : (
@@ -975,7 +1101,7 @@ function OverviewBreakdownTab({ article }) {
 // --- Reusable UI Components ---
 
 // Score Box for Overview Tab
-function ScoreBox({ label, value }) {
+function ScoreBox({ label, value, showTooltip, hideTooltip }) {
   let tooltip = '';
   switch(label) {
     case 'Trust Score':
@@ -995,7 +1121,12 @@ function ScoreBox({ label, value }) {
   }
 
   return (
-    <div className="score-circle" title={tooltip}>
+    <div 
+      className="score-circle" 
+      title={tooltip}
+      onTouchStart={(e) => showTooltip(tooltip, e)}
+      onTouchEnd={hideTooltip}
+    >
       <div className="score-value">{value ?? 'N/A'}</div>
       <div className="score-label">{label}</div>
     </div>
@@ -1003,7 +1134,7 @@ function ScoreBox({ label, value }) {
 }
 
 // --- Circular Progress Bar Component (Donut) ---
-function CircularProgressBar({ label, value, tooltip }) { // Added tooltip prop
+function CircularProgressBar({ label, value, tooltip, showTooltip, hideTooltip }) { // Added tooltip prop
   const numericValue = Math.max(0, Math.min(100, Number(value) || 0));
   const strokeWidth = 8;
   const radius = 40;
@@ -1011,9 +1142,15 @@ function CircularProgressBar({ label, value, tooltip }) { // Added tooltip prop
   const offset = circumference - (numericValue / 100) * circumference;
 
   const strokeColor = 'var(--accent-primary)'; // Consistent accent color
+  const finalTooltip = tooltip || `${label}: ${numericValue}/100`;
 
   return (
-    <div className="circle-progress-container" title={tooltip || `${label}: ${numericValue}/100`}> {/* Use provided tooltip */}
+    <div 
+      className="circle-progress-container" 
+      title={finalTooltip}
+      onTouchStart={(e) => showTooltip(finalTooltip, e)}
+      onTouchEnd={hideTooltip}
+    > {/* Use provided tooltip */}
       <svg className="circle-progress-svg" width="100" height="100" viewBox="0 0 100 100">
         <circle
           className="circle-progress-bg"
@@ -1035,7 +1172,7 @@ function CircularProgressBar({ label, value, tooltip }) { // Added tooltip prop
             strokeLinecap="round"
             fill="transparent"
             r={radius}
-            cx="5Tox"
+            cx="50"
             cy="50"
             transform="rotate(-90 50 50)" // Start from the top
           />

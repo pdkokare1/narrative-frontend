@@ -504,13 +504,14 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
   const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
 
+  // --- FIXED: Added missing comma ---
   const qualityLevels = [
     { value: 'All Quality Levels', label: 'All Quality Levels' },
     { value: 'A+ Excellent (90-100)', label: 'A+ : Excellent' },
     { value: 'A High (80-89)', label: 'A : High' },
     { value: 'B Professional (70-79)', label: 'B : Professional' },
     { value: 'C Acceptable (60-69)', label: 'C : Acceptable' },
-    { value: 'D-F Poor (0-59)', label: 'D-F : Poor' },
+    { value: 'D-F Poor (0-59)', label: 'D-F : Poor' }, // Comma was missing here
     { value: 'Review / Opinion', label: 'Review / Opinion' },
   ];
 

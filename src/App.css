@@ -167,6 +167,8 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  position: relative; /* NEW: z-index fix */
+  z-index: 1001; /* NEW: z-index fix */
 }
 .hamburger-btn:hover {
   color: var(--accent-primary);
@@ -431,7 +433,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 }
 
 .article-headline {
-  font-size: 14px; /* SCALED: Was 15px */
+  font-size: 14px; /* SCALED: Was 15px, then 14px. Stays 14px. */
   font-weight: 600;
   line-height: 1.4;
   color: var(--text-primary);
@@ -868,6 +870,25 @@ button:disabled, button:disabled:hover {
 .recommendations li:last-child { border-bottom: none; }
 .recommendations li::before { content: '▸'; color: var(--accent-primary); font-weight: bold; margin-right: 12px; font-size: 14px; line-height: 1.6; }
 
+/* --- NEW: Custom Tooltip --- */
+.tooltip-custom {
+  position: fixed;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  max-width: 200px;
+  text-align: center;
+  z-index: 3000; /* Above everything */
+  pointer-events: none; /* Don't intercept clicks */
+  animation: fadeIn 0.1s ease-out;
+  box-shadow: var(--shadow-md);
+}
+
+
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 1400px) { .main-container { max-width: 95%; } }
 @media (max-width: 1024px) {
@@ -962,15 +983,14 @@ button:disabled, button:disabled:hover {
 
   /* --- NEW: Content Area Scroll --- */
   .content { 
-    padding: 0px 16px; /* Remove top/bottom, add side */
-    /* NEW: Make content scrollable */
+    padding: 0; /* NEW: Remove all padding */
     height: calc(100vh - 60px); 
     overflow-y: auto; 
     overflow-x: hidden; 
     -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
     
-    /* --- REMOVED: Snap scroll --- */
-    /* scroll-snap-type: y proximity; */ 
+    /* --- NEW: Snap scroll --- */
+    scroll-snap-type: y mandatory; 
 
     /* --- NEW: Hide Scrollbar --- */
     -ms-overflow-style: none;  /* IE and Edge */
@@ -983,13 +1003,12 @@ button:disabled, button:disabled:hover {
   /* --- NEW: Card Stack & Snap --- */
   .articles-grid { 
     grid-template-columns: 1fr; 
-    gap: 0; /* Remove gap, use margin on card */
-    padding-top: 16px;
-    padding-bottom: 60vh; /* Allow last card to scroll up */
+    gap: 0; 
+    padding: 16px 16px 60vh 16px; /* NEW: Add side padding, keep top/bottom */
   }
   .article-card { 
-    position: sticky;
-    top: 16px; /* Stick to top of content area */
+    /* --- REMOVED: position: sticky --- */
+    scroll-snap-align: start; /* NEW: Snap to top */
     margin-bottom: 0; /* NEW: Stack perfectly */
     box-shadow: var(--shadow-md);
     background: var(--bg-card-flat); /* NEW: Use solid background */
@@ -997,7 +1016,7 @@ button:disabled, button:disabled:hover {
   }
   
   .load-more {
-    padding-bottom: 30px; /* Ensure load more is visible */
+    padding: 30px 16px; /* NEW: Add padding */
   }
   
   .article-headline { font-size: 16px; } .article-summary { font-size: 12px; line-height: 1.5; } .article-image { height: 160px; }
@@ -1018,6 +1037,7 @@ button:disabled, button:disabled:hover {
   [title] { 
     -webkit-user-select: none; /* Prevent text selection */
     user-select: none; 
+    /* Clicks are still handled by React, this just helps with touch */
   }
 }
 

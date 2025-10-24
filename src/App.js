@@ -80,10 +80,19 @@ function App() {
       const limit = 12; // Articles per page/load
       const offset = loadMore ? displayedArticles.length : 0;
 
-      // console.log(`Fetching articles with filters: ${JSON.stringify(filters)}, Limit: ${limit}, Offset: ${offset}`);
+      // --- Prepare params, handle special 'Review / Opinion' quality filter ---
+      const queryParams = { ...filters, limit, offset };
+      if (filters.quality === 'Review / Opinion') {
+        queryParams.quality = null; // Don't send score range
+        queryParams.analysisType = 'SentimentOnly'; // Send this instead
+      } else {
+        queryParams.analysisType = null; // Ensure this isn't sent for score-based filters
+      }
+
+      // console.log(`Fetching articles with queryParams: ${JSON.stringify(queryParams)}`);
 
       const response = await axios.get(`${API_URL}/articles`, {
-        params: { ...filters, limit, offset }
+        params: queryParams // Use the modified params
       });
 
       // console.log("API Response:", response.data); // Log API response
@@ -316,17 +325,18 @@ function Header({ theme, toggleTheme }) {
 function Sidebar({ filters, onFilterChange, articleCount }) {
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
   const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
-  
-  // --- UPDATED Quality Level Options ---
+
+  // --- UPDATED Quality Level Options (v2.11) ---
   const qualityLevels = [
     { value: 'All Quality Levels', label: 'All Quality Levels' },
-    { value: 'A+ Premium (90-100)', label: 'A+ Premium', range: '90-100' },
+    { value: 'A+ Excellent (90-100)', label: 'A+ Excellent', range: '90-100' }, // Changed Premium to Excellent
     { value: 'A High (80-89)', label: 'A High', range: '80-89' },
     { value: 'B Professional (70-79)', label: 'B Professional', range: '70-79' },
     { value: 'C Acceptable (60-69)', label: 'C Acceptable', range: '60-69' },
     { value: 'D-F Poor (0-59)', label: 'D-F Poor', range: '0-59' },
+    { value: 'Review / Opinion', label: 'Review / Opinion', range: null }, // NEW Option
   ];
-  
+
   const sortOptions = ['Latest First', 'Highest Quality', 'Most Covered', 'Lowest Bias'];
 
   const handleChange = (e) => {
@@ -356,13 +366,8 @@ function Sidebar({ filters, onFilterChange, articleCount }) {
           <select name="quality" value={filters.quality} onChange={handleChange}>
             {qualityLevels.map(level => (
               <option key={level.value} value={level.value}>
-                {level.range ? (
-                  <>
-                    {level.label} <span className="quality-range">({level.range})</span>
-                  </>
-                ) : (
-                  level.label
-                )}
+                {level.label}
+                {level.range && <span className="quality-range"> ({level.range})</span>}
               </option>
             ))}
           </select>
@@ -387,8 +392,8 @@ function Sidebar({ filters, onFilterChange, articleCount }) {
 }
 
 
-// --- UPDATED ArticleCard Component (v2.10) ---
-// --- Stacked buttons for reviews, updated grade tooltip ---
+// --- UPDATED ArticleCard Component (v2.11) ---
+// --- Show Bias/Lean, updated grade tooltip ---
 function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
 
   const isReview = article.analysisType === 'SentimentOnly';
@@ -424,9 +429,24 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
 
         <p className="article-summary">{article.summary}</p>
 
-        <div className="article-meta">
+        {/* --- UPDATED Meta Section --- */}
+        <div className="article-meta-v2">
           <span className="source">{article.source}</span>
+          {/* Show Bias/Lean only if it's a 'Full' analysis article */}
+          {!isReview && (
+            <>
+              <span className="meta-divider">|</span>
+              <span className="bias-score-card" title="Bias Score (0-100). Less is better.">
+                Bias: {article.biasScore}
+              </span>
+               <span className="meta-divider">|</span>
+               <span className="political-lean-card" title="Detected political leaning.">
+                 {article.politicalLean}
+               </span>
+            </>
+           )}
         </div>
+
 
         {/* --- Quality Display (v2.8) --- */}
         <div className="quality-display-v2">
@@ -443,9 +463,9 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
                    Grade: N/A
                  </span>
              )}
-             
-             <span 
-                className="sentiment-text" 
+
+             <span
+                className="sentiment-text"
                 title="The article's overall sentiment towards its main subject."
              >
                 Sentiment: {article.sentiment}
@@ -459,7 +479,6 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
           {isReview ? (
             // --- UI for SentimentOnly (STACKED BUTTONS) ---
             <>
-              {/* Share button takes full width in its own row */}
               <button
                 onClick={() => onShare(article)}
                 className="btn-secondary btn-full-width"
@@ -467,12 +486,11 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
               >
                 Share
               </button>
-              {/* Read Article button takes full width in the row below */}
-              <a 
-                href={article.url} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="btn-primary btn-full-width" 
+              <a
+                href={article.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary btn-full-width"
                 style={{ textDecoration: 'none', textAlign: 'center' }}
                 title="Read the full article on the source's website"
               >
@@ -535,7 +553,7 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze }) {
         // console.log(`Fetching cluster data for ID: ${clusterId}`);
         const response = await axios.get(`${API_URL}/cluster/${clusterId}`);
         // console.log("Cluster Response:", response.data);
-        
+
         const data = {
             left: response.data.left || [],
             center: response.data.center || [],
@@ -543,7 +561,7 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze }) {
             stats: response.data.stats || {}
         };
         setClusterData(data);
-        
+
         // --- Set default active tab ---
         if (data.left.length > 0) setActiveTab('left');
         else if (data.center.length > 0) setActiveTab('center');
@@ -651,7 +669,7 @@ function renderArticleGroup(articleList, perspective, onAnalyze) {
               <button onClick={() => onAnalyze(article)}>View Analysis</button>
             </div>
           </div>
-          
+
           {/* --- Image Thumbnail --- */}
           <div className="coverage-image">
             {article.imageUrl ? (
@@ -766,7 +784,7 @@ function OverviewTab({ article }) {
   );
 }
 
-// --- NEW Consolidated Breakdown Tab (v2.10) ---
+// --- UPDATED Consolidated Breakdown Tab (v2.11 Spacing) ---
 function OverviewBreakdownTab({ article }) {
   const [showZeroScores, setShowZeroScores] = useState(false);
 
@@ -820,7 +838,6 @@ function OverviewBreakdownTab({ article }) {
 
       {/* --- Bias Section --- */}
       <div className="component-section">
-        {/* --- Heading + Toggle --- */}
         <div className="component-section-header">
             <h4>Bias Details ({article.biasScore ?? 'N/A'}/100)</h4>
             <div className="toggle-zero-scores">
@@ -835,16 +852,14 @@ function OverviewBreakdownTab({ article }) {
             </div>
         </div>
         <div className="divider" /> {/* Added Divider */}
-        
-        {/* --- Grid --- */}
         <div className="component-grid-v2 section-spacing"> {/* Added Spacing */}
             {visibleBias.length > 0 ? (
                 visibleBias.map(comp => (
-                  <CircularProgressBar 
-                    key={comp.label} 
-                    label={comp.label} 
-                    value={comp.value} 
-                    tooltip={getBreakdownTooltip(comp.label)} 
+                  <CircularProgressBar
+                    key={comp.label}
+                    label={comp.label}
+                    value={comp.value}
+                    tooltip={getBreakdownTooltip(comp.label)}
                   />
                 ))
             ) : (
@@ -855,18 +870,19 @@ function OverviewBreakdownTab({ article }) {
 
       {/* --- Credibility Section --- */}
       <div className="component-section">
-        <h4>Credibility Details ({article.credibilityScore ?? 'N/A'}/100)</h4>
+        <div className="component-section-header"> {/* Re-added header for spacing consistency */}
+            <h4>Credibility Details ({article.credibilityScore ?? 'N/A'}/100)</h4>
+        </div>
          <div className="divider" /> {/* Added Divider */}
-        
         <div className="component-grid-v2 section-spacing"> {/* Added Spacing */}
             {visibleCredibility.length > 0 ? (
                 visibleCredibility.map(comp => (
-                  <CircularProgressBar 
-                    key={comp.label} 
-                    label={comp.label} 
-                    value={comp.value} 
+                  <CircularProgressBar
+                    key={comp.label}
+                    label={comp.label}
+                    value={comp.value}
                     tooltip={getBreakdownTooltip(comp.label)}
-                  />
+                   />
                 ))
             ) : (
               <p className="zero-score-note">All credibility components scored 0. Enable the toggle above to see them.</p>
@@ -876,18 +892,19 @@ function OverviewBreakdownTab({ article }) {
 
       {/* --- Reliability Section --- */}
       <div className="component-section">
-        <h4>Reliability Details ({article.reliabilityScore ?? 'N/A'}/100)</h4>
+         <div className="component-section-header"> {/* Re-added header for spacing consistency */}
+            <h4>Reliability Details ({article.reliabilityScore ?? 'N/A'}/100)</h4>
+         </div>
          <div className="divider" /> {/* Added Divider */}
-        
         <div className="component-grid-v2 section-spacing"> {/* Added Spacing */}
             {visibleReliability.length > 0 ? (
                 visibleReliability.map(comp => (
-                  <CircularProgressBar 
-                    key={comp.label} 
-                    label={comp.label} 
-                    value={comp.value} 
+                  <CircularProgressBar
+                    key={comp.label}
+                    label={comp.label}
+                    value={comp.value}
                     tooltip={getBreakdownTooltip(comp.label)}
-                  />
+                   />
                 ))
             ) : (
               <p className="zero-score-note">All reliability components scored 0. Enable the toggle above to see them.</p>
@@ -910,7 +927,7 @@ function ScoreBox({ label, value }) {
       tooltip = 'Overall Trust Score (0-100). A combined measure of Credibility and Reliability. Higher is better.';
       break;
     case 'Bias Score':
-      tooltip = 'Overall Bias Score (0-100). 0 indicates minimal bias, 100 indicates significant bias.';
+      tooltip = 'Overall Bias Score (0-100). Less is better. 0 indicates minimal bias, 100 indicates significant bias.'; // UPDATED
       break;
     case 'Credibility':
       tooltip = 'Credibility Score (0-100). Measures the article\'s trustworthiness based on sources, facts, and professionalism.';
@@ -921,7 +938,7 @@ function ScoreBox({ label, value }) {
     default:
       tooltip = `${label} (0-100)`;
   }
-  
+
   return (
     <div className="score-circle" title={tooltip}>
       <div className="score-value">{value ?? 'N/A'}</div>
@@ -931,17 +948,17 @@ function ScoreBox({ label, value }) {
 }
 
 // --- Circular Progress Bar Component (Donut) ---
-function CircularProgressBar({ label, value, tooltip }) {
+function CircularProgressBar({ label, value, tooltip }) { // Added tooltip prop
   const numericValue = Math.max(0, Math.min(100, Number(value) || 0));
   const strokeWidth = 8;
   const radius = 40;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (numericValue / 100) * circumference;
-  
+
   const strokeColor = 'var(--accent-primary)'; // Consistent accent color
 
   return (
-    <div className="circle-progress-container" title={tooltip || `${label}: ${numericValue}/100`}>
+    <div className="circle-progress-container" title={tooltip || `${label}: ${numericValue}/100`}> {/* Use provided tooltip */}
       <svg className="circle-progress-svg" width="100" height="100" viewBox="0 0 100 100">
         <circle
           className="circle-progress-bg"

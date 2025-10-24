@@ -511,7 +511,7 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
     { value: 'A High (80-89)', label: 'A : High' },
     { value: 'B Professional (70-79)', label: 'B : Professional' },
     { value: 'C Acceptable (60-69)', label: 'C : Acceptable' },
-    { value: 'D-F Poor (0-59)', label: 'D-F : Poor' }, // Ensured comma is here
+    { value: 'D-F Poor (0-59)', label: 'D-F : Poor' }, // <-- Comma added HERE
     { value: 'Review / Opinion', label: 'Review / Opinion' },
   ];
 

@@ -299,11 +299,9 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 
 
 /* --- UPDATED: Quality Range Styling --- */
+/* Styling <option> tags is not reliably supported. Removed custom font rules. */
 .quality-range {
-  font-size: 0.9em; /* Smaller */
-  color: var(--text-muted); /* Lighter (muted) */
-  font-weight: 400; /* Lighter weight */
-  margin-left: 4px;
+  /* This rule is intentionally left blank */
 }
 
 .filter-results {
@@ -433,7 +431,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 }
 
 .article-headline {
-  font-size: 15px; /* SCALED: Was 16px */
+  font-size: 14px; /* SCALED: Was 15px */
   font-weight: 600;
   line-height: 1.4;
   color: var(--text-primary);
@@ -451,7 +449,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 
 
 .article-summary {
-  font-size: 12px; /* SCALED: Was 12.5px */
+  font-size: 11.5px; /* SCALED: Was 12px */
   line-height: 1.6;
   color: var(--text-secondary);
   margin-bottom: 15px;
@@ -970,8 +968,16 @@ button:disabled, button:disabled:hover {
     overflow-y: auto; 
     overflow-x: hidden; 
     -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
-    /* NEW: Snap scroll */
-    scroll-snap-type: y proximity;
+    
+    /* --- REMOVED: Snap scroll --- */
+    /* scroll-snap-type: y proximity; */ 
+
+    /* --- NEW: Hide Scrollbar --- */
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .content::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
   }
   
   /* --- NEW: Card Stack & Snap --- */
@@ -984,10 +990,12 @@ button:disabled, button:disabled:hover {
   .article-card { 
     position: sticky;
     top: 16px; /* Stick to top of content area */
-    margin-bottom: 16px; /* This creates the "peel" distance */
+    margin-bottom: 0; /* NEW: Stack perfectly */
     box-shadow: var(--shadow-md);
-    scroll-snap-align: start; /* For the "snap" */
+    background: var(--bg-card-flat); /* NEW: Use solid background */
+    border-bottom: 1px solid var(--border-color); /* NEW: Separate cards */
   }
+  
   .load-more {
     padding-bottom: 30px; /* Ensure load more is visible */
   }
@@ -1018,3 +1026,4 @@ button:disabled, button:disabled:hover {
 ::-webkit-scrollbar-track { background: var(--bg-secondary); }
 ::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
+

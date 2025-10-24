@@ -110,7 +110,7 @@ function App() {
     if (isSidebarOpen) {
       setIsSidebarOpen(false);
     }
-  }, [filters, isSidebarOpen]); // Note: isSidebarOpen dependency prevents extra runs
+  }, [filters]); // <--- FIXED: Removed 'isSidebarOpen' dependency
 
   const fetchArticles = async (loadMore = false) => {
     try {
@@ -435,15 +435,15 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
   const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
 
-  // --- UPDATED Quality Level Options (v2.11) ---
+  // --- FIXED: Quality Level Options (v2.11) ---
   const qualityLevels = [
     { value: 'All Quality Levels', label: 'All Quality Levels' },
-    { value: 'A+ Excellent (90-100)', label: 'A+ Excellent', range: '90-100' }, // Changed Premium to Excellent
-    { value: 'A High (80-89)', label: 'A High', range: '80-89' },
-    { value: 'B Professional (70-79)', label: 'B Professional', range: '70-79' },
-    { value: 'C Acceptable (60-69)', label: 'C Acceptable', range: '60-69' },
-    { value: 'D-F Poor (0-59)', label: 'D-F Poor', range: '0-59' },
-    { value: 'Review / Opinion', label: 'Review / Opinion', range: null }, // NEW Option
+    { value: 'A+ Excellent (90-100)', label: 'A+ : Excellent' },
+    { value: 'A High (80-89)', label: 'A : High' },
+    { value: 'B Professional (70-79)', label: 'B : Professional' },
+    { value: 'C Acceptable (60-69)', label: 'C : Acceptable' },
+    { value: 'D-F Poor (0-59)', label: 'D-F : Poor' },
+    { value: 'Review / Opinion', label: 'Review / Opinion' },
   ];
 
   const sortOptions = ['Latest First', 'Highest Quality', 'Most Covered', 'Lowest Bias'];
@@ -478,9 +478,10 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
         <div className="filter-section">
           <h3>Quality Level</h3>
           <select name="quality" value={filters.quality} onChange={handleChange}>
+            {/* --- FIXED: Updated map to only show label --- */}
             {qualityLevels.map(level => (
               <option key={level.value} value={level.value}>
-                {level.label} {level.range && `(${level.range})`} {/* UPDATED: Removed invalid span */}
+                {level.label}
               </option>
             ))}
           </select>
@@ -989,7 +990,7 @@ function OverviewBreakdownTab({ article, showTooltip, hideTooltip }) {
   const allReliabilityComponents = [
     { label: "Consistency", value: relComps.consistency },
     { label: "Temporal Stability", value: relComps.temporalStability },
-    { label: "Quality Control", value: relComps.qualityControl },
+    { label:Validation: "Quality Control", value: relComps.qualityControl },
     { label: "Publication Standards", value: relComps.publicationStandards },
     { label: "Corrections Policy", value: relComps.correctionsPolicy },
     { label: "Update Maintenance", value: relComps.updateMaintenance },
@@ -1185,4 +1186,3 @@ function CircularProgressBar({ label, value, tooltip, showTooltip, hideTooltip }
 }
 
 export default App;
-

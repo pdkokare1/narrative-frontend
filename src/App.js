@@ -6,7 +6,6 @@ import './App.css'; // Ensure App.css is imported
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 function App() {
-  const [articles, setArticles] = useState([]);
   const [displayedArticles, setDisplayedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true); // Track initial load
@@ -42,13 +41,13 @@ function App() {
       const limit = 12; // Articles per page/load
       const offset = loadMore ? displayedArticles.length : 0;
 
-      console.log(`Fetching articles with filters: ${JSON.stringify(filters)}, Limit: ${limit}, Offset: ${offset}`);
+      // console.log(`Fetching articles with filters: ${JSON.stringify(filters)}, Limit: ${limit}, Offset: ${offset}`);
 
       const response = await axios.get(`${API_URL}/articles`, {
         params: { ...filters, limit, offset }
       });
 
-      console.log("API Response:", response.data); // Log API response
+      // console.log("API Response:", response.data); // Log API response
 
       const articlesData = response.data.articles || [];
       const paginationData = response.data.pagination || { total: 0 };
@@ -139,7 +138,7 @@ function App() {
             if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 800) {
                 // Check if not loading, and if there are more articles to load
                 if (!loading && displayedArticles.length < totalArticlesCount) {
-                    console.log("Scroll near bottom detected, loading more...");
+                    // console.log("Scroll near bottom detected, loading more...");
                     loadMoreArticles();
                 }
             }
@@ -183,15 +182,11 @@ function App() {
         <Sidebar
           filters={filters}
           onFilterChange={handleFilterChange} // Use handler to potentially debounce/manage filter state
-          // onApply={fetchArticles} // Replaced by useEffect on filters
           articleCount={totalArticlesCount} // Use total count from API
         />
 
         <main className="content">
-          <div className="content-header">
-            <h2>Latest News Analysis</h2>
-            <p className="subtitle">{totalArticlesCount} articles analyzed</p>
-          </div>
+          {/* --- REMOVED .content-header --- */}
 
           {(loading && initialLoad) ? ( // Show loading only on initial/filter load
             <div className="loading-container">
@@ -276,6 +271,7 @@ function Header({ theme, toggleTheme }) {
 }
 
 // --- Sidebar ---
+// --- MOVED articleCount to the bottom ---
 function Sidebar({ filters, onFilterChange, articleCount }) {
   // Define options directly in the component
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
@@ -291,41 +287,40 @@ function Sidebar({ filters, onFilterChange, articleCount }) {
 
   return (
     <aside className="sidebar">
-      <div className="filter-section">
-        <h3>Category</h3>
-        <select name="category" value={filters.category} onChange={handleChange}>
-          {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-        </select>
+      <div> {/* Added wrapper div to control flex */}
+        <div className="filter-section">
+          <h3>Category</h3>
+          <select name="category" value={filters.category} onChange={handleChange}>
+            {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+          </select>
+        </div>
+
+        <div className="filter-section">
+          <h3>Political Leaning</h3>
+          <select name="lean" value={filters.lean} onChange={handleChange}>
+            {leans.map(lean => <option key={lean} value={lean}>{lean}</option>)}
+          </select>
+        </div>
+
+        <div className="filter-section">
+          <h3>Quality Level</h3>
+          <select name="quality" value={filters.quality} onChange={handleChange}>
+            {qualityLevels.map(level => <option key={level} value={level}>{level}</option>)}
+          </select>
+        </div>
+
+        <div className="filter-section">
+          <h3>Sort By</h3>
+          <select name="sort" value={filters.sort} onChange={handleChange}>
+            {sortOptions.map(sort => <option key={sort} value={sort}>{sort}</option>)}
+          </select>
+        </div>
       </div>
 
-      <div className="filter-section">
-        <h3>Political Leaning</h3>
-        <select name="lean" value={filters.lean} onChange={handleChange}>
-          {leans.map(lean => <option key={lean} value={lean}>{lean}</option>)}
-        </select>
-      </div>
-
-      <div className="filter-section">
-        <h3>Quality Level</h3>
-        <select name="quality" value={filters.quality} onChange={handleChange}>
-          {qualityLevels.map(level => <option key={level} value={level}>{level}</option>)}
-        </select>
-      </div>
-
-      <div className="filter-section">
-        <h3>Sort By</h3>
-        <select name="sort" value={filters.sort} onChange={handleChange}>
-          {sortOptions.map(sort => <option key={sort} value={sort}>{sort}</option>)}
-        </select>
-      </div>
-
-      {/* Apply button removed - filtering happens onChange via useEffect in App */}
-      {/* <button className="apply-filters-btn" onClick={onApply}>Apply Filters</button> */}
-
-      {/* Show count only if > 0 */}
+      {/* --- MOVED to bottom --- */}
       {articleCount > 0 && (
         <div className="filter-results">
-          <p>Showing {articleCount} articles</p>
+          <p>{articleCount} articles analyzed</p>
         </div>
       )}
     </aside>
@@ -333,20 +328,37 @@ function Sidebar({ filters, onFilterChange, articleCount }) {
 }
 
 
-// --- UPDATED ArticleCard Component (v2.6) ---
-// --- Implements UI changes for 'SentimentOnly' and Tooltips ---
+// --- UPDATED ArticleCard Component (v2.7) ---
+// --- Adds Sentiment to quality display ---
 function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
 
-  // Determine if it's a review/opinion piece
   const isReview = article.analysisType === 'SentimentOnly';
 
-  // Fallback image handler
   const handleImageError = (e) => {
-    e.target.style.display = 'none'; // Hide the broken image
-    // Find the sibling placeholder and display it
+    e.target.style.display = 'none';
     const placeholder = e.target.nextElementSibling;
     if (placeholder && placeholder.classList.contains('image-placeholder')) {
       placeholder.style.display = 'flex';
+    }
+  };
+  
+  // Get sentiment-based tooltip
+  const getSentimentTooltip = (sentiment) => {
+    switch(sentiment) {
+      case 'Positive': return 'The article has a positive sentiment towards its subject.';
+      case 'Negative': return 'The article has a negative sentiment towards its subject.';
+      case 'Neutral': return 'The article has a neutral sentiment towards its subject.';
+      default: return 'Sentiment analysis';
+    }
+  };
+  
+  // Get sentiment-based icon
+  const getSentimentIcon = (sentiment) => {
+    switch(sentiment) {
+      case 'Positive': return '😊';
+      case 'Negative': return '😠';
+      case 'Neutral': return '😐';
+      default: return '😐';
     }
   };
 
@@ -356,19 +368,17 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
         {article.imageUrl ? (
           <img
             src={article.imageUrl}
-            alt={`Image for ${article.headline}`} // More descriptive alt text
+            alt={`Image for ${article.headline}`}
             onError={handleImageError}
-            loading="lazy" // Lazy load images
+            loading="lazy"
           />
         ) : null}
-         {/* Placeholder is always rendered but hidden by default if imageUrl exists */}
         <div className="image-placeholder" style={{ display: article.imageUrl ? 'none' : 'flex' }}>
-          📰 {/* Or use a more abstract icon */}
+          📰
         </div>
       </div>
 
       <div className="article-content">
-        {/* Use link for headline */}
          <a href={article.url} target="_blank" rel="noopener noreferrer" className="article-headline-link">
              <h3 className="article-headline">{article.headline}</h3>
          </a>
@@ -377,36 +387,41 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
 
         <div className="article-meta">
           <span className="source">{article.source}</span>
-          {/* Optionally add published date here */}
-          {/* <span className="date">{new Date(article.publishedAt).toLocaleDateString()}</span> */}
         </div>
 
-        {/* --- NEW Simplified Quality Display (with Tooltip) --- */}
-        <div className="quality-display">
+        {/* --- NEW Quality Display (with Grade and Sentiment) --- */}
+        <div className="quality-display-v2">
              {isReview ? (
                  <span className="quality-grade-text" title="This article is an opinion, review, or summary.">
-                   Review / Opinion Piece
+                   Review / Opinion
                  </span>
              ) : article.credibilityGrade ? (
                  <span className="quality-grade-text" title={`Overall Trust Score: ${article.trustScore}/100`}>
-                   Quality Grade: {article.credibilityGrade}
+                   Grade: {article.credibilityGrade}
                  </span>
              ) : (
                  <span className="quality-grade-text" title="Quality grade not available.">
-                   Quality Grade: N/A
+                   Grade: N/A
                  </span>
              )}
+             
+             {/* --- ADDED SENTIMENT --- */}
+             <span 
+                className="sentiment-text" 
+                title={getSentimentTooltip(article.sentiment)}
+             >
+                {getSentimentIcon(article.sentiment)} {article.sentiment}
+             </span>
          </div>
          {/* --- End Simplified Display --- */}
 
 
-        {/* --- NEW Article Actions (Handles SentimentOnly) --- */}
+        {/* --- Actions (Handles SentimentOnly) --- */}
         <div className="article-actions">
           {isReview ? (
             // --- UI for SentimentOnly (Reviews, Sports, etc.) ---
             <>
               <div className="article-actions-top">
-                {/* Share button takes full width in this new layout */}
                 <button
                   onClick={() => onShare(article)}
                   className="btn-secondary"
@@ -416,7 +431,6 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
                   Share
                 </button>
               </div>
-              {/* Direct "Read Article" button, styled as primary */}
               <a 
                 href={article.url} 
                 target="_blank" 
@@ -458,8 +472,6 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
             </>
           )}
         </div>
-        {/* --- END of NEW Article Actions --- */}
-
       </div>
     </div>
   );
@@ -469,44 +481,50 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
 
 // --- Modal Components ---
 
-// Compare Coverage Modal
+// --- Compare Coverage Modal (REMOVED 'All' Tab) ---
 function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze }) {
   const [clusterData, setClusterData] = useState({ left: [], center: [], right: [], stats: {} });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('all'); // Default to 'all'
+  const [activeTab, setActiveTab] = useState(null); // Set to null initially
 
   useEffect(() => {
     const fetchCluster = async () => {
       if (!clusterId) {
-          setLoading(false); // No ID, nothing to fetch
+          setLoading(false);
           return;
       }
       try {
         setLoading(true);
-        console.log(`Fetching cluster data for ID: ${clusterId}`);
+        // console.log(`Fetching cluster data for ID: ${clusterId}`);
         const response = await axios.get(`${API_URL}/cluster/${clusterId}`);
-        console.log("Cluster Response:", response.data);
-        setClusterData({
+        // console.log("Cluster Response:", response.data);
+        
+        const data = {
             left: response.data.left || [],
             center: response.data.center || [],
             right: response.data.right || [],
             stats: response.data.stats || {}
-        });
+        };
+        setClusterData(data);
+        
+        // --- Set default active tab ---
+        if (data.left.length > 0) setActiveTab('left');
+        else if (data.center.length > 0) setActiveTab('center');
+        else if (data.right.length > 0) setActiveTab('right');
+        else setActiveTab('left'); // Fallback
+
         setLoading(false);
       } catch (error) {
         console.error(`❌ Error fetching cluster ${clusterId}:`, error.response ? error.response.data : error.message);
         setLoading(false);
-        // Optionally set an error state to display to the user
       }
     };
 
     fetchCluster();
-  }, [clusterId]); // Refetch only when clusterId changes
+  }, [clusterId]);
 
-   // Calculate total once data is loaded
-   const totalArticles = clusterData.left.length + clusterData.center.length + clusterData.right.length;
+   const totalArticles = (clusterData.left?.length || 0) + (clusterData.center?.length || 0) + (clusterData.right?.length || 0);
 
-   // Handle click outside modal to close
    const handleOverlayClick = (e) => {
        if (e.target === e.currentTarget) {
            onClose();
@@ -515,18 +533,14 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze }) {
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="compare-modal" onClick={(e) => e.stopPropagation()}> {/* Prevent clicks inside modal from closing it */}
+      <div className="compare-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          {/* Display original article title for context */}
           <h2>Compare Coverage: "{articleTitle.substring(0, 40)}..."</h2>
           <button className="close-btn" onClick={onClose} title="Close comparison">×</button>
         </div>
 
-        {/* Tabs */}
+        {/* --- Tabs (REMOVED 'All') --- */}
          <div className="modal-tabs">
-          <button className={activeTab === 'all' ? 'active' : ''} onClick={() => setActiveTab('all')}>
-            All ({totalArticles})
-          </button>
           <button className={activeTab === 'left' ? 'active' : ''} onClick={() => setActiveTab('left')}>
             Left ({clusterData.left.length})
           </button>
@@ -551,12 +565,13 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze }) {
              </div>
           ) : (
             <>
-              {(activeTab === 'all' || activeTab === 'left') && renderArticleGroup(clusterData.left, 'Left', onAnalyze)}
-              {(activeTab === 'all' || activeTab === 'center') && renderArticleGroup(clusterData.center, 'Center', onAnalyze)}
-              {(activeTab === 'all' || activeTab === 'right') && renderArticleGroup(clusterData.right, 'Right', onAnalyze)}
+              {/* --- Logic updated to NOT show all by default --- */}
+              {activeTab === 'left' && renderArticleGroup(clusterData.left, 'Left', onAnalyze)}
+              {activeTab === 'center' && renderArticleGroup(clusterData.center, 'Center', onAnalyze)}
+              {activeTab === 'right' && renderArticleGroup(clusterData.right, 'Right', onAnalyze)}
 
               {/* Message if a specific tab has no articles */}
-              {activeTab !== 'all' && clusterData[activeTab]?.length === 0 && (
+              {activeTab && clusterData[activeTab]?.length === 0 && (
                  <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}>
                     <p>No articles found for the '{activeTab}' perspective in this cluster.</p>
                  </div>
@@ -564,46 +579,49 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze }) {
             </>
           )}
         </div>
-         {/* Optional Footer */}
-         {/* <div className="modal-footer">
-             <button onClick={onClose}>Close</button>
-         </div> */}
       </div>
     </div>
   );
 }
 
-// Helper function to render article groups in Compare Modal
-// --- UPDATED with Tooltips ---
+// --- Helper function to render article groups (ADDED Image) ---
 function renderArticleGroup(articleList, perspective, onAnalyze) {
-  if (!articleList || articleList.length === 0) return null; // Don't render if empty
+  if (!articleList || articleList.length === 0) return null;
 
   return (
     <div className="perspective-section">
       <h3 className={`perspective-title ${perspective.toLowerCase()}`}>{perspective} Perspective</h3>
       {articleList.map(article => (
         <div key={article._id || article.url} className="coverage-article">
-          <a href={article.url} target="_blank" rel="noopener noreferrer">
-             <h4>{article.headline || 'No Headline'}</h4>
-          </a>
-           {/* Display a snippet of the summary */}
-           <p>
-             {(article.summary || '').substring(0, 150)}{article.summary && article.summary.length > 150 ? '...' : ''}
-           </p>
-
-           {/* Simplified scores (with Tooltips) */}
-          <div className="article-scores">
-            <span title="Bias Score (0-100, lower is less biased)">Bias: {article.biasScore ?? 'N/A'}</span>
-            <span title="Overall Trust Score (0-100, higher is more trustworthy)">Trust: {article.trustScore ?? 'N/A'}</span>
-            <span title="Credibility Grade (A+ to F)">Grade: {article.credibilityGrade || 'N/A'}</span>
-          </div>
-          <div className="coverage-actions">
-            {/* Direct link to read article */}
-            <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1}}>
-                 <button style={{width: '100%'}}>Read Article</button>
+          {/* --- Content Wrapper --- */}
+          <div className="coverage-content">
+            <a href={article.url} target="_blank" rel="noopener noreferrer">
+              <h4>{article.headline || 'No Headline'}</h4>
             </a>
-            {/* Button to view analysis within the app */}
-            <button onClick={() => onAnalyze(article)}>View Analysis</button>
+            <p>
+              {(article.summary || '').substring(0, 150)}{article.summary && article.summary.length > 150 ? '...' : ''}
+            </p>
+
+            <div className="article-scores">
+              <span title="Bias Score (0-100, lower is less biased)">Bias: {article.biasScore ?? 'N/A'}</span>
+              <span title="Overall Trust Score (0-100, higher is more trustworthy)">Trust: {article.trustScore ?? 'N/A'}</span>
+              <span title="Credibility Grade (A+ to F)">Grade: {article.credibilityGrade || 'N/A'}</span>
+            </div>
+            <div className="coverage-actions">
+              <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1}}>
+                  <button style={{width: '100%'}}>Read Article</button>
+              </a>
+              <button onClick={() => onAnalyze(article)}>View Analysis</button>
+            </div>
+          </div>
+          
+          {/* --- Image Thumbnail --- */}
+          <div className="coverage-image">
+            {article.imageUrl ? (
+              <img src={article.imageUrl} alt="Article thumbnail" loading="lazy" />
+            ) : (
+              <div className="image-placeholder-small">📰</div>
+            )}
           </div>
         </div>
       ))}
@@ -616,14 +634,12 @@ function renderArticleGroup(articleList, perspective, onAnalyze) {
 function DetailedAnalysisModal({ article, onClose }) {
   const [activeTab, setActiveTab] = useState('overview'); // Default tab
 
-   // Handle click outside modal to close
    const handleOverlayClick = (e) => {
        if (e.target === e.currentTarget) {
            onClose();
        }
    };
 
-  // Basic check if article data is missing
   if (!article) {
     return (
         <div className="modal-overlay" onClick={handleOverlayClick}>
@@ -645,7 +661,6 @@ function DetailedAnalysisModal({ article, onClose }) {
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="analysis-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          {/* Use the article headline in the title */}
           <h2>Analysis: "{article.headline.substring(0, 50)}{article.headline.length > 50 ? '...' : ''}"</h2>
           <button className="close-btn" onClick={onClose} title="Close analysis">×</button>
         </div>
@@ -666,7 +681,6 @@ function DetailedAnalysisModal({ article, onClose }) {
         </div>
 
         <div className="modal-content">
-          {/* Conditionally render tab content */}
           {activeTab === 'overview' && <OverviewTab article={article} />}
           {activeTab === 'bias' && <BiasTab article={article} />}
           {activeTab === 'credibility' && <CredibilityTab article={article} />}
@@ -686,7 +700,6 @@ function DetailedAnalysisModal({ article, onClose }) {
 function OverviewTab({ article }) {
   return (
     <div className="tab-content">
-      {/* Grid for main scores */}
       <div className="overview-grid">
         <ScoreBox label="Trust Score" value={article.trustScore} />
         <ScoreBox label="Bias Score" value={article.biasScore} />
@@ -694,9 +707,8 @@ function OverviewTab({ article }) {
         <ScoreBox label="Reliability" value={article.reliabilityScore} />
       </div>
 
-       {/* Key Findings Section */}
        {article.keyFindings && article.keyFindings.length > 0 && (
-         <div className="recommendations"> {/* Reusing style */}
+         <div className="recommendations">
             <h4>Key Findings</h4>
             <ul>
                 {article.keyFindings.map((finding, i) => <li key={`kf-${i}`}>{finding}</li>)}
@@ -704,9 +716,8 @@ function OverviewTab({ article }) {
          </div>
        )}
 
-       {/* Recommendations Section */}
        {article.recommendations && article.recommendations.length > 0 && (
-         <div className="recommendations" style={{ marginTop: '20px' }}> {/* Add margin if both sections show */}
+         <div className="recommendations" style={{ marginTop: '20px' }}>
             <h4>Recommendations</h4>
             <ul>
                 {article.recommendations.map((rec, i) => <li key={`rec-${i}`}>{rec}</li>)}
@@ -714,7 +725,6 @@ function OverviewTab({ article }) {
          </div>
        )}
 
-        {/* Message if no findings/recommendations */}
         {(!article.keyFindings || article.keyFindings.length === 0) &&
          (!article.recommendations || article.recommendations.length === 0) && (
             <p style={{color: 'var(--text-tertiary)', textAlign: 'center', marginTop: '30px'}}>
@@ -725,14 +735,7 @@ function OverviewTab({ article }) {
   );
 }
 
-// Helper to safely get nested properties
-const getNested = (obj, path, defaultValue = 0) => {
-    return path.split('.').reduce((acc, part) => acc && acc[part] !== undefined ? acc[part] : defaultValue, obj);
-};
-
-
 function BiasTab({ article }) {
-  // Use helper to safely access potentially missing nested components
   const components = article.biasComponents || {};
   const linguistic = components.linguistic || {};
   const sourceSelection = components.sourceSelection || {};
@@ -745,33 +748,20 @@ function BiasTab({ article }) {
         Bias Analysis: {article.biasScore ?? 'N/A'}/100 ({article.biasLabel || 'Not Available'})
       </h3>
 
-      <div className="component-section">
-        <h4>Linguistic Bias</h4>
-        <ProgressBar label="Sentiment Polarity" value={linguistic.sentimentPolarity} />
-        <ProgressBar label="Emotional Language" value={linguistic.emotionalLanguage} />
-        <ProgressBar label="Loaded Terms" value={linguistic.loadedTerms} />
-        <ProgressBar label="Complexity Bias" value={linguistic.complexityBias} />
-      </div>
-
-      <div className="component-section">
-        <h4>Source Selection</h4>
-        <ProgressBar label="Source Diversity" value={sourceSelection.sourceDiversity} />
-        <ProgressBar label="Expert Balance" value={sourceSelection.expertBalance} />
-        <ProgressBar label="Attribution Transparency" value={sourceSelection.attributionTransparency} />
-      </div>
-
-      <div className="component-section">
-        <h4>Demographic Representation</h4>
-        <ProgressBar label="Gender Balance" value={demographic.genderBalance} />
-        <ProgressBar label="Racial Balance" value={demographic.racialBalance} />
-        <ProgressBar label="Age Representation" value={demographic.ageRepresentation} />
-      </div>
-
-      <div className="component-section">
-        <h4>Framing Analysis</h4>
-        <ProgressBar label="Headline Framing" value={framing.headlineFraming} />
-        <ProgressBar label="Story Selection" value={framing.storySelection} />
-        <ProgressBar label="Omission Bias" value={framing.omissionBias} />
+      <div className="component-grid">
+        <SemiCircleProgressBar label="Sentiment Polarity" value={linguistic.sentimentPolarity} />
+        <SemiCircleProgressBar label="Emotional Language" value={linguistic.emotionalLanguage} />
+        <SemiCircleProgressBar label="Loaded Terms" value={linguistic.loadedTerms} />
+        <SemiCircleProgressBar label="Complexity Bias" value={linguistic.complexityBias} />
+        <SemiCircleProgressBar label="Source Diversity" value={sourceSelection.sourceDiversity} />
+        <SemiCircleProgressBar label="Expert Balance" value={sourceSelection.expertBalance} />
+        <SemiCircleProgressBar label="Attribution Transparency" value={sourceSelection.attributionTransparency} />
+        <SemiCircleProgressBar label="Gender Balance" value={demographic.genderBalance} />
+        <SemiCircleProgressBar label="Racial Balance" value={demographic.racialBalance} />
+        <SemiCircleProgressBar label="Age Representation" value={demographic.ageRepresentation} />
+        <SemiCircleProgressBar label="Headline Framing" value={framing.headlineFraming} />
+        <SemiCircleProgressBar label="Story Selection" value={framing.storySelection} />
+        <SemiCircleProgressBar label="Omission Bias" value={framing.omissionBias} />
       </div>
     </div>
   );
@@ -785,14 +775,13 @@ function CredibilityTab({ article }) {
         Credibility Score: {article.credibilityScore ?? 'N/A'}/100 (Grade: {article.credibilityGrade || 'N/A'})
       </h3>
 
-      <div className="component-section">
-        <h4>Credibility Components (UCS)</h4>
-        <ProgressBar label="Source Credibility" value={components.sourceCredibility} />
-        <ProgressBar label="Fact Verification" value={components.factVerification} />
-        <ProgressBar label="Professionalism" value={components.professionalism} />
-        <ProgressBar label="Evidence Quality" value={components.evidenceQuality} />
-        <ProgressBar label="Transparency" value={components.transparency} />
-        <ProgressBar label="Audience Trust" value={components.audienceTrust} />
+      <div className="component-grid">
+        <SemiCircleProgressBar label="Source Credibility" value={components.sourceCredibility} />
+        <SemiCircleProgressBar label="Fact Verification" value={components.factVerification} />
+        <SemiCircleProgressBar label="Professionalism" value={components.professionalism} />
+        <SemiCircleProgressBar label="Evidence Quality" value={components.evidenceQuality} />
+        <SemiCircleProgressBar label="Transparency" value={components.transparency} />
+        <SemiCircleProgressBar label="Audience Trust" value={components.audienceTrust} />
       </div>
     </div>
   );
@@ -806,14 +795,13 @@ function ReliabilityTab({ article }) {
         Reliability Score: {article.reliabilityScore ?? 'N/A'}/100 (Grade: {article.reliabilityGrade || 'N/A'})
       </h3>
 
-      <div className="component-section">
-        <h4>Reliability Components (URS)</h4>
-        <ProgressBar label="Consistency" value={components.consistency} />
-        <ProgressBar label="Temporal Stability" value={components.temporalStability} />
-        <ProgressBar label="Quality Control" value={components.qualityControl} />
-        <ProgressBar label="Publication Standards" value={components.publicationStandards} />
-        <ProgressBar label="Corrections Policy" value={components.correctionsPolicy} />
-        <ProgressBar label="Update Maintenance" value={components.updateMaintenance} />
+      <div className="component-grid">
+        <SemiCircleProgressBar label="Consistency" value={components.consistency} />
+        <SemiCircleProgressBar label="Temporal Stability" value={components.temporalStability} />
+        <SemiCircleProgressBar label="Quality Control" value={components.qualityControl} />
+        <SemiCircleProgressBar label="Publication Standards" value={components.publicationStandards} />
+        <SemiCircleProgressBar label="Corrections Policy" value={components.correctionsPolicy} />
+        <SemiCircleProgressBar label="Update Maintenance" value={components.updateMaintenance} />
       </div>
     </div>
   );
@@ -822,7 +810,6 @@ function ReliabilityTab({ article }) {
 // --- Reusable UI Components ---
 
 // Score Box for Overview Tab
-// --- UPDATED with Tooltips ---
 function ScoreBox({ label, value }) {
   let tooltip = '';
   switch(label) {
@@ -843,26 +830,28 @@ function ScoreBox({ label, value }) {
   }
   
   return (
-    <div className="score-circle" title={tooltip}> {/* Add title attribute */}
-      <div className="score-value">{value ?? 'N/A'}</div> {/* Handle null/undefined */}
+    <div className="score-circle" title={tooltip}>
+      <div className="score-value">{value ?? 'N/A'}</div>
       <div className="score-label">{label}</div>
     </div>
   );
 }
 
-// Progress Bar for Analysis Tabs
-// --- UPDATED with Tooltips ---
-function ProgressBar({ label, value }) {
-   // Ensure value is a number between 0 and 100
-   const numericValue = Math.max(0, Math.min(100, Number(value) || 0));
+// --- NEW Semi-Circular Progress Bar Component ---
+function SemiCircleProgressBar({ label, value }) {
+  const numericValue = Math.max(0, Math.min(100, Number(value) || 0));
+  // Map value (0-100) to rotation (0-180 degrees)
+  const rotation = (numericValue / 100) * 180;
+  
   return (
-    <div className="progress-bar-container" title={`${label}: ${numericValue}/100`}>
-      <span className="progress-label">{label}</span>
-      <div className="progress-bar">
-        {/* Animate width change */}
-        <div className="progress-fill" style={{ width: `${numericValue}%` }}></div>
+    <div className="semicircle-container" title={`${label}: ${numericValue}/100`}>
+      <div className="semicircle">
+        <div className="semicircle-mask">
+          <div className="semicircle-fill" style={{ transform: `rotate(${rotation}deg)` }}></div>
+        </div>
       </div>
-      <span className="progress-value">{numericValue}</span>
+      <div className="semicircle-label">{label}</div>
+      <div className="semicircle-value">{numericValue}</div>
     </div>
   );
 }

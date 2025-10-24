@@ -80,11 +80,11 @@ a:hover {
 }
 
 [title] {
-  cursor: pointer;
+  cursor: help; /* Use help cursor for tooltips */
   white-space: normal; /* Ensure long tooltips wrap */
 }
 .light-mode [title] {
-  cursor: pointer;
+  cursor: help;
 }
 
 
@@ -119,46 +119,43 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   background: var(--gradient-header);
   border-bottom: 1px solid var(--border-color);
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; /* Ensures space between left/right */
   align-items: center;
   padding: 0 30px;
   z-index: 1000;
   transition: background 0.3s ease;
 }
 
-/* --- UPDATED: Logo Centering Logic --- */
+/* --- UPDATED: Text Logo Styles --- */
 .header-left {
-  /* This element now acts as the container for centering */
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  width: 260px; /* Match sidebar width */
+  /* No longer absolute positioning */
   display: flex;
-  justify-content: center; /* Center logo horizontally */
-  align-items: center; /* Center logo vertically */
-  padding-left: 20px; /* Align with sidebar padding */
-  padding-right: 20px;
+  align-items: center;
 }
 .logo-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start; /* Align text to the left */
 }
-.logo-svg {
-  height: 28px; /* Adjust size as needed */
-  width: auto;
-  color: var(--text-primary); /* Use theme color */
-  margin-bottom: 2px;
+.logo-text {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1;
 }
 .tagline {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-tertiary);
   font-weight: 500;
   letter-spacing: 0.3px;
+  margin-top: 2px;
 }
-/* --- End Logo Logic --- */
+/* --- End Logo Styles --- */
 
+.header-right {
+  /* Stays the same */
+}
 
 .theme-toggle {
   background: var(--bg-elevated);
@@ -246,6 +243,13 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   outline: none;
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 2px var(--accent-primary);
+}
+
+/* --- NEW: Quality Range Styling --- */
+.quality-range {
+  font-size: 0.8em;
+  color: var(--text-tertiary);
+  margin-left: 5px;
 }
 
 .filter-results {
@@ -440,7 +444,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 /* --- End v2.8 Display --- */
 
 
-/* --- Card Actions (v2.9 Button Symmetry) --- */
+/* --- Card Actions (v2.10 Stacked Buttons) --- */
 .article-actions {
   display: flex;
   flex-direction: column;
@@ -450,19 +454,25 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   border-top: 1px solid var(--border-light);
 }
 
+/* Override grid for review articles to stack */
+.article-actions > .btn-secondary.btn-full-width {
+  grid-column: 1 / -1; /* Make share button full width */
+}
+.article-actions > a.btn-primary.btn-full-width {
+   grid-column: 1 / -1; /* Make read button full width */
+}
+
 .article-actions-top {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
-/* Ensure anchor tags in the grid behave like buttons for styling */
 .article-actions-top > a {
-  display: block; /* Make anchor fill grid cell */
-  text-decoration: none;
+  display: block; text-decoration: none;
 }
 .article-actions-top > a > .btn-primary,
 .article-actions-top > a > .btn-secondary {
-   width: 100%; /* Make button inside anchor fill width */
+   width: 100%;
 }
 
 
@@ -644,7 +654,7 @@ button:disabled, button:disabled:hover {
 .score-label { font-size: 11px; color: var(--text-tertiary); font-weight: 600; text-transform: uppercase; margin-top: 6px; letter-spacing: 0.5px; }
 
 
-/* --- Styles for Breakdown Tab v2.9 --- */
+/* --- Styles for Breakdown Tab v2.10 --- */
 .component-section { margin-bottom: 30px; }
 
 /* Header for component sections (contains heading and toggle) */
@@ -652,10 +662,8 @@ button:disabled, button:disabled:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px; /* Space between header and grid */
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 10px;
-  flex-wrap: wrap; /* Allow wrapping on small screens */
+  margin-bottom: 10px; /* Reduced space before divider */
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -663,10 +671,23 @@ button:disabled, button:disabled:hover {
   font-size: 16px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 0; /* Removed bottom margin */
-  border-bottom: none; /* Removed bottom border */
-  padding-bottom: 0; /* Removed bottom padding */
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
 }
+
+/* Divider Line */
+.divider {
+  height: 1px;
+  background-color: var(--border-color);
+  margin-bottom: 25px; /* Space after divider */
+}
+
+/* Spacing class for grid */
+.section-spacing {
+  margin-top: 25px; /* Consistent space above grid */
+}
+
 
 /* Toggle Switch Styles */
 .toggle-zero-scores {
@@ -771,19 +792,19 @@ button:disabled, button:disabled:hover {
     .articles-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
     .content { padding: 30px; }
     .sidebar { width: 220px; }
-    .header-left { width: 220px; } /* Match sidebar */
+    .header-left { width: auto; /* Allow header left to shrink */ }
     .compare-modal { max-width: 95vw; }
     .coverage-article { flex-direction: column-reverse; }
     .coverage-image { width: 100%; height: 150px; }
 }
 @media (max-width: 768px) {
   body { font-size: 14px; }
-  .header { height: auto; padding: 15px 20px; flex-direction: column; align-items: flex-start; gap: 8px; position: static; /* Make header static on mobile */ }
-  .header-left { position: static; width: 100%; justify-content: flex-start; padding: 0; } /* Adjust logo position */
+  .header { height: auto; padding: 15px 20px; flex-direction: row; /* Keep row layout */ align-items: center; position: fixed; /* Keep fixed */ }
+  .header-left { position: static; width: auto; justify-content: flex-start; padding: 0; } /* Adjust logo position */
   .logo-container { align-items: flex-start; }
-  .header-right { position: absolute; top: 15px; right: 20px; }
+  .header-right { position: static; /* Remove absolute positioning */ }
   .theme-toggle { width: 36px; height: 36px; font-size: 16px; }
-  .main-container { flex-direction: column; padding-top: 0; max-width: 100%; } /* Remove padding-top */
+  .main-container { flex-direction: column; padding-top: 65px; /* Add padding back */ max-width: 100%; }
   .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border-color); padding: 20px; justify-content: flex-start; }
   .filter-section h3 { margin-bottom: 8px;} .filter-section select { padding: 8px 10px; font-size: 12px;} .apply-filters-btn { padding: 10px; font-size: 12px;}
   .filter-results { margin-top: 20px; } /* Ensure margin on mobile */
@@ -795,7 +816,7 @@ button:disabled, button:disabled:hover {
   .modal-tabs button { font-size: 11px; padding: 10px 12px; } .modal-body, .modal-content { padding: 20px; }
   .overview-grid { grid-template-columns: 1fr 1fr; gap: 15px;} .score-value { font-size: 24px;} .score-label { font-size: 10px;}
   .component-section-header { flex-direction: column; align-items: flex-start; } /* Stack header items */
-  .toggle-zero-scores { margin-top: 10px; }
+  .toggle-zero-scores { margin-top: 10px; width: 100%; justify-content: flex-start; }
   .component-grid-v2 { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 20px 15px; } /* Adjust grid for mobile */
   .circle-progress-svg { width: 80px; height: 80px; }
   .circle-progress-text-value { font-size: 18px; }

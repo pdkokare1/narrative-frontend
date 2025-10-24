@@ -58,6 +58,7 @@ function App() {
   const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '' }); // Added title
   const [analysisModal, setAnalysisModal] = useState({ open: false, article: null });
   const [totalArticlesCount, setTotalArticlesCount] = useState(0); // Track total count from API
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // NEW: State for mobile sidebar
 
   // Effect to set initial theme from localStorage
   useEffect(() => {
@@ -70,6 +71,13 @@ function App() {
   useEffect(() => {
     fetchArticles();
   }, [filters]); // Re-fetch when filters change
+
+  // Close sidebar on filter change (for mobile)
+  useEffect(() => {
+    if (isSidebarOpen) {
+      setIsSidebarOpen(false);
+    }
+  }, [filters, isSidebarOpen]); // Note: isSidebarOpen dependency prevents extra runs
 
   const fetchArticles = async (loadMore = false) => {
     try {
@@ -179,11 +187,21 @@ function App() {
   // Debounced scroll handler (optional optimization)
   useEffect(() => {
     let timeoutId;
+    // Get the scrollable element (content area on mobile, window on desktop)
+    const scrollableElement = window.innerWidth <= 768 ? document.querySelector('.content') : window;
+    
+    if (!scrollableElement) return; // Exit if element not found yet
+
     const handleScroll = () => {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
+            const isWindow = scrollableElement === window;
+            const scrollHeight = isWindow ? document.body.offsetHeight : scrollableElement.scrollHeight;
+            const scrollTop = isWindow ? window.scrollY : scrollableElement.scrollTop;
+            const clientHeight = isWindow ? window.innerHeight : scrollableElement.clientHeight;
+
             // Check if user is near the bottom
-            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 800) {
+            if (clientHeight + scrollTop >= scrollHeight - 800) {
                 // Check if not loading, and if there are more articles to load
                 if (!loading && displayedArticles.length < totalArticlesCount) {
                     // console.log("Scroll near bottom detected, loading more...");
@@ -193,11 +211,11 @@ function App() {
         }, 150); // Adjust debounce delay as needed
     };
 
-    window.addEventListener('scroll', handleScroll);
+    scrollableElement.addEventListener('scroll', handleScroll);
     // Cleanup function
     return () => {
         clearTimeout(timeoutId);
-        window.removeEventListener('scroll', handleScroll);
+        scrollableElement.removeEventListener('scroll', handleScroll);
     };
 }, [loading, displayedArticles, totalArticlesCount]); // Dependencies for the scroll effect
 
@@ -224,13 +242,25 @@ function App() {
 
   return (
     <div className="app">
-      <Header theme={theme} toggleTheme={toggleTheme} />
+      <Header 
+        theme={theme} 
+        toggleTheme={toggleTheme} 
+        onToggleSidebar={() => setIsSidebarOpen(true)} // NEW Prop
+      />
 
       <div className="main-container">
+        {/* --- NEW: Mobile Sidebar Overlay --- */}
+        <div 
+          className={`sidebar-mobile-overlay ${isSidebarOpen ? 'open' : ''}`}
+          onClick={() => setIsSidebarOpen(false)}
+        ></div>
+
         <Sidebar
           filters={filters}
           onFilterChange={handleFilterChange} // Use handler to potentially debounce/manage filter state
           articleCount={totalArticlesCount} // Use total count from API
+          isOpen={isSidebarOpen} // NEW Prop
+          onClose={() => setIsSidebarOpen(false)} // NEW Prop
         />
 
         <main className="content">
@@ -300,11 +330,20 @@ function App() {
 
 // === Sub-Components ===
 
-// --- Header (Text Logo, Toggle Fix) ---
-function Header({ theme, toggleTheme }) {
+// --- Header (Text Logo, Toggle Fix, NEW Hamburger) ---
+function Header({ theme, toggleTheme, onToggleSidebar }) {
   return (
     <header className="header">
       <div className="header-left">
+         {/* --- NEW: Hamburger Button --- */}
+         <button className="hamburger-btn" onClick={onToggleSidebar} title="Open Filters">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+         </button>
+
         {/* --- Text Logo --- */}
         <div className="logo-container">
           <h1 className="logo-text">The Gamut</h1>
@@ -321,8 +360,8 @@ function Header({ theme, toggleTheme }) {
   );
 }
 
-// --- Sidebar (Updated Quality Options) ---
-function Sidebar({ filters, onFilterChange, articleCount }) {
+// --- Sidebar (Updated Quality Options, NEW mobile props) ---
+function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
   const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
 
@@ -345,8 +384,13 @@ function Sidebar({ filters, onFilterChange, articleCount }) {
   };
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}> {/* NEW: conditional class */}
       <div> {/* Filters Wrapper */}
+        <div className="sidebar-header-mobile"> {/* NEW: Mobile header in sidebar */}
+          <h3>Filters</h3>
+          <button className="sidebar-close-btn" onClick={onClose} title="Close Filters">×</button>
+        </div>
+
         <div className="filter-section">
           <h3>Category</h3>
           <select name="category" value={filters.category} onChange={handleChange}>
@@ -366,8 +410,7 @@ function Sidebar({ filters, onFilterChange, articleCount }) {
           <select name="quality" value={filters.quality} onChange={handleChange}>
             {qualityLevels.map(level => (
               <option key={level.value} value={level.value}>
-                {level.label}
-                {level.range && <span className="quality-range"> ({level.range})</span>}
+                {level.label} {level.range && `(${level.range})`} {/* UPDATED: Removed invalid span */}
               </option>
             ))}
           </select>

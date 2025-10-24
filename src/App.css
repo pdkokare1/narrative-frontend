@@ -126,9 +126,8 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   transition: background 0.3s ease;
 }
 
-/* --- UPDATED: Text Logo Styles --- */
+/* --- Text Logo Styles --- */
 .header-left {
-  /* No longer absolute positioning */
   display: flex;
   align-items: center;
 }
@@ -154,7 +153,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 /* --- End Logo Styles --- */
 
 .header-right {
-  /* Stays the same */
+  /* No changes needed, flexbox handles positioning */
 }
 
 .theme-toggle {
@@ -245,11 +244,11 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   box-shadow: 0 0 0 2px var(--accent-primary);
 }
 
-/* --- NEW: Quality Range Styling --- */
+/* --- UPDATED: Quality Range Styling --- */
 .quality-range {
-  font-size: 0.8em;
-  color: var(--text-tertiary);
-  margin-left: 5px;
+  font-size: 0.8em; /* Smaller */
+  color: var(--text-tertiary); /* Lighter */
+  margin-left: 4px;
 }
 
 .filter-results {
@@ -300,12 +299,14 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 }
 
 /* ==================== ARTICLES GRID ==================== */
+/* --- UPDATED for more aggressive 4 columns --- */
 .articles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Adjust minmax */
   gap: 30px;
 }
-@media (min-width: 1700px) {
+/* Keep 4 columns even on very large screens */
+@media (min-width: 1600px) { /* Lower breakpoint slightly */
   .articles-grid {
     grid-template-columns: repeat(4, 1fr);
   }
@@ -403,32 +404,42 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   overflow-wrap: break-word;
 }
 
-.article-meta {
+/* --- UPDATED Meta Section (v2.11) --- */
+.article-meta-v2 {
   display: flex;
-  justify-content: flex-start;
   align-items: center;
   margin-bottom: 15px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--border-light);
-  gap: 15px;
+  gap: 8px; /* Reduced gap */
+  flex-wrap: wrap; /* Allow wrapping */
 }
 
-.source {
+.source, .bias-score-card, .political-lean-card {
   font-size: 11px;
   color: var(--text-tertiary);
-  font-weight: 600;
-  text-transform: uppercase;
+  font-weight: 500;
   letter-spacing: 0.5px;
 }
+.source {
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.meta-divider {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+/* --- End Meta v2.11 --- */
 
-/* --- Quality + Sentiment Display (v2.8) --- */
+
+/* --- Quality + Sentiment Display --- */
 .quality-display-v2 {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
-  flex-wrap: wrap; /* Allow wrapping on small cards */
-  gap: 5px 10px; /* Add horizontal gap */
+  flex-wrap: wrap;
+  gap: 5px 10px;
 }
 .quality-grade-text, .sentiment-text {
   font-size: 11px;
@@ -439,9 +450,9 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 }
 .sentiment-text {
   font-weight: 500;
-  text-transform: none; /* Sentiment is not uppercase */
+  text-transform: none;
 }
-/* --- End v2.8 Display --- */
+/* --- End Display --- */
 
 
 /* --- Card Actions (v2.10 Stacked Buttons) --- */
@@ -454,13 +465,20 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   border-top: 1px solid var(--border-light);
 }
 
-/* Override grid for review articles to stack */
-.article-actions > .btn-secondary.btn-full-width {
-  grid-column: 1 / -1; /* Make share button full width */
-}
+/* Specific styles for stacked buttons in review articles */
+.article-actions > .btn-secondary.btn-full-width,
 .article-actions > a.btn-primary.btn-full-width {
-   grid-column: 1 / -1; /* Make read button full width */
+  grid-column: 1 / -1; /* Ensure they take full width */
 }
+/* Remove the grid layout for the top row ONLY in review articles */
+.article-actions > .btn-secondary.btn-full-width + a.btn-primary.btn-full-width {
+  margin-top: 8px; /* Add gap between stacked buttons */
+}
+.article-actions > .btn-secondary.btn-full-width:only-child {
+   /* If only share button exists somehow */
+   margin-bottom: 0;
+}
+
 
 .article-actions-top {
   display: grid;
@@ -654,7 +672,7 @@ button:disabled, button:disabled:hover {
 .score-label { font-size: 11px; color: var(--text-tertiary); font-weight: 600; text-transform: uppercase; margin-top: 6px; letter-spacing: 0.5px; }
 
 
-/* --- Styles for Breakdown Tab v2.10 --- */
+/* --- Styles for Breakdown Tab v2.11 --- */
 .component-section { margin-bottom: 30px; }
 
 /* Header for component sections (contains heading and toggle) */
@@ -680,7 +698,7 @@ button:disabled, button:disabled:hover {
 .divider {
   height: 1px;
   background-color: var(--border-color);
-  margin-bottom: 25px; /* Space after divider */
+  /* margin-bottom: 25px; */ /* Removed margin, now handled by section-spacing */
 }
 
 /* Spacing class for grid */
@@ -802,7 +820,7 @@ button:disabled, button:disabled:hover {
   .header { height: auto; padding: 15px 20px; flex-direction: row; /* Keep row layout */ align-items: center; position: fixed; /* Keep fixed */ }
   .header-left { position: static; width: auto; justify-content: flex-start; padding: 0; } /* Adjust logo position */
   .logo-container { align-items: flex-start; }
-  .header-right { position: static; /* Remove absolute positioning */ }
+  .header-right { position: static; /* Remove absolute positioning */ margin-left: auto; /* Push toggle to the right */ }
   .theme-toggle { width: 36px; height: 36px; font-size: 16px; }
   .main-container { flex-direction: column; padding-top: 65px; /* Add padding back */ max-width: 100%; }
   .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border-color); padding: 20px; justify-content: flex-start; }

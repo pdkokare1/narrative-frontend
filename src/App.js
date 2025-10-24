@@ -71,7 +71,7 @@ function App() {
             sentiment: ['Positive', 'Negative', 'Neutral'].includes(article.sentiment) ? article.sentiment : 'Neutral',
             // Scores (ensure they are numbers, default 0)
             biasScore: Number(article.biasScore) || 0,
-            trustScore: Number(article.trustScore) || 0,
+            trustScore: Number(article.trustScore) || 0, // This is now calculated on backend
             credibilityScore: Number(article.credibilityScore) || 0,
             reliabilityScore: Number(article.reliabilityScore) || 0,
             // Grades/Labels (default if missing)
@@ -333,7 +333,8 @@ function Sidebar({ filters, onFilterChange, articleCount }) {
 }
 
 
-// --- UPDATED ArticleCard Component ---
+// --- UPDATED ArticleCard Component (v2.6) ---
+// --- Implements UI changes for 'SentimentOnly' and Tooltips ---
 function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
 
   // Determine if it's a review/opinion piece
@@ -380,46 +381,85 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare }) {
           {/* <span className="date">{new Date(article.publishedAt).toLocaleDateString()}</span> */}
         </div>
 
-        {/* --- NEW Simplified Quality Display --- */}
+        {/* --- NEW Simplified Quality Display (with Tooltip) --- */}
         <div className="quality-display">
              {isReview ? (
-                 <span className="quality-grade-text">Review / Opinion Piece</span>
+                 <span className="quality-grade-text" title="This article is an opinion, review, or summary.">
+                   Review / Opinion Piece
+                 </span>
              ) : article.credibilityGrade ? (
-                 <span className="quality-grade-text">Quality Grade: {article.credibilityGrade}</span>
+                 <span className="quality-grade-text" title={`Overall Trust Score: ${article.trustScore}/100`}>
+                   Quality Grade: {article.credibilityGrade}
+                 </span>
              ) : (
-                 <span className="quality-grade-text">Quality Grade: N/A</span> // Handle missing grade
+                 <span className="quality-grade-text" title="Quality grade not available.">
+                   Quality Grade: N/A
+                 </span>
              )}
          </div>
          {/* --- End Simplified Display --- */}
 
 
+        {/* --- NEW Article Actions (Handles SentimentOnly) --- */}
         <div className="article-actions">
-          <div className="article-actions-top">
-            <button
-              onClick={() => onAnalyze(article)}
-              className="btn-secondary"
-              title={isReview ? "Detailed analysis not applicable for reviews" : "View Detailed Analysis"}
-              disabled={isReview} // Disable button if it's a review
-            >
-              Analysis
-            </button>
-            <button
-              onClick={() => onShare(article)}
-              className="btn-secondary"
-              title="Share article link"
-            >
-              Share
-            </button>
-          </div>
-          <button
-            onClick={() => onCompare(article.clusterId, article.headline)} // Pass headline too
-            className="btn-primary btn-full-width"
-            title={isReview ? "Coverage comparison not applicable for reviews" : "Compare Coverage Across Perspectives"}
-            disabled={isReview || !article.clusterId} // Disable if review OR no clusterId
-          >
-            Compare Coverage
-          </button>
+          {isReview ? (
+            // --- UI for SentimentOnly (Reviews, Sports, etc.) ---
+            <>
+              <div className="article-actions-top">
+                {/* Share button takes full width in this new layout */}
+                <button
+                  onClick={() => onShare(article)}
+                  className="btn-secondary"
+                  title="Share article link"
+                  style={{ width: '100%' }} // Make share button full width
+                >
+                  Share
+                </button>
+              </div>
+              {/* Direct "Read Article" button, styled as primary */}
+              <a 
+                href={article.url} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="btn-primary btn-full-width" 
+                style={{ textDecoration: 'none', textAlign: 'center' }}
+                title="Read the full article on the source's website"
+              >
+                Read Article
+              </a>
+            </>
+          ) : (
+            // --- UI for Full Analysis ---
+            <>
+              <div className="article-actions-top">
+                <button
+                  onClick={() => onAnalyze(article)}
+                  className="btn-secondary"
+                  title="View Detailed Analysis"
+                >
+                  Analysis
+                </button>
+                <button
+                  onClick={() => onShare(article)}
+                  className="btn-secondary"
+                  title="Share article link"
+                >
+                  Share
+                </button>
+              </div>
+              <button
+                onClick={() => onCompare(article.clusterId, article.headline)} // Pass headline too
+                className="btn-primary btn-full-width"
+                title="Compare Coverage Across Perspectives"
+                disabled={!article.clusterId} // Disable if no clusterId
+              >
+                Compare Coverage
+              </button>
+            </>
+          )}
         </div>
+        {/* --- END of NEW Article Actions --- */}
+
       </div>
     </div>
   );
@@ -534,6 +574,7 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze }) {
 }
 
 // Helper function to render article groups in Compare Modal
+// --- UPDATED with Tooltips ---
 function renderArticleGroup(articleList, perspective, onAnalyze) {
   if (!articleList || articleList.length === 0) return null; // Don't render if empty
 
@@ -550,11 +591,11 @@ function renderArticleGroup(articleList, perspective, onAnalyze) {
              {(article.summary || '').substring(0, 150)}{article.summary && article.summary.length > 150 ? '...' : ''}
            </p>
 
-           {/* Simplified scores */}
+           {/* Simplified scores (with Tooltips) */}
           <div className="article-scores">
-            <span>Bias: {article.biasScore ?? 'N/A'}</span>
-            <span>Trust: {article.trustScore ?? 'N/A'}</span>
-            <span>Grade: {article.credibilityGrade || 'N/A'}</span>
+            <span title="Bias Score (0-100, lower is less biased)">Bias: {article.biasScore ?? 'N/A'}</span>
+            <span title="Overall Trust Score (0-100, higher is more trustworthy)">Trust: {article.trustScore ?? 'N/A'}</span>
+            <span title="Credibility Grade (A+ to F)">Grade: {article.credibilityGrade || 'N/A'}</span>
           </div>
           <div className="coverage-actions">
             {/* Direct link to read article */}
@@ -745,7 +786,7 @@ function CredibilityTab({ article }) {
       </h3>
 
       <div className="component-section">
-        <h4>Credibility Components</h4>
+        <h4>Credibility Components (UCS)</h4>
         <ProgressBar label="Source Credibility" value={components.sourceCredibility} />
         <ProgressBar label="Fact Verification" value={components.factVerification} />
         <ProgressBar label="Professionalism" value={components.professionalism} />
@@ -766,7 +807,7 @@ function ReliabilityTab({ article }) {
       </h3>
 
       <div className="component-section">
-        <h4>Reliability Components</h4>
+        <h4>Reliability Components (URS)</h4>
         <ProgressBar label="Consistency" value={components.consistency} />
         <ProgressBar label="Temporal Stability" value={components.temporalStability} />
         <ProgressBar label="Quality Control" value={components.qualityControl} />
@@ -781,9 +822,28 @@ function ReliabilityTab({ article }) {
 // --- Reusable UI Components ---
 
 // Score Box for Overview Tab
+// --- UPDATED with Tooltips ---
 function ScoreBox({ label, value }) {
+  let tooltip = '';
+  switch(label) {
+    case 'Trust Score':
+      tooltip = 'Overall Trust Score (0-100) = sqrt(Credibility * Reliability). Higher is better.';
+      break;
+    case 'Bias Score':
+      tooltip = 'Overall Bias Score (0-100). 0 is least biased, 100 is most biased.';
+      break;
+    case 'Credibility':
+      tooltip = 'Credibility Score (UCS, 0-100). Based on source, verification, professionalism, evidence, transparency, and audience trust.';
+      break;
+    case 'Reliability':
+      tooltip = 'Reliability Score (URS, 0-100). Based on consistency, stability, quality control, standards, and corrections policy.';
+      break;
+    default:
+      tooltip = `${label} (0-100)`;
+  }
+  
   return (
-    <div className="score-circle"> {/* Keep class name for now, but it's a box */}
+    <div className="score-circle" title={tooltip}> {/* Add title attribute */}
       <div className="score-value">{value ?? 'N/A'}</div> {/* Handle null/undefined */}
       <div className="score-label">{label}</div>
     </div>
@@ -791,11 +851,12 @@ function ScoreBox({ label, value }) {
 }
 
 // Progress Bar for Analysis Tabs
+// --- UPDATED with Tooltips ---
 function ProgressBar({ label, value }) {
    // Ensure value is a number between 0 and 100
    const numericValue = Math.max(0, Math.min(100, Number(value) || 0));
   return (
-    <div className="progress-bar-container">
+    <div className="progress-bar-container" title={`${label}: ${numericValue}/100`}>
       <span className="progress-label">{label}</span>
       <div className="progress-bar">
         {/* Animate width change */}

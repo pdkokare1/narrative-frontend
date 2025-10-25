@@ -599,7 +599,8 @@ function Header({ theme, toggleTheme, onToggleSidebar }) {
 
       <div className="header-right">
         <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
-          {theme === 'dark' ? '☀️' : '🌙'}
+          {/* --- (FIX) Show CURRENT mode icon --- */}
+          {theme === 'dark' ? '🌙' : '☀️'}
         </button>
       </div>
     </header>
@@ -757,6 +758,7 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
 // --- UPDATED ArticleCard Component (v2.11) ---
 // --- Show Bias/Lean, updated grade tooltip ---
 // --- NEW: Added onTouchStart/End={(e) => e.stopPropagation()} to all interactive elements ---
+// --- (FIX) Added accent coloring ---
 function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hideTooltip }) {
 
   const isReview = article.analysisType === 'SentimentOnly';
@@ -817,7 +819,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                 onTouchStart={(e) => showTooltip("Bias Score (0-100). Less is better.", e)}
                 onTouchEnd={hideTooltip}
               >
-                Bias: {article.biasScore}
+                {/* --- (FIX) Added accent color --- */}
+                Bias: <span className="accent-text">{article.biasScore}</span>
               </span>
                <span className="meta-divider">|</span>
                <span
@@ -826,7 +829,10 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                 onTouchStart={(e) => showTooltip("Detected political leaning.", e)}
                 onTouchEnd={hideTooltip}
                >
-                 {article.politicalLean}
+                 {/* --- (FIX) Added conditional accent color --- */}
+                 <span className={article.politicalLean !== 'Not Applicable' ? 'accent-text' : ''}>
+                    {article.politicalLean}
+                 </span>
                </span>
             </>
            )}
@@ -844,23 +850,15 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                  >
                    Review / Opinion
                  </span>
-             ) : article.credibilityGrade ? (
+             ) : (
                  <span
                     className="quality-grade-text"
                     title="This grade (A+ to F) is based on the article's Credibility and Reliability."
                     onTouchStart={(e) => showTooltip("This grade (A+ to F) is based on the article's Credibility and Reliability.", e)}
                     onTouchEnd={hideTooltip}
-                 > {/* UPDATED TOOLTIP */}
-                   Grade: {article.credibilityGrade}
-                 </span>
-             ) : (
-                 <span
-                    className="quality-grade-text"
-                    title="Quality grade not available."
-                    onTouchStart={(e) => showTooltip("Quality grade not available.", e)}
-                    onTouchEnd={hideTooltip}
                  >
-                   Grade: N/A
+                   {/* --- (FIX) Added conditional accent color --- */}
+                   Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}
                  </span>
              )}
 
@@ -1071,17 +1069,26 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip, hi
                 title="Bias Score (0-100, lower is less biased)"
                 onTouchStart={(e) => showTooltip("Bias Score (0-100, lower is less biased)", e)}
                 onTouchEnd={hideTooltip}
-              >Bias: {article.biasScore ?? 'N/A'}</span>
+              >
+                {/* --- (FIX) Added conditional accent color --- */}
+                Bias: {article.biasScore != null ? <span className="accent-text">{article.biasScore}</span> : 'N/A'}
+              </span>
               <span
                 title="Overall Trust Score (0-100, higher is more trustworthy)"
                 onTouchStart={(e) => showTooltip("Overall Trust Score (0-100, higher is more trustworthy)", e)}
                 onTouchEnd={hideTooltip}
-              >Trust: {article.trustScore ?? 'N/A'}</span>
+              >
+                {/* --- (FIX) Added conditional accent color --- */}
+                Trust: {article.trustScore != null ? <span className="accent-text">{article.trustScore}</span> : 'N/A'}
+              </span>
               <span
                 title="Credibility Grade (A+ to F)"
                 onTouchStart={(e) => showTooltip("Credibility Grade (A+ to F)", e)}
                 onTouchEnd={hideTooltip}
-              >Grade: {article.credibilityGrade || 'N/A'}</span>
+              >
+                {/* --- (FIX) Added conditional accent color --- */}
+                Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}
+              </span>
             </div>
             <div className="coverage-actions">
               <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1}} onTouchStart={stopTouch}>
@@ -1439,4 +1446,3 @@ function CircularProgressBar({ label, value, tooltip, showTooltip, hideTooltip }
 }
 
 export default App;
-

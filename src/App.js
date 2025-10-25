@@ -598,8 +598,9 @@ function Header({ theme, toggleTheme, onToggleSidebar }) {
       </div>
 
       <div className="header-right">
-        <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
-          {theme === 'dark' ? '☀️' : '🌙'}
+        <button className="theme-toggle" onClick={toggleTheme} title={`Current mode: ${theme}`}>
+          {/* (FIX) Show icon for CURRENT mode */}
+          {theme === 'dark' ? '🌙' : '☀️'}
         </button>
       </div>
     </header>
@@ -775,18 +776,18 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
 
   const stopTouch = (e) => e.stopPropagation();
 
+  // --- (FIX) Helper function for lean color class ---
+  const getLeanClass = (lean) => {
+    if (['Left', 'Left-Leaning'].includes(lean)) return 'text-accent-lean-left';
+    if (['Right', 'Right-Leaning'].includes(lean)) return 'text-accent-lean-right';
+    if (lean === 'Center') return 'text-accent-lean-center';
+    return '';
+  };
+
   return (
-    <div className="article-card">
-      <div className="article-image">
-        {article.imageUrl ? (
-          <img
-            src={article.imageUrl}
-            alt={`Image for ${article.headline}`}
-            onError={handleImageError}
-            loading="lazy"
-          />
-        ) : null}
-        <div className="image-placeholder" style={{ display: article.imageUrl ? 'none' : 'flex' }}>
+    <div className="article-card-wrapper"> {/* (FIX) Moved wrapper here */}
+      <div className="article-card">
+        <div className="article-image">
           📰
         </div>
       </div>
@@ -812,7 +813,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
             <>
               <span className="meta-divider">|</span>
               <span
-                className="bias-score-card"
+                // (FIX) Add accent class
+                className={`bias-score-card ${article.biasScore > 0 ? 'text-accent' : ''}`}
                 title="Bias Score (0-100). Less is better."
                 onTouchStart={(e) => showTooltip("Bias Score (0-100). Less is better.", e)}
                 onTouchEnd={hideTooltip}
@@ -821,7 +823,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
               </span>
                <span className="meta-divider">|</span>
                <span
-                className="political-lean-card"
+                // (FIX) Add conditional lean class
+                className={`political-lean-card ${getLeanClass(article.politicalLean)}`}
                 title="Detected political leaning."
                 onTouchStart={(e) => showTooltip("Detected political leaning.", e)}
                 onTouchEnd={hideTooltip}
@@ -846,7 +849,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                  </span>
              ) : article.credibilityGrade ? (
                  <span
-                    className="quality-grade-text"
+                    // (FIX) Add accent class
+                    className={`quality-grade-text ${article.credibilityGrade ? 'text-accent' : ''}`}
                     title="This grade (A+ to F) is based on the article's Credibility and Reliability."
                     onTouchStart={(e) => showTooltip("This grade (A+ to F) is based on the article's Credibility and Reliability.", e)}
                     onTouchEnd={hideTooltip}
@@ -860,9 +864,9 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                     onTouchStart={(e) => showTooltip("Quality grade not available.", e)}
                     onTouchEnd={hideTooltip}
                  >
-                   Grade: N/A
+                   Grade: {article.credibilityGrade}
                  </span>
-             )}
+             ) : (
 
              <span
                 className="sentiment-text"
@@ -1039,12 +1043,12 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
                     <p>No articles found for the '{activeTab}' perspective in this cluster.</p>
                  </div>
               )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+
+             <span
+                // (FIX) Add accent class
+                className={`sentiment-text ${article.sentiment !== 'Neutral' ? 'text-accent' : ''}`}
+                title="The article's overall sentiment towards its main subject."
+                onTouchStart={(e) => showTooltip("The article's overall sentiment towards its main subject.", e)}
 }
 
 // --- Helper function to render article groups ---
@@ -1069,16 +1073,22 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip, hi
             <div className="article-scores">
               <span
                 title="Bias Score (0-100, lower is less biased)"
+                // (FIX) Add accent class
+                className={article.biasScore > 0 ? 'text-accent' : ''}
                 onTouchStart={(e) => showTooltip("Bias Score (0-100, lower is less biased)", e)}
                 onTouchEnd={hideTooltip}
               >Bias: {article.biasScore ?? 'N/A'}</span>
               <span
                 title="Overall Trust Score (0-100, higher is more trustworthy)"
+                // (FIX) Add accent class
+                className={article.trustScore > 0 ? 'text-accent' : ''}
                 onTouchStart={(e) => showTooltip("Overall Trust Score (0-100, higher is more trustworthy)", e)}
                 onTouchEnd={hideTooltip}
               >Trust: {article.trustScore ?? 'N/A'}</span>
               <span
                 title="Credibility Grade (A+ to F)"
+                // (FIX) Add accent class
+                className={article.credibilityGrade ? 'text-accent' : ''}
                 onTouchStart={(e) => showTooltip("Credibility Grade (A+ to F)", e)}
                 onTouchEnd={hideTooltip}
               >Grade: {article.credibilityGrade || 'N/A'}</span>
@@ -1439,6 +1449,3 @@ function CircularProgressBar({ label, value, tooltip, showTooltip, hideTooltip }
 }
 
 export default App;
-
-
-

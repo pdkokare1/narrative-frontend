@@ -76,6 +76,7 @@ function App() {
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
   const [pullDistance, setPullDistance] = useState(0); // NEW: State for visual pull
+  const pullThreshold = 120; // (FIX) Defined pull threshold here
 
   // --- (FIX) UPDATED: Custom Tooltip/Popup Handlers (for Mobile Tap) ---
   const showTooltip = (text, e) => {
@@ -221,7 +222,7 @@ function App() {
     };
 
     const handleTouchEnd = () => {
-      const pullThreshold = 120; // (FIX) Increased threshold
+      // const pullThreshold = 120; // (FIX) Now defined in component scope
       if (contentEl.scrollTop === 0 && pullDistance > pullThreshold && !isRefreshing) {
         setIsRefreshing(true);
         fetchArticles().finally(() => setIsRefreshing(false));
@@ -239,7 +240,7 @@ function App() {
       contentEl.removeEventListener('touchmove', handleTouchMove);
       contentEl.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isRefreshing, pullDistance, contentRef]); // Re-attach if refreshing state changes
+  }, [isRefreshing, pullDistance, contentRef, pullThreshold]); // (FIX) Added pullThreshold
 
   const fetchArticles = async (loadMore = false) => {
     try {
@@ -429,6 +430,25 @@ function App() {
     }
   };
 
+  // --- (FIX) NEW: Helper functions for pull-to-refresh transform ---
+  const contentTransform = () => {
+    if (isRefreshing) {
+      // Hold content down to show spinner
+      return 'translateY(56px)'; // 56px = spinner container height (16+24+16)
+    }
+    if (pullDistance > 0) {
+      // User is pulling
+      return `translateY(${Math.min(pullDistance, pullThreshold + 20)}px)`; // Allow overpull slightly
+    }
+    return 'translateY(0px)';
+  };
+
+  const contentTransition = () => {
+    // Snap back fast if not refreshing. Animate in/out if refreshing.
+    return pullDistance === 0 ? 'transform 0.3s ease' : 'none';
+  };
+  // --- End transform helpers ---
+
 
   return (
     <div className="app">
@@ -467,20 +487,20 @@ function App() {
           <div 
             className="pull-indicator" 
             style={{ 
-              opacity: Math.min(pullDistance / 120, 1), 
-              transform: `translateY(${Math.min(pullDistance, 90)}px)`, // Move indicator down
+              opacity: Math.min(pullDistance / pullThreshold, 1), 
+              transform: `translateY(${Math.min(pullDistance, pullThreshold + 20)}px)`, // (FIX) Match overpull
               transition: pullDistance === 0 ? 'all 0.3s ease' : 'none' 
             }}
           >
             <span 
               className="pull-indicator-arrow" 
               style={{ 
-                transform: `rotate(${pullDistance > 120 ? '180deg' : '0deg'})` 
+                transform: `rotate(${pullDistance > pullThreshold ? '180deg' : '0deg'})` 
               }}
             >
               ↓
             </span>
-            <span>{pullDistance > 120 ? 'Release to refresh' : 'Pull to refresh'}</span>
+            <span>{pullDistance > pullThreshold ? 'Release to refresh' : 'Pull to refresh'}</span>
           </div>
 
           <div 
@@ -503,7 +523,13 @@ function App() {
           ) : (
             <>
               {displayedArticles.length > 0 ? (
-                 <div className="articles-grid">
+                 <div 
+                   className="articles-grid"
+                   style={{ // (FIX) Apply transform
+                     transform: contentTransform(),
+                     transition: contentTransition()
+                   }}
+                 >
                   {displayedArticles.map((article) => (
                     // --- NEW: Added wrapper for mobile scroll-snap ---
                     <div className="article-card-wrapper" key={article._id || article.url}>
@@ -520,14 +546,28 @@ function App() {
                  </div>
               ) : (
                 // Show message if no articles match filters (and not loading)
-                 <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
+                 <div 
+                   style={{ 
+                     textAlign: 'center', 
+                     marginTop: '50px', 
+                     color: 'var(--text-tertiary)',
+                     transform: contentTransform(), // (FIX) Apply transform
+                     transition: contentTransition()
+                   }}
+                 >
                     <p>No articles found matching your current filters.</p>
                  </div>
               )}
 
               {/* --- (FIX) NEW: Show loading spinner for infinite scroll --- */}
               {(loading && !initialLoad) && (
-                <div className="article-card-wrapper load-more-wrapper"> {/* Re-use wrapper for snap */}
+                <div 
+                  className="article-card-wrapper load-more-wrapper" 
+                  style={{ // (FIX) Apply transform
+                     transform: contentTransform(),
+                     transition: contentTransition()
+                  }}
+                > {/* Re-use wrapper for snap */}
                   <div className="loading-container" style={{ minHeight: '200px' }}>
                     <div className="spinner"></div>
                     <p>Loading more articles...</p>
@@ -537,7 +577,13 @@ function App() {
 
               {/* (FIX) Show Load More button only if there are more articles AND NOT loading */}
               {!loading && displayedArticles.length < totalArticlesCount && (
-                <div className="article-card-wrapper load-more-wrapper">
+                <div 
+                  className="article-card-wrapper load-more-wrapper" 
+                  style={{ // (FIX) Apply transform
+                     transform: contentTransform(),
+                     transition: contentTransition()
+                  }}
+                >
                   <div className="load-more">
                     <button onClick={loadMoreArticles} className="load-more-btn">
                       Load More ({totalArticlesCount - displayedArticles.length} remaining)
@@ -993,8 +1039,12 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
 
   useEffect(() => {
     const fetchCluster = async () => {
+      // (FIX) If no clusterId, just show empty state
       if (!clusterId) {
+          console.log("No clusterId provided, showing empty compare.");
           setLoading(false);
+          setClusterData({ left: [], center: [], right: [], stats: {} }); // Ensure empty
+          setActiveTab('left'); // Set a default tab
           return;
       }
       try {

@@ -56,8 +56,8 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 14px; /* SCALED: Was 15px */
-  line-height: 1.6;
+  font-size: 13.5px; /* (FIX) Scaled down from 14px */
+  line-height: 1.55; /* (FIX) Adjusted line height for new font size */
   transition: background 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -379,6 +379,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   padding: 30px 40px; /* SCALED: Was 40px 50px */
   transition: all 0.3s ease-in-out; /* NEW: For sidebar transitions */
   min-width: 0; /* NEW: Fix flexbox overflow */
+  position: relative; /* (FIX) Needed for pull-to-refresh indicator */
 }
 
 .content-header { display: none; }
@@ -420,7 +421,34 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   color: var(--text-tertiary);
   font-size: 12px;
   font-weight: 500;
+  /* (FIX) NEW: Position at the top for mobile */
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
   /* This will be shown/hidden by inline style in App.js */
+}
+
+/* (FIX) NEW: Pull-to-refresh Indicator */
+.pull-indicator {
+  position: absolute;
+  top: -50px; /* Start hidden above */
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  z-index: 0; /* Below content */
+  height: 50px;
+}
+.pull-indicator-arrow {
+  font-size: 16px;
+  margin-right: 8px;
+  transition: transform 0.2s ease;
 }
 
 
@@ -433,18 +461,14 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   align-items: stretch; /* (FIX) Make items in row same height */
 }
 
-/* --- (FIX) Force 3 columns on desktop --- */
+/* --- (FIX) Force 4 columns on desktop --- */
 @media (min-width: 1024px) {
-  .articles-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-/* --- (FIX) 4 columns only on very large screens --- */
-@media (min-width: 1600px) {
   .articles-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+/* --- (FIX) Remove 1600px breakpoint --- */
+/* @media (min-width: 1600px) { ... } */
 
 /* ==================== ARTICLE CARD ==================== */
 /* --- (FIX) Added height: 100% --- */
@@ -974,7 +998,10 @@ button:disabled, button:disabled:hover {
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 1400px) { .main-container { max-width: 95%; } }
 @media (max-width: 1024px) {
-    /* 3-col grid already handled by media query */
+    /* (FIX) Change to 3 columns for tablet */
+    .articles-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
     .content { padding: 25px; } /* SCALED: Was 30px */
     .sidebar { width: 220px; } /* Kept for tablet */
     .header-left { width: auto; /* Allow header left to shrink */ }
@@ -986,7 +1013,8 @@ button:disabled, button:disabled:hover {
 /* --- (FIX) MOBILE STYLES (Req 4, 5, 6) --- */
 @media (max-width: 768px) {
   body { 
-    font-size: 14px;
+    font-size: 14px; /* (FIX) Reset font size for mobile */
+    line-height: 1.6; /* (FIX) Reset line height for mobile */
     /* --- NEW: Prevent body scroll on mobile --- */
     overflow: hidden;
   }
@@ -1089,6 +1117,20 @@ button:disabled, button:disabled:hover {
     display: none; /* Chrome, Safari, Opera */
   }
 
+  /* (FIX) Reposition pull indicators for mobile */
+  .pull-to-refresh-container {
+    position: relative; /* Not absolute */
+    top: auto;
+  }
+  .pull-indicator {
+    position: absolute;
+    top: 10px; /* Show at top of viewport */
+    left: 0;
+    right: 0;
+    z-index: 10; /* Above cards */
+  }
+
+
   /* --- (FIX) Card Grid & Snap --- */
   .articles-grid {
     display: block; /* Use block layout */
@@ -1108,11 +1150,11 @@ button:disabled, button:disabled:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px 12px; /* (FIX) Symmetrical vertical, slightly less horizontal */
+    padding: 24px 12px; /* (FIX) Symmetrical vertical (more margin), slightly less horizontal */
     overflow: hidden; /* Prevent card overflow issues */
   }
   .article-card-wrapper .load-more {
-     margin: 0; /* Reset margins for load more button */
+     margin: 0; /* (FIX) Reset margins for load more button */
   }
 
 
@@ -1172,4 +1214,5 @@ button:disabled, button:disabled:hover {
 ::-webkit-scrollbar-track { background: var(--bg-secondary); }
 ::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
+
 

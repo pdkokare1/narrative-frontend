@@ -62,12 +62,11 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // NEW: State for mobile sidebar
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true); // NEW: State for desktop sidebar
 
-  // --- NEW: Custom Tooltip State ---
-  const [tooltip, setTooltip] = useState({
-    visible: false,
+  // --- (FIX) NEW: Detail Popup State ---
+  const [detailPopup, setDetailPopup] = useState({
+    open: false,
+    title: '',
     text: '',
-    x: 0,
-    y: 0,
   });
   const isMobile = () => window.innerWidth <= 768;
 
@@ -77,28 +76,20 @@ function App() {
   const touchEndY = useRef(0);
   const [pullDistance, setPullDistance] = useState(0); // NEW: State for visual pull
 
-  // --- NEW: Custom Tooltip Handlers (Simplified) ---
-  const showTooltip = (text, e) => {
-    if (!isMobile() || !text) return; // Only run on mobile
-    e.stopPropagation(); // Stop tap from triggering scroll
-
-    // Get touch position
-    const touch = e.touches[0];
-    // Position tooltip above the finger
-    const x = touch.clientX;
-    const y = touch.clientY - 40; // 40px above finger
-
-    // Show tooltip immediately
-    setTooltip({ visible: true, text, x, y });
-  };
-
-  const hideTooltip = (e) => {
-    if (!isMobile()) return;
-    if (tooltip.visible) {
-      setTooltip({ ...tooltip, visible: false });
+  // --- (FIX) NEW: Detail Popup Handlers ---
+  const showDetailPopup = (title, text) => {
+    // Only show popup on mobile
+    if (isMobile() && text) {
+      setDetailPopup({ open: true, title, text });
     }
   };
-  // --- End Tooltip Handlers ---
+
+  const closeDetailPopup = () => {
+    if (detailPopup.open) {
+      setDetailPopup({ open: false, title: '', text: '' });
+    }
+  };
+  // --- End Popup Handlers ---
 
 
   // Effect to set initial theme from localStorage
@@ -415,13 +406,14 @@ function App() {
 
   return (
     <div className="app">
-      {/* --- NEW: Custom Tooltip Render --- */}
-      <CustomTooltip
-        visible={tooltip.visible}
-        text={tooltip.text}
-        x={tooltip.x}
-        y={tooltip.y}
-      />
+      {/* --- (FIX) NEW: Detail Popup Render --- */}
+      {detailPopup.open && (
+        <DetailPopupModal
+          title={detailPopup.title}
+          text={detailPopup.text}
+          onClose={closeDetailPopup}
+        />
+      )}
 
       <Header
         theme={theme}
@@ -495,9 +487,8 @@ function App() {
                         onCompare={(clusterId, title) => setCompareModal({ open: true, clusterId, articleTitle: title })}
                         onAnalyze={(article) => setAnalysisModal({ open: true, article })}
                         onShare={shareArticle}
-                        // --- NEW: Tooltip props ---
-                        showTooltip={showTooltip}
-                        hideTooltip={hideTooltip}
+                        // --- (FIX) NEW: Popup prop ---
+                        showDetailPopup={showDetailPopup}
                       />
                     </div>
                   ))}
@@ -535,9 +526,8 @@ function App() {
             setCompareModal({ open: false, clusterId: null, articleTitle: '' }); // Close compare modal
             setAnalysisModal({ open: true, article }); // Open analysis modal
           }}
-          // --- NEW: Tooltip props ---
-          showTooltip={showTooltip}
-          hideTooltip={hideTooltip}
+          // --- (FIX) NEW: Popup prop ---
+          showDetailPopup={showDetailPopup}
         />
       )}
 
@@ -545,9 +535,8 @@ function App() {
         <DetailedAnalysisModal
           article={analysisModal.article}
           onClose={() => setAnalysisModal({ open: false, article: null })}
-          // --- NEW: Tooltip props ---
-          showTooltip={showTooltip}
-          hideTooltip={hideTooltip}
+          // --- (FIX) NEW: Popup prop ---
+          showDetailPopup={showDetailPopup}
         />
       )}
     </div>
@@ -556,21 +545,26 @@ function App() {
 
 // === Sub-Components ===
 
-// --- NEW: Custom Tooltip Component ---
-function CustomTooltip({ visible, text, x, y }) {
-  if (!visible) return null;
-
+// --- (FIX) NEW: Detail Popup Component ---
+function DetailPopupModal({ title, text, onClose }) {
+  // Handle overlay click to close
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+  
   return (
-    <div
-      className="tooltip-custom"
-      style={{
-        left: `${x}px`,
-        top: `${y}px`,
-        // Position centered horizontally, above the touch point
-        transform: 'translate(-50%, -100%)',
-      }}
-    >
-      {text}
+    <div className="popup-overlay" onClick={handleOverlayClick}>
+      <div className="popup-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="popup-header">
+          <h4>{title}</h4>
+          <button className="close-btn" onClick={onClose} title="Close">×</button>
+        </div>
+        <div className="popup-content">
+          <p>{text}</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -583,7 +577,7 @@ function Header({ theme, toggleTheme, onToggleSidebar }) {
       <div className="header-left">
          {/* --- NEW: Hamburger Button --- */}
          <button className="hamburger-btn" onClick={onToggleSidebar} title="Open Filters">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="3" y1="12" x2="21" y2="12"></line>
               <line x1="3" y1="6" x2="21" y2="6"></line>
               <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -755,16 +749,11 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
 }
 
 
-// --- UPDATED ArticleCard Component (v2.11) ---
-// --- Show Bias/Lean, updated grade tooltip ---
-// --- NEW: Added onTouchStart/End={(e) => e.stopPropagation()} to all interactive elements ---
-// --- (FIX) Added accent coloring ---
-function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hideTooltip }) {
+// --- (FIX) UPDATED ArticleCard Component ---
+function ArticleCard({ article, onCompare, onAnalyze, onShare, showDetailPopup }) {
 
   const isReview = article.analysisType === 'SentimentOnly';
-  // --- (FIX) NEW: Check for non-political leaning ---
   const isNonPolitical = article.politicalLean === 'Not Applicable';
-  // --- (FIX) REMOVED noCluster check ---
   const showReadArticleStack = isReview || isNonPolitical;
 
   const handleImageError = (e) => {
@@ -775,7 +764,16 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
     }
   };
 
+  // Stop event propagation to prevent card wrapper click
   const stopTouch = (e) => e.stopPropagation();
+
+  // (FIX) Get sentiment color class
+  const getSentimentClass = (sentiment) => {
+    if (sentiment === 'Positive') return 'accent-text-positive';
+    if (sentiment === 'Negative') return 'accent-text-negative';
+    if (sentiment === 'Neutral') return 'accent-text-neutral';
+    return '';
+  };
 
   return (
     <div className="article-card">
@@ -799,7 +797,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
             target="_blank"
             rel="noopener noreferrer"
             className="article-headline-link"
-            onTouchStart={stopTouch} // NEW: Prevent scroll on tap
+            onClick={stopTouch} // (FIX) Use onClick for desktop/mobile
          >
              <h3 className="article-headline">{article.headline}</h3>
          </a>
@@ -816,20 +814,16 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
               <span
                 className="bias-score-card"
                 title="Bias Score (0-100). Less is better."
-                onTouchStart={(e) => showTooltip("Bias Score (0-100). Less is better.", e)}
-                onTouchEnd={hideTooltip}
+                onClick={(e) => { e.stopPropagation(); showDetailPopup('Bias Score', 'Bias Score (0-100). Less is better.'); }}
               >
-                {/* --- (FIX) Added accent color --- */}
                 Bias: <span className="accent-text">{article.biasScore}</span>
               </span>
                <span className="meta-divider">|</span>
                <span
                 className="political-lean-card"
                 title="Detected political leaning."
-                onTouchStart={(e) => showTooltip("Detected political leaning.", e)}
-                onTouchEnd={hideTooltip}
+                onClick={(e) => { e.stopPropagation(); showDetailPopup('Political Leaning', 'Detected political leaning.'); }}
                >
-                 {/* --- (FIX) Added conditional accent color --- */}
                  <span className={article.politicalLean !== 'Not Applicable' ? 'accent-text' : ''}>
                     {article.politicalLean}
                  </span>
@@ -845,8 +839,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                  <span
                     className="quality-grade-text"
                     title="This article is an opinion, review, or summary."
-                    onTouchStart={(e) => showTooltip("This article is an opinion, review, or summary.", e)}
-                    onTouchEnd={hideTooltip}
+                    onClick={(e) => { e.stopPropagation(); showDetailPopup('Article Type', 'This article is an opinion, review, or summary.'); }}
                  >
                    Review / Opinion
                  </span>
@@ -854,10 +847,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                  <span
                     className="quality-grade-text"
                     title="This grade (A+ to F) is based on the article's Credibility and Reliability."
-                    onTouchStart={(e) => showTooltip("This grade (A+ to F) is based on the article's Credibility and Reliability.", e)}
-                    onTouchEnd={hideTooltip}
+                    onClick={(e) => { e.stopPropagation(); showDetailPopup('Quality Grade', 'This grade (A+ to F) is based on the article\'s Credibility and Reliability.'); }}
                  >
-                   {/* --- (FIX) Added conditional accent color --- */}
                    Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}
                  </span>
              )}
@@ -865,10 +856,10 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
              <span
                 className="sentiment-text"
                 title="The article's overall sentiment towards its main subject."
-                onTouchStart={(e) => showTooltip("The article's overall sentiment towards its main subject.", e)}
-                onTouchEnd={hideTooltip}
+                onClick={(e) => { e.stopPropagation(); showDetailPopup('Sentiment', 'The article\'s overall sentiment towards its main subject.'); }}
              >
-                Sentiment: {article.sentiment}
+                {/* (FIX) Added coloring to sentiment value */}
+                Sentiment: <span className={getSentimentClass(article.sentiment)}>{article.sentiment}</span>
              </span>
          </div>
          {/* --- End Simplified Display --- */}
@@ -881,8 +872,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
             // --- UI for SentimentOnly OR NonPolitical (STACKED BUTTONS) ---
             <>
               <button
-                onClick={() => onShare(article)}
-                onTouchStart={stopTouch} // NEW: Prevent scroll on tap
+                onClick={(e) => { stopTouch(e); onShare(article); }}
                 className="btn-secondary btn-full-width"
                 title="Share article link"
               >
@@ -895,7 +885,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                 className="btn-primary btn-full-width"
                 style={{ textDecoration: 'none', textAlign: 'center' }}
                 title="Read the full article on the source's website"
-                onTouchStart={stopTouch} // NEW: Prevent scroll on tap
+                onClick={stopTouch}
               >
                 Read Article
               </a>
@@ -905,16 +895,14 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
             <>
               <div className="article-actions-top">
                 <button
-                  onClick={() => onAnalyze(article)}
-                  onTouchStart={stopTouch} // NEW: Prevent scroll on tap
+                  onClick={(e) => { stopTouch(e); onAnalyze(article); }}
                   className="btn-secondary"
                   title="View Detailed Analysis"
                 >
                   Analysis
                 </button>
                 <button
-                  onClick={() => onShare(article)}
-                  onTouchStart={stopTouch} // NEW: Prevent scroll on tap
+                  onClick={(e) => { stopTouch(e); onShare(article); }}
                   className="btn-secondary"
                   title="Share article link"
                 >
@@ -922,8 +910,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                 </button>
               </div>
               <button
-                onClick={() => onCompare(article.clusterId, article.headline)} // Pass headline too
-                onTouchStart={stopTouch} // NEW: Prevent scroll on tap
+                onClick={(e) => { stopTouch(e); onCompare(article.clusterId, article.headline); }}
                 className="btn-primary btn-full-width"
                 title="Compare Coverage Across Perspectives"
                 disabled={!article.clusterId} // (FIX) This will now be disabled if no clusterId
@@ -943,7 +930,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
 // --- Modal Components ---
 
 // --- Compare Coverage Modal ---
-function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, showTooltip, hideTooltip }) {
+function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, showDetailPopup }) {
   const [clusterData, setClusterData] = useState({ left: [], center: [], right: [], stats: {} });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(null); // Set to null initially
@@ -1027,9 +1014,9 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
           ) : (
             <>
               {/* --- Logic updated to NOT show all by default --- */}
-              {activeTab === 'left' && renderArticleGroup(clusterData.left, 'Left', onAnalyze, showTooltip, hideTooltip)}
-              {activeTab === 'center' && renderArticleGroup(clusterData.center, 'Center', onAnalyze, showTooltip, hideTooltip)}
-              {activeTab === 'right' && renderArticleGroup(clusterData.right, 'Right', onAnalyze, showTooltip, hideTooltip)}
+              {activeTab === 'left' && renderArticleGroup(clusterData.left, 'Left', onAnalyze, showDetailPopup)}
+              {activeTab === 'center' && renderArticleGroup(clusterData.center, 'Center', onAnalyze, showDetailPopup)}
+              {activeTab === 'right' && renderArticleGroup(clusterData.right, 'Right', onAnalyze, showDetailPopup)}
 
               {/* Message if a specific tab has no articles */}
               {activeTab && clusterData[activeTab]?.length === 0 && (
@@ -1046,7 +1033,7 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
 }
 
 // --- Helper function to render article groups ---
-function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip, hideTooltip) {
+function renderArticleGroup(articleList, perspective, onAnalyze, showDetailPopup) {
   if (!articleList || articleList.length === 0) return null;
   const stopTouch = (e) => e.stopPropagation();
 
@@ -1057,7 +1044,7 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip, hi
         <div key={article._id || article.url} className="coverage-article">
           {/* --- Content Wrapper --- */}
           <div className="coverage-content">
-            <a href={article.url} target="_blank" rel="noopener noreferrer" onTouchStart={stopTouch}>
+            <a href={article.url} target="_blank" rel="noopener noreferrer" onClick={stopTouch}>
               <h4>{article.headline || 'No Headline'}</h4>
             </a>
             <p>
@@ -1067,34 +1054,28 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip, hi
             <div className="article-scores">
               <span
                 title="Bias Score (0-100, lower is less biased)"
-                onTouchStart={(e) => showTooltip("Bias Score (0-100, lower is less biased)", e)}
-                onTouchEnd={hideTooltip}
+                onClick={(e) => { e.stopPropagation(); showDetailPopup('Bias Score', 'Bias Score (0-100, lower is less biased)'); }}
               >
-                {/* --- (FIX) Added conditional accent color --- */}
                 Bias: {article.biasScore != null ? <span className="accent-text">{article.biasScore}</span> : 'N/A'}
               </span>
               <span
                 title="Overall Trust Score (0-100, higher is more trustworthy)"
-                onTouchStart={(e) => showTooltip("Overall Trust Score (0-100, higher is more trustworthy)", e)}
-                onTouchEnd={hideTooltip}
+                onClick={(e) => { e.stopPropagation(); showDetailPopup('Trust Score', 'Overall Trust Score (0-100, higher is more trustworthy)'); }}
               >
-                {/* --- (FIX) Added conditional accent color --- */}
                 Trust: {article.trustScore != null ? <span className="accent-text">{article.trustScore}</span> : 'N/A'}
               </span>
               <span
                 title="Credibility Grade (A+ to F)"
-                onTouchStart={(e) => showTooltip("Credibility Grade (A+ to F)", e)}
-                onTouchEnd={hideTooltip}
+                onClick={(e) => { e.stopPropagation(); showDetailPopup('Credibility Grade', 'Credibility Grade (A+ to F)'); }}
               >
-                {/* --- (FIX) Added conditional accent color --- */}
                 Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}
               </span>
             </div>
             <div className="coverage-actions">
-              <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1}} onTouchStart={stopTouch}>
-                  <button style={{width: '100%'}} onTouchStart={stopTouch}>Read Article</button>
+              <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1}} onClick={stopTouch}>
+                  <button style={{width: '100%'}} onClick={stopTouch}>Read Article</button>
               </a>
-              <button onClick={() => onAnalyze(article)} onTouchStart={stopTouch}>View Analysis</button>
+              <button onClick={(e) => { stopTouch(e); onAnalyze(article); }}>View Analysis</button>
             </div>
           </div>
 
@@ -1114,7 +1095,7 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip, hi
 
 
 // --- Detailed Analysis Modal ---
-function DetailedAnalysisModal({ article, onClose, showTooltip, hideTooltip }) {
+function DetailedAnalysisModal({ article, onClose, showDetailPopup }) {
   const [activeTab, setActiveTab] = useState('overview'); // Default tab
 
    const handleOverlayClick = (e) => {
@@ -1144,7 +1125,8 @@ function DetailedAnalysisModal({ article, onClose, showTooltip, hideTooltip }) {
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="analysis-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Analysis: "{article.headline.substring(0, 50)}{article.headline.length > 50 ? '...' : ''}"</h2>
+          {/* (FIX) Removed "Analysis: " from title */}
+          <h2>"{article.headline.substring(0, 50)}{article.headline.length > 50 ? '...' : ''}"</h2>
           <button className="close-btn" onClick={onClose} title="Close analysis">×</button>
         </div>
 
@@ -1160,8 +1142,8 @@ function DetailedAnalysisModal({ article, onClose, showTooltip, hideTooltip }) {
 
         <div className="modal-content">
           {/* Conditionally render tab content */}
-          {activeTab === 'overview' && <OverviewTab article={article} showTooltip={showTooltip} hideTooltip={hideTooltip} />}
-          {activeTab === 'breakdown' && <OverviewBreakdownTab article={article} showTooltip={showTooltip} hideTooltip={hideTooltip} />}
+          {activeTab === 'overview' && <OverviewTab article={article} showDetailPopup={showDetailPopup} />}
+          {activeTab === 'breakdown' && <OverviewBreakdownTab article={article} showDetailPopup={showDetailPopup} />}
         </div>
 
         <div className="modal-footer">
@@ -1174,14 +1156,14 @@ function DetailedAnalysisModal({ article, onClose, showTooltip, hideTooltip }) {
 
 // --- Analysis Tab Components ---
 
-function OverviewTab({ article, showTooltip, hideTooltip }) {
+function OverviewTab({ article, showDetailPopup }) {
   return (
     <div className="tab-content">
       <div className="overview-grid">
-        <ScoreBox label="Trust Score" value={article.trustScore} showTooltip={showTooltip} hideTooltip={hideTooltip} />
-        <ScoreBox label="Bias Score" value={article.biasScore} showTooltip={showTooltip} hideTooltip={hideTooltip} />
-        <ScoreBox label="Credibility" value={article.credibilityScore} showTooltip={showTooltip} hideTooltip={hideTooltip} />
-        <ScoreBox label="Reliability" value={article.reliabilityScore} showTooltip={showTooltip} hideTooltip={hideTooltip} />
+        <ScoreBox label="Trust Score" value={article.trustScore} showDetailPopup={showDetailPopup} />
+        <ScoreBox label="Bias Score" value={article.biasScore} showDetailPopup={showDetailPopup} />
+        <ScoreBox label="Credibility" value={article.credibilityScore} showDetailPopup={showDetailPopup} />
+        <ScoreBox label="Reliability" value={article.reliabilityScore} showDetailPopup={showDetailPopup} />
       </div>
 
        {article.keyFindings && article.keyFindings.length > 0 && (
@@ -1213,7 +1195,7 @@ function OverviewTab({ article, showTooltip, hideTooltip }) {
 }
 
 // --- UPDATED Consolidated Breakdown Tab (v2.11 Spacing) ---
-function OverviewBreakdownTab({ article, showTooltip, hideTooltip }) {
+function OverviewBreakdownTab({ article, showDetailPopup }) {
   const [showZeroScores, setShowZeroScores] = useState(false);
 
   // --- Bias Components ---
@@ -1288,8 +1270,7 @@ function OverviewBreakdownTab({ article, showTooltip, hideTooltip }) {
                     label={comp.label}
                     value={comp.value}
                     tooltip={getBreakdownTooltip(comp.label)}
-                    showTooltip={showTooltip}
-                    hideTooltip={hideTooltip}
+                    showDetailPopup={showDetailPopup}
                   />
                 ))
             ) : (
@@ -1312,8 +1293,7 @@ function OverviewBreakdownTab({ article, showTooltip, hideTooltip }) {
                     label={comp.label}
                     value={comp.value}
                     tooltip={getBreakdownTooltip(comp.label)}
-                    showTooltip={showTooltip}
-                    hideTooltip={hideTooltip}
+                    showDetailPopup={showDetailPopup}
                    />
                 ))
             ) : (
@@ -1336,8 +1316,7 @@ function OverviewBreakdownTab({ article, showTooltip, hideTooltip }) {
                     label={comp.label}
                     value={comp.value}
                     tooltip={getBreakdownTooltip(comp.label)}
-                    showTooltip={showTooltip}
-                    hideTooltip={hideTooltip}
+                    showDetailPopup={showDetailPopup}
                    />
                 ))
             ) : (
@@ -1353,8 +1332,8 @@ function OverviewBreakdownTab({ article, showTooltip, hideTooltip }) {
 
 // --- Reusable UI Components ---
 
-// Score Box for Overview Tab
-function ScoreBox({ label, value, showTooltip, hideTooltip }) {
+// (FIX) Score Box for Overview Tab
+function ScoreBox({ label, value, showDetailPopup }) {
   let tooltip = '';
   switch(label) {
     case 'Trust Score':
@@ -1377,8 +1356,7 @@ function ScoreBox({ label, value, showTooltip, hideTooltip }) {
     <div
       className="score-circle"
       title={tooltip}
-      onTouchStart={(e) => showTooltip(tooltip, e)}
-      onTouchEnd={hideTooltip}
+      onClick={(e) => { e.stopPropagation(); showDetailPopup(label, tooltip); }}
     >
       <div className="score-value">{value ?? 'N/A'}</div>
       <div className="score-label">{label}</div>
@@ -1386,8 +1364,8 @@ function ScoreBox({ label, value, showTooltip, hideTooltip }) {
   );
 }
 
-// --- Circular Progress Bar Component (Donut) ---
-function CircularProgressBar({ label, value, tooltip, showTooltip, hideTooltip }) { // Added tooltip prop
+// --- (FIX) Circular Progress Bar Component (Donut) ---
+function CircularProgressBar({ label, value, tooltip, showDetailPopup }) { // Added tooltip prop
   const numericValue = Math.max(0, Math.min(100, Number(value) || 0));
   const strokeWidth = 8;
   const radius = 40;
@@ -1401,8 +1379,7 @@ function CircularProgressBar({ label, value, tooltip, showTooltip, hideTooltip }
     <div
       className="circle-progress-container"
       title={finalTooltip}
-      onTouchStart={(e) => showTooltip(finalTooltip, e)}
-      onTouchEnd={hideTooltip}
+      onClick={(e) => { e.stopPropagation(); showDetailPopup(label, finalTooltip); }}
     > {/* Use provided tooltip */}
       <svg className="circle-progress-svg" width="100" height="100" viewBox="0 0 100 100">
         <circle

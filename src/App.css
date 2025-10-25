@@ -268,20 +268,23 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   letter-spacing: 0.8px;
 }
 
-/* --- NEW: Custom Select Styles --- */
+/* --- REMOVED OLD SELECT STYLING --- */
+/* .filter-section select { ... } */
+
+/* --- NEW: Custom Select Styling --- */
 .custom-select-container {
   position: relative;
   width: 100%;
+  font-size: 12px;
+  font-weight: 500;
 }
-.custom-select-trigger {
+.custom-select-value {
   width: 100%;
-  padding: 8px 10px; /* SCALED: Was 10px 12px */
+  padding: 8px 10px;
   background: var(--bg-primary);
   color: var(--text-secondary);
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  font-size: 12px; /* SCALED: Was 13px */
-  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
@@ -289,38 +292,23 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   align-items: center;
   text-align: left;
 }
-.custom-select-trigger:hover,
-.custom-select-trigger:focus {
+.custom-select-value:hover,
+.custom-select-value:focus,
+.custom-select-value.open {
   outline: none;
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 2px var(--accent-primary);
 }
-.custom-select-trigger span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .custom-select-arrow {
-  border: solid var(--text-tertiary);
-  border-width: 0 2px 2px 0;
-  display: inline-block;
-  padding: 3px;
-  transform: rotate(45deg);
-  -webkit-transform: rotate(45deg);
-  margin-left: 8px;
+  width: 18px;
+  height: 18px;
+  fill: var(--text-tertiary);
   transition: transform 0.2s ease;
 }
-/* Style for when dropdown is open */
-.custom-select-container .custom-select-trigger[aria-expanded="true"] + .custom-select-options {
-    display: block; /* Or your preferred display method */
+.custom-select-value.open .custom-select-arrow {
+  transform: rotate(180deg);
 }
-.custom-select-container .custom-select-trigger[aria-expanded="true"] .custom-select-arrow {
-    transform: rotate(-135deg);
-    -webkit-transform: rotate(-135deg);
-}
-
 .custom-select-options {
-  /* display: none; */ /* Initially hidden, shown via JS/state */
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
@@ -329,35 +317,35 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   border: 1px solid var(--border-color);
   border-radius: 6px;
   box-shadow: var(--shadow-md);
-  z-index: 1500; /* Above other sidebar content */
+  z-index: 1150; /* Above sidebar content, below header */
   max-height: 250px;
   overflow-y: auto;
   list-style: none;
   padding: 4px;
-  margin: 0;
   animation: fadeIn 0.1s ease-out;
 }
 .custom-select-option {
-  padding: 8px 12px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  border-radius: 4px;
+  padding: 10px 12px;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.custom-select-option:hover {
+.custom-select-option:hover,
+.custom-select-option:focus {
   background: var(--accent-primary);
   color: white;
+  outline: none;
 }
 .custom-select-option.selected {
-  background: var(--bg-primary);
-  color: var(--accent-primary);
   font-weight: 600;
+  color: var(--accent-primary);
+  background: var(--bg-primary);
 }
-/* --- End Custom Select Styles --- */
+/* --- End Custom Select Styling --- */
 
 
 .filter-results {
@@ -391,12 +379,6 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   justify-content: center;
   min-height: 400px;
 }
-/* --- Make loading container full height on mobile --- */
-@media (max-width: 768px) {
-  .loading-container {
-    height: calc(100vh - 60px);
-  }
-}
 
 .spinner {
   width: 48px;
@@ -408,20 +390,44 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   margin-bottom: 16px;
 }
 
-.loading-container p {
+/* --- NEW: Small Spinner for Pull-to-Refresh --- */
+.spinner-small {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 12px;
+}
+.pull-to-refresh-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
   color: var(--text-tertiary);
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 500;
+  /* This will be shown/hidden by inline style in App.js */
 }
 
+
 /* ==================== ARTICLES GRID ==================== */
-/* --- UPDATED for more aggressive 4 columns --- */
 .articles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); /* SCALED: Was 280px */
+  /* --- (FIX) Default to auto-fit, will be overridden by desktop/mobile rules --- */
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
   gap: 25px; /* SCALED: Was 30px */
 }
-/* Keep 4 columns even on large screens */
-@media (min-width: 1400px) { /* SCALED: Was 1600px */
+
+/* --- (FIX) Force 3 columns on desktop --- */
+@media (min-width: 1024px) {
+  .articles-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+/* --- (FIX) 4 columns only on very large screens --- */
+@media (min-width: 1600px) {
   .articles-grid {
     grid-template-columns: repeat(4, 1fr);
   }
@@ -439,6 +445,8 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   display: flex;
   flex-direction: column;
   box-shadow: none;
+  /* --- NEW: Ensure card doesn't get too small --- */
+  min-width: 270px;
 }
 
 .article-card:hover {
@@ -656,7 +664,7 @@ button:disabled, button:disabled:hover {
 }
 
 /* ==================== LOAD MORE ==================== */
-.load-more { text-align: center; margin: 0; /* Margin removed, handled by container */ }
+.load-more { text-align: center; margin: 40px 0; }
 .load-more-btn {
   padding: 10px 25px; /* SCALED: Was 12px 30px */
   background: var(--gradient-accent); color: white; border: none;
@@ -952,7 +960,7 @@ button:disabled, button:disabled:hover {
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 1400px) { .main-container { max-width: 95%; } }
 @media (max-width: 1024px) {
-    /* 4-col grid already handled by media query */
+    /* 3-col grid already handled by media query */
     .content { padding: 25px; } /* SCALED: Was 30px */
     .sidebar { width: 220px; } /* Kept for tablet */
     .header-left { width: auto; /* Allow header left to shrink */ }
@@ -961,9 +969,13 @@ button:disabled, button:disabled:hover {
     .coverage-image { width: 100%; height: 150px; }
 }
 
-/* --- MOBILE STYLES (Req 4, 5, 6) --- */
+/* --- (FIX) MOBILE STYLES (Req 4, 5, 6) --- */
 @media (max-width: 768px) {
-  body { font-size: 14px; }
+  body { 
+    font-size: 14px;
+    /* --- NEW: Prevent body scroll on mobile --- */
+    overflow: hidden;
+  }
   .header { height: 60px; padding: 0 15px; /* SCALED: Was 15px 20px */ position: fixed; }
   .header-left { position: static; width: auto; justify-content: flex-start; padding: 0; gap: 10px; } /* Adjust logo position */
   .logo-container { align-items: flex-start; }
@@ -1041,86 +1053,82 @@ button:disabled, button:disabled:hover {
   }
   .filter-results { margin-top: 20px; } /* Ensure margin on mobile */
 
-  /* --- Content Area Scroll --- */
+  /* --- (FIX) Content Area Scroll --- */
   .content {
-    padding: 0; 
-    height: calc(100vh - 60px);
+    padding: 0; /* NEW: Remove all padding */
+    height: calc(100vh - 60px); /* Fill remaining height */
     overflow-y: auto;
     overflow-x: hidden;
-    -webkit-overflow-scrolling: touch; 
-    scroll-snap-type: y mandatory; /* Snap enabled */
-    -ms-overflow-style: none; 
-    scrollbar-width: none; 
+    -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+
+    /* --- (FIX) Add Snap scroll for vertical snapping --- */
+    scroll-snap-type: y mandatory;
+
+    /* --- NEW: Hide Scrollbar --- */
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
   }
   .content::-webkit-scrollbar {
-    display: none; 
+    display: none; /* Chrome, Safari, Opera */
   }
 
-  /* --- Article Grid (Container for Snap Items) --- */
+  /* --- (FIX) Card Grid & Snap --- */
   .articles-grid {
-    display: block; /* Basic block container */
-    padding: 0;
+    display: block; /* Use block layout */
     gap: 0;
-  }
-  
-  /* --- FIXED: Card Snap Container --- */
-  .card-snap-container {
-    height: calc(100vh - 60px); /* Full viewport height */
-    scroll-snap-align: start; /* Snap target */
-    display: flex; /* Use flexbox to center card */
-    align-items: center; /* Vertical center */
-    justify-content: center; /* Horizontal center */
-    padding: 16px; /* Padding *around* the card area */
-    box-sizing: border-box; /* Include padding in height */
-    overflow: hidden; /* Prevent content spill */
+    padding: 0; /* No padding on the grid itself */
+    grid-template-columns: 1fr; /* Force single column */
   }
 
-  /* --- FIXED: Article Card (Inside Snap Container) --- */
-  .article-card {
-    /* --- Let card size itself, but limit width/height --- */
-    width: 100%; /* Take full width of container padding */
-    max-width: 500px; /* Max card width */
-    max-height: calc(100% - 32px); /* Max height within container padding (16px top + 16px bottom) */
-    
-    /* --- Basic styling --- */
-    background: var(--bg-card-flat); 
-    border-radius: 8px; /* Add back radius */
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-md);
-    
-    /* --- Reset properties handled by container --- */
-    margin: 0; /* No margin, padding on container handles space */
-    position: relative; 
-    top: auto;
-    scroll-snap-align: none; /* Container is the snap target */
-
-    /* --- Ensure internal scrolling if content overflows card --- */
+  /* --- (FIX) NEW: Wrapper for Card to handle snap and viewport sizing --- */
+  .article-card-wrapper {
+    /* This is the snap target */
+    scroll-snap-align: start;
+    /* Fill the viewport */
+    height: calc(100vh - 60px);
+    width: 100%;
+    /* Center the card inside */
     display: flex;
-    flex-direction: column;
-    overflow: hidden; /* Prevent internal content bleed */
+    align-items: center;
+    justify-content: center;
+    padding: 16px; /* This creates the "margins" user asked for */
+    overflow: hidden; /* Prevent card overflow issues */
   }
-  
-  .article-card .article-content {
-      padding: 16px; 
-      flex: 1; 
-      overflow-y: auto; /* Allow internal content scroll */
-      -webkit-overflow-scrolling: touch;
+  .article-card-wrapper .load-more {
+     margin: 0; /* Reset margins for load more button */
   }
-  .article-card .article-content::-webkit-scrollbar { display: none; }
-  .article-card .article-content { -ms-overflow-style: none; scrollbar-width: none; }
 
 
-  /* --- FIXED: Load More Container --- */
-   .load-more-container.card-snap-container {
-     /* Inherits snap-container styles: full height, snap alignment, flex centering */
-   }
+  /* --- (FIX) Article Card (Remove sticky/stacking) --- */
+  .article-card {
+    /* REMOVED: position: sticky, top, margin-bottom */
+    box-shadow: var(--shadow-md);
+    background: var(--bg-card-flat); /* Use solid background */
+    border-bottom: 1px solid var(--border-color); /* Separate cards */
+    
+    /* Center the card (already handled by wrapper, but set max-width) */
+    width: 100%;
+    max-width: 500px;
+    margin: 0; /* Remove auto margins */
+
+    /* --- NEW: Prevent card from shrinking and allow scrolling if content overflows --- */
+    flex-shrink: 0; /* Don't shrink inside flex wrapper */
+    max-height: 100%; /* Don't exceed wrapper height */
+    overflow-y: auto; /* Allow card itself to scroll if content is too tall */
+  }
+  /* Hide scrollbar inside card */
+  .article-card::-webkit-scrollbar { display: none; }
+  .article-card { scrollbar-width: none; -ms-overflow-style: none; }
+
+
   .load-more {
-    /* Reset previous styles, just center text */
-    text-align: center;
-    padding: 0; /* Remove extra padding */
+    padding: 30px 16px; /* NEW: Add padding */
   }
 
-  .article-headline { font-size: 16px; } .article-summary { font-size: 12px; line-height: 1.5; } .article-image { height: 160px; }
+  .article-headline { font-size: 16px; } 
+  .article-summary { font-size: 12px; line-height: 1.5; } 
+  .article-image { height: 160px; }
+  .article-content { padding: 16px; } /* Keep internal padding */
 
   .modal-overlay { padding: 10px;} .compare-modal, .analysis-modal { max-height: 95vh; }
   .modal-header { padding: 15px 20px; } .modal-header h2 { font-size: 18px; }

@@ -71,10 +71,11 @@ function App() {
   });
   const isMobile = () => window.innerWidth <= 768;
 
-  // --- NEW: Refs for Pull-to-Refresh ---
+  // --- (FIX) Refs for Pull-to-Refresh ---
   const contentRef = useRef(null);
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
+  const [pullDistance, setPullDistance] = useState(0); // NEW: State for visual pull
 
   // --- NEW: Custom Tooltip Handlers (Simplified) ---
   const showTooltip = (text, e) => {
@@ -107,6 +108,62 @@ function App() {
     document.body.className = savedTheme + '-mode';
   }, []);
 
+  // --- (FIX) NEW: Effect to check for shared article on load ---
+  useEffect(() => {
+    const fetchAndShowArticle = async (id) => {
+      // Basic sanitization
+      if (!id || !/^[a-f\d]{24}$/i.test(id)) {
+         console.error('Invalid article ID format from URL');
+         return;
+      }
+      try {
+        console.log(`Fetching shared article: ${id}`);
+        // We need to fetch the full article object, not just get from displayed ones
+        const response = await axios.get(`${API_URL}/articles/${id}`);
+        if (response.data) {
+          // Manually clean/default this single article just in case
+           const article = response.data;
+           const cleanedArticle = {
+              _id: article._id || article.url,
+              headline: article.headline || article.title || 'No Headline Available',
+              summary: article.summary || article.description || 'No summary available.',
+              source: article.source || 'Unknown Source',
+              category: article.category || 'General',
+              politicalLean: article.politicalLean || 'Center',
+              url: article.url,
+              imageUrl: article.imageUrl || null,
+              publishedAt: article.publishedAt || new Date().toISOString(),
+              analysisType: ['Full', 'SentimentOnly'].includes(article.analysisType) ? article.analysisType : 'Full',
+              sentiment: ['Positive', 'Negative', 'Neutral'].includes(article.sentiment) ? article.sentiment : 'Neutral',
+              biasScore: Number(article.biasScore) || 0,
+              trustScore: Number(article.trustScore) || 0,
+              credibilityScore: Number(article.credibilityScore) || 0,
+              reliabilityScore: Number(article.reliabilityScore) || 0,
+              credibilityGrade: article.credibilityGrade || null,
+              biasComponents: article.biasComponents && typeof article.biasComponents === 'object' ? article.biasComponents : {},
+              credibilityComponents: article.credibilityComponents && typeof article.credibilityComponents === 'object' ? article.credibilityComponents : {},
+              reliabilityComponents: article.reliabilityComponents && typeof article.reliabilityComponents === 'object' ? article.reliabilityComponents : {},
+              keyFindings: Array.isArray(article.keyFindings) ? article.keyFindings : [],
+              recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
+              clusterId: article.clusterId || null
+           };
+           setAnalysisModal({ open: true, article: cleanedArticle });
+        }
+      } catch (error) {
+        console.error('Failed to fetch shared article:', error.response ? error.response.data : error.message);
+        // Don't alert user, just fail silently
+      }
+    };
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const articleId = urlParams.get('article');
+    if (articleId) {
+       fetchAndShowArticle(articleId);
+       // Optional: Clean the URL
+       // window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []); // Runs only once on mount
+
   // Effect to fetch articles when filters change or on initial load
   useEffect(() => {
     fetchArticles();
@@ -121,7 +178,7 @@ function App() {
     }
   }, [filters]); // Note: isSidebarOpen dependency removed
 
-  // --- NEW: Pull-to-Refresh Effects ---
+  // --- (FIX) Pull-to-Refresh Effects ---
   useEffect(() => {
     const contentEl = contentRef.current;
     if (!contentEl || !isMobile()) return;
@@ -129,30 +186,35 @@ function App() {
     const handleTouchStart = (e) => {
       touchStartY.current = e.touches[0].clientY;
       touchEndY.current = e.touches[0].clientY;
+      // No setPullDistance(0) here, allows move to take over
     };
 
     const handleTouchMove = (e) => {
       touchEndY.current = e.touches[0].clientY;
       const pullDistance = touchEndY.current - touchStartY.current;
       
-      // Show pull indicator if at top and pulling down
+      // Only track pull distance if at top and pulling down
       if (contentEl.scrollTop === 0 && pullDistance > 0 && !isRefreshing) {
-        // You could add a visual indicator here, e.g., move the content down
-        // For simplicity, we just check on touchEnd
+        setPullDistance(pullDistance);
+        // Prevent default scroll behavior only when we are actively pulling down at the top
+        e.preventDefault(); 
+      } else {
+        setPullDistance(0); // Reset if scrolling up or not at top
       }
     };
 
     const handleTouchEnd = () => {
-      const pullDistance = touchEndY.current - touchStartY.current;
-      // Check if at the top, pulled down significantly, and not already refreshing
-      if (contentEl.scrollTop === 0 && pullDistance > 75 && !isRefreshing) {
+      const pullThreshold = 120; // (FIX) Increased threshold
+      if (contentEl.scrollTop === 0 && pullDistance > pullThreshold && !isRefreshing) {
         setIsRefreshing(true);
         fetchArticles().finally(() => setIsRefreshing(false));
       }
+      setPullDistance(0); // Reset visual pull on touch end
     };
 
+    // Use non-passive listeners *only* for move, to allow preventDefault
     contentEl.addEventListener('touchstart', handleTouchStart, { passive: true });
-    contentEl.addEventListener('touchmove', handleTouchMove, { passive: true });
+    contentEl.addEventListener('touchmove', handleTouchMove, { passive: false });
     contentEl.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     return () => {
@@ -160,12 +222,13 @@ function App() {
       contentEl.removeEventListener('touchmove', handleTouchMove);
       contentEl.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isRefreshing, contentRef]); // Re-attach if refreshing state changes
+  }, [isRefreshing, pullDistance, contentRef]); // Re-attach if refreshing state changes
 
   const fetchArticles = async (loadMore = false) => {
     try {
+      // --- (FIX) Set loading true for ALL fetches to prevent scroll-spam ---
+      setLoading(true);
       if (!loadMore) {
-        setLoading(true); // Show loading spinner only on filter change/initial load
         setInitialLoad(true);
       }
       const limit = 12; // Articles per page/load
@@ -239,6 +302,7 @@ function App() {
 
       setLoading(false);
       setInitialLoad(false);
+      setIsRefreshing(false); // NEW: Ensure refreshing stops
 
     } catch (error) {
       console.error('❌ Error fetching articles:', error.response ? error.response.data : error.message);
@@ -286,6 +350,7 @@ function App() {
             // Check if user is near the bottom
             if (clientHeight + scrollTop >= scrollHeight - 800) {
                 // Check if not loading, and if there are more articles to load
+                // (FIX) The 'loading' state check now correctly prevents spam
                 if (!loading && displayedArticles.length < totalArticlesCount) {
                     // console.log("Scroll near bottom detected, loading more...");
                     loadMoreArticles();
@@ -304,21 +369,27 @@ function App() {
 
 
   const shareArticle = (article) => {
+    // --- (FIX) Share link to our app, not the direct URL ---
+    const appUrl = window.location.origin;
+    const shareUrl = `${appUrl}?article=${article._id}`; // Use internal _id
+    const shareTitle = article.headline;
+    const shareText = `Check out this analysis on The Gamut: ${article.headline}`;
+
     if (navigator.share) {
       navigator.share({
-        title: article.headline,
-        text: `Check out this analysis: ${article.headline}`, // Shorter text
-        url: article.url
+        title: shareTitle,
+        text: shareText,
+        url: shareUrl
       }).then(() => {
         console.log('Article shared successfully');
       }).catch((error) => {
         console.error('Share failed:', error);
         // Fallback to copy link if share fails (e.g., user cancels)
-        navigator.clipboard.writeText(article.url).then(() => alert('Link copied to clipboard!'));
+        navigator.clipboard.writeText(shareUrl).then(() => alert('Link copied to clipboard!'));
       });
     } else {
       // Fallback for browsers without navigator.share
-      navigator.clipboard.writeText(article.url).then(() => alert('Link copied to clipboard!'));
+      navigator.clipboard.writeText(shareUrl).then(() => alert('Link copied to clipboard!'));
     }
   };
 
@@ -336,6 +407,7 @@ function App() {
     if (isMobile()) {
       setIsSidebarOpen(false);
     } else {
+      // On desktop, "close" just minimizes it
       setIsDesktopSidebarVisible(false);
     }
   };
@@ -373,7 +445,38 @@ function App() {
         />
 
         <main className="content" ref={contentRef}> {/* NEW: Added ref */}
-          {/* --- REMOVED .content-header --- */}
+          
+          {/* --- (FIX) NEW: Pull-to-refresh Visual Indicators --- */}
+          <div 
+            className="pull-indicator" 
+            style={{ 
+              opacity: Math.min(pullDistance / 120, 1), 
+              transform: `translateY(${Math.min(pullDistance, 90)}px)`, // Move indicator down
+              transition: pullDistance === 0 ? 'all 0.3s ease' : 'none' 
+            }}
+          >
+            <span 
+              className="pull-indicator-arrow" 
+              style={{ 
+                transform: `rotate(${pullDistance > 120 ? '180deg' : '0deg'})` 
+              }}
+            >
+              ↓
+            </span>
+            <span>{pullDistance > 120 ? 'Release to refresh' : 'Pull to refresh'}</span>
+          </div>
+
+          <div 
+            className="pull-to-refresh-container" // This is the spinner
+            style={{ 
+              display: isRefreshing ? 'flex' : 'none' 
+            }}
+          >
+            <div className="spinner-small"></div>
+            <p>Refreshing...</p>
+          </div>
+          {/* --- End Pull-to-refresh --- */}
+
 
           {(loading && initialLoad) ? ( // Show loading only on initial/filter load
             <div className="loading-container">
@@ -382,12 +485,6 @@ function App() {
             </div>
           ) : (
             <>
-              {/* --- NEW: Pull to Refresh Indicator --- */}
-              <div className="pull-to-refresh-container" style={{ display: isRefreshing ? 'flex' : 'none' }}>
-                <div className="spinner-small"></div>
-                <p>Refreshing...</p>
-              </div>
-
               {displayedArticles.length > 0 ? (
                  <div className="articles-grid">
                   {displayedArticles.map((article) => (
@@ -413,10 +510,10 @@ function App() {
               )}
 
 
-              {/* Show Load More button only if there are more articles */}
+              {/* (FIX) Show Load More button only if there are more articles */}
+              {/* This is now a snap-point on mobile */}
               {!loading && displayedArticles.length < totalArticlesCount && (
-                // --- NEW: Wrapper for load more button to act as a snap item ---
-                <div className="article-card-wrapper">
+                <div className="article-card-wrapper load-more-wrapper">
                   <div className="load-more">
                     <button onClick={loadMoreArticles} className="load-more-btn">
                       Load More ({totalArticlesCount - displayedArticles.length} remaining)
@@ -663,6 +760,8 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
 function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hideTooltip }) {
 
   const isReview = article.analysisType === 'SentimentOnly';
+  // --- (FIX) NEW: Check for non-political leaning ---
+  const isNonPolitical = article.politicalLean === 'Not Applicable';
 
   const handleImageError = (e) => {
     e.target.style.display = 'none';
@@ -777,8 +876,9 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
 
         {/* --- Actions (v2.10 Stacked Buttons) --- */}
         <div className="article-actions">
-          {isReview ? (
-            // --- UI for SentimentOnly (STACKED BUTTONS) ---
+          {/* --- (FIX) Show stacked buttons if review OR non-political --- */}
+          {(isReview || isNonPolitical) ? (
+            // --- UI for SentimentOnly OR NonPolitical (STACKED BUTTONS) ---
             <>
               <button
                 onClick={() => onShare(article)}
@@ -1258,7 +1358,7 @@ function ScoreBox({ label, value, showTooltip, hideTooltip }) {
       tooltip = 'Credibility Score (0-100). Measures the article\'s trustworthiness based on sources, facts, and professionalism.';
       break;
     case 'Reliability':
-      tooltip = 'Reliability Score (0-100). Measures the source\'s consistency, standards, and corrections policy over time.';
+      tooltip = 'Reliability Score (0-1A 0-100). Measures the source\'s consistency, standards, and corrections policy over time.';
       break;
     default:
       tooltip = `${label} (0-100)`;

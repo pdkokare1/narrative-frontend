@@ -8,31 +8,26 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 // --- Tooltip Helper ---
 const getBreakdownTooltip = (label) => {
   const tooltips = {
-    // Bias Linguistic
+    // ... (tooltips remain the same) ...
     "Sentiment Polarity": "Measures the overall positive, negative, or neutral leaning of the language used.",
     "Emotional Language": "Detects the prevalence of words intended to evoke strong emotional responses.",
     "Loaded Terms": "Identifies words or phrases with strong connotations beyond their literal meaning.",
     "Complexity Bias": "Assesses if overly complex or simplistic language is used to obscure or mislead.",
-    // Bias Source Selection
     "Source Diversity": "Evaluates the variety of sources cited (e.g., political, expert, eyewitness).",
     "Expert Balance": "Checks if experts from different perspectives are represented fairly.",
     "Attribution Transparency": "Assesses how clearly sources are identified and attributed.",
-    // Bias Demographic
     "Gender Balance": "Measures the representation of different genders in sources and examples.",
     "Racial Balance": "Measures the representation of different racial or ethnic groups.",
     "Age Representation": "Checks for biases related to age groups in reporting.",
-    // Bias Framing
     "Headline Framing": "Analyzes if the headline presents a neutral or skewed perspective of the story.",
     "Story Selection": "Considers if the choice of this story over others indicates a potential bias.",
     "Omission Bias": "Evaluates if significant facts or contexts are left out, creating a misleading picture.",
-    // Credibility
     "Source Credibility": "Assesses the reputation and track record of the news source itself.",
     "Fact Verification": "Evaluates the rigor of the fact-checking processes evident in the article.",
     "Professionalism": "Measures adherence to journalistic standards like objectivity and transparency.",
     "Evidence Quality": "Assesses the strength and reliability of the data and evidence presented.",
     "Transparency": "Evaluates openness about sources, funding, and potential conflicts of interest.",
     "Audience Trust": "Considers public perception and trust metrics associated with the source (if available).",
-    // Reliability
     "Consistency": "Measures the source's consistency in accuracy and quality over time.",
     "Temporal Stability": "Evaluates the source's track record and how long it has been operating reliably.",
     "Quality Control": "Assesses the internal editorial review and error correction processes.",
@@ -72,7 +67,7 @@ function App() {
   const isMobile = () => window.innerWidth <= 768;
 
   // --- (FIX) Refs for Pull-to-Refresh ---
-  const contentRef = useRef(null);
+  const contentRef = useRef(null); // Ref for the main scrollable .content area
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
   const [pullDistance, setPullDistance] = useState(0); // NEW: State for visual pull
@@ -198,10 +193,12 @@ function App() {
 
   // --- (FIX) Pull-to-Refresh Effects ---
   useEffect(() => {
-    const contentEl = contentRef.current;
+    const contentEl = contentRef.current; // Use the main content ref
     if (!contentEl || !isMobile()) return;
 
     const handleTouchStart = (e) => {
+      // Only process if the touch starts directly on the content area, not on its children that might scroll
+      if (e.target !== contentEl) return;
       touchStartY.current = e.touches[0].clientY;
       touchEndY.current = e.touches[0].clientY;
       // No setPullDistance(0) here, allows move to take over
@@ -209,30 +206,33 @@ function App() {
 
     const handleTouchMove = (e) => {
       touchEndY.current = e.touches[0].clientY;
-      const pullDistance = touchEndY.current - touchStartY.current;
+      const currentPullDistance = touchEndY.current - touchStartY.current;
       
       // Only track pull distance if at top and pulling down
-      if (contentEl.scrollTop === 0 && pullDistance > 0 && !isRefreshing) {
-        setPullDistance(pullDistance);
+      if (contentEl.scrollTop === 0 && currentPullDistance > 0 && !isRefreshing) {
+        setPullDistance(currentPullDistance);
         // Prevent default scroll behavior only when we are actively pulling down at the top
+        // This stops the native browser pull-to-refresh or bounce effect
         e.preventDefault(); 
-      } else {
-        setPullDistance(0); // Reset if scrolling up or not at top
+      } else if (contentEl.scrollTop !== 0 || currentPullDistance <= 0) {
+        // Reset if scrolling up, not at top, or refreshing
+        setPullDistance(0); 
       }
     };
 
     const handleTouchEnd = () => {
-      // const pullThreshold = 120; // (FIX) Now defined in component scope
+      // Check scroll position again in case it changed during the touch
       if (contentEl.scrollTop === 0 && pullDistance > pullThreshold && !isRefreshing) {
         setIsRefreshing(true);
         fetchArticles().finally(() => setIsRefreshing(false));
       }
-      setPullDistance(0); // Reset visual pull on touch end
+      // Always reset pull distance visual on touch end
+      setPullDistance(0); 
     };
 
     // Use non-passive listeners *only* for move, to allow preventDefault
     contentEl.addEventListener('touchstart', handleTouchStart, { passive: true });
-    contentEl.addEventListener('touchmove', handleTouchMove, { passive: false });
+    contentEl.addEventListener('touchmove', handleTouchMove, { passive: false }); 
     contentEl.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     return () => {
@@ -240,7 +240,9 @@ function App() {
       contentEl.removeEventListener('touchmove', handleTouchMove);
       contentEl.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isRefreshing, pullDistance, contentRef, pullThreshold]); // (FIX) Added pullThreshold
+  // Ensure all dependencies influencing the handlers are included
+  }, [isRefreshing, pullDistance, contentRef, pullThreshold]); 
+
 
   const fetchArticles = async (loadMore = false) => {
     try {
@@ -432,20 +434,24 @@ function App() {
 
   // --- (FIX) NEW: Helper functions for pull-to-refresh transform ---
   const contentTransform = () => {
+    if (!isMobile()) return 'none'; // Only apply transform on mobile
+    
     if (isRefreshing) {
-      // Hold content down to show spinner
-      return 'translateY(56px)'; // 56px = spinner container height (16+24+16)
+      // Hold content down to show spinner (spinner container height is roughly 56px)
+      return `translateY(56px)`; 
     }
     if (pullDistance > 0) {
-      // User is pulling
-      return `translateY(${Math.min(pullDistance, pullThreshold + 20)}px)`; // Allow overpull slightly
+      // User is pulling - ease the pull effect (e.g., sqrt makes it less linear)
+      const easedPull = Math.pow(pullDistance, 0.85); 
+      return `translateY(${Math.min(easedPull, pullThreshold + 40)}px)`; // Allow slight overpull visually
     }
     return 'translateY(0px)';
   };
 
   const contentTransition = () => {
-    // Snap back fast if not refreshing. Animate in/out if refreshing.
-    return pullDistance === 0 ? 'transform 0.3s ease' : 'none';
+    // Use transition only when snapping back or holding for refresh
+    if (!isMobile()) return 'none';
+    return pullDistance === 0 || isRefreshing ? 'transform 0.3s ease' : 'none';
   };
   // --- End transform helpers ---
 
@@ -481,15 +487,15 @@ function App() {
           onClose={closeSidebar} // UPDATED: Pass combined close function
         />
 
-        <main className="content" ref={contentRef}> {/* NEW: Added ref */}
+        {/* --- (FIX) Ref added here, overflow-y moved here for mobile --- */}
+        <main className="content" ref={contentRef}> 
           
-          {/* --- (FIX) NEW: Pull-to-refresh Visual Indicators --- */}
+          {/* --- (FIX) Pull-to-refresh Indicators are now direct children --- */}
           <div 
             className="pull-indicator" 
             style={{ 
               opacity: Math.min(pullDistance / pullThreshold, 1), 
-              transform: `translateY(${Math.min(pullDistance, pullThreshold + 20)}px)`, // (FIX) Match overpull
-              transition: pullDistance === 0 ? 'all 0.3s ease' : 'none' 
+              // (FIX) Indicator stays fixed at the top, opacity changes
             }}
           >
             <span 
@@ -504,9 +510,10 @@ function App() {
           </div>
 
           <div 
-            className="pull-to-refresh-container" // This is the spinner
+            className="pull-to-refresh-container" // Spinner
             style={{ 
               display: isRefreshing ? 'flex' : 'none' 
+              // (FIX) Spinner stays fixed at the top when refreshing
             }}
           >
             <div className="spinner-small"></div>
@@ -514,85 +521,65 @@ function App() {
           </div>
           {/* --- End Pull-to-refresh --- */}
 
+          {/* --- (FIX) NEW: Wrapper for scrollable content --- */}
+          <div 
+            className="content-scroll-wrapper"
+            style={{
+              transform: contentTransform(),
+              transition: contentTransition()
+            }}
+          >
+            {(loading && initialLoad) ? ( // Initial load spinner
+              <div className="loading-container">
+                <div className="spinner"></div>
+                <p>Loading articles...</p>
+              </div>
+            ) : (
+              <> 
+                {displayedArticles.length > 0 ? (
+                  <div className="articles-grid"> 
+                    {displayedArticles.map((article) => (
+                      <div className="article-card-wrapper" key={article._id || article.url}>
+                        <ArticleCard
+                          article={article}
+                          onCompare={(clusterId, title) => setCompareModal({ open: true, clusterId, articleTitle: title })}
+                          onAnalyze={(article) => setAnalysisModal({ open: true, article })}
+                          onShare={shareArticle}
+                          showTooltip={showTooltip}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  // "No articles" message
+                  <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
+                      <p>No articles found matching your current filters.</p>
+                  </div>
+                )}
 
-          {(loading && initialLoad) ? ( // Show loading only on initial/filter load
-            <div className="loading-container">
-              <div className="spinner"></div>
-              <p>Loading articles...</p>
-            </div>
-          ) : (
-            <>
-              {displayedArticles.length > 0 ? (
-                 <div 
-                   className="articles-grid"
-                   style={{ // (FIX) Apply transform
-                     transform: contentTransform(),
-                     transition: contentTransition()
-                   }}
-                 >
-                  {displayedArticles.map((article) => (
-                    // --- NEW: Added wrapper for mobile scroll-snap ---
-                    <div className="article-card-wrapper" key={article._id || article.url}>
-                      <ArticleCard
-                        article={article}
-                        onCompare={(clusterId, title) => setCompareModal({ open: true, clusterId, articleTitle: title })}
-                        onAnalyze={(article) => setAnalysisModal({ open: true, article })}
-                        onShare={shareArticle}
-                        // --- UPDATED: Tooltip prop ---
-                        showTooltip={showTooltip}
-                      />
+                {/* Loading spinner for infinite scroll */}
+                {(loading && !initialLoad) && (
+                  <div className="article-card-wrapper load-more-wrapper"> 
+                    <div className="loading-container" style={{ minHeight: '200px' }}>
+                      <div className="spinner"></div>
+                      <p>Loading more articles...</p>
                     </div>
-                  ))}
-                 </div>
-              ) : (
-                // Show message if no articles match filters (and not loading)
-                 <div 
-                   style={{ 
-                     textAlign: 'center', 
-                     marginTop: '50px', 
-                     color: 'var(--text-tertiary)',
-                     transform: contentTransform(), // (FIX) Apply transform
-                     transition: contentTransition()
-                   }}
-                 >
-                    <p>No articles found matching your current filters.</p>
-                 </div>
-              )}
-
-              {/* --- (FIX) NEW: Show loading spinner for infinite scroll --- */}
-              {(loading && !initialLoad) && (
-                <div 
-                  className="article-card-wrapper load-more-wrapper" 
-                  style={{ // (FIX) Apply transform
-                     transform: contentTransform(),
-                     transition: contentTransition()
-                  }}
-                > {/* Re-use wrapper for snap */}
-                  <div className="loading-container" style={{ minHeight: '200px' }}>
-                    <div className="spinner"></div>
-                    <p>Loading more articles...</p>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* (FIX) Show Load More button only if there are more articles AND NOT loading */}
-              {!loading && displayedArticles.length < totalArticlesCount && (
-                <div 
-                  className="article-card-wrapper load-more-wrapper" 
-                  style={{ // (FIX) Apply transform
-                     transform: contentTransform(),
-                     transition: contentTransition()
-                  }}
-                >
-                  <div className="load-more">
-                    <button onClick={loadMoreArticles} className="load-more-btn">
-                      Load More ({totalArticlesCount - displayedArticles.length} remaining)
-                    </button>
+                {/* Load More button */}
+                {!loading && displayedArticles.length < totalArticlesCount && (
+                  <div className="article-card-wrapper load-more-wrapper">
+                    <div className="load-more">
+                      <button onClick={loadMoreArticles} className="load-more-btn">
+                        Load More ({totalArticlesCount - displayedArticles.length} remaining)
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </>
-          )}
+                )}
+              </>
+            )}
+          </div> {/* --- End content-scroll-wrapper --- */}
         </main>
       </div>
 
@@ -621,6 +608,8 @@ function App() {
     </div>
   );
 }
+
+// ... (Rest of the sub-components: CustomTooltip, Header, CustomSelect, Sidebar, ArticleCard, CompareCoverageModal, renderArticleGroup, DetailedAnalysisModal, OverviewTab, OverviewBreakdownTab, ScoreBox, CircularProgressBar) remain the same as the previous version ...
 
 // === Sub-Components ===
 

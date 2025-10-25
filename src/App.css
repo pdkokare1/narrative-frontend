@@ -1116,6 +1116,7 @@ button:disabled, button:disabled:hover {
     line-height: 1.6; /* (FIX) Reset line height for mobile */
     /* --- NEW: Prevent body scroll on mobile --- */
     overflow: hidden;
+    overscroll-behavior-y: contain; /* (FIX) Add this line to prevent bounce */
   }
   .header { height: 60px; padding: 0 15px; /* SCALED: Was 15px 20px */ position: fixed; }
   .header-left { position: static; width: auto; justify-content: flex-start; padding: 0; gap: 10px; } /* Adjust logo position */
@@ -1229,14 +1230,14 @@ button:disabled, button:disabled:hover {
      top: 0;
      left: 0;
      right: 0;
-     z-index: 1; /* (FIX) Changed from 0 */
+     z-index: 1; /* (FIX) Ensure it's on top of content */
   }
   .pull-indicator {
     position: absolute; /* Keep absolute within .content */
     top: 0; 
     left: 0;
     right: 0;
-    z-index: 1; /* (FIX) Changed from 0 */
+    z-index: 1; /* (FIX) Ensure it's on top of content */
     height: 56px; /* Match spinner container */
   }
 

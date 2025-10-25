@@ -48,6 +48,7 @@ function App() {
   const [displayedArticles, setDisplayedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true); // Track initial load
+  const [isRefreshing, setIsRefreshing] = useState(false); // NEW: For pull-to-refresh
   const [theme, setTheme] = useState('dark');
   const [filters, setFilters] = useState({
     category: 'All Categories',
@@ -68,6 +69,11 @@ function App() {
     y: 0,
   });
   const isMobile = () => window.innerWidth <= 768;
+
+  // --- NEW: Refs for Pull-to-Refresh ---
+  const contentRef = useRef(null);
+  const touchStartY = useRef(0);
+  const touchEndY = useRef(0);
 
   // --- NEW: Custom Tooltip Handlers (Simplified) ---
   const showTooltip = (text, e) => {
@@ -105,12 +111,55 @@ function App() {
     fetchArticles();
   }, [filters]); // Re-fetch when filters change
 
+  // --- (FIXED) ---
   // Close sidebar on filter change (for mobile)
+  // Removed `isSidebarOpen` from dependency array to fix instant-close bug
   useEffect(() => {
     if (isSidebarOpen) {
       setIsSidebarOpen(false);
     }
-  }, [filters]);
+  }, [filters]); // Note: isSidebarOpen dependency removed
+
+  // --- NEW: Pull-to-Refresh Effects ---
+  useEffect(() => {
+    const contentEl = contentRef.current;
+    if (!contentEl || !isMobile()) return;
+
+    const handleTouchStart = (e) => {
+      touchStartY.current = e.touches[0].clientY;
+      touchEndY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e) => {
+      touchEndY.current = e.touches[0].clientY;
+      const pullDistance = touchEndY.current - touchStartY.current;
+      
+      // Show pull indicator if at top and pulling down
+      if (contentEl.scrollTop === 0 && pullDistance > 0 && !isRefreshing) {
+        // You could add a visual indicator here, e.g., move the content down
+        // For simplicity, we just check on touchEnd
+      }
+    };
+
+    const handleTouchEnd = () => {
+      const pullDistance = touchEndY.current - touchStartY.current;
+      // Check if at the top, pulled down significantly, and not already refreshing
+      if (contentEl.scrollTop === 0 && pullDistance > 75 && !isRefreshing) {
+        setIsRefreshing(true);
+        fetchArticles().finally(() => setIsRefreshing(false));
+      }
+    };
+
+    contentEl.addEventListener('touchstart', handleTouchStart, { passive: true });
+    contentEl.addEventListener('touchmove', handleTouchMove, { passive: true });
+    contentEl.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      contentEl.removeEventListener('touchstart', handleTouchStart);
+      contentEl.removeEventListener('touchmove', handleTouchMove);
+      contentEl.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isRefreshing, contentRef]); // Re-attach if refreshing state changes
 
   const fetchArticles = async (loadMore = false) => {
     try {
@@ -194,7 +243,7 @@ function App() {
       console.error('❌ Error fetching articles:', error.response ? error.response.data : error.message);
       setLoading(false); // Ensure loading stops on error
       setInitialLoad(false);
-      // Optionally: Add user-facing error message state here
+      setIsRefreshing(false); // NEW: Ensure refreshing stops on error
     }
   };
 
@@ -221,7 +270,7 @@ function App() {
   useEffect(() => {
     let timeoutId;
     // Get the scrollable element (content area on mobile, window on desktop)
-    const scrollableElement = window.innerWidth <= 768 ? document.querySelector('.content') : window;
+    const scrollableElement = window.innerWidth <= 768 ? contentRef.current : window;
 
     if (!scrollableElement) return; // Exit if element not found yet
 
@@ -233,13 +282,8 @@ function App() {
             const scrollTop = isWindow ? window.scrollY : scrollableElement.scrollTop;
             const clientHeight = isWindow ? window.innerHeight : scrollableElement.clientHeight;
 
-            // --- UPDATED Infinite Scroll Logic for Snap ---
-            // On mobile, clientHeight is fixed (viewport height).
-            // scrollHeight will be approx (Num Snap Containers * clientHeight)
-            // Load when the user scrolls past the *second to last* snap container.
-            const triggerPoint = isMobile() ? (scrollHeight - clientHeight * 1.5) : (scrollHeight - 800); // Desktop unchanged
-
-            if (scrollTop + clientHeight >= triggerPoint) {
+            // Check if user is near the bottom
+            if (clientHeight + scrollTop >= scrollHeight - 800) {
                 // Check if not loading, and if there are more articles to load
                 if (!loading && displayedArticles.length < totalArticlesCount) {
                     // console.log("Scroll near bottom detected, loading more...");
@@ -255,7 +299,7 @@ function App() {
         clearTimeout(timeoutId);
         scrollableElement.removeEventListener('scroll', handleScroll);
     };
-}, [loading, displayedArticles, totalArticlesCount]); // Dependencies for the scroll effect
+}, [loading, displayedArticles, totalArticlesCount, contentRef]); // Dependencies for the scroll effect
 
 
   const shareArticle = (article) => {
@@ -309,7 +353,7 @@ function App() {
           onClose={() => setIsSidebarOpen(false)} // NEW Prop
         />
 
-        <main className="content">
+        <main className="content" ref={contentRef}> {/* NEW: Added ref */}
           {/* --- REMOVED .content-header --- */}
 
           {(loading && initialLoad) ? ( // Show loading only on initial/filter load
@@ -319,11 +363,17 @@ function App() {
             </div>
           ) : (
             <>
+              {/* --- NEW: Pull to Refresh Indicator --- */}
+              <div className="pull-to-refresh-container" style={{ display: isRefreshing ? 'flex' : 'none' }}>
+                <div className="spinner-small"></div>
+                <p>Refreshing...</p>
+              </div>
+
               {displayedArticles.length > 0 ? (
                  <div className="articles-grid">
-                  {/* --- FIXED: Added card-snap-container wrapper --- */}
                   {displayedArticles.map((article) => (
-                    <div key={article._id || article.url} className="card-snap-container">
+                    // --- NEW: Added wrapper for mobile scroll-snap ---
+                    <div className="article-card-wrapper" key={article._id || article.url}>
                       <ArticleCard
                         article={article}
                         onCompare={(clusterId, title) => setCompareModal({ open: true, clusterId, articleTitle: title })}
@@ -346,13 +396,13 @@ function App() {
 
               {/* Show Load More button only if there are more articles */}
               {!loading && displayedArticles.length < totalArticlesCount && (
-                 {/* --- FIXED: Added card-snap-container wrapper --- */}
-                <div className="card-snap-container load-more-container">
-                    <div className="load-more">
-                        <button onClick={loadMoreArticles} className="load-more-btn">
-                            Load More ({totalArticlesCount - displayedArticles.length} remaining)
-                        </button>
-                    </div>
+                // --- NEW: Wrapper for load more button to act as a snap item ---
+                <div className="article-card-wrapper">
+                  <div className="load-more">
+                    <button onClick={loadMoreArticles} className="load-more-btn">
+                      Load More ({totalArticlesCount - displayedArticles.length} remaining)
+                    </button>
+                  </div>
                 </div>
               )}
             </>
@@ -443,51 +493,57 @@ function Header({ theme, toggleTheme, onToggleSidebar }) {
 // --- NEW: Custom Select Component ---
 function CustomSelect({ name, value, options, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef(null);
+  const selectRef = useRef(null);
 
-  // Handle click outside to close
+  // Find the display label for the current value
+  const selectedOption = options.find(option => (option.value || option) === value);
+  const displayLabel = selectedOption?.label || selectedOption || value;
+
+  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (ref.current && !ref.current.contains(event.target)) {
+      if (selectRef.current && !selectRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [ref]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [selectRef]);
 
-  const handleSelect = (optionValue) => {
-    onChange({ target: { name, value: optionValue } });
+  const handleSelectOption = (optionValue) => {
+    onChange({ target: { name, value: optionValue } }); // Mimic event object
     setIsOpen(false);
   };
 
-  // Find the label for the currently selected value
-  const selectedLabel = options.find(opt => (opt.value || opt) === value)?.label || value;
-
   return (
-    <div className="custom-select-container" ref={ref}>
+    <div className="custom-select-container" ref={selectRef}>
       <button
         type="button"
-        className="custom-select-trigger"
+        className={`custom-select-value ${isOpen ? 'open' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span>{selectedLabel}</span>
-        <span className="custom-select-arrow" />
+        <span>{displayLabel}</span>
+        <svg className="custom-select-arrow" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="20" viewBox="0 0 24 24" width="20">
+          <path d="M7 10l5 5 5-5z"></path><path d="M0 0h24v24H0z" fill="none"></path>
+        </svg>
       </button>
+      
       {isOpen && (
         <ul className="custom-select-options" role="listbox">
-          {options.map((option) => {
+          {options.map((option, index) => {
             const optionValue = option.value || option;
             const optionLabel = option.label || option;
+            const isSelected = optionValue === value;
+
             return (
               <li
-                key={optionValue}
-                className={`custom-select-option ${optionValue === value ? 'selected' : ''}`}
-                onClick={() => handleSelect(optionValue)}
+                key={index}
+                className={`custom-select-option ${isSelected ? 'selected' : ''}`}
+                onClick={() => handleSelectOption(optionValue)}
                 role="option"
-                aria-selected={optionValue === value}
+                aria-selected={isSelected}
               >
                 {optionLabel}
               </li>
@@ -499,20 +555,20 @@ function CustomSelect({ name, value, options, onChange }) {
   );
 }
 
-// --- Sidebar (Corrected) ---
+// --- Sidebar (UPDATED with CustomSelect and new Quality Labels) ---
 function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
   const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
 
-  // --- CORRECTED qualityLevels array ---
+  // --- UPDATED Quality Level Options (v2.11) ---
   const qualityLevels = [
     { value: 'All Quality Levels', label: 'All Quality Levels' },
     { value: 'A+ Excellent (90-100)', label: 'A+ : Excellent' },
     { value: 'A High (80-89)', label: 'A : High' },
     { value: 'B Professional (70-79)', label: 'B : Professional' },
     { value: 'C Acceptable (60-69)', label: 'C : Acceptable' },
-    { value: 'D-F Poor (0-59)', label: 'D-F : Poor' }, // <-- Comma added HERE
-    { value: 'Review / Opinion', label: 'Review / Opinion' },
+    { value: 'D-F Poor (0-59)', label: 'D-F : Poor' },
+    { value: 'Review / Opinion', label: 'Review / Opinion' }, // NEW Option
   ];
 
   const sortOptions = ['Latest First', 'Highest Quality', 'Most Covered', 'Lowest Bias'];
@@ -523,14 +579,13 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
   };
 
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}> {/* NEW: conditional class */}
       <div> {/* Filters Wrapper */}
-        <div className="sidebar-header-mobile">
+        <div className="sidebar-header-mobile"> {/* NEW: Mobile header in sidebar */}
           <h3>Filters</h3>
           <button className="sidebar-close-btn" onClick={onClose} title="Close Filters">×</button>
         </div>
 
-        {/* --- Using CustomSelect --- */}
         <div className="filter-section">
           <h3>Category</h3>
           <CustomSelect
@@ -556,7 +611,7 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
           <CustomSelect
             name="quality"
             value={filters.quality}
-            options={qualityLevels} // Uses the corrected array
+            options={qualityLevels} // Pass the array of objects
             onChange={handleChange}
           />
         </div>

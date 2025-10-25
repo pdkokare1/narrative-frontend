@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import './App.css'; // Ensure App.css is imported
 
@@ -79,21 +79,30 @@ function App() {
 
   // --- NEW: Custom Tooltip Handlers (Simplified) ---
   const showTooltip = (text, e) => {
-    if (!isMobile() || !text) return; // Only run on mobile
-    e.stopPropagation(); // Stop tap from triggering scroll
+    // (FIX) This is for DESKTOP hover tooltips
+    if (isMobile() || !text) return; 
+    e.stopPropagation();
 
-    // Get touch position
-    const touch = e.touches[0];
-    // Position tooltip above the finger
-    const x = touch.clientX;
-    const y = touch.clientY - 40; // 40px above finger
+    // Get element's position
+    const rect = e.currentTarget.getBoundingClientRect();
+    // Position tooltip above the element
+    const x = rect.left + rect.width / 2;
+    const y = rect.top; // Position at the top
 
-    // Show tooltip immediately
-    setTooltip({ visible: true, text, x, y });
+    setTooltip({ 
+      visible: true, 
+      text, 
+      x, 
+      y,
+      style: { 
+        transform: 'translate(-50%, -110%)', // Centered, 10% above element
+        pointerEvents: 'none' // Prevent flicker
+      }
+    });
   };
 
   const hideTooltip = (e) => {
-    if (!isMobile()) return;
+    if (isMobile()) return;
     if (tooltip.visible) {
       setTooltip({ ...tooltip, visible: false });
     }
@@ -113,8 +122,8 @@ function App() {
     const fetchAndShowArticle = async (id) => {
       // Basic sanitization
       if (!id || !/^[a-f\d]{24}$/i.test(id)) {
-         console.error('Invalid article ID format from URL');
-         return;
+          console.error('Invalid article ID format from URL');
+          return;
       }
       try {
         console.log(`Fetching shared article: ${id}`);
@@ -122,8 +131,8 @@ function App() {
         const response = await axios.get(`${API_URL}/articles/${id}`);
         if (response.data) {
           // Manually clean/default this single article just in case
-           const article = response.data;
-           const cleanedArticle = {
+            const article = response.data;
+            const cleanedArticle = {
               _id: article._id || article.url,
               headline: article.headline || article.title || 'No Headline Available',
               summary: article.summary || article.description || 'No summary available.',
@@ -146,8 +155,8 @@ function App() {
               keyFindings: Array.isArray(article.keyFindings) ? article.keyFindings : [],
               recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
               clusterId: article.clusterId || null
-           };
-           setAnalysisModal({ open: true, article: cleanedArticle });
+            };
+            setAnalysisModal({ open: true, article: cleanedArticle });
         }
       } catch (error) {
         console.error('Failed to fetch shared article:', error.response ? error.response.data : error.message);
@@ -166,6 +175,10 @@ function App() {
 
   // Effect to fetch articles when filters change or on initial load
   useEffect(() => {
+    // (FIX) Reset scroll on filter change
+    if (contentRef.current) {
+        contentRef.current.scrollTop = 0;
+    }
     fetchArticles();
   }, [filters]); // Re-fetch when filters change
 
@@ -177,6 +190,18 @@ function App() {
       setIsSidebarOpen(false);
     }
   }, [filters]); // Note: isSidebarOpen dependency removed
+  
+  // (FIX) Effect to add class for desktop sidebar
+  useEffect(() => {
+    const mainContainer = document.querySelector('.main-container');
+    if (mainContainer) {
+      if (!isDesktopSidebarVisible) { // (FIX) Check *visibility* state
+        mainContainer.classList.add('desktop-sidebar-hidden');
+      } else {
+        mainContainer.classList.remove('desktop-sidebar-hidden');
+      }
+    }
+  }, [isDesktopSidebarVisible]); // (FIX) Depend on visibility state
 
   // --- (FIX) Pull-to-Refresh Effects ---
   useEffect(() => {
@@ -195,7 +220,9 @@ function App() {
       
       // Only track pull distance if at top and pulling down
       if (contentEl.scrollTop === 0 && pullDistance > 0 && !isRefreshing) {
-        setPullDistance(pullDistance);
+        // (FIX) Apply resistance to pull
+        const resistedPull = Math.pow(pullDistance, 0.85);
+        setPullDistance(resistedPull);
         // Prevent default scroll behavior only when we are actively pulling down at the top
         e.preventDefault(); 
       } else {
@@ -205,6 +232,7 @@ function App() {
 
     const handleTouchEnd = () => {
       const pullThreshold = 120; // (FIX) Increased threshold
+      // (FIX) Check resisted pull distance state
       if (contentEl.scrollTop === 0 && pullDistance > pullThreshold && !isRefreshing) {
         setIsRefreshing(true);
         fetchArticles().finally(() => setIsRefreshing(false));
@@ -312,11 +340,12 @@ function App() {
     }
   };
 
-  const loadMoreArticles = () => {
+  // (FIX) Use useCallback for stable infinite scroll dependency
+  const loadMoreArticles = useCallback(() => {
     // Prevent loading more if already loading or no more articles
     if (loading || displayedArticles.length >= totalArticlesCount) return;
     fetchArticles(true); // Pass flag indicating this is a "load more" action
-  };
+  }, [loading, displayedArticles, totalArticlesCount, filters]); // (FIX) Add filters
 
 
   const toggleTheme = () => {
@@ -331,41 +360,24 @@ function App() {
       // Fetching is handled by the useEffect watching filters
   };
 
-  // Debounced scroll handler (optional optimization)
-  useEffect(() => {
-    let timeoutId;
-    // Get the scrollable element (content area on mobile, window on desktop)
-    const scrollableElement = window.innerWidth <= 768 ? contentRef.current : window;
-
-    if (!scrollableElement) return; // Exit if element not found yet
-
-    const handleScroll = () => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-            const isWindow = scrollableElement === window;
-            const scrollHeight = isWindow ? document.body.offsetHeight : scrollableElement.scrollHeight;
-            const scrollTop = isWindow ? window.scrollY : scrollableElement.scrollTop;
-            const clientHeight = isWindow ? window.innerHeight : scrollableElement.clientHeight;
-
-            // Check if user is near the bottom
-            if (clientHeight + scrollTop >= scrollHeight - 800) {
-                // Check if not loading, and if there are more articles to load
-                // (FIX) The 'loading' state check now correctly prevents spam
-                if (!loading && displayedArticles.length < totalArticlesCount) {
-                    // console.log("Scroll near bottom detected, loading more...");
-                    loadMoreArticles();
-                }
-            }
-        }, 150); // Adjust debounce delay as needed
-    };
-
-    scrollableElement.addEventListener('scroll', handleScroll);
-    // Cleanup function
-    return () => {
-        clearTimeout(timeoutId);
-        scrollableElement.removeEventListener('scroll', handleScroll);
-    };
-}, [loading, displayedArticles, totalArticlesCount, contentRef]); // Dependencies for the scroll effect
+  // (FIX) Infinite Scroll Intersection Observer
+  const observer = useRef();
+  const loadMoreSentinelRef = useCallback(node => {
+    if (loading) return; // Don't re-observe if already loading
+    if (observer.current) observer.current.disconnect(); // Disconnect old
+    
+    observer.current = new IntersectionObserver(entries => {
+      // (FIX) Check if intersecting AND there are more articles
+      if (entries[0].isIntersecting && displayedArticles.length < totalArticlesCount) {
+        loadMoreArticles();
+      }
+    }, { 
+      root: isMobile() ? contentRef.current : null, // Use viewport on desktop
+      rootMargin: isMobile() ? "200px" : "800px" // Load earlier
+    });
+    
+    if (node) observer.current.observe(node); // Observe new node
+  }, [loading, loadMoreArticles, displayedArticles, totalArticlesCount]); // Re-create observer if dependencies change
 
 
   const shareArticle = (article) => {
@@ -421,6 +433,7 @@ function App() {
         text={tooltip.text}
         x={tooltip.x}
         y={tooltip.y}
+        style={tooltip.style} // (FIX) Pass style
       />
 
       <Header
@@ -456,10 +469,7 @@ function App() {
             }}
           >
             <span 
-              className="pull-indicator-arrow" 
-              style={{ 
-                transform: `rotate(${pullDistance > 120 ? '180deg' : '0deg'})` 
-              }}
+              className={`pull-indicator-arrow ${pullDistance > 120 ? 'rotated' : ''}`}
             >
               ↓
             </span>
@@ -488,18 +498,21 @@ function App() {
               {displayedArticles.length > 0 ? (
                  <div className="articles-grid">
                   {displayedArticles.map((article) => (
-                    // --- NEW: Added wrapper for mobile scroll-snap ---
-                    <div className="article-card-wrapper" key={article._id || article.url}>
+                    // --- (FIX) Wrapper now handles ID and mobile wrapping ---
+                    <ArticleCardWrapper 
+                      key={article._id || article.url} 
+                      id={`article-${article._id}`} // (FIX) ID for shared links
+                    >
                       <ArticleCard
                         article={article}
                         onCompare={(clusterId, title) => setCompareModal({ open: true, clusterId, articleTitle: title })}
                         onAnalyze={(article) => setAnalysisModal({ open: true, article })}
                         onShare={shareArticle}
-                        // --- NEW: Tooltip props ---
+                        // --- (FIX) Pass desktop hover handlers ---
                         showTooltip={showTooltip}
                         hideTooltip={hideTooltip}
                       />
-                    </div>
+                    </ArticleCardWrapper>
                   ))}
                  </div>
               ) : (
@@ -510,17 +523,18 @@ function App() {
               )}
 
 
-              {/* (FIX) Show Load More button only if there are more articles */}
-              {/* This is now a snap-point on mobile */}
-              {!loading && displayedArticles.length < totalArticlesCount && (
-                <div className="article-card-wrapper load-more-wrapper">
-                  <div className="load-more">
-                    <button onClick={loadMoreArticles} className="load-more-btn">
-                      Load More ({totalArticlesCount - displayedArticles.length} remaining)
-                    </button>
+              {/* (FIX) Sentinel element for infinite scroll */}
+              <div 
+                ref={loadMoreSentinelRef} 
+                className="load-more-sentinel"
+              >
+                {/* Show spinner when loading more */}
+                {loading && !initialLoad && (
+                  <div className="loading-container" style={{ minHeight: '100px' }}>
+                    <div className="spinner-small"></div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </>
           )}
         </main>
@@ -535,7 +549,7 @@ function App() {
             setCompareModal({ open: false, clusterId: null, articleTitle: '' }); // Close compare modal
             setAnalysisModal({ open: true, article }); // Open analysis modal
           }}
-          // --- NEW: Tooltip props ---
+          // --- (FIX) Pass desktop hover handlers ---
           showTooltip={showTooltip}
           hideTooltip={hideTooltip}
         />
@@ -545,7 +559,7 @@ function App() {
         <DetailedAnalysisModal
           article={analysisModal.article}
           onClose={() => setAnalysisModal({ open: false, article: null })}
-          // --- NEW: Tooltip props ---
+          // --- (FIX) Pass desktop hover handlers ---
           showTooltip={showTooltip}
           hideTooltip={hideTooltip}
         />
@@ -557,18 +571,21 @@ function App() {
 // === Sub-Components ===
 
 // --- NEW: Custom Tooltip Component ---
-function CustomTooltip({ visible, text, x, y }) {
+function CustomTooltip({ visible, text, x, y, style }) {
   if (!visible) return null;
+
+  // (FIX) Default mobile style
+  const defaultStyle = {
+    left: `${x}px`,
+    top: `${y}px`,
+    transform: 'translate(-50%, -100%)',
+  };
 
   return (
     <div
       className="tooltip-custom"
-      style={{
-        left: `${x}px`,
-        top: `${y}px`,
-        // Position centered horizontally, above the touch point
-        transform: 'translate(-50%, -100%)',
-      }}
+      // (FIX) Apply default mobile style or specific desktop style
+      style={style || defaultStyle}
     >
       {text}
     </div>
@@ -581,8 +598,8 @@ function Header({ theme, toggleTheme, onToggleSidebar }) {
   return (
     <header className="header">
       <div className="header-left">
-         {/* --- NEW: Hamburger Button --- */}
-         <button className="hamburger-btn" onClick={onToggleSidebar} title="Open Filters">
+         {/* --- (FIX) Hamburger Button (Always visible) --- */}
+         <button className="hamburger-btn" onClick={onToggleSidebar} title="Toggle Filters">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="3" y1="12" x2="21" y2="12"></line>
               <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -598,8 +615,9 @@ function Header({ theme, toggleTheme, onToggleSidebar }) {
       </div>
 
       <div className="header-right">
-        <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
-          {theme === 'dark' ? '☀️' : '🌙'}
+        <button className="theme-toggle" onClick={toggleTheme} title={`Current mode: ${theme}`}>
+          {/* (FIX) Show icon for CURRENT mode */}
+          {theme === 'dark' ? '🌙' : '☀️'}
         </button>
       </div>
     </header>
@@ -754,9 +772,25 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
 }
 
 
+// (FIX) NEW: Wrapper component for mobile snap
+function ArticleCardWrapper({ id, children }) {
+  if (isMobile()) {
+    return (
+      <div id={id} className="article-card-wrapper">
+        {children}
+      </div>
+    );
+  }
+  // On desktop, just render the card directly with its ID
+  return (
+    <div id={id} style={{height: '100%'}}> {/* (FIX) Ensure wrapper has height for grid stretch */}
+      {children}
+    </div>
+  );
+}
+
+
 // --- UPDATED ArticleCard Component (v2.11) ---
-// --- Show Bias/Lean, updated grade tooltip ---
-// --- NEW: Added onTouchStart/End={(e) => e.stopPropagation()} to all interactive elements ---
 function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hideTooltip }) {
 
   const isReview = article.analysisType === 'SentimentOnly';
@@ -774,6 +808,14 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
   };
 
   const stopTouch = (e) => e.stopPropagation();
+  
+  // --- (FIX) Helper function for lean color class ---
+  const getLeanClass = (lean) => {
+    if (['Left', 'Left-Leaning'].includes(lean)) return 'text-accent-lean-left';
+    if (['Right', 'Right-Leaning'].includes(lean)) return 'text-accent-lean-right';
+    if (lean === 'Center') return 'text-accent-lean-center';
+    return '';
+  };
 
   return (
     <div className="article-card">
@@ -812,19 +854,21 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
             <>
               <span className="meta-divider">|</span>
               <span
-                className="bias-score-card"
+                // (FIX) Add accent class
+                className={`bias-score-card ${article.biasScore > 0 ? 'text-accent' : ''}`}
                 title="Bias Score (0-100). Less is better."
-                onTouchStart={(e) => showTooltip("Bias Score (0-100). Less is better.", e)}
-                onTouchEnd={hideTooltip}
+                onMouseEnter={(e) => showTooltip("Bias Score (0-100). Less is better.", e)}
+                onMouseLeave={hideTooltip}
               >
                 Bias: {article.biasScore}
               </span>
                <span className="meta-divider">|</span>
                <span
-                className="political-lean-card"
+                // (FIX) Add conditional lean class
+                className={`political-lean-card ${getLeanClass(article.politicalLean)}`}
                 title="Detected political leaning."
-                onTouchStart={(e) => showTooltip("Detected political leaning.", e)}
-                onTouchEnd={hideTooltip}
+                onMouseEnter={(e) => showTooltip("Detected political leaning.", e)}
+                onMouseLeave={hideTooltip}
                >
                  {article.politicalLean}
                </span>
@@ -839,36 +883,38 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                  <span
                     className="quality-grade-text"
                     title="This article is an opinion, review, or summary."
-                    onTouchStart={(e) => showTooltip("This article is an opinion, review, or summary.", e)}
-                    onTouchEnd={hideTooltip}
+                    onMouseEnter={(e) => showTooltip("This article is an opinion, review, or summary.", e)}
+                    onMouseLeave={hideTooltip}
                  >
                    Review / Opinion
                  </span>
              ) : article.credibilityGrade ? (
                  <span
-                    className="quality-grade-text"
+                    // (FIX) Add accent class
+                    className={`quality-grade-text ${article.credibilityGrade ? 'text-accent' : ''}`}
                     title="This grade (A+ to F) is based on the article's Credibility and Reliability."
-                    onTouchStart={(e) => showTooltip("This grade (A+ to F) is based on the article's Credibility and Reliability.", e)}
-                    onTouchEnd={hideTooltip}
-                 > {/* UPDATED TOOLTIP */}
+                    onMouseEnter={(e) => showTooltip("This grade (A+ to F) is based on the article's Credibility and Reliability.", e)}
+                    onMouseLeave={hideTooltip}
+                 >
                    Grade: {article.credibilityGrade}
                  </span>
              ) : (
                  <span
                     className="quality-grade-text"
                     title="Quality grade not available."
-                    onTouchStart={(e) => showTooltip("Quality grade not available.", e)}
-                    onTouchEnd={hideTooltip}
+                    onMouseEnter={(e) => showTooltip("Quality grade not available.", e)}
+                    onMouseLeave={hideTooltip}
                  >
                    Grade: N/A
                  </span>
              )}
 
              <span
-                className="sentiment-text"
+                // (FIX) Add accent class
+                className={`sentiment-text ${article.sentiment !== 'Neutral' ? 'text-accent' : ''}`}
                 title="The article's overall sentiment towards its main subject."
-                onTouchStart={(e) => showTooltip("The article's overall sentiment towards its main subject.", e)}
-                onTouchEnd={hideTooltip}
+                onMouseEnter={(e) => showTooltip("The article's overall sentiment towards its main subject.", e)}
+                onMouseLeave={hideTooltip}
              >
                 Sentiment: {article.sentiment}
              </span>
@@ -876,7 +922,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
          {/* --- End Simplified Display --- */}
 
 
-         {/* --- Actions (v2.10 Stacked Buttons) --- */}
+        {/* --- Actions (v2.10 Stacked Buttons) --- */}
         <div className="article-actions">
           {/* --- (FIX) Show stacked buttons if review OR non-political --- */}
           {showReadArticleStack ? (
@@ -886,7 +932,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                 onClick={() => onShare(article)}
                 onTouchStart={stopTouch} // NEW: Prevent scroll on tap
                 className="btn-secondary btn-full-width"
-                title="Share article link"
+                title="Share this analysis" // (FIX) Updated title
               >
                 Share
               </button>
@@ -918,7 +964,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                   onClick={() => onShare(article)}
                   onTouchStart={stopTouch} // NEW: Prevent scroll on tap
                   className="btn-secondary"
-                  title="Share article link"
+                  title="Share this analysis" // (FIX) Updated title
                 >
                   Share
                 </button>
@@ -1069,18 +1115,24 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip, hi
             <div className="article-scores">
               <span
                 title="Bias Score (0-100, lower is less biased)"
-                onTouchStart={(e) => showTooltip("Bias Score (0-100, lower is less biased)", e)}
-                onTouchEnd={hideTooltip}
+                // (FIX) Add accent class
+                className={article.biasScore > 0 ? 'text-accent' : ''}
+                onMouseEnter={(e) => showTooltip("Bias Score (0-100, lower is less biased)", e)}
+                onMouseLeave={hideTooltip}
               >Bias: {article.biasScore ?? 'N/A'}</span>
               <span
                 title="Overall Trust Score (0-100, higher is more trustworthy)"
-                onTouchStart={(e) => showTooltip("Overall Trust Score (0-100, higher is more trustworthy)", e)}
-                onTouchEnd={hideTooltip}
+                // (FIX) Add accent class
+                className={article.trustScore > 0 ? 'text-accent' : ''}
+                onMouseEnter={(e) => showTooltip("Overall Trust Score (0-100, higher is more trustworthy)", e)}
+                onMouseLeave={hideTooltip}
               >Trust: {article.trustScore ?? 'N/A'}</span>
               <span
                 title="Credibility Grade (A+ to F)"
-                onTouchStart={(e) => showTooltip("Credibility Grade (A+ to F)", e)}
-                onTouchEnd={hideTooltip}
+                // (FIX) Add accent class
+                className={article.credibilityGrade ? 'text-accent' : ''}
+                onMouseEnter={(e) => showTooltip("Credibility Grade (A+ to F)", e)}
+                onMouseLeave={hideTooltip}
               >Grade: {article.credibilityGrade || 'N/A'}</span>
             </div>
             <div className="coverage-actions">
@@ -1360,7 +1412,7 @@ function ScoreBox({ label, value, showTooltip, hideTooltip }) {
       tooltip = 'Credibility Score (0-100). Measures the article\'s trustworthiness based on sources, facts, and professionalism.';
       break;
     case 'Reliability':
-      tooltip = 'Reliability Score (0-1A 0-100). Measures the source\'s consistency, standards, and corrections policy over time.';
+      tooltip = 'Reliability Score (0-100). Measures the source\'s consistency, standards, and corrections policy over time.';
       break;
     default:
       tooltip = `${label} (0-100)`;
@@ -1370,8 +1422,8 @@ function ScoreBox({ label, value, showTooltip, hideTooltip }) {
     <div
       className="score-circle"
       title={tooltip}
-      onTouchStart={(e) => showTooltip(tooltip, e)}
-      onTouchEnd={hideTooltip}
+      onMouseEnter={(e) => showTooltip(tooltip, e)} // (FIX) Changed to MouseEnter
+      onMouseLeave={hideTooltip} // (FIX) Changed to MouseLeave
     >
       <div className="score-value">{value ?? 'N/A'}</div>
       <div className="score-label">{label}</div>
@@ -1394,8 +1446,8 @@ function CircularProgressBar({ label, value, tooltip, showTooltip, hideTooltip }
     <div
       className="circle-progress-container"
       title={finalTooltip}
-      onTouchStart={(e) => showTooltip(finalTooltip, e)}
-      onTouchEnd={hideTooltip}
+      onMouseEnter={(e) => showTooltip(finalTooltip, e)} // (FIX) Changed to MouseEnter
+      onMouseLeave={hideTooltip} // (FIX) Changed to MouseLeave
     > {/* Use provided tooltip */}
       <svg className="circle-progress-svg" width="100" height="100" viewBox="0 0 100 100">
         <circle
@@ -1439,5 +1491,4 @@ function CircularProgressBar({ label, value, tooltip, showTooltip, hideTooltip }
 }
 
 export default App;
-
 

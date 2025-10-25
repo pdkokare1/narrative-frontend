@@ -525,9 +525,17 @@ function App() {
                  </div>
               )}
 
+              {/* --- (FIX) NEW: Show loading spinner for infinite scroll --- */}
+              {(loading && !initialLoad) && (
+                <div className="article-card-wrapper load-more-wrapper"> {/* Re-use wrapper for snap */}
+                  <div className="loading-container" style={{ minHeight: '200px' }}>
+                    <div className="spinner"></div>
+                    <p>Loading more articles...</p>
+                  </div>
+                </div>
+              )}
 
-              {/* (FIX) Show Load More button only if there are more articles */}
-              {/* This is now a snap-point on mobile */}
+              {/* (FIX) Show Load More button only if there are more articles AND NOT loading */}
               {!loading && displayedArticles.length < totalArticlesCount && (
                 <div className="article-card-wrapper load-more-wrapper">
                   <div className="load-more">
@@ -898,11 +906,15 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
               )}
 
               <span
-                  className={`sentiment-text ${getSentimentClass(article.sentiment)}`} // (FIX) Added sentiment class
+                  className="sentiment-text" // (FIX) Removed class from here
                   title="The article's overall sentiment towards its main subject."
                   onClick={(e) => showTooltip("The article's overall sentiment towards its main subject.", e)}
               >
-                  Sentiment: {article.sentiment}
+                  Sentiment:
+                  {/* (FIX) Added new span for color */}
+                  <span className={getSentimentClass(article.sentiment)}>
+                    {' '}{article.sentiment}
+                  </span>
               </span>
           </div>
           {/* --- End Simplified Display --- */}
@@ -956,7 +968,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
                   onClick={(e) => { stopMobileClick(e); onCompare(article.clusterId, article.headline); }} // (FIX) Stop propagation
                   className="btn-primary btn-full-width"
                   title="Compare Coverage Across Perspectives"
-                  disabled={!article.clusterId} // (FIX) This will now be disabled if no clusterId
+                  // (FIX) Removed disabled prop
                 >
                   Compare Coverage
                 </button>

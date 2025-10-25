@@ -70,7 +70,7 @@ function App() {
   const contentRef = useRef(null); // Ref for the main scrollable .content area
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
-  const isTouching = useRef(false); // (FIX) Add this line
+  // (FIX) REMOVED isTouching ref
   const [pullDistance, setPullDistance] = useState(0); // NEW: State for visual pull
   const pullThreshold = 120; // (FIX) Defined pull threshold here
 
@@ -200,7 +200,7 @@ function App() {
     const handleTouchStart = (e) => {
       // Only process if the touch starts directly on the content area, not on its children that might scroll
       if (e.target !== contentEl) return;
-      isTouching.current = true; // (FIX) Track that touch has started
+      // (FIX) REMOVED isTouching.current = true;
       touchStartY.current = e.touches[0].clientY;
       touchEndY.current = e.touches[0].clientY;
       // No setPullDistance(0) here, allows move to take over
@@ -223,7 +223,7 @@ function App() {
     };
 
     const handleTouchEnd = () => {
-      isTouching.current = false; // (FIX) Track that touch has ended
+      // (FIX) REMOVED isTouching.current = false; 
 
       // Check scroll position again in case it changed during the touch
       if (contentEl.scrollTop === 0 && pullDistance > pullThreshold && !isRefreshing) {
@@ -436,34 +436,9 @@ function App() {
     }
   };
 
-  // --- (FIX) NEW: Helper functions for pull-to-refresh transform ---
-  const contentTransform = () => {
-    if (!isMobile()) return 'none'; // Only apply transform on mobile
-    
-    if (isRefreshing) {
-      // Hold content down to show spinner (spinner container height is roughly 56px)
-      return `translateY(56px)`; 
-    }
-    if (pullDistance > 0) {
-      // User is pulling - ease the pull effect (e.g., sqrt makes it less linear)
-      const easedPull = Math.pow(pullDistance, 0.85); 
-      return `translateY(${Math.min(easedPull, pullThreshold + 40)}px)`; // Allow slight overpull visually
-    }
-    return 'translateY(0px)';
-  };
-
-  const contentTransition = () => {
-    // (FIX) Updated logic
-    if (!isMobile()) return 'none';
-    
-    // Only apply transition if refreshing,
-    // OR if snapping back (pullDistance is 0 AND touch has ended)
-    if (isRefreshing || (pullDistance === 0 && !isTouching.current)) {
-      return 'transform 0.3s ease';
-    }
-    
-    return 'none'; // No transition while finger is actively moving
-  };
+  // --- (FIX) REMOVED transform helpers ---
+  // const contentTransform = () => { ... };
+  // const contentTransition = () => { ... };
   // --- End transform helpers ---
 
 
@@ -535,10 +510,7 @@ function App() {
           {/* --- (FIX) NEW: Wrapper for scrollable content --- */}
           <div 
             className="content-scroll-wrapper"
-            style={{
-              transform: contentTransform(),
-              transition: contentTransition()
-            }}
+            // (FIX) REMOVED style prop
           >
             {(loading && initialLoad) ? ( // Initial load spinner
               <div className="loading-container">

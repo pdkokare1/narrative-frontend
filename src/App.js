@@ -60,6 +60,7 @@ function App() {
   const [analysisModal, setAnalysisModal] = useState({ open: false, article: null });
   const [totalArticlesCount, setTotalArticlesCount] = useState(0); // Track total count from API
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // NEW: State for mobile sidebar
+  const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true); // NEW: State for desktop sidebar
 
   // --- NEW: Custom Tooltip State ---
   const [tooltip, setTooltip] = useState({
@@ -321,6 +322,24 @@ function App() {
     }
   };
 
+  // --- NEW: Combined Sidebar Toggle Logic ---
+  const toggleSidebar = () => {
+    if (isMobile()) {
+      setIsSidebarOpen(!isSidebarOpen); // Toggle mobile overlay
+    } else {
+      setIsDesktopSidebarVisible(!isDesktopSidebarVisible); // Toggle desktop minimize
+    }
+  };
+
+  // --- NEW: Combined Sidebar Close Logic ---
+  const closeSidebar = () => {
+    if (isMobile()) {
+      setIsSidebarOpen(false);
+    } else {
+      setIsDesktopSidebarVisible(false);
+    }
+  };
+
 
   return (
     <div className="app">
@@ -335,10 +354,10 @@ function App() {
       <Header
         theme={theme}
         toggleTheme={toggleTheme}
-        onToggleSidebar={() => setIsSidebarOpen(true)} // Pass correct function
+        onToggleSidebar={toggleSidebar} // UPDATED: Pass combined toggle function
       />
 
-      <div className="main-container">
+      <div className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''}`}> {/* UPDATED: Add class */}
         {/* --- NEW: Mobile Sidebar Overlay --- */}
         <div
           className={`sidebar-mobile-overlay ${isSidebarOpen ? 'open' : ''}`}
@@ -350,7 +369,7 @@ function App() {
           onFilterChange={handleFilterChange} // Use handler to potentially debounce/manage filter state
           articleCount={totalArticlesCount} // Use total count from API
           isOpen={isSidebarOpen} // NEW Prop
-          onClose={() => setIsSidebarOpen(false)} // NEW Prop
+          onClose={closeSidebar} // UPDATED: Pass combined close function
         />
 
         <main className="content" ref={contentRef}> {/* NEW: Added ref */}
@@ -1318,3 +1337,4 @@ function CircularProgressBar({ label, value, tooltip, showTooltip, hideTooltip }
 }
 
 export default App;
+

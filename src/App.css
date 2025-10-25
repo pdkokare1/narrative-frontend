@@ -105,6 +105,11 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes cardSnapIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -539,7 +544,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 }
 
 .article-headline {
-  font-size: 14px; /* SCALED: Was 15px, then 14px. Corrected here. */
+  font-size: 13.5px; /* (FIX) Scaled down from 14px */
   font-weight: 600;
   line-height: 1.4;
   color: var(--text-primary);
@@ -557,7 +562,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 
 
 .article-summary {
-  font-size: 11.5px; /* SCALED: Was 12px. Corrected here. */
+  font-size: 11px; /* (FIX) Scaled down from 11.5px */
   line-height: 1.6;
   color: var(--text-secondary);
   margin-bottom: 15px;
@@ -1108,6 +1113,7 @@ button:disabled, button:disabled:hover {
 
     /* --- (FIX) Add Snap scroll for vertical snapping --- */
     scroll-snap-type: y mandatory;
+    scroll-behavior: smooth; /* (FIX) NEW: Add smooth scroll animation */
 
     /* --- NEW: Hide Scrollbar --- */
     -ms-overflow-style: none;  /* IE and Edge */
@@ -1150,8 +1156,10 @@ button:disabled, button:disabled:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px 12px; /* (FIX) Symmetrical vertical (more margin), slightly less horizontal */
+    padding: 24px 12px 40px 12px; /* (FIX) Symmetrical vertical (more bottom margin), slightly less horizontal */
     overflow: hidden; /* Prevent card overflow issues */
+    /* (FIX) NEW: Add subtle animation on snap */
+    animation: cardSnapIn 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
   }
   .article-card-wrapper .load-more {
      margin: 0; /* (FIX) Reset margins for load more button */
@@ -1214,5 +1222,7 @@ button:disabled, button:disabled:hover {
 ::-webkit-scrollbar-track { background: var(--bg-secondary); }
 ::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
+
+
 
 

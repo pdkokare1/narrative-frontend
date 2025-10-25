@@ -762,6 +762,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
   const isReview = article.analysisType === 'SentimentOnly';
   // --- (FIX) NEW: Check for non-political leaning ---
   const isNonPolitical = article.politicalLean === 'Not Applicable';
+  // --- (FIX) REMOVED noCluster check ---
+  const showReadArticleStack = isReview || isNonPolitical;
 
   const handleImageError = (e) => {
     e.target.style.display = 'none';
@@ -874,10 +876,10 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
          {/* --- End Simplified Display --- */}
 
 
-        {/* --- Actions (v2.10 Stacked Buttons) --- */}
+         {/* --- Actions (v2.10 Stacked Buttons) --- */}
         <div className="article-actions">
           {/* --- (FIX) Show stacked buttons if review OR non-political --- */}
-          {(isReview || isNonPolitical) ? (
+          {showReadArticleStack ? (
             // --- UI for SentimentOnly OR NonPolitical (STACKED BUTTONS) ---
             <>
               <button
@@ -926,7 +928,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip, hide
                 onTouchStart={stopTouch} // NEW: Prevent scroll on tap
                 className="btn-primary btn-full-width"
                 title="Compare Coverage Across Perspectives"
-                disabled={!article.clusterId} // Disable if no clusterId
+                disabled={!article.clusterId} // (FIX) This will now be disabled if no clusterId
               >
                 Compare Coverage
               </button>
@@ -1437,4 +1439,6 @@ function CircularProgressBar({ label, value, tooltip, showTooltip, hideTooltip }
 }
 
 export default App;
+
+
 

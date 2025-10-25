@@ -225,7 +225,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 
 /* ==================== SIDEBAR ==================== */
 .sidebar {
-  width: 200px; /* (FIX) Reduced width */
+  width: 220px; /* (FIX) Reduced width */
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
   padding: 25px 15px; /* SCALED: Was 30px 20px */
@@ -243,7 +243,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 
 /* (FIX) Desktop sidebar hiding */
 .main-container.desktop-sidebar-hidden .sidebar {
-  margin-left: -200px; /* (FIX) Match new width */
+  margin-left: -220px;
 }
 
 
@@ -276,7 +276,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 }
 
 .filter-section h3 {
-  font-size: 10.5px; /* (FIX) Scaled down */
+  font-size: 11px; /* SCALED: Was 12px */
   font-weight: 600;
   color: var(--accent-primary);
   margin-bottom: 12px;
@@ -291,7 +291,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 .custom-select-container {
   position: relative;
   width: 100%;
-  font-size: 11.5px; /* (FIX) Scaled down */
+  font-size: 12px;
   font-weight: 500;
 }
 .custom-select-value {
@@ -375,7 +375,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 
 .filter-results p {
   color: var(--text-tertiary);
-  font-size: 10.5px; /* (FIX) Scaled down */
+  font-size: 11px; /* SCALED: Was 12px */
   font-weight: 500;
 }
 
@@ -467,23 +467,14 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   align-items: stretch; /* (FIX) Make items in row same height */
 }
 
-/* --- (FIX) Responsive Grid Breakpoints --- */
-@media (max-width: 768px) {
-  /* Mobile styles will override this */
-}
-@media (min-width: 769px) and (max-width: 1100px) {
+/* --- (FIX) Force 4 columns on desktop --- */
+@media (min-width: 1024px) {
   .articles-grid {
-    /* (FIX) Allow 2-3 columns for tablet */
-    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-  }
-}
-@media (min-width: 1101px) {
-  .articles-grid {
-    /* (FIX) Force 4 columns on desktop */
     grid-template-columns: repeat(4, 1fr);
   }
 }
-
+/* --- (FIX) Remove 1600px breakpoint --- */
+/* @media (min-width: 1600px) { ... } */
 
 /* ==================== ARTICLE CARD ==================== */
 /* --- (FIX) Added height: 100% --- */
@@ -497,7 +488,8 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   display: flex;
   flex-direction: column;
   box-shadow: none;
-  /* --- (FIX) REMOVED min-width --- */
+  /* --- NEW: Ensure card doesn't get too small --- */
+  min-width: 270px;
   height: 100%; /* (FIX) Fill wrapper/grid item */
 }
 
@@ -553,7 +545,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 }
 
 .article-headline {
-  font-size: 13px; /* (FIX) Scaled down again */
+  font-size: 13.5px; /* (FIX) Scaled down from 14px */
   font-weight: 600;
   line-height: 1.4;
   color: var(--text-primary);
@@ -571,7 +563,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 
 
 .article-summary {
-  font-size: 10.5px; /* (FIX) Scaled down again */
+  font-size: 11px; /* (FIX) Scaled down from 11.5px */
   line-height: 1.6;
   color: var(--text-secondary);
   margin-bottom: 15px;
@@ -628,25 +620,6 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   text-transform: none;
 }
 /* --- End Display --- */
-
-/* --- (FIX) NEW Accent Color Classes --- */
-.text-accent {
-  color: var(--accent-primary) !important;
-  font-weight: 600;
-}
-.text-accent-lean-left {
-  color: #dc2626 !important; /* Red */
-  font-weight: 600;
-}
-.text-accent-lean-center {
-  color: #6b7280 !important; /* Gray */
-  font-weight: 600;
-}
-.text-accent-lean-right {
-  color: #2563eb !important; /* Blue */
-  font-weight: 600;
-}
-/* --- End Accent Classes --- */
 
 
 /* --- Card Actions (v2.10 Stacked Buttons) --- */
@@ -773,12 +746,7 @@ button:disabled, button:disabled:hover {
 .modal-header h2 { font-size: 20px; /* SCALED: Was 22px */ font-weight: 700; margin: 0; color: var(--text-primary); }
 
 .close-btn {
-  background: none; border: none; font-size: 28px; line-height: 1; color: var(--text-tertiary);
-  cursor: pointer; transition: all 0.3s ease; width: 36px; height: 36px;
-  display: flex; align-items: center; justify-content: center; border-radius: 50%;
-}
-.close-btn:hover { 
-  background: var(--accent-primary); color: white; transform: rotate(90deg); /* (FIX) Restore desktop animation */
+  transform: rotate(90deg);
 }
 /* (FIX) Add tap states for mobile */
 .close-btn:active {
@@ -1008,7 +976,7 @@ button:disabled, button:disabled:hover {
 .circle-progress-text-value {
   font-size: 22px;
   font-weight: 700;
-  fill: var(--accent-primary); /* (FIX) Use accent color */
+  fill: var(--text-primary);
 }
 .circle-progress-label {
   font-size: 11px; /* SCALED: Was 12px */
@@ -1280,6 +1248,3 @@ button:disabled, button:disabled:hover {
 ::-webkit-scrollbar-track { background: var(--bg-secondary); }
 ::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
-
-
-

@@ -780,6 +780,8 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
 // --- (FIX) Added accent coloring ---
 function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
 
+  const isMobile = () => window.innerWidth <= 768; // <-- FIX: Definition added
+
   const isReview = article.analysisType === 'SentimentOnly';
   // --- (FIX) NEW: Check for non-political leaning ---
   const isNonPolitical = article.politicalLean === 'Not Applicable';
@@ -796,7 +798,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
 
   // (FIX) Stop propagation on interactive elements for mobile
   const stopMobileClick = (e) => {
-    if (isMobile()) {
+    if (isMobile()) { // <-- FIX: This will now work
       e.stopPropagation();
     }
   };
@@ -1078,9 +1080,11 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
 function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
   if (!articleList || articleList.length === 0) return null;
   
+  const isMobile = () => window.innerWidth <= 768; // <-- FIX: Definition added
+
   // (FIX) Stop propagation on interactive elements for mobile
   const stopMobileClick = (e) => {
-    if (isMobile()) {
+    if (isMobile()) { // <-- FIX: This will now work
       e.stopPropagation();
     }
   };

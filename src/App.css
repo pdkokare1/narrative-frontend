@@ -88,21 +88,9 @@ a:hover {
   cursor: help;
 }
 
-/* --- (FIX) Accent color classes --- */
+/* --- NEW: Accent color class --- */
 .accent-text {
   color: var(--accent-primary);
-  font-weight: 600;
-}
-.accent-text-positive {
-  color: #22c55e; /* Green */
-  font-weight: 600;
-}
-.accent-text-negative {
-  color: #ef4444; /* Red */
-  font-weight: 600;
-}
-.accent-text-neutral {
-  color: #6b7280; /* Gray */
   font-weight: 600;
 }
 
@@ -483,6 +471,11 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   align-items: stretch; /* (FIX) Make items in row same height */
 }
 
+/* --- (FIX) Remove rigid column rules --- */
+/* @media (min-width: 1024px) { ... } */
+/* @media (max-width: 1024px) { ... } */
+
+
 /* ==================== ARTICLE CARD ==================== */
 /* --- (FIX) Added height: 100% --- */
 .article-card {
@@ -526,7 +519,6 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   object-fit: cover;
   transition: transform 0.5s ease, filter 0.3s ease;
   filter: brightness(0.95);
-  display: block; /* (FIX) Add display block */
 }
 
 .article-card:hover .article-image img {
@@ -577,10 +569,9 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   margin-bottom: 15px;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  min-height: 2.4em; /* (FIX) For desktop alignment */
 }
 
-/* --- (FIX) Meta Section Alignment --- */
+/* --- UPDATED Meta Section (v2.11) --- */
 .article-meta-v2 {
   display: flex;
   align-items: center;
@@ -588,9 +579,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   padding-bottom: 10px;
   border-bottom: 1px solid var(--border-light);
   gap: 8px; /* Reduced gap */
-  flex-wrap: nowrap; /* (FIX) Force single line */
-  overflow: hidden; /* (FIX) Hide overflow */
-  min-height: 20px; /* (FIX) For desktop alignment */
+  flex-wrap: wrap; /* Allow wrapping */
 }
 
 .source, .bias-score-card, .political-lean-card {
@@ -602,23 +591,12 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 .source {
   font-weight: 600;
   text-transform: uppercase;
-  /* (FIX) Truncation styles */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex-shrink: 1;
-  min-width: 50px;
-}
-.bias-score-card, .political-lean-card {
-  flex-shrink: 0; /* (FIX) Don't shrink */
-  white-space: nowrap; /* (FIX) Don't wrap */
 }
 .meta-divider {
   color: var(--text-muted);
   font-size: 10px;
-  flex-shrink: 0; /* (FIX) Don't shrink */
 }
-/* --- End Meta --- */
+/* --- End Meta v2.11 --- */
 
 
 /* --- Quality + Sentiment Display --- */
@@ -629,7 +607,6 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   margin-bottom: 15px;
   flex-wrap: wrap;
   gap: 5px 10px;
-  min-height: 38px; /* (FIX) For desktop alignment */
 }
 .quality-grade-text, .sentiment-text {
   font-size: 10px; /* SCALED: Was 11px */
@@ -637,7 +614,6 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  cursor: default; /* (FIX) Make tappable on mobile */
 }
 .sentiment-text {
   font-weight: 500;
@@ -873,7 +849,7 @@ button:disabled, button:disabled:hover {
 .coverage-article p { font-size: 12px; /* SCALED: Was 13px */ color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; flex-grow: 1; }
 
 .article-scores { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; padding: 0; background: none; }
-.article-scores span { padding: 0; background: none; color: var(--text-tertiary); border-radius: 0; font-size: 10px; /* SCALED: Was 11px */ font-weight: 600; text-transform: uppercase; cursor: default; }
+.article-scores span { padding: 0; background: none; color: var(--text-tertiary); border-radius: 0; font-size: 10px; /* SCALED: Was 11px */ font-weight: 600; text-transform: uppercase; }
 
 .coverage-actions { display: flex; gap: 10px; margin-top: auto; } /* Use auto margin */
 .coverage-actions button {
@@ -896,8 +872,7 @@ button:disabled, button:disabled:hover {
 .score-circle {
   display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
   background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color); min-height: 90px; text-align: center;
-  transition: border-color 0.3s ease;
-  cursor: default; /* (FIX) Make tappable on mobile */
+  transition: border-color 0.3s ease; /* Added */
 }
 .score-circle:hover { border-color: var(--accent-primary); }
 
@@ -1007,7 +982,6 @@ button:disabled, button:disabled:hover {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  cursor: default; /* (FIX) Make tappable on mobile */
 }
 .circle-progress-svg {
   width: 100px;
@@ -1041,68 +1015,30 @@ button:disabled, button:disabled:hover {
 .recommendations li:last-child { border-bottom: none; }
 .recommendations li::before { content: '▸'; color: var(--accent-primary); font-weight: bold; margin-right: 12px; font-size: 14px; line-height: 1.6; }
 
-/* --- (FIX) Remove Custom Tooltip --- */
-/* .tooltip-custom { ... } */
-
-/* --- (FIX) NEW: Detail Popup Modal --- */
-.popup-overlay {
+/* --- NEW: Custom Tooltip --- */
+.tooltip-custom {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(5px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 3000; /* Above other modals */
-  padding: 20px;
-  animation: fadeIn 0.2s ease-out;
-}
-.popup-modal {
   background: var(--bg-elevated);
-  border-radius: 10px;
+  color: var(--text-primary);
   border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-lg);
-  width: 100%;
-  max-width: 300px;
-  animation: cardSnapIn 0.2s ease-out;
-}
-.popup-header {
-  padding: 12px 15px;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.popup-header h4 {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--accent-primary);
-}
-.popup-header .close-btn {
-  /* Use close-btn styles but remove rotation */
-  font-size: 24px;
-  width: 30px;
-  height: 30px;
-  transform: none;
-}
-.popup-header .close-btn:hover {
-  background: var(--bg-secondary);
-  color: var(--accent-primary);
-  transform: none;
-}
-.popup-content {
-  padding: 15px;
+  border-radius: 6px;
+  padding: 8px 12px;
   font-size: 12px;
-  line-height: 1.6;
-  color: var(--text-secondary);
+  font-weight: 500;
+  max-width: 200px;
+  text-align: center;
+  z-index: 3000; /* Above everything */
+  pointer-events: none; /* Don't intercept clicks */
+  animation: fadeIn 0.1s ease-out;
+  box-shadow: var(--shadow-md);
 }
-/* --- End Detail Popup --- */
 
 
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 1400px) { .main-container { max-width: 95%; } }
 @media (max-width: 1024px) {
     /* (FIX) Removed rigid 3-column layout */
+    /* .articles-grid { ... } */
     
     .content { padding: 25px; } /* SCALED: Was 30px */
     .sidebar { width: 200px; } /* (FIX) Match new sidebar width */
@@ -1299,10 +1235,8 @@ button:disabled, button:disabled:hover {
   .article-content { padding: 16px; } /* Keep internal padding */
 
   .modal-overlay { padding: 10px;} .compare-modal, .analysis-modal { max-height: 95vh; }
-  .modal-header { padding: 15px 20px; }
-  /* (FIX) Smaller font for analysis title */
-  .analysis-modal .modal-header h2 { font-size: 16px; }
-
+  .modal-header { padding: 15px 20px; } .modal-header h2 { font-size: 18px; }
+  
   /* --- (FIX) Close Button Mobile Styling --- */
   .close-btn {
     transform: none; /* Remove base rotation */
@@ -1318,10 +1252,7 @@ button:disabled, button:disabled:hover {
   }
   /* --- End Close Button Mobile --- */
 
-  .modal-tabs button { font-size: 11px; padding: 10px 12px; }
-  /* (FIX) Add padding to modal content */
-  .modal-body, .modal-content { padding: 30px 20px; }
-  
+  .modal-tabs button { font-size: 11px; padding: 10px 12px; } .modal-body, .modal-content { padding: 20px; }
   .overview-grid { grid-template-columns: 1fr 1fr; gap: 15px;} .score-value { font-size: 24px;} .score-label { font-size: 10px;}
   .component-section-header { flex-direction: column; align-items: flex-start; } /* Stack header items */
   .toggle-zero-scores { margin-top: 10px; width: 100%; justify-content: flex-start; }
@@ -1331,8 +1262,12 @@ button:disabled, button:disabled:hover {
   .circle-progress-label { font-size: 10px; max-width: 100px; }
   .recommendations li { font-size: 12px; padding: 8px 0;}
 
-  /* --- (FIX) Remove [title] selector --- */
-  /* [title] { ... } */
+  /* --- NEW: Mobile Tooltip Helper --- */
+  [title] {
+    -webkit-user-select: none; /* Prevent text selection */
+    user-select: none;
+    /* Clicks are still handled by React, this just helps with touch */
+  }
 }
 
 /* ==================== General Scrollbar ==================== */

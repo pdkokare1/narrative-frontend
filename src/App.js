@@ -70,7 +70,6 @@ function App() {
   const contentRef = useRef(null); // Ref for the main scrollable .content area
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
-  // (FIX) REMOVED isTouching ref
   const [pullDistance, setPullDistance] = useState(0); // NEW: State for visual pull
   const pullThreshold = 120; // (FIX) Defined pull threshold here
 
@@ -198,12 +197,10 @@ function App() {
     if (!contentEl || !isMobile()) return;
 
     const handleTouchStart = (e) => {
-      // Only process if the touch starts directly on the content area, not on its children that might scroll
-      if (e.target !== contentEl) return;
-      // (FIX) REMOVED isTouching.current = true;
+      // (FIX) Removed 'if (e.target !== contentEl) return;'
+      // This was the bug. We need to capture all touches, not just on the container.
       touchStartY.current = e.touches[0].clientY;
       touchEndY.current = e.touches[0].clientY;
-      // No setPullDistance(0) here, allows move to take over
     };
 
     const handleTouchMove = (e) => {
@@ -223,8 +220,6 @@ function App() {
     };
 
     const handleTouchEnd = () => {
-      // (FIX) REMOVED isTouching.current = false; 
-
       // Check scroll position again in case it changed during the touch
       if (contentEl.scrollTop === 0 && pullDistance > pullThreshold && !isRefreshing) {
         setIsRefreshing(true);

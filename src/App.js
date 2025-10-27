@@ -2,6 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css'; // Ensure App.css is imported
 
+// --- NEW: Firebase Auth Imports ---
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from './firebaseConfig'; // Import our configured auth
+import Login from './Login'; // Import the Login component
+
 // Use environment variable for API URL, fallback to localhost for local dev
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -40,6 +45,14 @@ const getBreakdownTooltip = (label) => {
 
 
 function App() {
+  // --- NEW: Auth State ---
+  // We start in a loading state until Firebase checks the user's status
+  const [authState, setAuthState] = useState({
+    isLoading: true,
+    user: null,
+  });
+
+  // --- Existing States ---
   const [displayedArticles, setDisplayedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true); // Track initial load
@@ -114,6 +127,47 @@ function App() {
   // --- End Tooltip Handlers ---
 
 
+  // --- NEW: Firebase Auth Listener Effect ---
+  useEffect(() => {
+    // onAuthStateChanged returns an "unsubscribe" function
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in
+        setAuthState({ isLoading: false, user: user });
+      } else {
+        // User is signed out
+        setAuthState({ isLoading: false, user: null });
+      }
+    });
+
+    // Cleanup function to unsubscribe when the component unmounts
+    return () => unsubscribe();
+  }, []); // Empty dependency array so this runs only once on mount
+
+  // --- NEW: Axios Token Interceptor Effect ---
+  useEffect(() => {
+    // This interceptor automatically adds the auth token to all axios requests
+    const interceptor = axios.interceptors.request.use(
+      async (config) => {
+        const user = auth.currentUser; // Get the user at the time of the request
+        if (user) {
+          const token = await user.getIdToken(); // Get their Firebase ID token
+          config.headers.Authorization = `Bearer ${token}`; // Add it to the header
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // Cleanup function to remove the interceptor when the app unmounts
+    return () => {
+      axios.interceptors.request.eject(interceptor);
+    };
+  }, []); // Empty dependency array, run once
+
+
   // Effect to set initial theme from localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -132,6 +186,16 @@ function App() {
       try {
         console.log(`Fetching shared article: ${id}`);
         // We need to fetch the full article object, not just get from displayed ones
+        
+        // --- UPDATED: No token needed for this one-off fetch ---
+        // We create a temporary axios instance *without* the interceptor
+        // This allows non-logged-in users to view shared articles
+        // **NOTE:** This requires your `/api/articles/:id` route on the backend
+        // to *NOT* have the `checkAuth` middleware. If it *does*, this will fail.
+        
+        // --- ASSUMING /api/articles/:id IS PROTECTED, we'll just let the interceptor handle it ---
+        // If the user isn't logged in, this modal just won't show, which is fine.
+        
         const response = await axios.get(`${API_URL}/articles/${id}`);
         if (response.data) {
           // Manually clean/default this single article just in case
@@ -171,16 +235,22 @@ function App() {
     const urlParams = new URLSearchParams(window.location.search);
     const articleId = urlParams.get('article');
     if (articleId) {
-       fetchAndShowArticle(articleId);
+       // --- NEW: Only fetch if user is logged in ---
+       if(authState.user) {
+         fetchAndShowArticle(articleId);
+       }
        // Optional: Clean the URL
        // window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, []); // Runs only once on mount
+  }, [authState.user]); // --- UPDATED: Runs only when user is available
 
   // Effect to fetch articles when filters change or on initial load
   useEffect(() => {
+    // --- NEW: Don't fetch if we don't have a user yet ---
+    if (!authState.user) return;
+    
     fetchArticles();
-  }, [filters]); // Re-fetch when filters change
+  }, [filters, authState.user]); // --- UPDATED: Re-fetch when filters or user changes
 
   // --- (FIXED) ---
   // Close sidebar on filter change (for mobile)
@@ -243,6 +313,15 @@ function App() {
   }, [isRefreshing, pullDistance, contentRef, pullThreshold]); 
 
 
+  // --- NEW: Logout Function ---
+  const handleLogout = () => {
+    signOut(auth).catch((error) => {
+      console.error('Logout Error:', error);
+    });
+    // onAuthStateChanged will handle the state update and UI change
+  };
+
+
   const fetchArticles = async (loadMore = false) => {
     try {
       // --- (FIX) Set loading true for ALL fetches to prevent scroll-spam ---
@@ -264,6 +343,7 @@ function App() {
 
       // console.log(`Fetching articles with queryParams: ${JSON.stringify(queryParams)}`);
 
+      // --- UPDATED: Request will now send auth token via interceptor ---
       const response = await axios.get(`${API_URL}/articles`, {
         params: queryParams // Use the modified params
       });
@@ -325,6 +405,13 @@ function App() {
 
     } catch (error) {
       console.error('❌ Error fetching articles:', error.response ? error.response.data : error.message);
+      
+      // --- NEW: Handle Auth Errors ---
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+         console.error("Auth token invalid, logging out.");
+         handleLogout(); // Log the user out if their token is bad
+      }
+
       setLoading(false); // Ensure loading stops on error
       setInitialLoad(false);
       setIsRefreshing(false); // NEW: Ensure refreshing stops on error
@@ -439,155 +526,173 @@ function App() {
 
   return (
     <div className="app">
-      {/* --- NEW: Custom Tooltip Render --- */}
-      <CustomTooltip
-        visible={tooltip.visible}
-        text={tooltip.text}
-        x={tooltip.x}
-        y={tooltip.y}
-      />
+      {/* --- NEW: Auth Gate --- */}
+      {authState.isLoading ? (
+        // Show a full-page loader while Firebase is checking
+        <div className="loading-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
+          <div className="spinner"></div>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '20px' }}>Authenticating...</p>
+        </div>
+      ) : !authState.user ? (
+        // No user, show the Login component
+        <Login />
+      ) : (
+        // User is signed in, show the main app
+        <>
+          {/* --- All existing app content goes here --- */}
 
-      <Header
-        theme={theme}
-        toggleTheme={toggleTheme}
-        onToggleSidebar={toggleSidebar} // UPDATED: Pass combined toggle function
-      />
+          {/* --- NEW: Custom Tooltip Render --- */}
+          <CustomTooltip
+            visible={tooltip.visible}
+            text={tooltip.text}
+            x={tooltip.x}
+            y={tooltip.y}
+          />
 
-      <div className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''}`}> {/* UPDATED: Add class */}
-        {/* --- NEW: Mobile Sidebar Overlay --- */}
-        <div
-          className={`sidebar-mobile-overlay ${isSidebarOpen ? 'open' : ''}`}
-          onClick={() => setIsSidebarOpen(false)}
-        ></div>
+          <Header
+            theme={theme}
+            toggleTheme={toggleTheme}
+            onToggleSidebar={toggleSidebar}
+            // --- UPDATED: Pass user and logout function ---
+            user={authState.user}
+            onLogout={handleLogout}
+          />
 
-        <Sidebar
-          filters={filters}
-          onFilterChange={handleFilterChange} // Use handler to potentially debounce/manage filter state
-          articleCount={totalArticlesCount} // Use total count from API
-          isOpen={isSidebarOpen} // NEW Prop
-          onClose={closeSidebar} // UPDATED: Pass combined close function
-        />
+          <div className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''}`}> {/* UPDATED: Add class */}
+            {/* --- NEW: Mobile Sidebar Overlay --- */}
+            <div
+              className={`sidebar-mobile-overlay ${isSidebarOpen ? 'open' : ''}`}
+              onClick={() => setIsSidebarOpen(false)}
+            ></div>
 
-        {/* --- (FIX) Ref added here, overflow-y moved here for mobile --- */}
-        <main className="content" ref={contentRef}> 
-          
-          {/* --- (FIX) Pull-to-refresh Indicators are now direct children --- */}
-          <div 
-            className="pull-indicator" 
-            style={{ 
-              opacity: Math.min(pullDistance / pullThreshold, 1), 
-              // (FIX) Indicator stays fixed at the top, opacity changes
-            }}
-          >
-            <span 
-              className="pull-indicator-arrow" 
-              style={{ 
-                transform: `rotate(${pullDistance > pullThreshold ? '180deg' : '0deg'})` 
-              }}
-            >
-              ↓
-            </span>
-            <span>{pullDistance > pullThreshold ? 'Release to refresh' : 'Pull to refresh'}</span>
-          </div>
+            <Sidebar
+              filters={filters}
+              onFilterChange={handleFilterChange} // Use handler to potentially debounce/manage filter state
+              articleCount={totalArticlesCount} // Use total count from API
+              isOpen={isSidebarOpen} // NEW Prop
+              onClose={closeSidebar} // UPDATED: Pass combined close function
+            />
 
-          <div 
-            className="pull-to-refresh-container" // Spinner
-            style={{ 
-              display: isRefreshing ? 'flex' : 'none' 
-              // (FIX) Spinner stays fixed at the top when refreshing
-            }}
-          >
-            <div className="spinner-small"></div>
-            <p>Refreshing...</p>
-          </div>
-          {/* --- End Pull-to-refresh --- */}
-
-          {/* --- (FIX) NEW: Wrapper for scrollable content --- */}
-          <div 
-            className="content-scroll-wrapper"
-            // (FIX) REMOVED style prop
-          >
-            {(loading && initialLoad) ? ( // Initial load spinner
-              <div className="loading-container">
-                <div className="spinner"></div>
-                <p>Loading articles...</p>
+            {/* --- (FIX) Ref added here, overflow-y moved here for mobile --- */}
+            <main className="content" ref={contentRef}> 
+              
+              {/* --- (FIX) Pull-to-refresh Indicators are now direct children --- */}
+              <div 
+                className="pull-indicator" 
+                style={{ 
+                  opacity: Math.min(pullDistance / pullThreshold, 1), 
+                  // (FIX) Indicator stays fixed at the top, opacity changes
+                }}
+              >
+                <span 
+                  className="pull-indicator-arrow" 
+                  style={{ 
+                    transform: `rotate(${pullDistance > pullThreshold ? '180deg' : '0deg'})` 
+                  }}
+                >
+                  ↓
+                </span>
+                <span>{pullDistance > pullThreshold ? 'Release to refresh' : 'Pull to refresh'}</span>
               </div>
-            ) : (
-              <> 
-                {displayedArticles.length > 0 ? (
-                  <div className="articles-grid"> 
-                    {displayedArticles.map((article) => (
-                      <div className="article-card-wrapper" key={article._id || article.url}>
-                        <ArticleCard
-                          article={article}
-                          onCompare={(clusterId, title) => setCompareModal({ open: true, clusterId, articleTitle: title })}
-                          onAnalyze={(article) => setAnalysisModal({ open: true, article })}
-                          onShare={shareArticle}
-                          showTooltip={showTooltip}
-                        />
-                      </div>
-                    ))}
+
+              <div 
+                className="pull-to-refresh-container" // Spinner
+                style={{ 
+                  display: isRefreshing ? 'flex' : 'none' 
+                  // (FIX) Spinner stays fixed at the top when refreshing
+                }}
+              >
+                <div className="spinner-small"></div>
+                <p>Refreshing...</p>
+              </div>
+              {/* --- End Pull-to-refresh --- */}
+
+              {/* --- (FIX) NEW: Wrapper for scrollable content --- */}
+              <div 
+                className="content-scroll-wrapper"
+                // (FIX) REMOVED style prop
+              >
+                {(loading && initialLoad) ? ( // Initial load spinner
+                  <div className="loading-container">
+                    <div className="spinner"></div>
+                    <p>Loading articles...</p>
                   </div>
                 ) : (
-                  // "No articles" message
-                  <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
-                      <p>No articles found matching your current filters.</p>
-                  </div>
+                  <> 
+                    {displayedArticles.length > 0 ? (
+                      <div className="articles-grid"> 
+                        {displayedArticles.map((article) => (
+                          <div className="article-card-wrapper" key={article._id || article.url}>
+                            <ArticleCard
+                              article={article}
+                              onCompare={(clusterId, title) => setCompareModal({ open: true, clusterId, articleTitle: title })}
+                              onAnalyze={(article) => setAnalysisModal({ open: true, article })}
+                              onShare={shareArticle}
+                              showTooltip={showTooltip}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      // "No articles" message
+                      <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
+                          <p>No articles found matching your current filters.</p>
+                      </div>
+                    )}
+
+                    {/* Loading spinner for infinite scroll */}
+                    {(loading && !initialLoad) && (
+                      <div className="article-card-wrapper load-more-wrapper"> 
+                        <div className="loading-container" style={{ minHeight: '200px' }}>
+                          <div className="spinner"></div>
+                          <p>Loading more articles...</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Load More button */}
+                    {!loading && displayedArticles.length < totalArticlesCount && (
+                      <div className="article-card-wrapper load-more-wrapper">
+                        <div className="load-more">
+                          <button onClick={loadMoreArticles} className="load-more-btn">
+                            Load More ({totalArticlesCount - displayedArticles.length} remaining)
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
+              </div> {/* --- End content-scroll-wrapper --- */}
+            </main>
+          </div>
 
-                {/* Loading spinner for infinite scroll */}
-                {(loading && !initialLoad) && (
-                  <div className="article-card-wrapper load-more-wrapper"> 
-                    <div className="loading-container" style={{ minHeight: '200px' }}>
-                      <div className="spinner"></div>
-                      <p>Loading more articles...</p>
-                    </div>
-                  </div>
-                )}
+          {compareModal.open && (
+            <CompareCoverageModal
+              clusterId={compareModal.clusterId}
+              articleTitle={compareModal.articleTitle} // Pass title
+              onClose={() => setCompareModal({ open: false, clusterId: null, articleTitle: '' })}
+              onAnalyze={(article) => {
+                setCompareModal({ open: false, clusterId: null, articleTitle: '' }); // Close compare modal
+                setAnalysisModal({ open: true, article }); // Open analysis modal
+              }}
+              // --- UPDATED: Tooltip prop ---
+              showTooltip={showTooltip}
+            />
+          )}
 
-                {/* Load More button */}
-                {!loading && displayedArticles.length < totalArticlesCount && (
-                  <div className="article-card-wrapper load-more-wrapper">
-                    <div className="load-more">
-                      <button onClick={loadMoreArticles} className="load-more-btn">
-                        Load More ({totalArticlesCount - displayedArticles.length} remaining)
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div> {/* --- End content-scroll-wrapper --- */}
-        </main>
-      </div>
-
-      {compareModal.open && (
-        <CompareCoverageModal
-          clusterId={compareModal.clusterId}
-          articleTitle={compareModal.articleTitle} // Pass title
-          onClose={() => setCompareModal({ open: false, clusterId: null, articleTitle: '' })}
-          onAnalyze={(article) => {
-            setCompareModal({ open: false, clusterId: null, articleTitle: '' }); // Close compare modal
-            setAnalysisModal({ open: true, article }); // Open analysis modal
-          }}
-          // --- UPDATED: Tooltip prop ---
-          showTooltip={showTooltip}
-        />
-      )}
-
-      {analysisModal.open && (
-        <DetailedAnalysisModal
-          article={analysisModal.article}
-          onClose={() => setAnalysisModal({ open: false, article: null })}
-          // --- UPDATED: Tooltip prop ---
-          showTooltip={showTooltip}
-        />
-      )}
+          {analysisModal.open && (
+            <DetailedAnalysisModal
+              article={analysisModal.article}
+              onClose={() => setAnalysisModal({ open: false, article: null })}
+              // --- UPDATED: Tooltip prop ---
+              showTooltip={showTooltip}
+            />
+          )}
+        </>
+      )} {/* --- NEW: End of Auth Gate --- */}
     </div>
   );
 }
-
-// ... (Rest of the sub-components: CustomTooltip, Header, CustomSelect, Sidebar, ArticleCard, CompareCoverageModal, renderArticleGroup, DetailedAnalysisModal, OverviewTab, OverviewBreakdownTab, ScoreBox, CircularProgressBar) remain the same as the previous version ...
 
 // === Sub-Components ===
 
@@ -617,7 +722,8 @@ function CustomTooltip({ visible, text, x, y }) {
 
 
 // --- Header (Text Logo, Toggle Fix, NEW Hamburger) ---
-function Header({ theme, toggleTheme, onToggleSidebar }) {
+// --- UPDATED: Added user and onLogout props ---
+function Header({ theme, toggleTheme, onToggleSidebar, user, onLogout }) {
   return (
     <header className="header">
       <div className="header-left">
@@ -638,6 +744,17 @@ function Header({ theme, toggleTheme, onToggleSidebar }) {
       </div>
 
       <div className="header-right">
+        {/* --- NEW: User Info and Logout Button --- */}
+        {user && (
+          <div className="user-info">
+            <span className="user-email" title={user.email}>{user.email}</span>
+            <button onClick={onLogout} className="logout-btn" title="Sign Out">
+              Sign Out
+            </button>
+          </div>
+        )}
+        {/* --- End New User Info --- */}
+
         <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
           {/* --- (FIX) Show CURRENT mode icon --- */}
           {theme === 'dark' ? '🌙' : '☀️'}
@@ -1017,6 +1134,7 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
       try {
         setLoading(true);
         // console.log(`Fetching cluster data for ID: ${clusterId}`);
+        // --- UPDATED: Request will now send auth token via interceptor ---
         const response = await axios.get(`${API_URL}/cluster/${clusterId}`);
         // console.log("Cluster Response:", response.data);
 

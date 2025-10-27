@@ -32,7 +32,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65); /* 35% brightness (100% - 65% opacity) */
+  background: rgba(0, 0, 0, 0.75); /* 25% brightness (100% - 65% opacity) */
   z-index: 1;
 }
 

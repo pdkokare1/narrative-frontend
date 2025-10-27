@@ -2,6 +2,7 @@ import React from 'react';
 import StyledFirebaseAuth from 'react-firebaseui/StyledFirebaseAuth';
 import { EmailAuthProvider, GoogleAuthProvider } from "firebase/auth";
 import { auth } from './firebaseConfig'; // Import our configured auth
+import './Login.css'; // --- ADD THIS LINE ---
 
 // Configure FirebaseUI.
 const uiConfig = {
@@ -22,31 +23,21 @@ const uiConfig = {
 
 function Login() {
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100vh',
-      // Use CSS variables from your App.css for background
-      backgroundColor: 'var(--bg-primary)' 
-    }}>
-      <div style={{
-        padding: '40px',
-        // Use CSS variables for card styling
-        backgroundColor: 'var(--bg-secondary)', 
-        borderRadius: '12px',
-        boxShadow: 'var(--shadow-md)',
-        textAlign: 'center',
-        maxWidth: '400px', // Optional: constrain width
-        width: '90%'
-      }}>
-        {/* Use CSS variables for text */}
-        <h1 style={{ color: 'var(--text-primary)', marginBottom: '10px' }}>The Gamut</h1> 
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '30px' }}>Please sign in to continue</p>
+    // --- UPDATED: Use CSS classes instead of inline styles ---
+    <div className="login-page-wrapper">
+      <div className="login-container">
+        
+        {/* --- NEW: Image Panel (visible on desktop) --- */}
+        <div className="login-image-panel"></div>
 
-        {/* The pre-built FirebaseUI login component */}
-        <StyledFirebaseAuth uiConfig={uiConfig} firebaseAuth={auth} />
+        {/* --- NEW: Form Panel (contains original content) --- */}
+        <div className="login-form-panel">
+          <h1>The Gamut</h1> 
+          <p>Please sign in to analyze the full spectrum</p>
+
+          {/* The pre-built FirebaseUI login component */}
+          <StyledFirebaseAuth uiConfig={uiConfig} firebaseAuth={auth} />
+        </div>
       </div>
     </div>
   );

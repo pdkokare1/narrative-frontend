@@ -8,8 +8,8 @@
   padding: 20px;
   background-color: var(--bg-primary);
 
-  /* --- Mobile First: Use CSS variable for background --- */
-  background-image: var(--bg-image-mobile);
+  /* --- Mobile First: Use your hosted URL here --- */
+  background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/v1761582659/login-bg-mobile.png_wctrjs.png');
   background-size: cover;
   background-position: center center;
   position: relative;
@@ -79,8 +79,8 @@
   .login-image-panel {
     display: block;
     flex: 1;
-    /* --- Use CSS variable for desktop background --- */
-    background-image: var(--bg-image-desktop);
+    /* --- Use your hosted desktop URL here --- */
+    background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/v1761582649/login-bg-desktop.png_qvrwhm.png');
     background-size: cover;
     background-position: center center;
   }
@@ -152,4 +152,5 @@
 
 /* Style text */
 .firebaseui-title, .firebaseui-text, .firebaseui-text-input-label {
-  color: var(--text-secondary) !impor
+  color: var(--text-secondary) !important;
+}

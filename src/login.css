@@ -1,0 +1,155 @@
+/* src/Login.css */
+
+.login-page-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: var(--bg-primary);
+
+  /* --- Mobile First: Use portrait image as full background --- */
+  background-image: url('/login-bg-mobile.jpg');
+  background-size: cover;
+  background-position: center center;
+  position: relative;
+}
+
+/* --- Mobile overlay to darken the background image --- */
+.login-page-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+.login-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 420px; /* Max width for mobile login card */
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: 2; /* Ensure card is above the overlay */
+}
+
+.login-image-panel {
+  display: none; /* --- Hidden on mobile --- */
+}
+
+.login-form-panel {
+  padding: 40px 30px;
+  text-align: center;
+}
+
+.login-form-panel h1 {
+  font-family: 'Inter', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.login-form-panel p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 30px;
+}
+
+/* --- Desktop Styles --- */
+@media (min-width: 769px) {
+  .login-page-wrapper {
+    background-image: none; /* --- Remove full-page background on desktop --- */
+    background-color: var(--bg-primary);
+  }
+
+  .login-page-wrapper::before {
+    display: none; /* --- Remove overlay on desktop --- */
+  }
+
+  .login-container {
+    flex-direction: row; /* --- Side-by-side layout --- */
+    max-width: 900px; /* Wider card for two panels */
+    min-height: 550px;
+  }
+
+  .login-image-panel {
+    display: block;
+    flex: 1;
+    background-image: url('/login-bg-desktop.jpg');
+    background-size: cover;
+    background-position: center center;
+  }
+
+  .login-form-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px;
+  }
+}
+
+
+/* --- FirebaseUI Theme Overrides --- */
+
+/* Style the buttons to match your .btn-primary */
+.firebaseui-id-submit.firebaseui-button {
+  background: var(--gradient-accent) !important;
+  color: white !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.7px !important;
+  padding: 10px 15px !important; /* Make buttons a bit taller */
+  transition: all 0.25s ease !important;
+}
+.firebaseui-id-submit.firebaseui-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm) !important;
+  filter: brightness(1.1) !important;
+}
+
+/* Style the Google button to match .btn-secondary */
+.firebaseui-idp-button.firebaseui-idp-google {
+  background: none !important;
+  color: var(--text-tertiary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  transition: all 0.25s ease !important;
+}
+.firebaseui-idp-button.firebaseui-idp-google:hover {
+  border-color: var(--accent-primary) !important;
+  color: var(--accent-primary) !important;
+  background: var(--bg-elevated) !important;
+}
+
+/* Style input fields */
+.firebaseui-id-input.firebaseui-input {
+  background: var(--bg-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  border-radius: 6px !important;
+}
+.firebaseui-id-input.firebaseui-input:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: none !important;
+}
+
+/* Style links */
+.firebaseui-link {
+  color: var(--accent-primary) !important;
+}
+.firebaseui-link:hover {
+  color: var(--accent-hover) !important;
+}
+
+/* Style text */
+.firebaseui-title, .firebaseui-text, .firebaseui-text-input-label {
+  color: var(--text-secondary) !important;
+}

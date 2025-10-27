@@ -6,22 +6,22 @@
   justify-content: center;
   min-height: 100vh;
   padding: 20px;
-  background-color: var(--bg-primary);
+  background-color: var(--bg-primary); /* Fallback */
+  position: relative;
+  overflow: hidden; /* Ensure backgrounds are contained */
 
-  /* Mobile First: Use your hosted URL here */
+  /* --- Mobile First: Use mobile image as full background --- */
   background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/v1761582659/login-bg-mobile.png_wctrjs.png');
   background-size: cover;
   background-position: center center;
-  position: relative;
 }
 
-/* Mobile overlay (50% brightness) */
+/* Mobile overlay (35% brightness) */
 .login-page-wrapper::before {
   content: '';
   position: absolute;
   inset: 0;
-  /* This creates the 50% brightness effect */
-  background: rgba(0, 0, 0, 0.5); 
+  background: rgba(0, 0, 0, 0.65); /* 35% brightness (100% - 65% opacity) */
   z-index: 1;
 }
 
@@ -30,21 +30,32 @@
   flex-direction: column;
   width: 100%;
   max-width: 420px; /* Max width for mobile login card */
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-secondary); /* Fallback for transparency */
   border-radius: 12px;
   box-shadow: var(--shadow-lg);
   overflow: hidden;
-  z-index: 2; /* Ensure card is above the overlay */
+  z-index: 2; /* Ensure card is above the wrapper overlay */
 }
 
+/* --- The image panel is now only for desktop, so hide on mobile --- */
 .login-image-panel {
-  display: none; /* --- Hidden on mobile --- */
+  display: none;
 }
 
 .login-form-panel {
   padding: 40px 30px;
   text-align: center;
+  position: relative; /* For the form's background overlay */
+  overflow: hidden;
+  background-color: var(--bg-secondary); /* Fallback for transparency */
 }
+
+/* Base content of form panel should be above its background */
+.login-form-panel > * {
+  position: relative;
+  z-index: 2;
+}
+
 
 .login-form-panel h1 {
   font-family: 'Inter', sans-serif;
@@ -63,58 +74,45 @@
 /* --- Desktop Styles --- */
 @media (min-width: 769px) {
   .login-page-wrapper {
-    background-image: none; /* --- Remove full-page background on desktop --- */
-  }
-
-  .login-page-wrapper::before {
-    display: none; /* --- Remove overlay on desktop --- */
-  }
-
-  .login-container {
-    flex-direction: row; /* --- Side-by-side layout --- */
-    max-width: 900px; /* Wider card for two panels */
-    min-height: 550px;
-  }
-
-  .login-image-panel {
-    display: block;
-    flex: 1;
+    /* --- NEW: Desktop image as THE main background, 35% brightness --- */
     background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/v1761582649/login-bg-desktop.png_qvrwhm.png');
     background-size: cover;
     background-position: center center;
-    /* --- NEW: Add 50% brightness filter --- */
-    filter: brightness(0.5);
-    transition: filter 0.3s ease;
+  }
+
+  /* NEW: Desktop wrapper overlay for 35% brightness */
+  .login-page-wrapper::before {
+    background: rgba(0, 0, 0, 0.65); /* 35% brightness */
+    display: block; /* Ensure it's active on desktop */
+  }
+
+  .login-container {
+    flex-direction: column; /* Back to single column for the card itself */
+    max-width: 480px; /* Adjust card width */
+    min-height: auto; /* Let content define height */
+    /* NEW: Ensure the card has a background, possibly semi-transparent */
+    background-color: rgba(var(--bg-secondary-rgb), 0.9); /* Slightly transparent background */
+  }
+
+  .login-image-panel {
+    display: none; /* No separate image panel on desktop */
   }
 
   .login-form-panel {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 40px;
-    /* --- NEW: Position relative to hold the new background --- */
-    position: relative;
-    overflow: hidden; /* Cntain the ::before element */
+    padding: 40px; /* Slightly more padding for desktop form */
+    /* NEW: Background image for the form panel itself, 20% brightness */
+    background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/v1761582649/login-bg-desktop.png_qvrwhm.png');
+    background-size: cover;
+    background-position: center center;
   }
 
-  /* --- NEW: Dark (25% brightness) background for form panel --- */
+  /* NEW: Overlay for the login-form-panel's background (20% brightness) */
   .login-form-panel::before {
     content: '';
     position: absolute;
     inset: 0;
+    background: rgba(0, 0, 0, 0.8); /* 20% brightness (100% - 80% opacity) */
     z-index: 1; /* Sit behind the content */
-    background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/v1761582649/login-bg-desktop.png_qvrwhm.png');
-    background-size: cover;
-    background-position: center center;
-    /* --- NEW: Add 25% brightness filter --- */
-    filter: brightness(0.25);
-  }
-
-  /* --- NEW: Make all form content sit on top of the dark background --- */
-  .login-form-panel > * {
-    position: relative;
-    z-index: 2;
   }
 }
 

@@ -1,8 +1,13 @@
 import React from 'react';
 import StyledFirebaseAuth from 'react-firebaseui/StyledFirebaseAuth';
 import { EmailAuthProvider, GoogleAuthProvider } from "firebase/auth";
-import { auth } from './firebaseConfig'; // Import our configured auth
-import './Login.css'; // --- ADD THIS LINE ---
+import { auth } from './firebaseConfig'; 
+import './Login.css'; 
+
+// --- 1. IMPORT THE IMAGES ---
+import bgMobile from './login-bg-mobile.png';
+import bgDesktop from './login-bg-desktop.png';
+
 
 // Configure FirebaseUI.
 const uiConfig = {
@@ -22,9 +27,15 @@ const uiConfig = {
 };
 
 function Login() {
+  // --- 2. CREATE A STYLE OBJECT WITH CSS VARIABLES ---
+  const wrapperStyle = {
+    '--bg-image-mobile': `url(${bgMobile})`,
+    '--bg-image-desktop': `url(${bgDesktop})`,
+  };
+
   return (
-    // --- UPDATED: Use CSS classes instead of inline styles ---
-    <div className="login-page-wrapper">
+    // --- 3. APPLY THE STYLE TO THE WRAPPER ---
+    <div className="login-page-wrapper" style={wrapperStyle}>
       <div className="login-container">
         
         {/* --- NEW: Image Panel (visible on desktop) --- */}

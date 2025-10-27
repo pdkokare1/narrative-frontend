@@ -1,4 +1,4 @@
-/* src/Login.css new*/
+/* src/Login.css */
 
 .login-page-wrapper {
   display: flex;
@@ -8,8 +8,8 @@
   padding: 20px;
   background-color: var(--bg-primary);
 
-  /* --- Mobile First: Use portrait image as full background --- */
-  background-image: url('%PUBLIC_URL%/login-bg-mobile.png');
+  /* --- Mobile First: Use CSS variable for background --- */
+  background-image: var(--bg-image-mobile);
   background-size: cover;
   background-position: center center;
   position: relative;
@@ -79,7 +79,8 @@
   .login-image-panel {
     display: block;
     flex: 1;
-    background-image: url('%PUBLIC_URL%/login-bg-desktop.png');
+    /* --- Use CSS variable for desktop background --- */
+    background-image: var(--bg-image-desktop);
     background-size: cover;
     background-position: center center;
   }
@@ -151,5 +152,4 @@
 
 /* Style text */
 .firebaseui-title, .firebaseui-text, .firebaseui-text-input-label {
-  color: var(--text-secondary) !important;
-}
+  color: var(--text-secondary) !impor

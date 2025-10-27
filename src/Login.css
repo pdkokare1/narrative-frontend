@@ -1,5 +1,16 @@
 /* src/Login.css */
 
+/* --- NEW: Define transparent backgrounds based on theme --- */
+.dark-mode .login-container {
+  /* #1E1E1E from App.css with 90% opacity */
+  background-color: rgba(30, 30, 30, 0.9); 
+}
+.light-mode .login-container {
+  /* #FFFFFF from App.css with 90% opacity */
+  background-color: rgba(255, 255, 255, 0.9);
+}
+/* --- End New Rules --- */
+
 .login-page-wrapper {
   display: flex;
   align-items: center;
@@ -30,7 +41,7 @@
   flex-direction: column;
   width: 100%;
   max-width: 420px; /* Max width for mobile login card */
-  background-color: var(--bg-secondary); /* Fallback for transparency */
+  /* background-color is now handled by .dark-mode/.light-mode rules */
   border-radius: 12px;
   box-shadow: var(--shadow-lg);
   overflow: hidden;
@@ -45,15 +56,15 @@
 .login-form-panel {
   padding: 40px 30px;
   text-align: center;
-  position: relative; /* For the form's background overlay */
+  position: relative; 
   overflow: hidden;
-  background-color: var(--bg-secondary); /* Fallback for transparency */
+  /* background-color is inherited from .login-container */
 }
 
-/* Base content of form panel should be above its background */
+/* Base content of form panel */
 .login-form-panel > * {
   position: relative;
-  z-index: 2;
+  /* z-index is no longer needed */
 }
 
 
@@ -74,13 +85,11 @@
 /* --- Desktop Styles --- */
 @media (min-width: 769px) {
   .login-page-wrapper {
-    /* --- NEW: Desktop image as THE main background, 35% brightness --- */
+    /* --- Desktop image as THE main background, 35% brightness --- */
     background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/v1761582649/login-bg-desktop.png_qvrwhm.png');
-    background-size: cover;
-    background-position: center center;
   }
 
-  /* NEW: Desktop wrapper overlay for 35% brightness */
+  /* Desktop wrapper overlay for 35% brightness */
   .login-page-wrapper::before {
     background: rgba(0, 0, 0, 0.65); /* 35% brightness */
     display: block; /* Ensure it's active on desktop */
@@ -90,8 +99,7 @@
     flex-direction: column; /* Back to single column for the card itself */
     max-width: 480px; /* Adjust card width */
     min-height: auto; /* Let content define height */
-    /* NEW: Ensure the card has a background, possibly semi-transparent */
-    background-color: rgba(var(--bg-secondary-rgb), 0.9); /* Slightly transparent background */
+    /* background-color is already set by the new theme rules */
   }
 
   .login-image-panel {
@@ -99,21 +107,11 @@
   }
 
   .login-form-panel {
-    padding: 40px; /* Slightly more padding for desktop form */
-    /* NEW: Background image for the form panel itself, 20% brightness */
-    background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/v1761582649/login-bg-desktop.png_qvrwhm.png');
-    background-size: cover;
-    background-position: center center;
+    padding: 40px; 
+    /* --- REMOVED: Background image properties --- */
   }
 
-  /* NEW: Overlay for the login-form-panel's background (20% brightness) */
-  .login-form-panel::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.8); /* 20% brightness (100% - 80% opacity) */
-    z-index: 1; /* Sit behind the content */
-  }
+  /* --- REMOVED: .login-form-panel::before rule --- */
 }
 
 

@@ -4,7 +4,7 @@ import axios from 'axios';
 import './App.css'; // Ensure App.css is imported
 
 // --- NEW: React Router imports ---
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
 
 // --- NEW: Firebase Auth Imports ---
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -13,6 +13,9 @@ import Login from './Login'; // Import the Login component
 
 // --- NEW: Import the CreateProfile page ---
 import CreateProfile from './CreateProfile'; 
+
+// --- NEW: Import the ProfilePage ---
+import ProfilePage from './ProfilePage';
 
 // Use environment variable for API URL, fallback to localhost for local dev
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
@@ -186,7 +189,10 @@ function AppWrapper() {
           if (error.response && error.response.status === 404) {
             // 404 means "Profile not found". Send them to create one.
             console.log('Profile not found, redirecting to create-profile');
-            navigate('/create-profile');
+            // --- UPDATED: Only redirect if NOT on profile page ---
+            if (location.pathname !== '/profile') {
+              navigate('/create-profile');
+            }
           } else {
             console.error('Failed to fetch profile', error);
             // Handle other errors (e.g., show an error message)
@@ -197,6 +203,7 @@ function AppWrapper() {
 
       checkProfile();
     }
+    // --- UPDATED: Allow redirect from /profile if profile is created ---
   }, [authState.user, profile, navigate, location.pathname]); // Re-run if user or profile changes
 
 
@@ -294,9 +301,12 @@ function AppWrapper() {
   useEffect(() => {
     // --- UPDATED: Don't fetch if we don't have a user OR profile ---
     if (!authState.user || !profile) return;
+    
+    // --- NEW: Don't fetch if we are on the profile page ---
+    if (location.pathname === '/profile') return;
 
     fetchArticles();
-  }, [filters, authState.user, profile]); // --- UPDATED: Re-fetch when filters, user or profile changes
+  }, [filters, authState.user, profile, location.pathname]); // --- UPDATED: Re-fetch when filters, user, profile, or path changes
 
   // --- (FIXED) ---
   // Close sidebar on filter change (for mobile)
@@ -569,12 +579,28 @@ function AppWrapper() {
   // We use <Routes> to handle showing the main app vs. the create profile page.
   return (
     <div className="app">
+      {/* --- This Header is now shared by all routes --- */}
+      {/* We only show it if the user is logged in (which they are at this point) */}
+      {/* And we only show it if they have a profile */}
+      {/* OR if they are ON the create-profile page */}
+      {profile && (
+        <Header
+          theme={theme}
+          toggleTheme={toggleTheme}
+          onToggleSidebar={toggleSidebar}
+          user={authState.user}
+          onLogout={handleLogout}
+          // --- UPDATED: Pass username from profile ---
+          username={profile.username}
+        />
+      )}
+
       <Routes>
         {/* --- Main App Page (Homepage) --- */}
         <Route path="/" element={
           // This is your main app content
           // We only render this if the profile exists
-          profile && (
+          profile ? (
             <>
               <CustomTooltip
                 visible={tooltip.visible}
@@ -583,15 +609,7 @@ function AppWrapper() {
                 y={tooltip.y}
               />
 
-              <Header
-                theme={theme}
-                toggleTheme={toggleTheme}
-                onToggleSidebar={toggleSidebar}
-                user={authState.user}
-                onLogout={handleLogout}
-                // --- UPDATED: Pass username from profile ---
-                username={profile.username}
-              />
+              {/* HEADER MOVED OUTSIDE */}
 
               <div className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''}`}> 
                 <div
@@ -710,11 +728,24 @@ function AppWrapper() {
                 />
               )}
             </>
+          ) : (
+             // If no profile, but on '/', redirect to create-profile
+             // This happens if the checkProfile effect hasn't redirected yet
+             <div className="loading-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
+               <div className="spinner"></div>
+             </div>
           )
         } />
 
         {/* --- ADD THE ROUTE FOR PROFILE CREATION --- */}
         <Route path="/create-profile" element={<CreateProfile />} />
+
+        {/* --- ADDED THE ROUTE FOR VIEWING PROFILE --- */}
+        <Route path="/profile" element={ profile ? <ProfilePage /> : 
+          <div className="loading-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
+            <div className="spinner"></div>
+          </div>
+        } />
 
       </Routes>
     </div>
@@ -781,8 +812,10 @@ function Header({ theme, toggleTheme, onToggleSidebar, user, username, onLogout 
       <div className="header-right">
         {user && (
           <div className="user-info">
-            {/* --- UPDATED: Show username --- */}
-            <span className="user-email" title={user.email}>{username}</span>
+            {/* --- UPDATED: Changed <span> to <Link> --- */}
+            <Link to="/profile" className="user-email" title="View your profile" style={{textDecoration: 'none'}}>
+              {username}
+            </Link>
             <button onClick={onLogout} className="logout-btn" title="Sign Out">
               Sign Out
             </button>
@@ -1533,7 +1566,7 @@ function ScoreBox({ label, value, showTooltip }) {
       tooltip = 'Credibility Score (0-100). Measures the article\'s trustworthiness based on sources, facts, and professionalism.';
       break;
     case 'Reliability':
-      tooltip = 'Reliability Score (0-100). Measures the source\'s consistency, standards, and corrections policy over time.';
+      tooltip = 'Reliability Score (0-1G00). Measures the source\'s consistency, standards, and corrections policy over time.';
       break;
     default:
       tooltip = `${label} (0-100)`;
@@ -1588,7 +1621,7 @@ function CircularProgressBar({ label, value, tooltip, showTooltip }) {
             strokeLinecap="round"
             fill="transparent"
             r={radius}
-            cx="50"
+            cx="5s0"
             cy="50"
             transform="rotate(-90 50 50)" 
           />

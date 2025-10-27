@@ -8,19 +8,20 @@
   padding: 20px;
   background-color: var(--bg-primary);
 
-  /* --- Mobile First: Use your hosted URL here --- */
+  /* Mobile First: Use your hosted URL here */
   background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/v1761582659/login-bg-mobile.png_wctrjs.png');
   background-size: cover;
   background-position: center center;
   position: relative;
 }
 
-/* --- Mobile overlay to darken the background image --- */
+/* Mobile overlay (50% brightness) */
 .login-page-wrapper::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  /* This creates the 50% brightness effect */
+  background: rgba(0, 0, 0, 0.5); 
   z-index: 1;
 }
 
@@ -63,7 +64,6 @@
 @media (min-width: 769px) {
   .login-page-wrapper {
     background-image: none; /* --- Remove full-page background on desktop --- */
-    background-color: var(--bg-primary);
   }
 
   .login-page-wrapper::before {
@@ -79,10 +79,12 @@
   .login-image-panel {
     display: block;
     flex: 1;
-    /* --- Use your hosted desktop URL here dektop --- */
     background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/v1761582649/login-bg-desktop.png_qvrwhm.png');
     background-size: cover;
     background-position: center center;
+    /* --- NEW: Add 50% brightness filter --- */
+    filter: brightness(0.5);
+    transition: filter 0.3s ease;
   }
 
   .login-form-panel {
@@ -91,6 +93,28 @@
     flex-direction: column;
     justify-content: center;
     padding: 40px;
+    /* --- NEW: Position relative to hold the new background --- */
+    position: relative;
+    overflow: hidden; /* Cntain the ::before element */
+  }
+
+  /* --- NEW: Dark (25% brightness) background for form panel --- */
+  .login-form-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1; /* Sit behind the content */
+    background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/v1761582649/login-bg-desktop.png_qvrwhm.png');
+    background-size: cover;
+    background-position: center center;
+    /* --- NEW: Add 25% brightness filter --- */
+    filter: brightness(0.25);
+  }
+
+  /* --- NEW: Make all form content sit on top of the dark background --- */
+  .login-form-panel > * {
+    position: relative;
+    z-index: 2;
   }
 }
 

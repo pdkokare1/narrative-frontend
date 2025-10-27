@@ -2,6 +2,9 @@
   "name": "narrative-frontend-complete",
   "version": "2.0.0",
   "private": true,
+  "overrides": {
+    "ajv": "6.12.6"
+  },
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -25,13 +28,4 @@
     "development": ["last 1 chrome version"]
   }
 }
-{
-  "name": "narrative-frontend-complete",
-  // ... other fields
-  "overrides": {
-    "ajv": "6.12.6"
-  },
-  "dependencies": {
-    // ...
-  }
-}
+ 

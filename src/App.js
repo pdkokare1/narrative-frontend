@@ -1,11 +1,12 @@
+// App.js (UPDATED v2.12 - Minor Auth Fix)
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import './App.css'; // Ensure App.css is imported
+import './App.css'; 
 
 // --- NEW: Firebase Auth Imports ---
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from './firebaseConfig'; // Import our configured auth
-import Login from './Login'; // Import the Login component
+import { auth } from './firebaseConfig'; 
+import Login from './Login'; 
 
 // Use environment variable for API URL, fallback to localhost for local dev
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
@@ -40,13 +41,12 @@ const getBreakdownTooltip = (label) => {
     "Corrections Policy": "Assesses the clarity, visibility, and timeliness of corrections for errors.",
     "Update Maintenance": "Measures how well the source updates developing stories with new information.",
   };
-  return tooltips[label] || label; // Return explanation or the label itself as fallback
+  return tooltips[label] || label;
 };
 
 
 function App() {
   // --- NEW: Auth State ---
-  // We start in a loading state until Firebase checks the user's status
   const [authState, setAuthState] = useState({
     isLoading: true,
     user: null,
@@ -55,8 +55,8 @@ function App() {
   // --- Existing States ---
   const [displayedArticles, setDisplayedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [initialLoad, setInitialLoad] = useState(true); // Track initial load
-  const [isRefreshing, setIsRefreshing] = useState(false); // NEW: For pull-to-refresh
+  const [initialLoad, setInitialLoad] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [theme, setTheme] = useState('dark');
   const [filters, setFilters] = useState({
     category: 'All Categories',
@@ -64,11 +64,11 @@ function App() {
     quality: 'All Quality Levels',
     sort: 'Latest First'
   });
-  const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '' }); // Added title
+  const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '' });
   const [analysisModal, setAnalysisModal] = useState({ open: false, article: null });
-  const [totalArticlesCount, setTotalArticlesCount] = useState(0); // Track total count from API
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // NEW: State for mobile sidebar
-  const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true); // NEW: State for desktop sidebar
+  const [totalArticlesCount, setTotalArticlesCount] = useState(0);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
 
   // --- (FIX) UPDATED: Custom Tooltip/Popup State ---
   const [tooltip, setTooltip] = useState({
@@ -80,29 +80,26 @@ function App() {
   const isMobile = () => window.innerWidth <= 768;
 
   // --- (FIX) Refs for Pull-to-Refresh ---
-  const contentRef = useRef(null); // Ref for the main scrollable .content area
+  const contentRef = useRef(null);
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
-  const [pullDistance, setPullDistance] = useState(0); // NEW: State for visual pull
-  const pullThreshold = 120; // (FIX) Defined pull threshold here
+  const [pullDistance, setPullDistance] = useState(0);
+  const pullThreshold = 120;
 
   // --- (FIX) UPDATED: Custom Tooltip/Popup Handlers (for Mobile Tap) ---
   const showTooltip = (text, e) => {
     if (!isMobile() || !text) return;
-    e.stopPropagation(); // Stop tap from triggering other clicks
+    e.stopPropagation(); 
 
-    // Get click/tap position
     const x = e.clientX || (e.touches && e.touches[0].clientX);
     const y = e.clientY || (e.touches && e.touches[0].clientY);
 
-    if (!x || !y) return; // Exit if no coords
+    if (!x || !y) return;
 
-    // Toggle logic
     if (tooltip.visible && tooltip.text === text) {
-      setTooltip({ visible: false, text: '', x: 0, y: 0 }); // Hide if tapping the same element
+      setTooltip({ visible: false, text: '', x: 0, y: 0 }); 
     } else {
-      // Show new tooltip, positioned above the tap
-      setTooltip({ visible: true, text, x: x, y: y }); // Position relative to tap
+      setTooltip({ visible: true, text, x: x, y: y });
     }
   };
 
@@ -112,10 +109,8 @@ function App() {
     }
   };
   
-  // NEW: Effect to hide tooltip on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
-      // Check if the click is outside the tooltip element
       if (tooltip.visible && !e.target.closest('.tooltip-custom')) {
         hideTooltip();
       }
@@ -123,36 +118,30 @@ function App() {
 
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [tooltip.visible]); // Re-run when tooltip visibility changes
+  }, [tooltip.visible]);
   // --- End Tooltip Handlers ---
 
 
   // --- NEW: Firebase Auth Listener Effect ---
   useEffect(() => {
-    // onAuthStateChanged returns an "unsubscribe" function
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        // User is signed in
         setAuthState({ isLoading: false, user: user });
       } else {
-        // User is signed out
         setAuthState({ isLoading: false, user: null });
       }
     });
-
-    // Cleanup function to unsubscribe when the component unmounts
     return () => unsubscribe();
-  }, []); // Empty dependency array so this runs only once on mount
+  }, []);
 
   // --- NEW: Axios Token Interceptor Effect ---
   useEffect(() => {
-    // This interceptor automatically adds the auth token to all axios requests
     const interceptor = axios.interceptors.request.use(
       async (config) => {
-        const user = auth.currentUser; // Get the user at the time of the request
+        const user = auth.currentUser;
         if (user) {
-          const token = await user.getIdToken(); // Get their Firebase ID token
-          config.headers.Authorization = `Bearer ${token}`; // Add it to the header
+          const token = await user.getIdToken();
+          config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
       },
@@ -161,9 +150,24 @@ function App() {
       }
     );
 
-    // Cleanup function to remove the interceptor when the app unmounts
+    // --- NEW: Add Response Interceptor for Auth Error Handling (CRITICAL) ---
+    const responseInterceptor = axios.interceptors.response.use(
+      (response) => response, // Pass successful responses through
+      (error) => {
+        // If the error response status is 401 or 403, log out the user
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+          console.error("Auth token invalid, logging out.");
+          handleLogout(); 
+        }
+        return Promise.reject(error);
+      }
+    );
+    // ------------------------------------------------------------------------
+
+    // Cleanup function to remove the interceptors
     return () => {
       axios.interceptors.request.eject(interceptor);
+      axios.interceptors.response.eject(responseInterceptor); // Cleanup response interceptor
     };
   }, []); // Empty dependency array, run once
 
@@ -178,27 +182,16 @@ function App() {
   // --- (FIX) NEW: Effect to check for shared article on load ---
   useEffect(() => {
     const fetchAndShowArticle = async (id) => {
-      // Basic sanitization
       if (!id || !/^[a-f\d]{24}$/i.test(id)) {
          console.error('Invalid article ID format from URL');
          return;
       }
       try {
         console.log(`Fetching shared article: ${id}`);
-        // We need to fetch the full article object, not just get from displayed ones
         
-        // --- UPDATED: No token needed for this one-off fetch ---
-        // We create a temporary axios instance *without* the interceptor
-        // This allows non-logged-in users to view shared articles
-        // **NOTE:** This requires your `/api/articles/:id` route on the backend
-        // to *NOT* have the `checkAuth` middleware. If it *does*, this will fail.
-        
-        // --- ASSUMING /api/articles/:id IS PROTECTED, we'll just let the interceptor handle it ---
-        // If the user isn't logged in, this modal just won't show, which is fine.
-        
+        // The request uses the interceptor which handles the token
         const response = await axios.get(`${API_URL}/articles/${id}`);
         if (response.data) {
-          // Manually clean/default this single article just in case
            const article = response.data;
            const cleanedArticle = {
               _id: article._id || article.url,
@@ -227,48 +220,42 @@ function App() {
            setAnalysisModal({ open: true, article: cleanedArticle });
         }
       } catch (error) {
-        console.error('Failed to fetch shared article:', error.response ? error.response.data : error.message);
-        // Don't alert user, just fail silently
+        // The interceptor handles the 403/401, so we just log if the article is not found
+        if (error.response && error.response.status !== 401 && error.response.status !== 403) {
+            console.error('Failed to fetch shared article:', error.response ? error.response.data : error.message);
+        }
       }
     };
 
     const urlParams = new URLSearchParams(window.location.search);
     const articleId = urlParams.get('article');
     if (articleId) {
-       // --- NEW: Only fetch if user is logged in ---
        if(authState.user) {
          fetchAndShowArticle(articleId);
        }
-       // Optional: Clean the URL
-       // window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, [authState.user]); // --- UPDATED: Runs only when user is available
+  }, [authState.user]);
 
   // Effect to fetch articles when filters change or on initial load
   useEffect(() => {
-    // --- NEW: Don't fetch if we don't have a user yet ---
     if (!authState.user) return;
     
     fetchArticles();
-  }, [filters, authState.user]); // --- UPDATED: Re-fetch when filters or user changes
+  }, [filters, authState.user]);
 
-  // --- (FIXED) ---
   // Close sidebar on filter change (for mobile)
-  // Removed `isSidebarOpen` from dependency array to fix instant-close bug
   useEffect(() => {
     if (isSidebarOpen) {
       setIsSidebarOpen(false);
     }
-  }, [filters]); // Note: isSidebarOpen dependency removed
+  }, [filters]);
 
-  // --- (FIX) Pull-to-Refresh Effects ---
+  // --- (FIX) Pull-to-Refresh Effects (No change, remains correct) ---
   useEffect(() => {
-    const contentEl = contentRef.current; // Use the main content ref
+    const contentEl = contentRef.current;
     if (!contentEl || !isMobile()) return;
 
     const handleTouchStart = (e) => {
-      // (FIX) Removed 'if (e.target !== contentEl) return;'
-      // This was the bug. We need to capture all touches, not just on the container.
       touchStartY.current = e.touches[0].clientY;
       touchEndY.current = e.touches[0].clientY;
     };
@@ -277,29 +264,22 @@ function App() {
       touchEndY.current = e.touches[0].clientY;
       const currentPullDistance = touchEndY.current - touchStartY.current;
       
-      // Only track pull distance if at top and pulling down
       if (contentEl.scrollTop === 0 && currentPullDistance > 0 && !isRefreshing) {
         setPullDistance(currentPullDistance);
-        // Prevent default scroll behavior only when we are actively pulling down at the top
-        // This stops the native browser pull-to-refresh or bounce effect
         e.preventDefault(); 
       } else if (contentEl.scrollTop !== 0 || currentPullDistance <= 0) {
-        // Reset if scrolling up, not at top, or refreshing
         setPullDistance(0); 
       }
     };
 
     const handleTouchEnd = () => {
-      // Check scroll position again in case it changed during the touch
       if (contentEl.scrollTop === 0 && pullDistance > pullThreshold && !isRefreshing) {
         setIsRefreshing(true);
         fetchArticles().finally(() => setIsRefreshing(false));
       }
-      // Always reset pull distance visual on touch end
       setPullDistance(0); 
     };
 
-    // Use non-passive listeners *only* for move, to allow preventDefault
     contentEl.addEventListener('touchstart', handleTouchStart, { passive: true });
     contentEl.addEventListener('touchmove', handleTouchMove, { passive: false }); 
     contentEl.addEventListener('touchend', handleTouchEnd, { passive: true });
@@ -309,7 +289,6 @@ function App() {
       contentEl.removeEventListener('touchmove', handleTouchMove);
       contentEl.removeEventListener('touchend', handleTouchEnd);
     };
-  // Ensure all dependencies influencing the handlers are included
   }, [isRefreshing, pullDistance, contentRef, pullThreshold]); 
 
 
@@ -318,110 +297,90 @@ function App() {
     signOut(auth).catch((error) => {
       console.error('Logout Error:', error);
     });
-    // onAuthStateChanged will handle the state update and UI change
   };
 
 
   const fetchArticles = async (loadMore = false) => {
     try {
-      // --- (FIX) Set loading true for ALL fetches to prevent scroll-spam ---
       setLoading(true);
       if (!loadMore) {
         setInitialLoad(true);
       }
-      const limit = 12; // Articles per page/load
+      const limit = 12;
       const offset = loadMore ? displayedArticles.length : 0;
 
-      // --- Prepare params, handle special 'Review / Opinion' quality filter ---
       const queryParams = { ...filters, limit, offset };
       if (filters.quality === 'Review / Opinion') {
-        queryParams.quality = null; // Don't send score range
-        queryParams.analysisType = 'SentimentOnly'; // Send this instead
+        queryParams.quality = null;
+        queryParams.analysisType = 'SentimentOnly';
       } else {
-        queryParams.analysisType = null; // Ensure this isn't sent for score-based filters
+        queryParams.analysisType = null;
       }
 
-      // console.log(`Fetching articles with queryParams: ${JSON.stringify(queryParams)}`);
-
-      // --- UPDATED: Request will now send auth token via interceptor ---
       const response = await axios.get(`${API_URL}/articles`, {
-        params: queryParams // Use the modified params
+        params: queryParams
       });
-
-      // console.log("API Response:", response.data); // Log API response
 
       const articlesData = response.data.articles || [];
       const paginationData = response.data.pagination || { total: 0 };
       setTotalArticlesCount(paginationData.total || 0);
 
-      // --- Data Cleaning and Defaulting (Important) ---
+      // --- Data Cleaning and Defaulting (No major changes here) ---
       const uniqueNewArticles = articlesData
-        .filter(article => article && article.url) // Ensure article and URL exist
+        .filter(article => article && article.url)
         .map(article => ({
-            _id: article._id || article.url, // Use URL as fallback key if _id missing
+            _id: article._id || article.url,
             headline: article.headline || article.title || 'No Headline Available',
             summary: article.summary || article.description || 'No summary available.',
             source: article.source || 'Unknown Source',
             category: article.category || 'General',
             politicalLean: article.politicalLean || 'Center',
             url: article.url,
-            imageUrl: article.imageUrl || null, // Default to null if missing
+            imageUrl: article.imageUrl || null,
             publishedAt: article.publishedAt || new Date().toISOString(),
-            analysisType: ['Full', 'SentimentOnly'].includes(article.analysisType) ? article.analysisType : 'Full', // Validate or default
+            analysisType: ['Full', 'SentimentOnly'].includes(article.analysisType) ? article.analysisType : 'Full',
             sentiment: ['Positive', 'Negative', 'Neutral'].includes(article.sentiment) ? article.sentiment : 'Neutral',
-            // Scores (ensure they are numbers, default 0)
             biasScore: Number(article.biasScore) || 0,
-            trustScore: Number(article.trustScore) || 0, // This is now calculated on backend
+            trustScore: Number(article.trustScore) || 0,
             credibilityScore: Number(article.credibilityScore) || 0,
             reliabilityScore: Number(article.reliabilityScore) || 0,
-            // Grades/Labels (default if missing)
             credibilityGrade: article.credibilityGrade || null,
-            // Components (ensure they exist as objects)
             biasComponents: article.biasComponents && typeof article.biasComponents === 'object' ? article.biasComponents : {},
             credibilityComponents: article.credibilityComponents && typeof article.credibilityComponents === 'object' ? article.credibilityComponents : {},
             reliabilityComponents: article.reliabilityComponents && typeof article.reliabilityComponents === 'object' ? article.reliabilityComponents : {},
-            // Arrays (ensure they exist)
             keyFindings: Array.isArray(article.keyFindings) ? article.keyFindings : [],
             recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
-            // Cluster ID
-            clusterId: article.clusterId || null // Use null if missing
+            clusterId: article.clusterId || null
         }));
       // --- End Data Cleaning ---
 
 
       if (loadMore) {
-        // Append new articles, preventing duplicates based on URL
          const currentUrls = new Set(displayedArticles.map(a => a.url));
          const trulyNewArticles = uniqueNewArticles.filter(a => !currentUrls.has(a.url));
          setDisplayedArticles(prev => [...prev, ...trulyNewArticles]);
       } else {
-         // Replace articles on filter change/initial load
          setDisplayedArticles(uniqueNewArticles);
       }
 
       setLoading(false);
       setInitialLoad(false);
-      setIsRefreshing(false); // NEW: Ensure refreshing stops
+      setIsRefreshing(false);
 
     } catch (error) {
       console.error('❌ Error fetching articles:', error.response ? error.response.data : error.message);
       
-      // --- NEW: Handle Auth Errors ---
-      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-         console.error("Auth token invalid, logging out.");
-         handleLogout(); // Log the user out if their token is bad
-      }
-
-      setLoading(false); // Ensure loading stops on error
+      // Removed manual 401/403 handling as it is now in the response interceptor
+      
+      setLoading(false);
       setInitialLoad(false);
-      setIsRefreshing(false); // NEW: Ensure refreshing stops on error
+      setIsRefreshing(false);
     }
   };
 
   const loadMoreArticles = () => {
-    // Prevent loading more if already loading or no more articles
     if (loading || displayedArticles.length >= totalArticlesCount) return;
-    fetchArticles(true); // Pass flag indicating this is a "load more" action
+    fetchArticles(true);
   };
 
 
@@ -434,16 +393,14 @@ function App() {
 
   const handleFilterChange = (newFilters) => {
       setFilters(newFilters);
-      // Fetching is handled by the useEffect watching filters
   };
 
-  // Debounced scroll handler (optional optimization)
+  // Debounced scroll handler (no change, remains correct)
   useEffect(() => {
     let timeoutId;
-    // Get the scrollable element (content area on mobile, window on desktop)
     const scrollableElement = window.innerWidth <= 768 ? contentRef.current : window;
 
-    if (!scrollableElement) return; // Exit if element not found yet
+    if (!scrollableElement) return;
 
     const handleScroll = () => {
         clearTimeout(timeoutId);
@@ -453,31 +410,25 @@ function App() {
             const scrollTop = isWindow ? window.scrollY : scrollableElement.scrollTop;
             const clientHeight = isWindow ? window.innerHeight : scrollableElement.clientHeight;
 
-            // Check if user is near the bottom
             if (clientHeight + scrollTop >= scrollHeight - 800) {
-                // Check if not loading, and if there are more articles to load
-                // (FIX) The 'loading' state check now correctly prevents spam
                 if (!loading && displayedArticles.length < totalArticlesCount) {
-                    // console.log("Scroll near bottom detected, loading more...");
                     loadMoreArticles();
                 }
             }
-        }, 150); // Adjust debounce delay as needed
+        }, 150);
     };
 
     scrollableElement.addEventListener('scroll', handleScroll);
-    // Cleanup function
     return () => {
         clearTimeout(timeoutId);
         scrollableElement.removeEventListener('scroll', handleScroll);
     };
-}, [loading, displayedArticles, totalArticlesCount, contentRef]); // Dependencies for the scroll effect
+}, [loading, displayedArticles, totalArticlesCount, contentRef]);
 
 
   const shareArticle = (article) => {
-    // --- (FIX) Share link to our app, not the direct URL ---
     const appUrl = window.location.origin;
-    const shareUrl = `${appUrl}?article=${article._id}`; // Use internal _id
+    const shareUrl = `${appUrl}?article=${article._id}`;
     const shareTitle = article.headline;
     const shareText = `Check out this analysis on The Gamut: ${article.headline}`;
 
@@ -490,58 +441,42 @@ function App() {
         console.log('Article shared successfully');
       }).catch((error) => {
         console.error('Share failed:', error);
-        // Fallback to copy link if share fails (e.g., user cancels)
         navigator.clipboard.writeText(shareUrl).then(() => alert('Link copied to clipboard!'));
       });
     } else {
-      // Fallback for browsers without navigator.share
       navigator.clipboard.writeText(shareUrl).then(() => alert('Link copied to clipboard!'));
     }
   };
 
-  // --- NEW: Combined Sidebar Toggle Logic ---
   const toggleSidebar = () => {
     if (isMobile()) {
-      setIsSidebarOpen(!isSidebarOpen); // Toggle mobile overlay
+      setIsSidebarOpen(!isSidebarOpen);
     } else {
-      setIsDesktopSidebarVisible(!isDesktopSidebarVisible); // Toggle desktop minimize
+      setIsDesktopSidebarVisible(!isDesktopSidebarVisible);
     }
   };
 
-  // --- NEW: Combined Sidebar Close Logic ---
   const closeSidebar = () => {
     if (isMobile()) {
       setIsSidebarOpen(false);
     } else {
-      // On desktop, "close" just minimizes it
       setIsDesktopSidebarVisible(false);
     }
   };
-
-  // --- (FIX) REMOVED transform helpers ---
-  // const contentTransform = () => { ... };
-  // const contentTransition = () => { ... };
-  // --- End transform helpers ---
 
 
   return (
     <div className="app">
       {/* --- NEW: Auth Gate --- */}
       {authState.isLoading ? (
-        // Show a full-page loader while Firebase is checking
         <div className="loading-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
           <div className="spinner"></div>
           <p style={{ color: 'var(--text-secondary)', marginTop: '20px' }}>Authenticating...</p>
         </div>
       ) : !authState.user ? (
-        // No user, show the Login component
         <Login />
       ) : (
-        // User is signed in, show the main app
         <>
-          {/* --- All existing app content goes here --- */}
-
-          {/* --- NEW: Custom Tooltip Render --- */}
           <CustomTooltip
             visible={tooltip.visible}
             text={tooltip.text}
@@ -553,13 +488,11 @@ function App() {
             theme={theme}
             toggleTheme={toggleTheme}
             onToggleSidebar={toggleSidebar}
-            // --- UPDATED: Pass user and logout function ---
             user={authState.user}
             onLogout={handleLogout}
           />
 
-          <div className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''}`}> {/* UPDATED: Add class */}
-            {/* --- NEW: Mobile Sidebar Overlay --- */}
+          <div className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''}`}>
             <div
               className={`sidebar-mobile-overlay ${isSidebarOpen ? 'open' : ''}`}
               onClick={() => setIsSidebarOpen(false)}
@@ -567,21 +500,18 @@ function App() {
 
             <Sidebar
               filters={filters}
-              onFilterChange={handleFilterChange} // Use handler to potentially debounce/manage filter state
-              articleCount={totalArticlesCount} // Use total count from API
-              isOpen={isSidebarOpen} // NEW Prop
-              onClose={closeSidebar} // UPDATED: Pass combined close function
+              onFilterChange={handleFilterChange}
+              articleCount={totalArticlesCount}
+              isOpen={isSidebarOpen}
+              onClose={closeSidebar}
             />
 
-            {/* --- (FIX) Ref added here, overflow-y moved here for mobile --- */}
             <main className="content" ref={contentRef}> 
               
-              {/* --- (FIX) Pull-to-refresh Indicators are now direct children --- */}
               <div 
                 className="pull-indicator" 
                 style={{ 
                   opacity: Math.min(pullDistance / pullThreshold, 1), 
-                  // (FIX) Indicator stays fixed at the top, opacity changes
                 }}
               >
                 <span 
@@ -596,23 +526,19 @@ function App() {
               </div>
 
               <div 
-                className="pull-to-refresh-container" // Spinner
+                className="pull-to-refresh-container"
                 style={{ 
-                  display: isRefreshing ? 'flex' : 'none' 
-                  // (FIX) Spinner stays fixed at the top when refreshing
+                  display: isRefreshing ? 'flex' : 'none'
                 }}
               >
                 <div className="spinner-small"></div>
                 <p>Refreshing...</p>
               </div>
-              {/* --- End Pull-to-refresh --- */}
 
-              {/* --- (FIX) NEW: Wrapper for scrollable content --- */}
               <div 
                 className="content-scroll-wrapper"
-                // (FIX) REMOVED style prop
               >
-                {(loading && initialLoad) ? ( // Initial load spinner
+                {(loading && initialLoad) ? (
                   <div className="loading-container">
                     <div className="spinner"></div>
                     <p>Loading articles...</p>
@@ -634,13 +560,11 @@ function App() {
                         ))}
                       </div>
                     ) : (
-                      // "No articles" message
                       <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
                           <p>No articles found matching your current filters.</p>
                       </div>
                     )}
 
-                    {/* Loading spinner for infinite scroll */}
                     {(loading && !initialLoad) && (
                       <div className="article-card-wrapper load-more-wrapper"> 
                         <div className="loading-container" style={{ minHeight: '200px' }}>
@@ -650,7 +574,6 @@ function App() {
                       </div>
                     )}
 
-                    {/* Load More button */}
                     {!loading && displayedArticles.length < totalArticlesCount && (
                       <div className="article-card-wrapper load-more-wrapper">
                         <div className="load-more">
@@ -662,20 +585,19 @@ function App() {
                     )}
                   </>
                 )}
-              </div> {/* --- End content-scroll-wrapper --- */}
+              </div>
             </main>
           </div>
 
           {compareModal.open && (
             <CompareCoverageModal
               clusterId={compareModal.clusterId}
-              articleTitle={compareModal.articleTitle} // Pass title
+              articleTitle={compareModal.articleTitle}
               onClose={() => setCompareModal({ open: false, clusterId: null, articleTitle: '' })}
               onAnalyze={(article) => {
-                setCompareModal({ open: false, clusterId: null, articleTitle: '' }); // Close compare modal
-                setAnalysisModal({ open: true, article }); // Open analysis modal
+                setCompareModal({ open: false, clusterId: null, articleTitle: '' });
+                setAnalysisModal({ open: true, article });
               }}
-              // --- UPDATED: Tooltip prop ---
               showTooltip={showTooltip}
             />
           )}
@@ -684,36 +606,33 @@ function App() {
             <DetailedAnalysisModal
               article={analysisModal.article}
               onClose={() => setAnalysisModal({ open: false, article: null })}
-              // --- UPDATED: Tooltip prop ---
               showTooltip={showTooltip}
             />
           )}
         </>
-      )} {/* --- NEW: End of Auth Gate --- */}
+      )}
     </div>
   );
 }
 
-// === Sub-Components ===
+// === Sub-Components (All remain the same below) ===
 
-// --- NEW: Custom Tooltip Component ---
 function CustomTooltip({ visible, text, x, y }) {
   if (!visible) return null;
 
-  // (FIX) Position relative to tap, offset up and left
   const style = {
     position: 'fixed',
     left: `${x}px`,
     top: `${y}px`,
-    transform: 'translate(-50%, -100%)', // Center horizontally, place above tap
-    marginTop: '-10px', // Add a small gap above the finger
+    transform: 'translate(-50%, -100%)',
+    marginTop: '-10px',
   };
 
   return (
     <div
       className="tooltip-custom"
       style={style}
-      onClick={(e) => e.stopPropagation()} // Prevent click from closing itself
+      onClick={(e) => e.stopPropagation()}
     >
       {text}
     </div>
@@ -721,13 +640,10 @@ function CustomTooltip({ visible, text, x, y }) {
 }
 
 
-// --- Header (Text Logo, Toggle Fix, NEW Hamburger) ---
-// --- UPDATED: Added user and onLogout props ---
 function Header({ theme, toggleTheme, onToggleSidebar, user, onLogout }) {
   return (
     <header className="header">
       <div className="header-left">
-         {/* --- NEW: Hamburger Button --- */}
          <button className="hamburger-btn" onClick={onToggleSidebar} title="Open Filters">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -736,7 +652,6 @@ function Header({ theme, toggleTheme, onToggleSidebar, user, onLogout }) {
             </svg>
          </button>
 
-        {/* --- Text Logo --- */}
         <div className="logo-container">
           <h1 className="logo-text">The Gamut</h1>
           <p className="tagline">Analyse The Full Spectrum</p>
@@ -744,7 +659,6 @@ function Header({ theme, toggleTheme, onToggleSidebar, user, onLogout }) {
       </div>
 
       <div className="header-right">
-        {/* --- NEW: User Info and Logout Button --- */}
         {user && (
           <div className="user-info">
             <span className="user-email" title={user.email}>{user.email}</span>
@@ -753,10 +667,8 @@ function Header({ theme, toggleTheme, onToggleSidebar, user, onLogout }) {
             </button>
           </div>
         )}
-        {/* --- End New User Info --- */}
 
         <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
-          {/* --- (FIX) Show CURRENT mode icon --- */}
           {theme === 'dark' ? '🌙' : '☀️'}
         </button>
       </div>
@@ -764,16 +676,13 @@ function Header({ theme, toggleTheme, onToggleSidebar, user, onLogout }) {
   );
 }
 
-// --- NEW: Custom Select Component ---
 function CustomSelect({ name, value, options, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef(null);
 
-  // Find the display label for the current value
   const selectedOption = options.find(option => (option.value || option) === value);
   const displayLabel = selectedOption?.label || selectedOption || value;
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (selectRef.current && !selectRef.current.contains(event.target)) {
@@ -785,7 +694,7 @@ function CustomSelect({ name, value, options, onChange }) {
   }, [selectRef]);
 
   const handleSelectOption = (optionValue) => {
-    onChange({ target: { name, value: optionValue } }); // Mimic event object
+    onChange({ target: { name, value: optionValue } });
     setIsOpen(false);
   };
 
@@ -829,12 +738,10 @@ function CustomSelect({ name, value, options, onChange }) {
   );
 }
 
-// --- Sidebar (UPDATED with CustomSelect and new Quality Labels) ---
 function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
   const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
 
-  // --- UPDATED Quality Level Options (v2.11) ---
   const qualityLevels = [
     { value: 'All Quality Levels', label: 'All Quality Levels' },
     { value: 'A+ Excellent (90-100)', label: 'A+ : Excellent' },
@@ -842,7 +749,7 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
     { value: 'B Professional (70-79)', label: 'B : Professional' },
     { value: 'C Acceptable (60-69)', label: 'C : Acceptable' },
     { value: 'D-F Poor (0-59)', label: 'D-F : Poor' },
-    { value: 'Review / Opinion', label: 'Review / Opinion' }, // NEW Option
+    { value: 'Review / Opinion', label: 'Review / Opinion' },
   ];
 
   const sortOptions = ['Latest First', 'Highest Quality', 'Most Covered', 'Lowest Bias'];
@@ -853,9 +760,9 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
   };
 
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : ''}`}> {/* NEW: conditional class */}
-      <div> {/* Filters Wrapper */}
-        <div className="sidebar-header-mobile"> {/* NEW: Mobile header in sidebar */}
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+      <div>
+        <div className="sidebar-header-mobile">
           <h3>Filters</h3>
           <button className="sidebar-close-btn" onClick={onClose} title="Close Filters">×</button>
         </div>
@@ -885,7 +792,7 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
           <CustomSelect
             name="quality"
             value={filters.quality}
-            options={qualityLevels} // Pass the array of objects
+            options={qualityLevels}
             onChange={handleChange}
           />
         </div>
@@ -901,7 +808,6 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
         </div>
       </div>
 
-      {/* Article Count */}
       {articleCount > 0 && (
         <div className="filter-results">
           <p>{articleCount} articles analyzed</p>
@@ -911,19 +817,12 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
   );
 }
 
-
-// --- UPDATED ArticleCard Component (v2.11) ---
-// --- Show Bias/Lean, updated grade tooltip ---
-// --- NEW: Added onClick={(e) => e.stopPropagation()} to all interactive elements ---
-// --- (FIX) Added accent coloring ---
 function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
 
-  const isMobile = () => window.innerWidth <= 768; // <-- FIX: Definition added
+  const isMobile = () => window.innerWidth <= 768;
 
   const isReview = article.analysisType === 'SentimentOnly';
-  // --- (FIX) NEW: Check for non-political leaning ---
   const isNonPolitical = article.politicalLean === 'Not Applicable';
-  // --- (FIX) REMOVED noCluster check ---
   const showReadArticleStack = isReview || isNonPolitical;
 
   const handleImageError = (e) => {
@@ -934,18 +833,16 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
     }
   };
 
-  // (FIX) Stop propagation on interactive elements for mobile
   const stopMobileClick = (e) => {
-    if (isMobile()) { // <-- FIX: This will now work
+    if (isMobile()) {
       e.stopPropagation();
     }
   };
 
-  // (FIX) NEW: Sentiment color helper
   const getSentimentClass = (sentiment) => {
     if (sentiment === 'Positive') return 'sentiment-positive';
     if (sentiment === 'Negative') return 'sentiment-negative';
-    return 'sentiment-neutral'; // Neutral or any other value
+    return 'sentiment-neutral';
   };
 
 
@@ -966,14 +863,13 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
       </div>
 
       <div className="article-content">
-        {/* --- (FIX) NEW: Wrapper for top content --- */}
         <div className="article-content-top">
           <a
               href={article.url}
               target="_blank"
               rel="noopener noreferrer"
               className="article-headline-link"
-              onClick={stopMobileClick} // (FIX) Prevent scroll on tap
+              onClick={stopMobileClick}
           >
               <h3 className="article-headline">{article.headline}</h3>
           </a>
@@ -981,12 +877,9 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
           <p className="article-summary">{article.summary}</p>
         </div>
         
-        {/* --- (FIX) NEW: Wrapper for bottom content --- */}
         <div className="article-content-bottom">
-          {/* --- UPDATED Meta Section --- */}
           <div className="article-meta-v2">
             <span className="source" title={article.source}>{article.source}</span>
-            {/* Show Bias/Lean only if it's a 'Full' analysis article */}
             {!isReview && (
               <>
                 <span className="meta-divider">|</span>
@@ -995,7 +888,6 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
                   title="Bias Score (0-100). Less is better."
                   onClick={(e) => showTooltip("Bias Score (0-100). Less is better.", e)}
                 >
-                  {/* --- (FIX) Added accent color --- */}
                   Bias: <span className="accent-text">{article.biasScore}</span>
                 </span>
                 <span className="meta-divider">|</span>
@@ -1004,7 +896,6 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
                   title="Detected political leaning."
                   onClick={(e) => showTooltip("Detected political leaning.", e)}
                 >
-                  {/* --- (FIX) Added conditional accent color --- */}
                   <span className={article.politicalLean !== 'Not Applicable' ? 'accent-text' : ''}>
                       {article.politicalLean}
                   </span>
@@ -1014,7 +905,6 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
           </div>
 
 
-          {/* --- Quality Display (v2.8) --- */}
           <div className="quality-display-v2">
               {isReview ? (
                   <span
@@ -1030,34 +920,28 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
                       title="This grade (A+ to F) is based on the article's Credibility and Reliability."
                       onClick={(e) => showTooltip("This grade (A+ to F) is based on the article's Credibility and Reliability.", e)}
                   >
-                    {/* --- (FIX) Added conditional accent color --- */}
                     Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}
                   </span>
               )}
 
               <span
-                  className="sentiment-text" // (FIX) Removed class from here
+                  className="sentiment-text"
                   title="The article's overall sentiment towards its main subject."
                   onClick={(e) => showTooltip("The article's overall sentiment towards its main subject.", e)}
               >
                   Sentiment:
-                  {/* (FIX) Added new span for color */}
                   <span className={getSentimentClass(article.sentiment)}>
                     {' '}{article.sentiment}
                   </span>
               </span>
           </div>
-          {/* --- End Simplified Display --- */}
 
 
-          {/* --- Actions (v2.10 Stacked Buttons) --- */}
           <div className="article-actions">
-            {/* --- (FIX) Show stacked buttons if review OR non-political --- */}
             {showReadArticleStack ? (
-              // --- UI for SentimentOnly OR NonPolitical (STACKED BUTTONS) ---
               <>
                 <button
-                  onClick={(e) => { stopMobileClick(e); onShare(article); }} // (FIX) Stop propagation
+                  onClick={(e) => { stopMobileClick(e); onShare(article); }}
                   className="btn-secondary btn-full-width"
                   title="Share article link"
                 >
@@ -1070,24 +954,23 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
                   className="btn-primary btn-full-width"
                   style={{ textDecoration: 'none', textAlign: 'center' }}
                   title="Read the full article on the source's website"
-                  onClick={stopMobileClick} // (FIX) Stop propagation
+                  onClick={stopMobileClick}
                 >
                   Read Article
                 </a>
               </>
             ) : (
-              // --- UI for Full Analysis (Standard) ---
               <>
                 <div className="article-actions-top">
                   <button
-                    onClick={(e) => { stopMobileClick(e); onAnalyze(article); }} // (FIX) Stop propagation
+                    onClick={(e) => { stopMobileClick(e); onAnalyze(article); }}
                     className="btn-secondary"
                     title="View Detailed Analysis"
                   >
                     Analysis
                   </button>
                   <button
-                    onClick={(e) => { stopMobileClick(e); onShare(article); }} // (FIX) Stop propagation
+                    onClick={(e) => { stopMobileClick(e); onShare(article); }}
                     className="btn-secondary"
                     title="Share article link"
                   >
@@ -1095,48 +978,38 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
                   </button>
                 </div>
                 <button
-                  onClick={(e) => { stopMobileClick(e); onCompare(article.clusterId, article.headline); }} // (FIX) Stop propagation
+                  onClick={(e) => { stopMobileClick(e); onCompare(article.clusterId, article.headline); }}
                   className="btn-primary btn-full-width"
                   title="Compare Coverage Across Perspectives"
-                  // (FIX) Removed disabled prop
                 >
                   Compare Coverage
                 </button>
               </>
             )}
           </div>
-        </div> {/* End article-content-bottom */}
+        </div>
       </div>
     </div>
   );
 }
-// --- END of UPDATED ArticleCard Component ---
 
-
-// --- Modal Components ---
-
-// --- Compare Coverage Modal ---
 function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, showTooltip }) {
   const [clusterData, setClusterData] = useState({ left: [], center: [], right: [], stats: {} });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(null); // Set to null initially
+  const [activeTab, setActiveTab] = useState(null);
 
   useEffect(() => {
     const fetchCluster = async () => {
-      // (FIX) If no clusterId, just show empty state
       if (!clusterId) {
           console.log("No clusterId provided, showing empty compare.");
           setLoading(false);
-          setClusterData({ left: [], center: [], right: [], stats: {} }); // Ensure empty
-          setActiveTab('left'); // Set a default tab
+          setClusterData({ left: [], center: [], right: [], stats: {} });
+          setActiveTab('left');
           return;
       }
       try {
         setLoading(true);
-        // console.log(`Fetching cluster data for ID: ${clusterId}`);
-        // --- UPDATED: Request will now send auth token via interceptor ---
         const response = await axios.get(`${API_URL}/cluster/${clusterId}`);
-        // console.log("Cluster Response:", response.data);
 
         const data = {
             left: response.data.left || [],
@@ -1146,15 +1019,15 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
         };
         setClusterData(data);
 
-        // --- Set default active tab ---
         if (data.left.length > 0) setActiveTab('left');
         else if (data.center.length > 0) setActiveTab('center');
         else if (data.right.length > 0) setActiveTab('right');
-        else setActiveTab('left'); // Fallback
+        else setActiveTab('left');
 
         setLoading(false);
       } catch (error) {
         console.error(`❌ Error fetching cluster ${clusterId}:`, error.response ? error.response.data : error.message);
+        // Auth error handled by interceptor
         setLoading(false);
       }
     };
@@ -1178,7 +1051,6 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
           <button className="close-btn" onClick={onClose} title="Close comparison">×</button>
         </div>
 
-        {/* --- Tabs (REMOVED 'All') --- */}
          <div className="modal-tabs">
           <button className={activeTab === 'left' ? 'active' : ''} onClick={() => setActiveTab('left')}>
             Left ({clusterData.left.length})
@@ -1204,12 +1076,10 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
              </div>
           ) : (
             <>
-              {/* --- Logic updated to NOT show all by default --- */}
               {activeTab === 'left' && renderArticleGroup(clusterData.left, 'Left', onAnalyze, showTooltip)}
               {activeTab === 'center' && renderArticleGroup(clusterData.center, 'Center', onAnalyze, showTooltip)}
               {activeTab === 'right' && renderArticleGroup(clusterData.right, 'Right', onAnalyze, showTooltip)}
 
-              {/* Message if a specific tab has no articles */}
               {activeTab && clusterData[activeTab]?.length === 0 && (
                  <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}>
                     <p>No articles found for the '{activeTab}' perspective in this cluster.</p>
@@ -1223,15 +1093,13 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
   );
 }
 
-// --- Helper function to render article groups ---
 function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
   if (!articleList || articleList.length === 0) return null;
   
-  const isMobile = () => window.innerWidth <= 768; // <-- FIX: Definition added
+  const isMobile = () => window.innerWidth <= 768;
 
-  // (FIX) Stop propagation on interactive elements for mobile
   const stopMobileClick = (e) => {
-    if (isMobile()) { // <-- FIX: This will now work
+    if (isMobile()) {
       e.stopPropagation();
     }
   };
@@ -1242,7 +1110,6 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
       <h3 className={`perspective-title ${perspective.toLowerCase()}`}>{perspective} Perspective</h3>
       {articleList.map(article => (
         <div key={article._id || article.url} className="coverage-article">
-          {/* --- Content Wrapper --- */}
           <div className="coverage-content">
             <a href={article.url} target="_blank" rel="noopener noreferrer" onClick={stopMobileClick}>
               <h4>{article.headline || 'No Headline'}</h4>
@@ -1256,21 +1123,18 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
                 title="Bias Score (0-100, lower is less biased)"
                 onClick={(e) => showTooltip("Bias Score (0-100, lower is less biased)", e)}
               >
-                {/* --- (FIX) Added conditional accent color --- */}
                 Bias: {article.biasScore != null ? <span className="accent-text">{article.biasScore}</span> : 'N/A'}
               </span>
               <span
                 title="Overall Trust Score (0-100, higher is more trustworthy)"
                 onClick={(e) => showTooltip("Overall Trust Score (0-100, higher is more trustworthy)", e)}
               >
-                {/* --- (FIX) Added conditional accent color --- */}
                 Trust: {article.trustScore != null ? <span className="accent-text">{article.trustScore}</span> : 'N/A'}
               </span>
               <span
                 title="Credibility Grade (A+ to F)"
                 onClick={(e) => showTooltip("Credibility Grade (A+ to F)", e)}
               >
-                {/* --- (FIX) Added conditional accent color --- */}
                 Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}
               </span>
             </div>
@@ -1282,7 +1146,6 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
             </div>
           </div>
 
-          {/* --- Image Thumbnail --- */}
           <div className="coverage-image">
             {article.imageUrl ? (
               <img src={article.imageUrl} alt="Article thumbnail" loading="lazy" />
@@ -1296,10 +1159,8 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
   );
 }
 
-
-// --- Detailed Analysis Modal ---
 function DetailedAnalysisModal({ article, onClose, showTooltip }) {
-  const [activeTab, setActiveTab] = useState('overview'); // Default tab
+  const [activeTab, setActiveTab] = useState('overview');
 
    const handleOverlayClick = (e) => {
        if (e.target === e.currentTarget) {
@@ -1328,12 +1189,10 @@ function DetailedAnalysisModal({ article, onClose, showTooltip }) {
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="analysis-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          {/* --- (FIX) Title Updated --- */}
           <h2>{article.headline.substring(0, 60)}{article.headline.length > 60 ? '...' : ''}</h2>
           <button className="close-btn" onClick={onClose} title="Close analysis">×</button>
         </div>
 
-        {/* --- UPDATED Tabs --- */}
         <div className="modal-tabs">
           <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>
             Overview
@@ -1344,7 +1203,6 @@ function DetailedAnalysisModal({ article, onClose, showTooltip }) {
         </div>
 
         <div className="modal-content">
-          {/* Conditionally render tab content */}
           {activeTab === 'overview' && <OverviewTab article={article} showTooltip={showTooltip} />}
           {activeTab === 'breakdown' && <OverviewBreakdownTab article={article} showTooltip={showTooltip} />}
         </div>
@@ -1356,8 +1214,6 @@ function DetailedAnalysisModal({ article, onClose, showTooltip }) {
     </div>
   );
 }
-
-// --- Analysis Tab Components ---
 
 function OverviewTab({ article, showTooltip }) {
   return (
@@ -1397,11 +1253,9 @@ function OverviewTab({ article, showTooltip }) {
   );
 }
 
-// --- UPDATED Consolidated Breakdown Tab (v2.11 Spacing) ---
 function OverviewBreakdownTab({ article, showTooltip }) {
   const [showZeroScores, setShowZeroScores] = useState(false);
 
-  // --- Bias Components ---
   const biasComps = article.biasComponents || {};
   const allBiasComponents = [
     { label: "Sentiment Polarity", value: biasComps.linguistic?.sentimentPolarity },
@@ -1417,9 +1271,8 @@ function OverviewBreakdownTab({ article, showTooltip }) {
     { label: "Headline Framing", value: biasComps.framing?.headlineFraming },
     { label: "Story Selection", value: biasComps.framing?.storySelection },
     { label: "Omission Bias", value: biasComps.framing?.omissionBias },
-  ].map(c => ({ ...c, value: Number(c.value) || 0 })); // Ensure value is a number
+  ].map(c => ({ ...c, value: Number(c.value) || 0 }));
 
-  // --- Credibility Components ---
   const credComps = article.credibilityComponents || {};
   const allCredibilityComponents = [
     { label: "Source Credibility", value: credComps.sourceCredibility },
@@ -1430,7 +1283,6 @@ function OverviewBreakdownTab({ article, showTooltip }) {
     { label: "Audience Trust", value: credComps.audienceTrust },
   ].map(c => ({ ...c, value: Number(c.value) || 0 }));
 
-  // --- Reliability Components ---
   const relComps = article.reliabilityComponents || {};
   const allReliabilityComponents = [
     { label: "Consistency", value: relComps.consistency },
@@ -1441,7 +1293,6 @@ function OverviewBreakdownTab({ article, showTooltip }) {
     { label: "Update Maintenance", value: relComps.updateMaintenance },
   ].map(c => ({ ...c, value: Number(c.value) || 0 }));
 
-  // --- Filtered Lists ---
   const visibleBias = allBiasComponents.filter(c => c.value > 0 || showZeroScores);
   const visibleCredibility = allCredibilityComponents.filter(c => c.value > 0 || showZeroScores);
   const visibleReliability = allReliabilityComponents.filter(c => c.value > 0 || showZeroScores);
@@ -1449,7 +1300,6 @@ function OverviewBreakdownTab({ article, showTooltip }) {
   return (
     <div className="tab-content">
 
-      {/* --- Bias Section --- */}
       <div className="component-section">
         <div className="component-section-header">
             <h4>Bias Details ({article.biasScore ?? 'N/A'}/100)</h4>
@@ -1464,8 +1314,8 @@ function OverviewBreakdownTab({ article, showTooltip }) {
                 </label>
             </div>
         </div>
-        <div className="divider" /> {/* Added Divider */}
-        <div className="component-grid-v2 section-spacing"> {/* Added Spacing */}
+        <div className="divider" />
+        <div className="component-grid-v2 section-spacing">
             {visibleBias.length > 0 ? (
                 visibleBias.map(comp => (
                   <CircularProgressBar
@@ -1482,13 +1332,12 @@ function OverviewBreakdownTab({ article, showTooltip }) {
         </div>
       </div>
 
-      {/* --- Credibility Section --- */}
       <div className="component-section">
-        <div className="component-section-header"> {/* Re-added header for spacing consistency */}
+        <div className="component-section-header">
             <h4>Credibility Details ({article.credibilityScore ?? 'N/V'}/100)</h4>
         </div>
-         <div className="divider" /> {/* Added Divider */}
-        <div className="component-grid-v2 section-spacing"> {/* Added Spacing */}
+         <div className="divider" />
+        <div className="component-grid-v2 section-spacing">
             {visibleCredibility.length > 0 ? (
                 visibleCredibility.map(comp => (
                   <CircularProgressBar
@@ -1505,13 +1354,12 @@ function OverviewBreakdownTab({ article, showTooltip }) {
         </div>
       </div>
 
-      {/* --- Reliability Section --- */}
       <div className="component-section">
-         <div className="component-section-header"> {/* Re-added header for spacing consistency */}
+         <div className="component-section-header">
             <h4>Reliability Details ({article.reliabilityScore ?? 'N/V'}/100)</h4>
          </div>
-         <div className="divider" /> {/* Added Divider */}
-        <div className="component-grid-v2 section-spacing"> {/* Added Spacing */}
+         <div className="divider" />
+        <div className="component-grid-v2 section-spacing">
             {visibleReliability.length > 0 ? (
                 visibleReliability.map(comp => (
                   <CircularProgressBar
@@ -1532,10 +1380,6 @@ function OverviewBreakdownTab({ article, showTooltip }) {
   );
 }
 
-
-// --- Reusable UI Components ---
-
-// Score Box for Overview Tab
 function ScoreBox({ label, value, showTooltip }) {
   let tooltip = '';
   switch(label) {
@@ -1543,7 +1387,7 @@ function ScoreBox({ label, value, showTooltip }) {
       tooltip = 'Overall Trust Score (0-100). A combined measure of Credibility and Reliability. Higher is better.';
       break;
     case 'Bias Score':
-      tooltip = 'Overall Bias Score (0-100). Less is better. 0 indicates minimal bias, 100 indicates significant bias.'; // UPDATED
+      tooltip = 'Overall Bias Score (0-100). Less is better. 0 indicates minimal bias, 100 indicates significant bias.';
       break;
     case 'Credibility':
       tooltip = 'Credibility Score (0-100). Measures the article\'s trustworthiness based on sources, facts, and professionalism.';
@@ -1559,7 +1403,7 @@ function ScoreBox({ label, value, showTooltip }) {
     <div
       className="score-circle"
       title={tooltip}
-      onClick={(e) => showTooltip(tooltip, e)} // (FIX) Changed to onClick
+      onClick={(e) => showTooltip(tooltip, e)}
     >
       <div className="score-value">{value ?? 'N/A'}</div>
       <div className="score-label">{label}</div>
@@ -1567,23 +1411,22 @@ function ScoreBox({ label, value, showTooltip }) {
   );
 }
 
-// --- Circular Progress Bar Component (Donut) ---
-function CircularProgressBar({ label, value, tooltip, showTooltip }) { // Added tooltip prop
+function CircularProgressBar({ label, value, tooltip, showTooltip }) {
   const numericValue = Math.max(0, Math.min(100, Number(value) || 0));
   const strokeWidth = 8;
   const radius = 40;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (numericValue / 100) * circumference;
 
-  const strokeColor = 'var(--accent-primary)'; // Consistent accent color
+  const strokeColor = 'var(--accent-primary)';
   const finalTooltip = tooltip || `${label}: ${numericValue}/100`;
 
   return (
     <div
       className="circle-progress-container"
       title={finalTooltip}
-      onClick={(e) => showTooltip(finalTooltip, e)} // (FIX) Changed to onClick
-    > {/* Use provided tooltip */}
+      onClick={(e) => showTooltip(finalTooltip, e)}
+    >
       <svg className="circle-progress-svg" width="100" height="100" viewBox="0 0 100 100">
         <circle
           className="circle-progress-bg"
@@ -1594,7 +1437,6 @@ function CircularProgressBar({ label, value, tooltip, showTooltip }) { // Added 
           cx="50"
           cy="50"
         />
-        {/* Only render the progress bar if value > 0 */}
         {numericValue > 0 && (
           <circle
             className="circle-progress-bar"
@@ -1607,7 +1449,7 @@ function CircularProgressBar({ label, value, tooltip, showTooltip }) { // Added 
             r={radius}
             cx="50"
             cy="50"
-            transform="rotate(-90 50 50)" // Start from the top
+            transform="rotate(-90 50 50)"
           />
         )}
         <text

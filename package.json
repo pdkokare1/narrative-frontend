@@ -25,3 +25,13 @@
     "development": ["last 1 chrome version"]
   }
 }
+{
+  "name": "narrative-frontend-complete",
+  // ... other fields
+  "overrides": {
+    "ajv": "6.12.6"
+  },
+  "dependencies": {
+    // ...
+  }
+}

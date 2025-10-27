@@ -9,7 +9,7 @@
   background-color: var(--bg-primary);
 
   /* --- Mobile First: Use portrait image as full background --- */
-  background-image: url('/login-bg-mobile.png');
+  background-image: url('%PUBLIC_URL%/login-bg-mobile.png');
   background-size: cover;
   background-position: center center;
   position: relative;
@@ -79,7 +79,7 @@
   .login-image-panel {
     display: block;
     flex: 1;
-    background-image: url('/login-bg-desktop.png');
+    background-image: url('%PUBLIC_URL%/login-bg-desktop.png');
     background-size: cover;
     background-position: center center;
   }

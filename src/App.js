@@ -502,6 +502,11 @@ function AppWrapper() {
 
 
   const shareArticle = (article) => {
+    // --- ADDED THIS "FIRE AND FORGET" CALL ---
+    axios.post(`${API_URL}/activity/log-share`)
+      .then(res => console.log('Share activity logged', res.data))
+      .catch(err => console.error('Failed to log share activity', err));
+
     const appUrl = window.location.origin;
     const shareUrl = `${appUrl}?article=${article._id}`; // Use internal _id
     const shareTitle = article.headline;
@@ -550,6 +555,15 @@ function AppWrapper() {
     axios.post(`${API_URL}/activity/log-view`)
       .then(res => console.log('Activity logged', res.data))
       .catch(err => console.error('Failed to log activity', err));
+  };
+
+  // --- ADDED THIS NEW HANDLER ---
+  const handleCompareClick = (clusterId, title) => {
+    setCompareModal({ open: true, clusterId, articleTitle: title });
+    // "Fire and forget" log
+    axios.post(`${API_URL}/activity/log-compare`)
+      .then(res => console.log('Compare activity logged', res.data))
+      .catch(err => console.error('Failed to log compare activity', err));
   };
 
   // --- NEW: Main App Render Logic ---
@@ -667,7 +681,8 @@ function AppWrapper() {
                               <div className="article-card-wrapper" key={article._id || article.url}>
                                 <ArticleCard
                                   article={article}
-                                  onCompare={(clusterId, title) => setCompareModal({ open: true, clusterId, articleTitle: title })}
+                                  // --- UPDATED: Use new handler ---
+                                  onCompare={handleCompareClick}
                                   // --- UPDATED: Use new handler ---
                                   onAnalyze={handleAnalyzeClick} 
                                   onShare={shareArticle}
@@ -1566,7 +1581,7 @@ function ScoreBox({ label, value, showTooltip }) {
       tooltip = 'Credibility Score (0-100). Measures the article\'s trustworthiness based on sources, facts, and professionalism.';
       break;
     case 'Reliability':
-      tooltip = 'Reliability Score (0-1G00). Measures the source\'s consistency, standards, and corrections policy over time.';
+      tooltip = 'Reliability Score (0-100). Measures the source\'s consistency, standards, and corrections policy over time.';
       break;
     default:
       tooltip = `${label} (0-100)`;
@@ -1621,7 +1636,7 @@ function CircularProgressBar({ label, value, tooltip, showTooltip }) {
             strokeLinecap="round"
             fill="transparent"
             r={radius}
-            cx="5s0"
+            cx="50"
             cy="50"
             transform="rotate(-90 50 50)" 
           />

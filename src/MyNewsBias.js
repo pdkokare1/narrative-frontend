@@ -1,5 +1,5 @@
 // In file: src/MyNewsBias.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react'; // <-- ADDED useMemo, useCallback
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Line, Bar } from 'react-chartjs-2';
@@ -55,7 +55,6 @@ const leanColors = {
     'Right': '#2563eb', // Blue
     'Not Applicable': '#a1a1aa' // Lighter Gray
 };
-const qualityOrder = ['A+ Excellent (90-100)', 'A High (80-89)', 'B Professional (70-79)', 'C Acceptable (60-69)', 'D-F Poor (0-59)', null];
 const qualityColors = {
     'A+ Excellent (90-100)': '#2563eb', // Blue
     'A High (80-89)': '#60a5fa', // Light Blue
@@ -118,9 +117,9 @@ function MyNewsBias() {
 
   // --- Chart Data Preparation ---
   
-  // --- *** NEW *** ---
+  // --- *** MOVED INSIDE COMPONENT & WRAPPED IN useMemo *** ---
   // Helper function for bar chart options
-  const getBarChartOptions = (title) => ({
+  const getBarChartOptions = useCallback((title) => ({
     responsive: true,
     maintainAspectRatio: false,
     indexAxis: 'y', // Horizontal bar chart
@@ -150,7 +149,7 @@ function MyNewsBias() {
         font: { size: 14 }
       }
     },
-  });
+  }), []); // Empty dependency array, this function doesn't need to change
 
   // --- *** NEW *** ---
   // Helper function to prepare lean data
@@ -186,60 +185,11 @@ function MyNewsBias() {
   // --- *** NEW *** ---
   // Helper function to prepare quality data
   const prepareQualityData = (rawData) => {
-    const counts = (rawData || []).reduce((acc, item) => {
-       const key = item.grade === null ? 'null' : item.grade;
-       acc[key] = (acc[key] || 0) + item.count;
-       return acc;
-    }, {});
-    
-    // Map internal grade (e.g., 'A') to the full label
-    const gradeMap = {
-       "A+": "A+ Excellent (90-100)",
-       "A": "A High (80-89)",
-       "B": "B Professional (70-79)",
-       "C": "C Acceptable (60-69)",
-       "D-F": "D-F Poor (0-59)", // Assuming 'D-F' is the grade string
-       "null": "N/A" // Handle null grades
-    };
-    
-    // We need to map the grades we get ('A', 'B', etc.) to the full labels
-    const qualityCounts = {};
-    for (const [key, count] of Object.entries(counts)) {
-       // This is a bit complex, but finds the full label that contains the key
-       let fullLabel = Object.keys(qualityColors).find(label => label.startsWith(key));
-       if (key === 'null') fullLabel = 'N/A';
-       
-       if(fullLabel) {
-           qualityCounts[fullLabel] = count;
-       } else {
-           // Fallback for grades like D, F
-           if (['D', 'F'].includes(key)) {
-               qualityCounts['D-F Poor (0-59)'] = (qualityCounts['D-F Poor (0-59)'] || 0) + count;
-           } else {
-               qualityCounts[key] = count; // e.g. 'A+'
-           }
-       }
-    }
-
-    // Re-map A+, A, etc. to full labels
-    const finalCounts = {};
-    const dbGrades = statsData?.qualityDistribution_read.map(item => item.grade) || [];
-    
     // Create a map of the counts from the raw data
-    const rawCountsMap = (statsData?.qualityDistribution_read || []).reduce((acc, item) => {
+    const rawCountsMap = (rawData || []).reduce((acc, item) => {
       acc[item.grade] = item.count;
       return acc;
     }, {});
-
-    // Define the display order and labels
-    const displayGrades = [
-      { key: 'A+', label: 'A+ Excellent (90-100)' },
-      { key: 'A', label: 'A High (80-89)' },
-      { key: 'B', label: 'B Professional (70-79)' },
-      { key: 'C', label: 'C Acceptable (60-69)' },
-      { key: 'D-F', label: 'D-F Poor (0-59)' }, // This assumes your backend sends "D-F"
-      // Need to check if backend sends D or F separately
-    ];
     
     // This part is tricky, we need to adapt to what the DB sends.
     // Let's assume the DB sends 'A+', 'A', 'B', 'C', 'D', 'F', null
@@ -282,8 +232,9 @@ function MyNewsBias() {
     };
   };
 
+  // --- *** MOVED INSIDE COMPONENT & WRAPPED IN useMemo *** ---
   // --- Stories Read (Line Chart) ---
-  const storiesReadData = {
+  const storiesReadData = useMemo(() => ({
     labels: statsData?.dailyCounts?.map(item => item.date) || [],
     datasets: [
       {
@@ -294,8 +245,9 @@ function MyNewsBias() {
         tension: 0.1,
       },
     ],
-  };
-  const storiesReadOptions = {
+  }), [statsData?.dailyCounts]);
+  
+  const storiesReadOptions = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     scales: {
@@ -325,7 +277,7 @@ function MyNewsBias() {
         bodyColor: 'var(--text-secondary)',
       }
     },
-  };
+  }), []); // Empty dependency array, these options are static
 
   // --- Prepare data for all charts ---
   const leanReadData = prepareLeanData(statsData?.leanDistribution_read);
@@ -352,6 +304,15 @@ function MyNewsBias() {
       return acc;
   }, {});
 
+  // --- *** NEW *** ---
+  // Create an array for the stat boxes to map over
+  const statBoxes = [
+    { key: 'analyzed', title: 'Articles Analyzed', value: totalAnalyzed, desc: 'Total times you viewed the "Analysis" popup.' },
+    { key: 'read', title: 'Articles Read', value: totalRead, desc: 'Total times you clicked "Read Article".' },
+    { key: 'shared', title: 'Articles Shared', value: totalShared, desc: "Total articles you've shared with others." },
+    { key: 'compared', title: 'Comparisons Viewed', value: totalCompared, desc: 'Total times you clicked "Compare Coverage".' }
+  ];
+
 
   return (
     <div className="bias-dashboard-page">
@@ -371,38 +332,24 @@ function MyNewsBias() {
         </div>
       </div>
 
-      {/* --- Main Content Grid --- */}
-      <div className="dashboard-grid">
+      {/* --- *** NEW: Key Stats Section *** --- */}
+      <h2 className="section-title">Your Activity</h2>
+      <div className="stat-box-grid">
+        {statBoxes.map(box => (
+          <div key={box.key} className="dashboard-card stat-box">
+             <h3>{box.title}</h3>
+             <p className="stat-number">{loadingStats ? '...' : box.value}</p>
+             <p className="stat-description">{box.desc}</p>
+          </div>
+        ))}
+      </div>
+        
+
+      {/* --- Analysis Section Title --- */}
+      <h2 className="section-title">Reading Habits</h2>
       
-        {/* --- *** NEW: Key Stats Section *** --- */}
-        <h2 className="section-title">Your Activity</h2>
-        
-        <div className="dashboard-card stat-box">
-           <h3>Articles Analyzed</h3>
-           <p className="stat-number">{loadingStats ? '...' : totalAnalyzed}</p>
-           <p className="stat-description">Total times you viewed the "Analysis" popup.</p>
-        </div>
-        
-        <div className="dashboard-card stat-box">
-           <h3>Articles Read</h3>
-           <p className="stat-number">{loadingStats ? '...' : totalRead}</p>
-           <p className="stat-description">Total times you clicked "Read Article".</p>
-        </div>
-        
-        <div className="dashboard-card stat-box">
-           <h3>Articles Shared</h3>
-           <p className="stat-number">{loadingStats ? '...' : totalShared}</p>
-           <p className="stat-description">Total articles you've shared with others.</p>
-        </div>
-        
-        <div className="dashboard-card stat-box">
-           <h3>Comparisons Viewed</h3>
-           <p className="stat-number">{loadingStats ? '...' : totalCompared}</p>
-           <p className="stat-description">Total times you clicked "Compare Coverage".</p>
-        </div>
-        
-        {/* --- Analysis Section Title --- */}
-        <h2 className="section-title">Reading Habits</h2>
+      {/* --- *** MODIFIED: Main Content Grid *** --- */}
+      <div className="dashboard-grid">
 
         {/* --- Lean Summary Card --- */}
         <div className="dashboard-card lean-summary-card">
@@ -488,7 +435,7 @@ function MyNewsBias() {
                ) : (totalAnalyzed > 0) ? (
                  <Bar options={getBarChartOptions('Top Categories (Analyzed)')} data={categoryReadData} />
                ): (
-                  <p className="no-data-msg">No analysis data for this period.</p>
+                  <p className="no-data-msg">No analysis data for this period.</C:\Users\prati\Downloads\screenshot-2025-10-28-15-37-49.pngp>
                )}
            </div>
          </div>

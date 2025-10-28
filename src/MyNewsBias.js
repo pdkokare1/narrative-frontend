@@ -28,15 +28,15 @@ const getActionCount = (totals, action) => {
 
 // Colors and Order definitions
 const leanOrder = ['Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
-const leanColors = {
+const leanColors = { /* ... (colors remain the same) ... */
     'Left': '#dc2626', 'Left-Leaning': '#f87171', 'Center': '#6b7280',
     'Right-Leaning': '#60a5fa', 'Right': '#2563eb', 'Not Applicable': '#a1a1aa'
 };
-const qualityLabels = [
+const qualityLabels = [ /* ... (labels remain the same) ... */
     'A+ Excellent (90-100)', 'A High (80-89)', 'B Professional (70-79)',
     'C Acceptable (60-69)', 'D-F Poor (0-59)', 'N/A (Review/Opinion)'
 ];
-const qualityColors = {
+const qualityColors = { /* ... (colors remain the same) ... */
     'A+ Excellent (90-100)': '#2563eb', 'A High (80-89)': '#60a5fa',
     'B Professional (70-79)': '#4CAF50', 'C Acceptable (60-69)': '#F59E0B',
     'D-F Poor (0-59)': '#dc2626', 'N/A (Review/Opinion)': '#a1a1aa'
@@ -71,7 +71,7 @@ function MyNewsBias() {
 
   // Fetch aggregated stats
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchStats = async () => { /* ... (no changes) ... */
       setError(''); setLoadingStats(true);
       try { const response = await axios.get(`${API_URL}/profile/stats`); setStatsData(response.data); }
       catch (err) { console.error('Error fetching stats:', err); setError(prev => prev + 'Could not load statistics data. '); }
@@ -114,9 +114,8 @@ function MyNewsBias() {
       plugins: { legend: { display: false }, tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary } },
    }), [chartColors]);
 
-  // --- Chart Data Preparation ---
-
-  const prepareLeanData = (rawData) => {
+  // --- Chart Data Preparation (Functions remain the same) ---
+  const prepareLeanData = (rawData) => { /* ... (no changes) ... */
     const counts = (rawData || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
     const data = leanOrder.map(lean => counts[lean] || 0);
     const backgroundColors = leanOrder.map(lean => leanColors[lean]);
@@ -125,8 +124,7 @@ function MyNewsBias() {
     const filteredColors = backgroundColors.filter((_, index) => data[index] > 0);
     return { labels: filteredLabels, datasets: [{ label: 'Articles', data: filteredData, backgroundColor: filteredColors, borderColor: chartColors.borderColor, borderWidth: 1 }] };
   };
-
-  const prepareCategoryData = (rawData) => {
+  const prepareCategoryData = (rawData) => { /* ... (no changes) ... */
     const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10);
     const themeCategoryColors = chartColors.categoryPalette;
     return {
@@ -140,8 +138,7 @@ function MyNewsBias() {
       }],
     };
   };
-
-  const prepareQualityData = (rawData) => {
+  const prepareQualityData = (rawData) => { /* ... (no changes) ... */
     const rawCountsMap = (rawData || []).reduce((acc, item) => { acc[item.grade] = item.count; return acc; }, {});
     const dbCounts = rawCountsMap;
     const data = [ dbCounts['A+'] || 0, dbCounts['A'] || 0, dbCounts['B'] || 0, dbCounts['C'] || 0, (dbCounts['D'] || 0) + (dbCounts['F'] || 0) + (dbCounts['D-F'] || 0), dbCounts[null] || 0 ];
@@ -152,7 +149,7 @@ function MyNewsBias() {
     return { labels: filteredLabels, datasets: [{ label: 'Articles Read', data: filteredData, backgroundColor: filteredColors, borderColor: chartColors.borderColor, borderWidth: 1 }] };
   };
 
-  const storiesReadData = useMemo(() => ({
+  const storiesReadData = useMemo(() => ({ /* ... (no changes) ... */
     labels: statsData?.dailyCounts?.map(item => item.date) || [],
     datasets: [{ label: 'Stories Analyzed', data: statsData?.dailyCounts?.map(item => item.count) || [], fill: false, borderColor: 'var(--accent-primary)', tension: 0.1 }],
   }), [statsData?.dailyCounts]);
@@ -170,17 +167,17 @@ function MyNewsBias() {
   const totalCompared = getActionCount(totals, 'view_comparison');
   const totalRead = getActionCount(totals, 'read_external');
   
-  // Calculate lean percentages for the top summary bar
+  // Calculate lean percentages
   const totalLeanArticles = statsData?.leanDistribution_read?.reduce((sum, item) => sum + item.count, 0) || 0;
   const leanReadCounts = (statsData?.leanDistribution_read || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
   const leanPercentages = leanOrder.reduce((acc, lean) => { const count = leanReadCounts[lean] || 0; acc[lean] = totalLeanArticles > 0 ? Math.round((count / totalLeanArticles) * 100) : 0; return acc; }, {});
   
-  // Combine left/right lean percentages for the bar display
+  // Combine left/right lean percentages
   const leftCombinedPerc = leanPercentages['Left'] + leanPercentages['Left-Leaning'];
   const centerPerc = leanPercentages['Center'];
   const rightCombinedPerc = leanPercentages['Right'] + leanPercentages['Right-Leaning'];
 
-  const statBoxes = [
+  const statBoxes = [ /* ... (no changes) ... */
     { key: 'analyzed', title: 'Articles Analyzed', value: totalAnalyzed, desc: 'Total times you viewed the "Analysis" popup.' },
     { key: 'read', title: 'Articles Read', value: totalRead, desc: 'Total times you clicked "Read Article".' },
     { key: 'shared', title: 'Articles Shared', value: totalShared, desc: "Total articles you've shared with others." },
@@ -194,10 +191,16 @@ function MyNewsBias() {
 
         {/* --- Left Column (Fixed) --- */}
         <div className="dashboard-left-column">
-           {/* Section Title + Time Selector Aligned */}
+           {/* Section Title + Time Selector + Back Button Aligned */}
            <div className="section-title-header">
              <h2 className="section-title no-border">Your Activity</h2>
-             <div className="date-range-selector"> <span>Viewing All-Time Stats</span> </div>
+             <div className="header-actions"> {/* Wrapper for right side items */}
+                 <div className="date-range-selector"> <span>Viewing All-Time Stats</span> </div>
+                 {/* --- *** MOVED Back Button HERE *** --- */}
+                 <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
+                   Back to Articles
+                 </Link>
+             </div>
            </div>
 
           {/* Activity Stat Boxes */}
@@ -219,15 +222,18 @@ function MyNewsBias() {
                   <div className="lean-bar">
                      { leftCombinedPerc > 0 &&
                        <div className="lean-segment left" style={{ width: `${leftCombinedPerc}%` }}>
-                          {leftCombinedPerc >= 5 ? `L ${leftCombinedPerc}%` : ''} {/* Conditional Text */}
+                          {/* --- *** UPDATED THRESHOLD *** --- */}
+                          {leftCombinedPerc >= 10 ? `L ${leftCombinedPerc}%` : ''} 
                        </div> }
                      { centerPerc > 0 &&
                        <div className="lean-segment center" style={{ width: `${centerPerc}%` }}>
-                           {centerPerc >= 5 ? `C ${centerPerc}%` : ''} {/* Conditional Text */}
+                           {/* --- *** UPDATED THRESHOLD *** --- */}
+                           {centerPerc >= 10 ? `C ${centerPerc}%` : ''} 
                        </div> }
                      { rightCombinedPerc > 0 &&
                        <div className="lean-segment right" style={{ width: `${rightCombinedPerc}%` }}>
-                           {rightCombinedPerc >= 5 ? `R ${rightCombinedPerc}%` : ''} {/* Conditional Text */}
+                           {/* --- *** UPDATED THRESHOLD *** --- */}
+                           {rightCombinedPerc >= 10 ? `R ${rightCombinedPerc}%` : ''} 
                        </div> }
                   </div>
                   <ul className="lean-details">
@@ -251,32 +257,37 @@ function MyNewsBias() {
 
         {/* --- Right Column (Scrollable) --- */}
         <div className="dashboard-right-column">
-          {/* --- *** CHANGED TITLE HERE *** --- */}
-          <h2 className="section-title">Your Reading Habits Dashboard</h2> 
+          {/* --- *** Sticky Header Wrapper *** --- */}
+          <div className="sticky-header-wrapper">
+             {/* --- *** CHANGED TITLE HERE *** --- */}
+             <h2 className="section-title">Your Reading Habits Dashboard</h2> 
+          </div>
 
-          {/* Top Categories Chart (Full Width) */}
-           <div className="dashboard-card full-width-chart-card">
-             <div className="chart-container category-chart-container"> 
-                 {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                 : (totalAnalyzed > 0 && categoryReadData.labels.length > 0) ? ( <Bar options={getBarChartOptions('Top Categories (Analyzed)')} data={categoryReadData} /> )
-                 : ( <p className="no-data-msg">No analysis data for this period.</p> )}
-             </div>
-           </div>
+          {/* --- *** SWAPPED CHART POSITIONS *** --- */}
 
-          {/* Grid for Remaining Charts */}
-          <div className="dashboard-grid">
-
-            {/* Stories Analyzed Over Time */}
-            <div className="dashboard-card stories-read-card">
-              <div className="card-header"> <h3>Stories Analyzed Over Time</h3> </div>
+          {/* Stories Analyzed Over Time (Full Width) */}
+          <div className="dashboard-card full-width-chart-card stories-read-card"> {/* Added class */}
+              {/* <div className="card-header"> <h3>Stories Analyzed Over Time</h3> </div> Removed Title */}
               <div className="chart-container stories-read-chart">
                  {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
                   : (statsData?.dailyCounts?.length > 0) ? ( <Line options={storiesReadOptions} data={storiesReadData} /> )
                   : ( <p className="no-data-msg">No analysis data for this period.</p> )}
               </div>
-            </div>
+          </div>
 
-            {/* Political Lean (Analyzed) */}
+          {/* Grid for Remaining Charts */}
+          <div className="dashboard-grid">
+
+            {/* Top Categories (Column/Bar Chart) */}
+             <div className="dashboard-card">
+               <div className="chart-container article-bias-chart">
+                   {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
+                   : (totalAnalyzed > 0 && categoryReadData.labels.length > 0) ? ( <Bar options={getBarChartOptions('Top Categories (Analyzed)')} data={categoryReadData} /> ) 
+                   : ( <p className="no-data-msg">No analysis data for this period.</p> )}
+               </div>
+             </div>
+
+            {/* Political Lean (Analyzed - Doughnut) */}
              <div className="dashboard-card">
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
@@ -285,7 +296,7 @@ function MyNewsBias() {
                </div>
              </div>
              
-             {/* Article Quality */}
+             {/* Article Quality (Doughnut Chart) */}
              <div className="dashboard-card">
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
@@ -294,7 +305,7 @@ function MyNewsBias() {
                </div>
              </div>
 
-            {/* Political Lean (Shared) */}
+            {/* Political Lean (Shared - Doughnut) */}
              <div className="dashboard-card">
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
@@ -307,12 +318,7 @@ function MyNewsBias() {
 
           {error && <p style={{ color: 'red', textAlign: 'center', marginTop: '20px' }}>{error}</p>}
 
-          {/* Back Button */}
-          <div style={{ textAlign: 'center', marginTop: '30px' }}>
-              <Link to="/" className="btn-secondary" style={{ textDecoration: 'none' }}>
-                Back to Articles
-              </Link>
-          </div>
+          {/* --- *** REMOVED Back Button from here *** --- */}
 
         </div> {/* --- End Right Column --- */}
       </div> {/* --- End Content Wrapper --- */}

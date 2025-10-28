@@ -50,7 +50,7 @@ function MyNewsBias() {
   const [statsData, setStatsData] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState('');
-  
+
   const [currentTheme, setCurrentTheme] = useState('dark');
    useEffect(() => {
      const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -80,42 +80,24 @@ function MyNewsBias() {
   }, []);
 
 
-  // --- Chart Options ---
-
-   const getDoughnutChartOptions = useCallback((title) => ({
+  // --- Chart Options (Functions remain the same) ---
+   const getDoughnutChartOptions = useCallback((title) => ({ /* ... */
       responsive: true, maintainAspectRatio: false,
-      plugins: {
-         legend: { position: 'bottom', labels: { color: chartColors.textSecondary } },
-         tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary },
-         title: { display: true, text: title, color: chartColors.textPrimary, font: { size: 14 } }
-      }, cutout: '60%',
+      plugins: { legend: { position: 'bottom', labels: { color: chartColors.textSecondary } }, tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary }, title: { display: true, text: title, color: chartColors.textPrimary, font: { size: 14 } } }, cutout: '60%',
    }), [chartColors]);
-
-    const getBarChartOptions = useCallback((title) => ({ // For Vertical Categories
+    const getBarChartOptions = useCallback((title) => ({ /* ... */
       responsive: true, maintainAspectRatio: false,
-      scales: {
-         x: { ticks: { color: chartColors.textTertiary }, grid: { display: false } }, // Categories
-         y: { beginAtZero: true, title: { display: true, text: 'Number of Articles', color: chartColors.textSecondary }, ticks: { color: chartColors.textTertiary, stepSize: 1 }, grid: { color: chartColors.borderColor } }, // Values
-      },
-      plugins: {
-         legend: { display: false },
-         tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary },
-         title: { display: true, text: title, color: chartColors.textPrimary, font: { size: 14 } }
-      },
+      scales: { x: { ticks: { color: chartColors.textTertiary }, grid: { display: false } }, y: { beginAtZero: true, title: { display: true, text: 'Number of Articles', color: chartColors.textSecondary }, ticks: { color: chartColors.textTertiary, stepSize: 1 }, grid: { color: chartColors.borderColor } }, },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary }, title: { display: true, text: title, color: chartColors.textPrimary, font: { size: 14 } } },
    }), [chartColors]);
-
-
-   const storiesReadOptions = useMemo(() => ({
+   const storiesReadOptions = useMemo(() => ({ /* ... */
       responsive: true, maintainAspectRatio: false,
-      scales: {
-         x: { type: 'time', time: { unit: 'day', tooltipFormat: 'MMM d, yyyy', displayFormats: { day: 'MMM d' }}, title: { display: true, text: 'Date', color: chartColors.textSecondary }, ticks: { color: chartColors.textTertiary }, grid: { color: chartColors.borderColor }},
-         y: { beginAtZero: true, title: { display: true, text: 'Number of Stories', color: chartColors.textSecondary }, ticks: { color: chartColors.textTertiary, stepSize: 1 }, grid: { color: chartColors.borderColor }},
-      },
+      scales: { x: { type: 'time', time: { unit: 'day', tooltipFormat: 'MMM d, yyyy', displayFormats: { day: 'MMM d' }}, title: { display: true, text: 'Date', color: chartColors.textSecondary }, ticks: { color: chartColors.textTertiary }, grid: { color: chartColors.borderColor }}, y: { beginAtZero: true, title: { display: true, text: 'Number of Stories', color: chartColors.textSecondary }, ticks: { color: chartColors.textTertiary, stepSize: 1 }, grid: { color: chartColors.borderColor }}, },
       plugins: { legend: { display: false }, tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary } },
    }), [chartColors]);
 
   // --- Chart Data Preparation (Functions remain the same) ---
-  const prepareLeanData = (rawData) => { /* ... (no changes) ... */
+  const prepareLeanData = (rawData) => { /* ... */
     const counts = (rawData || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
     const data = leanOrder.map(lean => counts[lean] || 0);
     const backgroundColors = leanOrder.map(lean => leanColors[lean]);
@@ -124,7 +106,7 @@ function MyNewsBias() {
     const filteredColors = backgroundColors.filter((_, index) => data[index] > 0);
     return { labels: filteredLabels, datasets: [{ label: 'Articles', data: filteredData, backgroundColor: filteredColors, borderColor: chartColors.borderColor, borderWidth: 1 }] };
   };
-  const prepareCategoryData = (rawData) => { /* ... (no changes) ... */
+  const prepareCategoryData = (rawData) => { /* ... */
     const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10);
     const themeCategoryColors = chartColors.categoryPalette;
     return {
@@ -138,7 +120,7 @@ function MyNewsBias() {
       }],
     };
   };
-  const prepareQualityData = (rawData) => { /* ... (no changes) ... */
+  const prepareQualityData = (rawData) => { /* ... */
     const rawCountsMap = (rawData || []).reduce((acc, item) => { acc[item.grade] = item.count; return acc; }, {});
     const dbCounts = rawCountsMap;
     const data = [ dbCounts['A+'] || 0, dbCounts['A'] || 0, dbCounts['B'] || 0, dbCounts['C'] || 0, (dbCounts['D'] || 0) + (dbCounts['F'] || 0) + (dbCounts['D-F'] || 0), dbCounts[null] || 0 ];
@@ -149,7 +131,7 @@ function MyNewsBias() {
     return { labels: filteredLabels, datasets: [{ label: 'Articles Read', data: filteredData, backgroundColor: filteredColors, borderColor: chartColors.borderColor, borderWidth: 1 }] };
   };
 
-  const storiesReadData = useMemo(() => ({ /* ... (no changes) ... */
+  const storiesReadData = useMemo(() => ({ /* ... */
     labels: statsData?.dailyCounts?.map(item => item.date) || [],
     datasets: [{ label: 'Stories Analyzed', data: statsData?.dailyCounts?.map(item => item.count) || [], fill: false, borderColor: 'var(--accent-primary)', tension: 0.1 }],
   }), [statsData?.dailyCounts]);
@@ -194,9 +176,9 @@ function MyNewsBias() {
            {/* Section Title + Time Selector + Back Button Aligned */}
            <div className="section-title-header">
              <h2 className="section-title no-border">Your Activity</h2>
-             <div className="header-actions"> {/* Wrapper for right side items */}
+             <div className="header-actions"> 
                  <div className="date-range-selector"> <span>Viewing All-Time Stats</span> </div>
-                 {/* --- *** MOVED Back Button HERE *** --- */}
+                 {/* --- *** RESTORED Back Button HERE *** --- */}
                  <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
                    Back to Articles
                  </Link>
@@ -222,17 +204,14 @@ function MyNewsBias() {
                   <div className="lean-bar">
                      { leftCombinedPerc > 0 &&
                        <div className="lean-segment left" style={{ width: `${leftCombinedPerc}%` }}>
-                          {/* --- *** UPDATED THRESHOLD *** --- */}
                           {leftCombinedPerc >= 10 ? `L ${leftCombinedPerc}%` : ''} 
                        </div> }
                      { centerPerc > 0 &&
                        <div className="lean-segment center" style={{ width: `${centerPerc}%` }}>
-                           {/* --- *** UPDATED THRESHOLD *** --- */}
                            {centerPerc >= 10 ? `C ${centerPerc}%` : ''} 
                        </div> }
                      { rightCombinedPerc > 0 &&
                        <div className="lean-segment right" style={{ width: `${rightCombinedPerc}%` }}>
-                           {/* --- *** UPDATED THRESHOLD *** --- */}
                            {rightCombinedPerc >= 10 ? `R ${rightCombinedPerc}%` : ''} 
                        </div> }
                   </div>
@@ -257,17 +236,13 @@ function MyNewsBias() {
 
         {/* --- Right Column (Scrollable) --- */}
         <div className="dashboard-right-column">
-          {/* --- *** Sticky Header Wrapper *** --- */}
+          {/* Sticky Header Wrapper */}
           <div className="sticky-header-wrapper">
-             {/* --- *** CHANGED TITLE HERE *** --- */}
              <h2 className="section-title">Your Reading Habits Dashboard</h2> 
           </div>
 
-          {/* --- *** SWAPPED CHART POSITIONS *** --- */}
-
           {/* Stories Analyzed Over Time (Full Width) */}
-          <div className="dashboard-card full-width-chart-card stories-read-card"> {/* Added class */}
-              {/* <div className="card-header"> <h3>Stories Analyzed Over Time</h3> </div> Removed Title */}
+          <div className="dashboard-card full-width-chart-card stories-read-card"> 
               <div className="chart-container stories-read-chart">
                  {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
                   : (statsData?.dailyCounts?.length > 0) ? ( <Line options={storiesReadOptions} data={storiesReadData} /> )
@@ -318,7 +293,7 @@ function MyNewsBias() {
 
           {error && <p style={{ color: 'red', textAlign: 'center', marginTop: '20px' }}>{error}</p>}
 
-          {/* --- *** REMOVED Back Button from here *** --- */}
+          {/* Removed Back Button */}
 
         </div> {/* --- End Right Column --- */}
       </div> {/* --- End Content Wrapper --- */}

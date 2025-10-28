@@ -567,6 +567,21 @@ function AppWrapper() {
       .catch(err => console.error('Failed to log compare activity', err));
   };
 
+  // --- *** NEW FUNCTION *** ---
+  // --- ADDED THIS NEW HANDLER FOR LOGGING "READ ARTICLE" ---
+  const handleReadClick = (article) => {
+    // Log the activity to the new endpoint
+    // We do this as "fire and forget" - we don't wait for the response
+    axios.post(`${API_URL}/activity/log-read`, { articleId: article._id })
+      .then(res => console.log('Read activity logged', res.data))
+      .catch(err => console.error('Failed to log read activity', err));
+      
+    // Immediately open the article in a new tab
+    window.open(article.url, '_blank', 'noopener,noreferrer');
+  };
+  // --- *** END NEW FUNCTION *** ---
+
+
   // --- NEW: Main App Render Logic ---
 
   // 1. Show main loader while checking auth OR profile
@@ -687,6 +702,8 @@ function AppWrapper() {
                                   // --- UPDATED: Use new handler ---
                                   onAnalyze={handleAnalyzeClick}
                                   onShare={shareArticle}
+                                  // --- *** NEW PROP *** ---
+                                  onRead={handleReadClick} // Pass the new handler
                                   showTooltip={showTooltip}
                                 />
                               </div>
@@ -990,8 +1007,9 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
 }
 
 
+// --- *** MODIFIED COMPONENT *** ---
 // --- UPDATED ArticleCard Component ---
-function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
+function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showTooltip }) {
 
   const isMobile = () => window.innerWidth <= 768;
 
@@ -1038,15 +1056,16 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
 
       <div className="article-content">
         <div className="article-content-top">
-          <a
-              href={article.url}
-              target="_blank"
-              rel="noopener noreferrer"
+          {/* --- *** MODIFICATION HERE *** --- */}
+          {/* The <a> tag is now a button-like div that calls onRead */}
+          <div
               className="article-headline-link"
-              onClick={stopMobileClick} // (FIX) Prevent scroll on tap
+              onClick={(e) => { stopMobileClick(e); onRead(article); }} // Call onRead
+              style={{ cursor: 'pointer' }} // Make it look clickable
+              title="Read the full article (logs click)"
           >
               <h3 className="article-headline">{article.headline}</h3>
-          </a>
+          </div>
 
           <p className="article-summary">{article.summary}</p>
         </div>
@@ -1119,17 +1138,15 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
                 >
                   Share
                 </button>
-                <a
-                  href={article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                {/* --- *** MODIFICATION HERE *** --- */}
+                {/* This button now calls onRead */}
+                <button
+                  onClick={(e) => { stopMobileClick(e); onRead(article); }}
                   className="btn-primary btn-full-width"
-                  style={{ textDecoration: 'none', textAlign: 'center' }}
                   title="Read the full article on the source's website"
-                  onClick={stopMobileClick}
                 >
                   Read Article
-                </a>
+                </button>
               </>
             ) : (
               <>
@@ -1290,6 +1307,9 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
       {articleList.map(article => (
         <div key={article._id || article.url} className="coverage-article">
           <div className="coverage-content">
+             {/* --- *** MODIFICATION HERE *** --- */}
+             {/* This now calls the onRead function from App.js, which is not available here */}
+             {/* We will just keep this as a standard link for now, as onRead isn't passed down this deep */}
             <a href={article.url} target="_blank" rel="noopener noreferrer" onClick={stopMobileClick}>
               <h4>{article.headline || 'No Headline'}</h4>
             </a>
@@ -1318,6 +1338,8 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
               </span>
             </div>
             <div className="coverage-actions">
+               {/* --- *** MODIFICATION HERE *** --- */}
+               {/* This also becomes a standard link */}
               <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1}} onClick={stopMobileClick}>
                   <button style={{width: '100%'}} onClick={stopMobileClick}>Read Article</button>
               </a>

@@ -2,14 +2,16 @@
 
 .bias-dashboard-page {
   /* Removed max-width */
-  margin: 0 auto;
-  padding: 30px 30px 50px 30px; 
+  margin: 0 auto; /* Keep centered if window is wider than content */
+  /* --- *** REMOVED SIDE PADDING *** --- */
+  padding: 30px 0 50px 0; 
   color: var(--text-primary);
   height: calc(100vh - 60px); 
   margin-top: 60px; 
   display: flex; 
   flex-direction: column; 
   overflow: hidden; 
+  width: 100%; /* Ensure it tries to use full width */
 }
 
 /* --- Main Content Flex Wrapper --- */
@@ -18,17 +20,22 @@
   flex-grow: 1; 
   gap: 30px; 
   overflow: hidden; 
+  width: 100%; /* Take full width */
+  /* --- *** ADDED PADDING HERE *** --- */
+  padding: 0 15px; /* Add minimal side padding inside the wrapper */
 }
 
 /* --- Left Column Styles --- */
 .dashboard-left-column {
-  flex: 0 0 350px; /* Reduced width slightly */
-  min-width: 0; /* Prevent content pushing width */
+  flex: 0 0 350px; 
+  min-width: 0; 
   display: flex;
   flex-direction: column;
   gap: 15px; 
   overflow: hidden; 
   padding-bottom: 20px; 
+  /* --- *** ADDED PADDING *** --- */
+  /* padding-left: 15px; */ /* Padding is now on the wrapper */
 }
 
 /* --- Right Column Styles --- */
@@ -36,7 +43,8 @@
   flex: 1 1 auto; 
   overflow-y: auto; 
   min-width: 0; 
-  padding: 0 15px 30px 15px; /* Adjust padding */
+  /* --- *** ADJUSTED PADDING *** --- */
+  padding: 0 15px 30px 15px; /* Keep vertical padding, adjust horizontal */
   scrollbar-width: thin;
   scrollbar-color: var(--accent-primary) var(--bg-secondary);
 }
@@ -50,14 +58,14 @@
 .dashboard-header { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; margin-bottom: 0; flex-shrink: 0; }
 .user-info-header { display: flex; align-items: center; gap: 15px; }
 .user-avatar { width: 50px; height: 50px; border-radius: 50%; background-color: var(--accent-primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600; }
-.user-details h2 { font-size: 24px; font-weight: 700; margin: 0 0 5px 0; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px; } /* Prevent long names breaking layout */
+.user-details h2 { font-size: 24px; font-weight: 700; margin: 0 0 5px 0; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px; }
 .user-details p { font-size: 14px; color: var(--text-secondary); margin: 0; }
 .date-range-selector span { font-size: 14px; color: var(--text-secondary); font-weight: 500; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); }
 
 /* --- Section Title --- */
 .section-title {
    grid-column: 1 / -1; 
-   font-size: 20px; /* Slightly smaller */
+   font-size: 20px; 
    font-weight: 700;
    color: var(--text-primary);
    margin-top: 15px; 
@@ -84,7 +92,7 @@
 .dashboard-card {
   background: var(--bg-card-flat); border: 1px solid var(--border-color);
   border-radius: 8px; padding: 25px; display: flex; flex-direction: column;
-  box-shadow: var(--shadow-sm); overflow: hidden; /* Prevent content spill */
+  box-shadow: var(--shadow-sm); overflow: hidden; 
 }
 
 /* Card Title (Can be h3 or inside .card-header) */
@@ -95,13 +103,13 @@
 
 /* --- Stat Box Specific Styles --- */
 .stat-box { background: var(--bg-secondary); text-align: left; padding: 20px; }
-.stat-box h3 { font-size: 13px; margin-bottom: 8px; } /* Smaller title */
-.stat-number { font-size: 32px; margin-bottom: 8px; } /* Slightly smaller number */
+.stat-box h3 { font-size: 13px; margin-bottom: 8px; } 
+.stat-number { font-size: 32px; margin-bottom: 8px; } 
 .stat-description { font-size: 12px; color: var(--text-tertiary); margin: 0; line-height: 1.4; }
 
 
 /* --- Lean Summary Card Specific Styles (in Left Column) --- */
-.lean-summary-card { flex-grow: 1; min-height: 150px; }
+.lean-summary-card { flex-grow: 1; min-height: 150px; justify-content: center; /* Center content vertically if loading/no data */ }
 .lean-bar { display: flex; height: 25px; border-radius: 4px; overflow: hidden; margin-bottom: 20px; background-color: var(--bg-primary); }
 .lean-segment { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: white; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); transition: width 0.5s ease-in-out; }
 .lean-segment.left { background-color: #dc2626; }
@@ -117,19 +125,13 @@
 .stories-read-card h3 { margin-bottom: 0; }
 
 /* --- Chart Container Styles --- */
-.chart-container { position: relative; flex-grow: 1; min-height: 300px; /* Reduced default min-height */ }
-.stories-read-chart { height: 300px; min-height: 250px; } /* Line chart height */
-.article-bias-chart { height: 350px; min-height: 300px; } /* Doughnut chart height */
+.chart-container { position: relative; flex-grow: 1; min-height: 300px; }
+.stories-read-chart { height: 300px; min-height: 250px; } 
+.article-bias-chart { height: 350px; min-height: 300px; } 
 
-/* --- *** NEW: Category Chart Specific Styles *** --- */
-.full-width-chart-card {
-  grid-column: 1 / -1; /* Make card span grid if inside grid */
-  margin-bottom: 25px; /* Add space below this full-width card */
-}
-.category-chart-container {
-  min-height: 350px; /* Specific height for category bar chart */
-  height: 350px;
-}
+/* --- Category Chart Specific Styles --- */
+.full-width-chart-card { grid-column: 1 / -1; margin-bottom: 25px; }
+.category-chart-container { min-height: 350px; height: 350px; }
 
 
 .chart-description { font-size: 12px; color: var(--text-tertiary); margin-top: 15px; text-align: left; }
@@ -137,33 +139,33 @@
 /* --- Loading and No Data States --- */
 .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 150px; }
 .loading-container .spinner { width: 24px; height: 24px; border-width: 3px; }
-.no-data-msg { text-align: center; color: var(--text-tertiary); font-size: 13px; margin-top: 20px; height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; } /* Added padding */
+.no-data-msg { text-align: center; color: var(--text-tertiary); font-size: 13px; margin: auto; /* Center vertically */ height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; } 
 
-/* --- *** NEW: Simple/Small Loading/NoData states *** --- */
-.loading-container.simple { min-height: 50px; /* Much smaller */ }
-.spinner.small { width: 18px; height: 18px; border-width: 2px; }
-.no-data-msg.small { font-size: 12px; padding: 10px; margin-top: 0; }
+/* Simple/Small Loading/NoData states */
+.loading-container.simple { min-height: 50px; }
+.spinner.small { width: 18px; height: 18px; border-width: 2px; margin: auto; } /* Center spinner */
+.no-data-msg.small { font-size: 12px; padding: 10px; margin: auto; } /* Center text */
 
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 1024px) { /* Tablet and below */
-  .bias-dashboard-page { height: auto; margin-top: 60px; overflow: visible; }
-  .dashboard-content-wrapper { flex-direction: column; overflow: visible; gap: 0; }
+  .bias-dashboard-page { height: auto; margin-top: 60px; overflow: visible; padding: 30px 15px 50px 15px; /* Add side padding back */ }
+  .dashboard-content-wrapper { flex-direction: column; overflow: visible; gap: 0; padding: 0; /* Remove wrapper padding */ }
   .dashboard-left-column { flex: 0 0 auto; width: 100%; margin-bottom: 30px; overflow: visible; }
-  .dashboard-right-column { overflow-y: visible; max-height: none; padding: 0 0 30px 0; } /* Remove side padding */
+  .dashboard-right-column { overflow-y: visible; max-height: none; padding: 0 0 30px 0; } 
   .stat-box-grid { grid-template-columns: repeat(2, 1fr); }
-  .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); } /* More flexible grid on tablet */
-  .full-width-chart-card { margin-bottom: 25px; } /* Ensure spacing */
+  .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); } 
+  .full-width-chart-card { margin-bottom: 25px; } 
 }
 
 @media (max-width: 768px) { /* Mobile */
   .bias-dashboard-page { padding: 20px 15px 30px 15px; margin-top: 60px; }
   .dashboard-header { align-items: flex-start; }
-  .user-details h2 { font-size: 20px; max-width: calc(100vw - 100px); } /* Adjust max-width */
+  .user-details h2 { font-size: 20px; max-width: calc(100vw - 100px); } 
   .user-details p { font-size: 13px; }
   .stat-box-grid { grid-template-columns: 1fr; }
   .dashboard-grid { grid-template-columns: 1fr; }
-  .section-title { font-size: 18px; } /* Smaller titles on mobile */
+  .section-title { font-size: 18px; } 
   .chart-container { min-height: 280px; }
   .stories-read-chart, .article-bias-chart, .category-chart-container { height: 280px; min-height: 250px; }
   .dashboard-right-column > div:last-child { margin-bottom: 20px; }

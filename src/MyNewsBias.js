@@ -47,9 +47,7 @@ const categoryColorsLight = ['#2E4E6B', '#3E6A8E', '#5085B2', '#63A0D6', '#243E5
 
 // --- Main Component ---
 function MyNewsBias() {
-  // Removed profileData state as it's no longer used here
   const [statsData, setStatsData] = useState(null);
-  // Removed loadingProfile state
   const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState('');
   
@@ -176,6 +174,11 @@ function MyNewsBias() {
   const totalLeanArticles = statsData?.leanDistribution_read?.reduce((sum, item) => sum + item.count, 0) || 0;
   const leanReadCounts = (statsData?.leanDistribution_read || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
   const leanPercentages = leanOrder.reduce((acc, lean) => { const count = leanReadCounts[lean] || 0; acc[lean] = totalLeanArticles > 0 ? Math.round((count / totalLeanArticles) * 100) : 0; return acc; }, {});
+  
+  // Combine left/right lean percentages for the bar display
+  const leftCombinedPerc = leanPercentages['Left'] + leanPercentages['Left-Leaning'];
+  const centerPerc = leanPercentages['Center'];
+  const rightCombinedPerc = leanPercentages['Right'] + leanPercentages['Right-Leaning'];
 
   const statBoxes = [
     { key: 'analyzed', title: 'Articles Analyzed', value: totalAnalyzed, desc: 'Total times you viewed the "Analysis" popup.' },
@@ -191,14 +194,13 @@ function MyNewsBias() {
 
         {/* --- Left Column (Fixed) --- */}
         <div className="dashboard-left-column">
-          {/* --- *** REMOVED User Info Header *** --- */}
-          {/* The dashboard-header div now only holds the time stats selector */}
-           <div className="dashboard-header">
+           {/* Section Title + Time Selector Aligned */}
+           <div className="section-title-header">
+             <h2 className="section-title no-border">Your Activity</h2>
              <div className="date-range-selector"> <span>Viewing All-Time Stats</span> </div>
            </div>
 
-          {/* Activity Section */}
-          <h2 className="section-title">Your Activity</h2>
+          {/* Activity Stat Boxes */}
           <div className="stat-box-grid">
             {statBoxes.map(box => (
               <div key={box.key} className="dashboard-card stat-box">
@@ -215,28 +217,28 @@ function MyNewsBias() {
               {loadingStats ? <div className="loading-container simple"><div className="spinner small"></div></div> : totalLeanArticles > 0 ? (
                 <>
                   <div className="lean-bar">
-                     { (leanPercentages['Left'] + leanPercentages['Left-Leaning']) > 0 &&
-                       <div className="lean-segment left" style={{ width: `${leanPercentages['Left'] + leanPercentages['Left-Leaning']}%` }}>
-                          L {leanPercentages['Left'] + leanPercentages['Left-Leaning']}%
+                     { leftCombinedPerc > 0 &&
+                       <div className="lean-segment left" style={{ width: `${leftCombinedPerc}%` }}>
+                          {leftCombinedPerc >= 5 ? `L ${leftCombinedPerc}%` : ''} {/* Conditional Text */}
                        </div> }
-                     { leanPercentages['Center'] > 0 &&
-                       <div className="lean-segment center" style={{ width: `${leanPercentages['Center']}%` }}>
-                          C {leanPercentages['Center']}%
+                     { centerPerc > 0 &&
+                       <div className="lean-segment center" style={{ width: `${centerPerc}%` }}>
+                           {centerPerc >= 5 ? `C ${centerPerc}%` : ''} {/* Conditional Text */}
                        </div> }
-                     { (leanPercentages['Right'] + leanPercentages['Right-Leaning']) > 0 &&
-                       <div className="lean-segment right" style={{ width: `${leanPercentages['Right'] + leanPercentages['Right-Leaning']}%` }}>
-                          R {leanPercentages['Right'] + leanPercentages['Right-Leaning']}%
+                     { rightCombinedPerc > 0 &&
+                       <div className="lean-segment right" style={{ width: `${rightCombinedPerc}%` }}>
+                           {rightCombinedPerc >= 5 ? `R ${rightCombinedPerc}%` : ''} {/* Conditional Text */}
                        </div> }
                   </div>
                   <ul className="lean-details">
-                     {(leanPercentages['Left'] + leanPercentages['Left-Leaning']) > 0 && (
-                        <li><span>{leanPercentages['Left'] + leanPercentages['Left-Leaning']}%</span> of analyzed stories lean left.</li>
+                     {leftCombinedPerc > 0 && (
+                        <li><span>{leftCombinedPerc}%</span> of analyzed stories lean left.</li>
                      )}
-                      {leanPercentages['Center'] > 0 && (
-                         <li><span>{leanPercentages['Center']}%</span> of analyzed stories were balanced.</li>
+                      {centerPerc > 0 && (
+                         <li><span>{centerPerc}%</span> of analyzed stories were balanced.</li>
                       )}
-                       {(leanPercentages['Right'] + leanPercentages['Right-Leaning']) > 0 && (
-                         <li><span>{leanPercentages['Right'] + leanPercentages['Right-Leaning']}%</span> of analyzed stories lean right.</li>
+                       {rightCombinedPerc > 0 && (
+                         <li><span>{rightCombinedPerc}%</span> of analyzed stories lean right.</li>
                        )}
                   </ul>
                 </>
@@ -250,7 +252,7 @@ function MyNewsBias() {
         {/* --- Right Column (Scrollable) --- */}
         <div className="dashboard-right-column">
           {/* --- *** CHANGED TITLE HERE *** --- */}
-          <h2 className="section-title">My News Bias Dashboard</h2> 
+          <h2 className="section-title">Your Reading Habits Dashboard</h2> 
 
           {/* Top Categories Chart (Full Width) */}
            <div className="dashboard-card full-width-chart-card">

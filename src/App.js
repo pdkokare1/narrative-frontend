@@ -189,10 +189,10 @@ function AppWrapper() {
           if (error.response && error.response.status === 404) {
             // 404 means "Profile not found". Send them to create one.
             console.log('Profile not found, redirecting to create-profile');
-            // --- UPDATED: Only redirect if NOT on profile page ---
-            if (location.pathname !== '/profile') {
-              navigate('/create-profile');
-            }
+            // --- *** BUG FIX *** ---
+            // --- REMOVED faulty 'if' condition. Always redirect if 404. ---
+            navigate('/create-profile');
+            
           } else {
             console.error('Failed to fetch profile', error);
             // Handle other errors (e.g., show an error message)

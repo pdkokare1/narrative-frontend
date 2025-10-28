@@ -1,7 +1,7 @@
 /* In file: src/MyNewsBias.css */
 
 .bias-dashboard-page {
-  /* max-width: 1600px; */ /* --- *** REMOVED MAX WIDTH *** --- */
+  /* Removed max-width */
   margin: 0 auto;
   padding: 30px 30px 50px 30px; 
   color: var(--text-primary);
@@ -22,12 +22,13 @@
 
 /* --- Left Column Styles --- */
 .dashboard-left-column {
-  flex: 0 0 380px; 
+  flex: 0 0 350px; /* Reduced width slightly */
+  min-width: 0; /* Prevent content pushing width */
   display: flex;
   flex-direction: column;
-  gap: 15px; /* Reduced gap */
+  gap: 15px; 
   overflow: hidden; 
-  padding-bottom: 20px; /* Add padding at bottom */
+  padding-bottom: 20px; 
 }
 
 /* --- Right Column Styles --- */
@@ -35,10 +36,7 @@
   flex: 1 1 auto; 
   overflow-y: auto; 
   min-width: 0; 
-  padding-right: 10px; 
-  padding-left: 10px; /* Add some padding on left too */
-  padding-bottom: 30px; /* Ensure space for back button */
-  /* Custom scrollbar for this column */
+  padding: 0 15px 30px 15px; /* Adjust padding */
   scrollbar-width: thin;
   scrollbar-color: var(--accent-primary) var(--bg-secondary);
 }
@@ -49,28 +47,20 @@
 
 
 /* --- Dashboard Header (Now in Left Column) --- */
-.dashboard-header {
-  display: flex;
-  flex-direction: column; 
-  align-items: flex-start; 
-  gap: 20px;
-  margin-bottom: 0; 
-  flex-shrink: 0; 
-}
-
+.dashboard-header { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; margin-bottom: 0; flex-shrink: 0; }
 .user-info-header { display: flex; align-items: center; gap: 15px; }
 .user-avatar { width: 50px; height: 50px; border-radius: 50%; background-color: var(--accent-primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600; }
-.user-details h2 { font-size: 24px; font-weight: 700; margin: 0 0 5px 0; color: var(--text-primary); }
+.user-details h2 { font-size: 24px; font-weight: 700; margin: 0 0 5px 0; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 280px; } /* Prevent long names breaking layout */
 .user-details p { font-size: 14px; color: var(--text-secondary); margin: 0; }
 .date-range-selector span { font-size: 14px; color: var(--text-secondary); font-weight: 500; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); }
 
 /* --- Section Title --- */
 .section-title {
    grid-column: 1 / -1; 
-   font-size: 22px;
+   font-size: 20px; /* Slightly smaller */
    font-weight: 700;
    color: var(--text-primary);
-   margin-top: 15px; /* Add top margin */
+   margin-top: 15px; 
    margin-bottom: 15px; 
    border-bottom: 1px solid var(--border-color);
    padding-bottom: 10px;
@@ -78,7 +68,6 @@
    width: 100%; 
    flex-shrink: 0; 
 }
-/* First title in each column has NO top margin */
 .dashboard-left-column > .section-title:first-of-type,
 .dashboard-right-column > .section-title:first-of-type {
     margin-top: 0;
@@ -86,61 +75,40 @@
 
 
 /* --- Stat Box Grid (Now in Left Column) --- */
-.stat-box-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); 
-  gap: 20px; 
-  flex-shrink: 0; 
-}
+.stat-box-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; flex-shrink: 0; }
 
-/* --- Dashboard Grid (Now in Right Column) --- */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); /* Fixed 2 columns */
-  gap: 25px;
-}
+/* --- Dashboard Grid (Now in Right Column, below category chart) --- */
+.dashboard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; }
 
+/* --- Styles common to all cards --- */
 .dashboard-card {
-  background: var(--bg-card-flat);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 25px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: var(--shadow-sm);
+  background: var(--bg-card-flat); border: 1px solid var(--border-color);
+  border-radius: 8px; padding: 25px; display: flex; flex-direction: column;
+  box-shadow: var(--shadow-sm); overflow: hidden; /* Prevent content spill */
 }
 
-.dashboard-card h3 { 
-  font-size: 16px; 
-  font-weight: 600; 
-  color: var(--text-primary); 
-  margin: 0 0 20px 0; 
-  /* --- *** Ensure single line title *** --- */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* Card Title (Can be h3 or inside .card-header) */
+.dashboard-card h3, .card-header h3 { 
+  font-size: 16px; font-weight: 600; color: var(--text-primary); 
+  margin: 0 0 20px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 } 
 
-/* --- Stat Box Styles --- */
+/* --- Stat Box Specific Styles --- */
 .stat-box { background: var(--bg-secondary); text-align: left; padding: 20px; }
-.stat-box h3 { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-.stat-number { font-size: 36px; font-weight: 700; color: var(--accent-primary); margin-bottom: 10px; line-height: 1; }
-.stat-description { font-size: 12px; color: var(--text-tertiary); margin: 0; }
+.stat-box h3 { font-size: 13px; margin-bottom: 8px; } /* Smaller title */
+.stat-number { font-size: 32px; margin-bottom: 8px; } /* Slightly smaller number */
+.stat-description { font-size: 12px; color: var(--text-tertiary); margin: 0; line-height: 1.4; }
 
 
-/* --- Lean Summary Card Specific Styles --- */
-.lean-summary-card {
-   flex-grow: 1; /* Allow this card to fill remaining space in left column if needed */
-   min-height: 150px; /* Ensure it has some minimum height */
-}
-/* .lean-summary-card h3 { margin-bottom: 15px; } REMOVED - Title handled by section title */
+/* --- Lean Summary Card Specific Styles (in Left Column) --- */
+.lean-summary-card { flex-grow: 1; min-height: 150px; }
 .lean-bar { display: flex; height: 25px; border-radius: 4px; overflow: hidden; margin-bottom: 20px; background-color: var(--bg-primary); }
 .lean-segment { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: white; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); transition: width 0.5s ease-in-out; }
 .lean-segment.left { background-color: #dc2626; }
 .lean-segment.center { background-color: #6b7280; }
 .lean-segment.right { background-color: #2563eb; }
 .lean-details { list-style: none; padding: 0; margin: 0; font-size: 13px; color: var(--text-secondary); }
-.lean-details li { margin-bottom: 8px; display: flex; align-items: flex-start; /* Align text start */ }
+.lean-details li { margin-bottom: 8px; display: flex; align-items: flex-start; }
 .lean-details li:last-child { margin-bottom: 0; }
 .lean-details li span { font-weight: 600; color: var(--text-primary); margin-right: 8px; min-width: 30px; text-align: right; flex-shrink: 0; }
 
@@ -148,9 +116,20 @@
 .stories-read-card .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
 .stories-read-card h3 { margin-bottom: 0; }
 
-.chart-container { position: relative; flex-grow: 1; min-height: 350px; }
-.stories-read-chart { height: 300px; min-height: 250px; }
-.article-bias-chart { height: 350px; min-height: 300px; }
+/* --- Chart Container Styles --- */
+.chart-container { position: relative; flex-grow: 1; min-height: 300px; /* Reduced default min-height */ }
+.stories-read-chart { height: 300px; min-height: 250px; } /* Line chart height */
+.article-bias-chart { height: 350px; min-height: 300px; } /* Doughnut chart height */
+
+/* --- *** NEW: Category Chart Specific Styles *** --- */
+.full-width-chart-card {
+  grid-column: 1 / -1; /* Make card span grid if inside grid */
+  margin-bottom: 25px; /* Add space below this full-width card */
+}
+.category-chart-container {
+  min-height: 350px; /* Specific height for category bar chart */
+  height: 350px;
+}
 
 
 .chart-description { font-size: 12px; color: var(--text-tertiary); margin-top: 15px; text-align: left; }
@@ -158,61 +137,35 @@
 /* --- Loading and No Data States --- */
 .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 150px; }
 .loading-container .spinner { width: 24px; height: 24px; border-width: 3px; }
-.no-data-msg { text-align: center; color: var(--text-tertiary); font-size: 13px; margin-top: 20px; height: 100%; display: flex; align-items: center; justify-content: center; }
+.no-data-msg { text-align: center; color: var(--text-tertiary); font-size: 13px; margin-top: 20px; height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px; } /* Added padding */
+
+/* --- *** NEW: Simple/Small Loading/NoData states *** --- */
+.loading-container.simple { min-height: 50px; /* Much smaller */ }
+.spinner.small { width: 18px; height: 18px; border-width: 2px; }
+.no-data-msg.small { font-size: 12px; padding: 10px; margin-top: 0; }
 
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 1024px) { /* Tablet and below */
-  .bias-dashboard-page {
-     height: auto; 
-     margin-top: 60px;
-     overflow: visible; 
-  }
-  .dashboard-content-wrapper {
-    flex-direction: column; 
-    overflow: visible; 
-    gap: 0; 
-  }
-  .dashboard-left-column {
-    flex: 0 0 auto; 
-    width: 100%; 
-    margin-bottom: 30px; 
-    overflow: visible; 
-  }
-  .dashboard-right-column {
-    overflow-y: visible; 
-    max-height: none; 
-    padding-right: 0; 
-  }
-  .stat-box-grid {
-     grid-template-columns: repeat(2, 1fr);
-  }
-  /* Keep 2 columns for charts on tablet */
-  .dashboard-grid {
-     grid-template-columns: repeat(2, 1fr); 
-  }
+  .bias-dashboard-page { height: auto; margin-top: 60px; overflow: visible; }
+  .dashboard-content-wrapper { flex-direction: column; overflow: visible; gap: 0; }
+  .dashboard-left-column { flex: 0 0 auto; width: 100%; margin-bottom: 30px; overflow: visible; }
+  .dashboard-right-column { overflow-y: visible; max-height: none; padding: 0 0 30px 0; } /* Remove side padding */
+  .stat-box-grid { grid-template-columns: repeat(2, 1fr); }
+  .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); } /* More flexible grid on tablet */
+  .full-width-chart-card { margin-bottom: 25px; } /* Ensure spacing */
 }
 
 @media (max-width: 768px) { /* Mobile */
-  .bias-dashboard-page {
-    padding: 20px 15px 30px 15px; 
-    margin-top: 60px;
-  }
+  .bias-dashboard-page { padding: 20px 15px 30px 15px; margin-top: 60px; }
   .dashboard-header { align-items: flex-start; }
-  .user-details h2 { font-size: 20px; }
+  .user-details h2 { font-size: 20px; max-width: calc(100vw - 100px); } /* Adjust max-width */
   .user-details p { font-size: 13px; }
-
-  .stat-box-grid {
-     grid-template-columns: 1fr;
-  }
-  .dashboard-grid {
-    grid-template-columns: 1fr; 
-  }
-   .section-title { font-size: 20px; }
-   .chart-container { min-height: 280px; }
-   .stories-read-chart, .article-bias-chart { height: 280px; min-height: 250px; }
-   
-   .dashboard-right-column > div:last-child {
-       margin-bottom: 20px;
-   }
+  .stat-box-grid { grid-template-columns: 1fr; }
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .section-title { font-size: 18px; } /* Smaller titles on mobile */
+  .chart-container { min-height: 280px; }
+  .stories-read-chart, .article-bias-chart, .category-chart-container { height: 280px; min-height: 250px; }
+  .dashboard-right-column > div:last-child { margin-bottom: 20px; }
+  .full-width-chart-card { margin-bottom: 25px; }
 }

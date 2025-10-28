@@ -31,7 +31,6 @@
   gap: 12px; 
   overflow: hidden; 
   padding-bottom: 15px; 
-  /* --- *** ADDED PADDING TOP *** --- */
   padding-top: 10px; 
 }
 
@@ -41,7 +40,6 @@
   overflow-y: auto; 
   min-width: 0; 
   padding: 0 10px 20px 10px; 
-  /* --- *** ADDED PADDING TOP *** --- */
   padding-top: 10px; 
   scrollbar-width: thin;
   scrollbar-color: var(--accent-primary) var(--bg-secondary);
@@ -52,15 +50,29 @@
 .dashboard-right-column::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
 
 
-/* --- *** SIMPLIFIED Header (Now in Left Column) *** --- */
-.dashboard-header { 
-  display: flex; 
-  /* Removed align-items, gap */
-  margin-bottom: 10px; /* Add some space below */
-  flex-shrink: 0; 
+/* --- REMOVED Old .dashboard-header styles --- */
+
+/* --- *** NEW: Header for Section Title + Date Selector *** --- */
+.section-title-header {
+  display: flex;
+  justify-content: space-between; /* Pushes items apart */
+  align-items: baseline; /* Aligns text baselines */
+  margin-bottom: 10px; /* Space below header */
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-color); /* Border below the whole header */
+  padding-bottom: 8px; 
 }
-/* Removed .user-info-header, .user-avatar, .user-details */
-.date-range-selector span { font-size: 13px; padding: 6px 10px; } 
+
+.date-range-selector span { 
+  font-size: 13px; 
+  padding: 4px 8px; /* Smaller padding */
+  border: 1px solid var(--border-color); /* Add border */
+  border-radius: 6px; 
+  background: var(--bg-secondary); 
+  color: var(--text-secondary);
+  white-space: nowrap; /* Prevent wrapping */
+  margin-left: 15px; /* Space between title and date */
+} 
 
 /* --- Section Title --- */
 .section-title {
@@ -68,17 +80,22 @@
    font-size: 18px; 
    font-weight: 600; 
    color: var(--text-primary);
-   margin-top: 10px; 
-   margin-bottom: 10px; 
+   /* Removed top/bottom margin - handled by container/header */
+   margin: 0; 
    border-bottom: 1px solid var(--border-color);
    padding-bottom: 8px; 
    text-align: left; 
    width: 100%; 
    flex-shrink: 0; 
 }
-.dashboard-left-column > .section-title:first-of-type,
+/* Title inside the header specifically */
+.section-title-header .section-title {
+    border-bottom: none; /* Remove duplicate border */
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
 .dashboard-right-column > .section-title:first-of-type {
-    margin-top: 0; /* First title in each column still has no top margin */
+    margin-top: 0; /* Right column title still needs no top margin */
 }
 
 
@@ -95,7 +112,13 @@
   padding: 20px; 
   display: flex; flex-direction: column;
   box-shadow: var(--shadow-sm); overflow: hidden; 
+  transition: border-color 0.2s ease-in-out; /* For hover effect */
 }
+/* --- *** NEW: Hover Effect *** --- */
+.dashboard-card:hover {
+  border-color: var(--accent-primary);
+}
+
 
 /* Card Title (Can be h3 or inside .card-header) */
 .dashboard-card h3, .card-header h3 { 
@@ -113,12 +136,13 @@
 /* --- Lean Summary Card Specific Styles (in Left Column) --- */
 .lean-summary-card { flex-grow: 1; min-height: 130px; justify-content: center; padding: 15px; } 
 .lean-bar { display: flex; height: 22px; border-radius: 4px; overflow: hidden; margin-bottom: 15px; background-color: var(--bg-primary); } 
-.lean-segment { display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); transition: width 0.5s ease-in-out; } 
+.lean-segment { display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); transition: width 0.5s ease-in-out; overflow: hidden; white-space: nowrap; } /* Added overflow/whitespace */
 .lean-segment.left { background-color: #dc2626; }
 .lean-segment.center { background-color: #6b7280; }
 .lean-segment.right { background-color: #2563eb; }
 .lean-details { list-style: none; padding: 0; margin: 0; font-size: 12px; color: var(--text-secondary); } 
-.lean-details li { margin-bottom: 6px; display: flex; align-items: flex-start; } 
+/* --- *** UPDATED ALIGNMENT *** --- */
+.lean-details li { margin-bottom: 6px; display: flex; align-items: baseline; } 
 .lean-details li:last-child { margin-bottom: 0; }
 .lean-details li span { font-weight: 600; color: var(--text-primary); margin-right: 6px; min-width: 25px; text-align: right; flex-shrink: 0; } 
 
@@ -153,7 +177,7 @@
 @media (max-width: 1024px) { /* Tablet and below */
   .bias-dashboard-page { height: auto; margin-top: 60px; overflow: visible; padding: 20px 15px 30px 15px; }
   .dashboard-content-wrapper { flex-direction: column; overflow: visible; gap: 0; padding: 0; }
-  .dashboard-left-column { flex: 0 0 auto; width: 100%; margin-bottom: 20px; overflow: visible; padding-top: 0; } /* Remove top padding when stacked */
+  .dashboard-left-column { flex: 0 0 auto; width: 100%; margin-bottom: 20px; overflow: visible; padding-top: 0; } 
   .dashboard-right-column { overflow-y: visible; max-height: none; padding: 0 0 20px 0; padding-top: 0; } 
   .stat-box-grid { grid-template-columns: repeat(2, 1fr); }
   .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; } 
@@ -162,11 +186,9 @@
 
 @media (max-width: 768px) { /* Mobile */
   .bias-dashboard-page { padding: 15px 10px 20px 10px; margin-top: 60px; } 
-  /* Remove left column fixed width */
   .dashboard-left-column { flex-basis: auto; } 
-  .dashboard-header { align-items: flex-start; }
-  .user-details h2 { font-size: 18px; max-width: calc(100vw - 90px); } 
-  .user-details p { font-size: 12px; }
+  .section-title-header { margin-bottom: 15px; } /* More space below header on mobile */
+  .date-range-selector span { margin-left: 10px; } /* Adjust spacing */
   .stat-box-grid { grid-template-columns: repeat(2, 1fr); gap: 10px;} 
   .stat-box { padding: 12px; }
   .stat-number { font-size: 24px; }
@@ -183,6 +205,8 @@
   .dashboard-card h3, .card-header h3 { font-size: 14px; margin-bottom: 12px; }
 }
 
-@media (max-width: 380px) { /* Very small mobile */
+@media (max-width: 420px) { /* Smaller mobile adjustments */
    .stat-box-grid { grid-template-columns: 1fr; } /* Stack stat boxes */
+   .section-title-header { flex-direction: column; align-items: flex-start; gap: 8px;} /* Stack title/date */
+   .date-range-selector span { margin-left: 0; } 
 }

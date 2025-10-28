@@ -2,15 +2,15 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { Line, Doughnut } from 'react-chartjs-2'; // <-- Changed Bar to Doughnut
+import { Line, Doughnut, Bar } from 'react-chartjs-2'; // <-- Added Bar back
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
-  BarElement, // Still needed if you keep any bar charts
-  ArcElement, // <-- ADDED for Doughnut
+  BarElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend,
@@ -27,7 +27,7 @@ ChartJS.register(
   PointElement,
   LineElement,
   BarElement,
-  ArcElement, // <-- ADDED
+  ArcElement,
   Title,
   Tooltip,
   Legend,
@@ -67,12 +67,10 @@ function MyNewsBias() {
   const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState('');
   
-  // --- *** NEW: Get theme for chart colors *** ---
   const [currentTheme, setCurrentTheme] = useState('dark');
    useEffect(() => {
      const savedTheme = localStorage.getItem('theme') || 'dark';
      setCurrentTheme(savedTheme);
-     // Optional: Listen for theme changes if your app allows it without reload
    }, []);
 
    const chartColors = useMemo(() => {
@@ -85,7 +83,6 @@ function MyNewsBias() {
          tooltipBg: isDark ? '#2C2C2C' : '#FDFDFD',
       };
    }, [currentTheme]);
-  // --- End Theme Logic ---
 
   // Fetch basic profile info
   useEffect(() => {
@@ -95,12 +92,8 @@ function MyNewsBias() {
       try {
         const response = await axios.get(`${API_URL}/profile/me`);
         setProfileData(response.data);
-      } catch (err) {
-        console.error('Error fetching profile:', err);
-        setError(prev => prev + 'Could not load profile data. ');
-      } finally {
-        setLoadingProfile(false);
-      }
+      } catch (err) { console.error('Error fetching profile:', err); setError(prev => prev + 'Could not load profile data. '); }
+      finally { setLoadingProfile(false); }
     };
     fetchProfile();
   }, []);
@@ -113,12 +106,8 @@ function MyNewsBias() {
       try {
         const response = await axios.get(`${API_URL}/profile/stats`);
         setStatsData(response.data);
-      } catch (err) {
-        console.error('Error fetching stats:', err);
-        setError(prev => prev + 'Could not load statistics data. ');
-      } finally {
-        setLoadingStats(false);
-      }
+      } catch (err) { console.error('Error fetching stats:', err); setError(prev => prev + 'Could not load statistics data. '); }
+      finally { setLoadingStats(false); }
     };
     fetchStats();
   }, []);
@@ -130,89 +119,72 @@ function MyNewsBias() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-         legend: {
-            position: 'bottom',
-            labels: { color: chartColors.textSecondary }
-         },
-         tooltip: {
-            backgroundColor: chartColors.tooltipBg,
-            titleColor: chartColors.textPrimary,
-            bodyColor: chartColors.textSecondary,
-         },
-         title: {
-            display: true,
-            text: title,
-            color: chartColors.textPrimary,
-            font: { size: 14 }
-         }
+         legend: { position: 'bottom', labels: { color: chartColors.textSecondary } },
+         tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary },
+         title: { display: true, text: title, color: chartColors.textPrimary, font: { size: 14 } }
       },
-      cutout: '60%', // Makes it a doughnut chart
+      cutout: '60%',
+   }), [chartColors]);
+
+   // --- *** NEW: Options for Vertical Bar Chart (Categories) *** ---
+    const getBarChartOptions = useCallback((title) => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      // indexAxis: 'y', // REMOVED: Makes it vertical
+      scales: {
+         x: { // Now the category axis
+            ticks: { color: chartColors.textTertiary },
+            grid: { display: false } // Hide vertical grid lines
+         },
+         y: { // Now the value axis
+            beginAtZero: true,
+            title: { display: true, text: 'Number of Articles', color: chartColors.textSecondary },
+            ticks: { color: chartColors.textTertiary, stepSize: 1 },
+            grid: { color: chartColors.borderColor } // Show horizontal grid lines
+         },
+      },
+      plugins: {
+         legend: { display: false },
+         tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary },
+         title: { display: true, text: title, color: chartColors.textPrimary, font: { size: 14 } }
+      },
    }), [chartColors]); // Depend on chartColors
+
 
    const storiesReadOptions = useMemo(() => ({
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-         x: {
-            type: 'time',
-            time: { unit: 'day', tooltipFormat: 'MMM d, yyyy', displayFormats: { day: 'MMM d' }},
-            title: { display: true, text: 'Date', color: chartColors.textSecondary },
-            ticks: { color: chartColors.textTertiary },
-            grid: { color: chartColors.borderColor }
-         },
-         y: {
-            beginAtZero: true,
-            title: { display: true, text: 'Number of Stories', color: chartColors.textSecondary },
-            ticks: { color: chartColors.textTertiary, stepSize: 1 },
-            grid: { color: chartColors.borderColor }
-         },
+         x: { type: 'time', time: { unit: 'day', tooltipFormat: 'MMM d, yyyy', displayFormats: { day: 'MMM d' }}, title: { display: true, text: 'Date', color: chartColors.textSecondary }, ticks: { color: chartColors.textTertiary }, grid: { color: chartColors.borderColor }},
+         y: { beginAtZero: true, title: { display: true, text: 'Number of Stories', color: chartColors.textSecondary }, ticks: { color: chartColors.textTertiary, stepSize: 1 }, grid: { color: chartColors.borderColor }},
       },
       plugins: {
          legend: { display: false },
-         tooltip: {
-            backgroundColor: chartColors.tooltipBg,
-            titleColor: chartColors.textPrimary,
-            bodyColor: chartColors.textSecondary,
-         }
+         tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary }
       },
-   }), [chartColors]); // Depend on chartColors
+   }), [chartColors]);
 
   // --- Chart Data Preparation ---
 
   const prepareLeanData = (rawData) => {
-    const counts = (rawData || []).reduce((acc, item) => {
-      acc[item.lean] = item.count;
-      return acc;
-    }, {});
+    const counts = (rawData || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
     const data = leanOrder.map(lean => counts[lean] || 0);
     const backgroundColors = leanOrder.map(lean => leanColors[lean]);
-    // Filter out labels/colors where data is 0 for cleaner doughnut chart
     const filteredLabels = leanOrder.filter((_, index) => data[index] > 0);
     const filteredData = data.filter(count => count > 0);
     const filteredColors = backgroundColors.filter((_, index) => data[index] > 0);
-
-    return {
-      labels: filteredLabels,
-      datasets: [{
-        label: 'Articles',
-        data: filteredData,
-        backgroundColor: filteredColors,
-        borderColor: chartColors.borderColor, // Add border
-        borderWidth: 1,
-      }],
-    };
+    return { labels: filteredLabels, datasets: [{ label: 'Articles', data: filteredData, backgroundColor: filteredColors, borderColor: chartColors.borderColor, borderWidth: 1 }] };
   };
 
   const prepareCategoryData = (rawData) => {
-    const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 7); // Top 7 for doughnut
-     // Simple color cycling for categories
-     const categoryColors = ['#B38F5F', '#9C7C50', '#CCA573', '#D9B98A', '#E6CB9F', '#F3DDB4', '#FFF4E0']; // Example colors
+    const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10); // Top 10 for bar chart
+    const categoryColors = ['#B38F5F', '#9C7C50', '#CCA573', '#D9B98A', '#E6CB9F', '#F3DDB4', '#FFF4E0', '#D4AF37', '#C0C0C0', '#CD7F32' ]; // More colors if needed
     return {
       labels: sortedData.map(d => d.category),
       datasets: [{
         label: 'Articles Read',
         data: sortedData.map(d => d.count),
-        backgroundColor: sortedData.map((_, i) => categoryColors[i % categoryColors.length]),
+        backgroundColor: sortedData.map((_, i) => categoryColors[i % categoryColors.length]), // Use consistent colors
         borderColor: chartColors.borderColor,
         borderWidth: 1,
       }],
@@ -220,44 +192,19 @@ function MyNewsBias() {
   };
 
   const prepareQualityData = (rawData) => {
-    const rawCountsMap = (rawData || []).reduce((acc, item) => {
-      acc[item.grade] = item.count; return acc;
-    }, {});
+    const rawCountsMap = (rawData || []).reduce((acc, item) => { acc[item.grade] = item.count; return acc; }, {});
     const dbCounts = rawCountsMap;
-    
-    const data = [
-      dbCounts['A+'] || 0, dbCounts['A'] || 0, dbCounts['B'] || 0, dbCounts['C'] || 0,
-      (dbCounts['D'] || 0) + (dbCounts['F'] || 0) + (dbCounts['D-F'] || 0),
-      dbCounts[null] || 0
-    ];
+    const data = [ dbCounts['A+'] || 0, dbCounts['A'] || 0, dbCounts['B'] || 0, dbCounts['C'] || 0, (dbCounts['D'] || 0) + (dbCounts['F'] || 0) + (dbCounts['D-F'] || 0), dbCounts[null] || 0 ];
     const backgroundColors = qualityLabels.map(label => qualityColors[label] || '#a1a1aa');
-
-    // Filter out zero counts
     const filteredLabels = qualityLabels.filter((_, index) => data[index] > 0);
     const filteredData = data.filter(count => count > 0);
     const filteredColors = backgroundColors.filter((_, index) => data[index] > 0);
-
-    return {
-      labels: filteredLabels,
-      datasets: [{
-        label: 'Articles Read',
-        data: filteredData,
-        backgroundColor: filteredColors,
-        borderColor: chartColors.borderColor,
-        borderWidth: 1,
-      }],
-    };
+    return { labels: filteredLabels, datasets: [{ label: 'Articles Read', data: filteredData, backgroundColor: filteredColors, borderColor: chartColors.borderColor, borderWidth: 1 }] };
   };
 
   const storiesReadData = useMemo(() => ({
     labels: statsData?.dailyCounts?.map(item => item.date) || [],
-    datasets: [{
-        label: 'Stories Analyzed',
-        data: statsData?.dailyCounts?.map(item => item.count) || [],
-        fill: false,
-        borderColor: 'var(--accent-primary)',
-        tension: 0.1,
-      }],
+    datasets: [{ label: 'Stories Analyzed', data: statsData?.dailyCounts?.map(item => item.count) || [], fill: false, borderColor: 'var(--accent-primary)', tension: 0.1 }],
   }), [statsData?.dailyCounts]);
 
   // Prepare data for all charts
@@ -275,14 +222,8 @@ function MyNewsBias() {
   
   // Calculate lean percentages for the top summary bar
   const totalLeanArticles = statsData?.leanDistribution_read?.reduce((sum, item) => sum + item.count, 0) || 0;
-  const leanReadCounts = (statsData?.leanDistribution_read || []).reduce((acc, item) => {
-      acc[item.lean] = item.count; return acc;
-  }, {});
-  const leanPercentages = leanOrder.reduce((acc, lean) => {
-      const count = leanReadCounts[lean] || 0;
-      acc[lean] = totalLeanArticles > 0 ? Math.round((count / totalLeanArticles) * 100) : 0;
-      return acc;
-  }, {});
+  const leanReadCounts = (statsData?.leanDistribution_read || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
+  const leanPercentages = leanOrder.reduce((acc, lean) => { const count = leanReadCounts[lean] || 0; acc[lean] = totalLeanArticles > 0 ? Math.round((count / totalLeanArticles) * 100) : 0; return acc; }, {});
 
   const statBoxes = [
     { key: 'analyzed', title: 'Articles Analyzed', value: totalAnalyzed, desc: 'Total times you viewed the "Analysis" popup.' },
@@ -291,10 +232,9 @@ function MyNewsBias() {
     { key: 'compared', title: 'Comparisons Viewed', value: totalCompared, desc: 'Total times you clicked "Compare Coverage".' }
   ];
 
-  // --- *** RENDER LOGIC *** ---
+  // --- RENDER LOGIC ---
   return (
     <div className="bias-dashboard-page">
-      {/* --- Main Content Wrapper (Flexbox) --- */}
       <div className="dashboard-content-wrapper">
 
         {/* --- Left Column (Fixed) --- */}
@@ -302,17 +242,13 @@ function MyNewsBias() {
           {/* --- User Info Header --- */}
           <div className="dashboard-header">
             <div className="user-info-header">
-              <div className="user-avatar">
-                {profileData?.username ? profileData.username.charAt(0).toUpperCase() : '?'}
-              </div>
+              <div className="user-avatar"> {profileData?.username ? profileData.username.charAt(0).toUpperCase() : '?'} </div>
               <div className="user-details">
                 <h2>{profileData?.username || (loadingProfile ? 'Loading...' : 'User')}</h2>
                 <p>My News Bias Dashboard</p>
               </div>
             </div>
-            <div className="date-range-selector">
-              <span>Viewing All-Time Stats</span>
-            </div>
+            <div className="date-range-selector"> <span>Viewing All-Time Stats</span> </div>
           </div>
 
           {/* --- Activity Section --- */}
@@ -326,17 +262,12 @@ function MyNewsBias() {
               </div>
             ))}
           </div>
-        </div> {/* --- End Left Column --- */}
-
-        {/* --- Right Column (Scrollable) --- */}
-        <div className="dashboard-right-column">
-          <h2 className="section-title">Reading Habits</h2>
-          <div className="dashboard-grid">
-
-            {/* --- Lean Summary Card --- */}
-            <div className="dashboard-card lean-summary-card">
-              <h3>Your Reading Bias</h3>
-              {loadingStats ? <p>Loading...</p> : totalLeanArticles > 0 ? (
+          
+          {/* --- *** MOVED Reading Bias Card HERE *** --- */}
+          <h2 className="section-title">Reading Bias</h2>
+           <div className="dashboard-card lean-summary-card">
+              {/* <h3>Your Reading Bias</h3>  <- Removed duplicate title */}
+              {loadingStats ? <div className="loading-container"><div className="spinner"></div></div> : totalLeanArticles > 0 ? (
                 <>
                   <div className="lean-bar">
                      { (leanPercentages['Left'] + leanPercentages['Left-Leaning']) > 0 &&
@@ -354,13 +285,13 @@ function MyNewsBias() {
                   </div>
                   <ul className="lean-details">
                      {(leanPercentages['Left'] + leanPercentages['Left-Leaning']) > 0 && (
-                        <li><span>{leanPercentages['Left'] + leanPercentages['Left-Leaning']}%</span> of the stories you analyzed lean left.</li>
+                        <li><span>{leanPercentages['Left'] + leanPercentages['Left-Leaning']}%</span> of analyzed stories lean left.</li>
                      )}
                       {leanPercentages['Center'] > 0 && (
-                         <li><span>{leanPercentages['Center']}%</span> of the stories you analyzed were balanced.</li>
+                         <li><span>{leanPercentages['Center']}%</span> of analyzed stories were balanced.</li>
                       )}
                        {(leanPercentages['Right'] + leanPercentages['Right-Leaning']) > 0 && (
-                         <li><span>{leanPercentages['Right'] + leanPercentages['Right-Leaning']}%</span> of the stories you analyzed lean right.</li>
+                         <li><span>{leanPercentages['Right'] + leanPercentages['Right-Leaning']}%</span> of analyzed stories lean right.</li>
                        )}
                   </ul>
                 </>
@@ -369,7 +300,14 @@ function MyNewsBias() {
               )}
             </div>
 
-            {/* --- Stories Analyzed Over Time --- */}
+        </div> {/* --- End Left Column --- */}
+
+        {/* --- Right Column (Scrollable) --- */}
+        <div className="dashboard-right-column">
+          <h2 className="section-title">Reading Habits Analysis</h2>
+          <div className="dashboard-grid">
+
+            {/* --- Stories Analyzed Over Time (Line Chart) --- */}
             <div className="dashboard-card stories-read-card">
               <div className="card-header"> <h3>Stories Analyzed Over Time</h3> </div>
               <div className="chart-container stories-read-chart">
@@ -379,7 +317,7 @@ function MyNewsBias() {
               </div>
             </div>
 
-            {/* --- Political Lean (Analyzed) --- */}
+            {/* --- Political Lean (Analyzed - Doughnut) --- */}
              <div className="dashboard-card">
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
@@ -388,7 +326,25 @@ function MyNewsBias() {
                </div>
              </div>
              
-            {/* --- Political Lean (Shared) --- */}
+            {/* --- Top Categories (Column/Bar Chart) --- */}
+             <div className="dashboard-card">
+               <div className="chart-container article-bias-chart">
+                   {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
+                   : (totalAnalyzed > 0 && categoryReadData.labels.length > 0) ? ( <Bar options={getBarChartOptions('Top Categories (Analyzed)')} data={categoryReadData} /> ) // <-- Changed to Bar
+                   : ( <p className="no-data-msg">No analysis data for this period.</p> )}
+               </div>
+             </div>
+
+             {/* --- Article Quality (Doughnut Chart) --- */}
+             <div className="dashboard-card">
+               <div className="chart-container article-bias-chart">
+                   {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
+                   : (totalAnalyzed > 0 && qualityReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('Article Quality (Analyzed)')} data={qualityReadData} /> )
+                   : ( <p className="no-data-msg">No analysis data for this period.</p> )}
+               </div>
+             </div>
+
+            {/* --- Political Lean (Shared - Doughnut) --- */}
              <div className="dashboard-card">
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
@@ -397,23 +353,9 @@ function MyNewsBias() {
                </div>
              </div>
              
-             {/* --- Top Categories --- */}
-             <div className="dashboard-card">
-               <div className="chart-container article-bias-chart">
-                   {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && categoryReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('Top Categories (Analyzed)')} data={categoryReadData} /> )
-                   : ( <p className="no-data-msg">No analysis data for this period.</p> )}
-               </div>
-             </div>
+             {/* Add a spacer card if needed to fill the grid nicely */}
+             {/* <div className="dashboard-card" style={{ background: 'transparent', border: 'none', boxShadow: 'none'}}></div> */}
 
-             {/* --- Article Quality --- */}
-             <div className="dashboard-card">
-               <div className="chart-container article-bias-chart">
-                   {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && qualityReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('Article Quality (Analyzed)')} data={qualityReadData} /> )
-                   : ( <p className="no-data-msg">No analysis data for this period.</p> )}
-               </div>
-             </div>
 
           </div> {/* End dashboard-grid (right column) */}
 

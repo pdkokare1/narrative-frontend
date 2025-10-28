@@ -65,7 +65,7 @@ function ProfilePage() {
               {/* --- UPDATED TO SHOW ALL STATS --- */}
               <p style={{ fontSize: '16px', marginBottom: '10px' }}>
                 <strong>Articles Analyzed:</strong> {profileData.articlesViewedCount || 0}
-              </Check>
+              </p>
               <p style={{ fontSize: '16px', marginBottom: '10px' }}>
                 <strong>Comparisons Viewed:</strong> {profileData.comparisonsViewedCount || 0}
               </p>

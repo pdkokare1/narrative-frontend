@@ -435,7 +435,7 @@ function MyNewsBias() {
                ) : (totalAnalyzed > 0) ? (
                  <Bar options={getBarChartOptions('Top Categories (Analyzed)')} data={categoryReadData} />
                ): (
-                  <p className="no-data-msg">No analysis data for this period.</C:\Users\prati\Downloads\screenshot-2025-10-28-15-37-49.pngp>
+                  <p className="no-data-msg">No analysis data for this period.</p>
                )}
            </div>
          </div>

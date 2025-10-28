@@ -4,17 +4,8 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  TimeScale
+  Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement,
+  BarElement, ArcElement, Title, Tooltip, Legend, TimeScale
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import './App.css';
@@ -50,17 +41,15 @@ const qualityColors = {
     'B Professional (70-79)': '#4CAF50', 'C Acceptable (60-69)': '#F59E0B',
     'D-F Poor (0-59)': '#dc2626', 'N/A (Review/Opinion)': '#a1a1aa'
 };
-
-// --- *** NEW: Rich Category Colors *** ---
 const categoryColorsDark = ['#B38F5F', '#CCA573', '#D9B98A', '#E6CB9F', '#9C7C50', '#8F6B4D', '#C19A6B', '#AE8A53', '#D0B48F', '#B8860B'];
 const categoryColorsLight = ['#2E4E6B', '#3E6A8E', '#5085B2', '#63A0D6', '#243E56', '#1A2D3E', '#4B77A3', '#395D7D', '#5D92C1', '#004E8A'];
 
 
 // --- Main Component ---
 function MyNewsBias() {
-  const [profileData, setProfileData] = useState(null);
+  // Removed profileData state as it's no longer used here
   const [statsData, setStatsData] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  // Removed loadingProfile state
   const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState('');
   
@@ -78,23 +67,13 @@ function MyNewsBias() {
          textTertiary: isDark ? '#757575' : '#888888',
          borderColor: isDark ? '#333333' : '#EAEAEA',
          tooltipBg: isDark ? '#2C2C2C' : '#FDFDFD',
-         categoryPalette: isDark ? categoryColorsDark : categoryColorsLight, // Use theme-specific colors
+         categoryPalette: isDark ? categoryColorsDark : categoryColorsLight,
       };
    }, [currentTheme]);
 
-  // Fetch basic profile info
-  useEffect(() => {
-    const fetchProfile = async () => { /* ... (no changes needed) ... */
-      setError(''); setLoadingProfile(true);
-      try { const response = await axios.get(`${API_URL}/profile/me`); setProfileData(response.data); }
-      catch (err) { console.error('Error fetching profile:', err); setError(prev => prev + 'Could not load profile data. '); }
-      finally { setLoadingProfile(false); }
-    }; fetchProfile();
-  }, []);
-
   // Fetch aggregated stats
   useEffect(() => {
-    const fetchStats = async () => { /* ... (no changes needed) ... */
+    const fetchStats = async () => {
       setError(''); setLoadingStats(true);
       try { const response = await axios.get(`${API_URL}/profile/stats`); setStatsData(response.data); }
       catch (err) { console.error('Error fetching stats:', err); setError(prev => prev + 'Could not load statistics data. '); }
@@ -149,16 +128,15 @@ function MyNewsBias() {
     return { labels: filteredLabels, datasets: [{ label: 'Articles', data: filteredData, backgroundColor: filteredColors, borderColor: chartColors.borderColor, borderWidth: 1 }] };
   };
 
-  // --- *** UPDATED CATEGORY DATA PREP *** ---
   const prepareCategoryData = (rawData) => {
     const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10);
-    const themeCategoryColors = chartColors.categoryPalette; // Use theme-specific colors
+    const themeCategoryColors = chartColors.categoryPalette;
     return {
       labels: sortedData.map(d => d.category),
       datasets: [{
         label: 'Articles Read',
         data: sortedData.map(d => d.count),
-        backgroundColor: sortedData.map((_, i) => themeCategoryColors[i % themeCategoryColors.length]), // Use new palette
+        backgroundColor: sortedData.map((_, i) => themeCategoryColors[i % themeCategoryColors.length]),
         borderColor: chartColors.borderColor,
         borderWidth: 1,
       }],
@@ -213,17 +191,11 @@ function MyNewsBias() {
 
         {/* --- Left Column (Fixed) --- */}
         <div className="dashboard-left-column">
-          {/* User Info */}
-          <div className="dashboard-header">
-            <div className="user-info-header">
-              <div className="user-avatar"> {profileData?.username ? profileData.username.charAt(0).toUpperCase() : '?'} </div>
-              <div className="user-details">
-                <h2>{profileData?.username || (loadingProfile ? 'Loading...' : 'User')}</h2>
-                <p>My News Bias Dashboard</p>
-              </div>
-            </div>
-            <div className="date-range-selector"> <span>Viewing All-Time Stats</span> </div>
-          </div>
+          {/* --- *** REMOVED User Info Header *** --- */}
+          {/* The dashboard-header div now only holds the time stats selector */}
+           <div className="dashboard-header">
+             <div className="date-range-selector"> <span>Viewing All-Time Stats</span> </div>
+           </div>
 
           {/* Activity Section */}
           <h2 className="section-title">Your Activity</h2>
@@ -277,18 +249,19 @@ function MyNewsBias() {
 
         {/* --- Right Column (Scrollable) --- */}
         <div className="dashboard-right-column">
-          <h2 className="section-title">Reading Habits Analysis</h2>
+          {/* --- *** CHANGED TITLE HERE *** --- */}
+          <h2 className="section-title">My News Bias Dashboard</h2> 
 
-          {/* --- *** MOVED Top Categories Chart HERE (Full Width) *** --- */}
+          {/* Top Categories Chart (Full Width) */}
            <div className="dashboard-card full-width-chart-card">
-             <div className="chart-container category-chart-container"> {/* Specific container class */}
+             <div className="chart-container category-chart-container"> 
                  {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
                  : (totalAnalyzed > 0 && categoryReadData.labels.length > 0) ? ( <Bar options={getBarChartOptions('Top Categories (Analyzed)')} data={categoryReadData} /> )
                  : ( <p className="no-data-msg">No analysis data for this period.</p> )}
              </div>
            </div>
 
-          {/* --- Grid for Remaining Charts --- */}
+          {/* Grid for Remaining Charts */}
           <div className="dashboard-grid">
 
             {/* Stories Analyzed Over Time */}
@@ -332,7 +305,7 @@ function MyNewsBias() {
 
           {error && <p style={{ color: 'red', textAlign: 'center', marginTop: '20px' }}>{error}</p>}
 
-          {/* Back Button - now inside scrollable area */}
+          {/* Back Button */}
           <div style={{ textAlign: 'center', marginTop: '30px' }}>
               <Link to="/" className="btn-secondary" style={{ textDecoration: 'none' }}>
                 Back to Articles

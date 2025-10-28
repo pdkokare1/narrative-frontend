@@ -12,10 +12,10 @@ import { auth } from './firebaseConfig'; // Import our configured auth
 import Login from './Login'; // Import the Login component
 
 // --- NEW: Import the CreateProfile page ---
-import CreateProfile from './CreateProfile'; 
+import CreateProfile from './CreateProfile';
 
-// --- NEW: Import the ProfilePage ---
-import ProfilePage from './ProfilePage';
+// --- UPDATED: Import the NEW dashboard page ---
+import MyNewsBias from './MyNewsBias'; // Changed from ProfilePage
 
 // Use environment variable for API URL, fallback to localhost for local dev
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
@@ -302,7 +302,7 @@ function AppWrapper() {
   useEffect(() => {
     // --- UPDATED: Don't fetch if we don't have a user OR profile ---
     if (!authState.user || !profile) return;
-    
+
     // --- NEW: Don't fetch if we are on the profile page ---
     if (location.pathname === '/profile') return;
 
@@ -333,9 +333,9 @@ function AppWrapper() {
 
       if (contentEl.scrollTop === 0 && currentPullDistance > 0 && !isRefreshing) {
         setPullDistance(currentPullDistance);
-        e.preventDefault(); 
+        e.preventDefault();
       } else if (contentEl.scrollTop !== 0 || currentPullDistance <= 0) {
-        setPullDistance(0); 
+        setPullDistance(0);
       }
     };
 
@@ -344,11 +344,11 @@ function AppWrapper() {
         setIsRefreshing(true);
         fetchArticles().finally(() => setIsRefreshing(false));
       }
-      setPullDistance(0); 
+      setPullDistance(0);
     };
 
     contentEl.addEventListener('touchstart', handleTouchStart, { passive: true });
-    contentEl.addEventListener('touchmove', handleTouchMove, { passive: false }); 
+    contentEl.addEventListener('touchmove', handleTouchMove, { passive: false });
     contentEl.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     return () => {
@@ -381,10 +381,10 @@ function AppWrapper() {
 
       const queryParams = { ...filters, limit, offset };
       if (filters.quality === 'Review / Opinion') {
-        queryParams.quality = null; 
-        queryParams.analysisType = 'SentimentOnly'; 
+        queryParams.quality = null;
+        queryParams.analysisType = 'SentimentOnly';
       } else {
-        queryParams.analysisType = null; 
+        queryParams.analysisType = null;
       }
 
       // --- UPDATED: Request will now send auth token via interceptor ---
@@ -400,19 +400,19 @@ function AppWrapper() {
       const uniqueNewArticles = articlesData
         .filter(article => article && article.url) // Ensure article and URL exist
         .map(article => ({
-            _id: article._id || article.url, 
+            _id: article._id || article.url,
             headline: article.headline || article.title || 'No Headline Available',
             summary: article.summary || article.description || 'No summary available.',
             source: article.source || 'Unknown Source',
             category: article.category || 'General',
             politicalLean: article.politicalLean || 'Center',
             url: article.url,
-            imageUrl: article.imageUrl || null, 
+            imageUrl: article.imageUrl || null,
             publishedAt: article.publishedAt || new Date().toISOString(),
-            analysisType: ['Full', 'SentimentOnly'].includes(article.analysisType) ? article.analysisType : 'Full', 
+            analysisType: ['Full', 'SentimentOnly'].includes(article.analysisType) ? article.analysisType : 'Full',
             sentiment: ['Positive', 'Negative', 'Neutral'].includes(article.sentiment) ? article.sentiment : 'Neutral',
             biasScore: Number(article.biasScore) || 0,
-            trustScore: Number(article.trustScore) || 0, 
+            trustScore: Number(article.trustScore) || 0,
             credibilityScore: Number(article.credibilityScore) || 0,
             reliabilityScore: Number(article.reliabilityScore) || 0,
             credibilityGrade: article.credibilityGrade || null,
@@ -421,7 +421,7 @@ function AppWrapper() {
             reliabilityComponents: article.reliabilityComponents && typeof article.reliabilityComponents === 'object' ? article.reliabilityComponents : {},
             keyFindings: Array.isArray(article.keyFindings) ? article.keyFindings : [],
             recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
-            clusterId: article.clusterId || null 
+            clusterId: article.clusterId || null
         }));
       // --- End Data Cleaning ---
 
@@ -446,15 +446,15 @@ function AppWrapper() {
          handleLogout(); // Log the user out if their token is bad
       }
 
-      setLoading(false); 
+      setLoading(false);
       setInitialLoad(false);
-      setIsRefreshing(false); 
+      setIsRefreshing(false);
     }
   };
 
   const loadMoreArticles = () => {
     if (loading || displayedArticles.length >= totalArticlesCount) return;
-    fetchArticles(true); 
+    fetchArticles(true);
   };
 
 
@@ -560,7 +560,7 @@ function AppWrapper() {
   // --- ADDED THIS NEW HANDLER ---
   const handleCompareClick = (article) => { // Takes the full article object
     setCompareModal({ open: true, clusterId: article.clusterId, articleTitle: article.headline, articleId: article._id });
-    
+
     // "Fire and forget" log
     axios.post(`${API_URL}/activity/log-compare`, { articleId: article._id })
       .then(res => console.log('Compare activity logged', res.data))
@@ -626,7 +626,7 @@ function AppWrapper() {
 
               {/* HEADER MOVED OUTSIDE */}
 
-              <div className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''}`}> 
+              <div className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''}`}>
                 <div
                   className={`sidebar-mobile-overlay ${isSidebarOpen ? 'open' : ''}`}
                   onClick={() => setIsSidebarOpen(false)}
@@ -634,23 +634,23 @@ function AppWrapper() {
 
                 <Sidebar
                   filters={filters}
-                  onFilterChange={handleFilterChange} 
-                  articleCount={totalArticlesCount} 
-                  isOpen={isSidebarOpen} 
-                  onClose={closeSidebar} 
+                  onFilterChange={handleFilterChange}
+                  articleCount={totalArticlesCount}
+                  isOpen={isSidebarOpen}
+                  onClose={closeSidebar}
                 />
 
-                <main className="content" ref={contentRef}> 
-                  <div 
-                    className="pull-indicator" 
-                    style={{ 
-                      opacity: Math.min(pullDistance / pullThreshold, 1), 
+                <main className="content" ref={contentRef}>
+                  <div
+                    className="pull-indicator"
+                    style={{
+                      opacity: Math.min(pullDistance / pullThreshold, 1),
                     }}
                   >
-                    <span 
-                      className="pull-indicator-arrow" 
-                      style={{ 
-                        transform: `rotate(${pullDistance > pullThreshold ? '180deg' : '0deg'})` 
+                    <span
+                      className="pull-indicator-arrow"
+                      style={{
+                        transform: `rotate(${pullDistance > pullThreshold ? '180deg' : '0deg'})`
                       }}
                     >
                       ↓
@@ -658,10 +658,10 @@ function AppWrapper() {
                     <span>{pullDistance > pullThreshold ? 'Release to refresh' : 'Pull to refresh'}</span>
                   </div>
 
-                  <div 
+                  <div
                     className="pull-to-refresh-container" // Spinner
-                    style={{ 
-                      display: isRefreshing ? 'flex' : 'none' 
+                    style={{
+                      display: isRefreshing ? 'flex' : 'none'
                     }}
                   >
                     <div className="spinner-small"></div>
@@ -675,9 +675,9 @@ function AppWrapper() {
                         <p>Loading articles...</p>
                       </div>
                     ) : (
-                      <> 
+                      <>
                         {displayedArticles.length > 0 ? (
-                          <div className="articles-grid"> 
+                          <div className="articles-grid">
                             {displayedArticles.map((article) => (
                               <div className="article-card-wrapper" key={article._id || article.url}>
                                 <ArticleCard
@@ -685,7 +685,7 @@ function AppWrapper() {
                                   // --- UPDATED: Use new handler ---
                                   onCompare={() => handleCompareClick(article)}
                                   // --- UPDATED: Use new handler ---
-                                  onAnalyze={handleAnalyzeClick} 
+                                  onAnalyze={handleAnalyzeClick}
                                   onShare={shareArticle}
                                   showTooltip={showTooltip}
                                 />
@@ -699,7 +699,7 @@ function AppWrapper() {
                         )}
 
                         {(loading && !initialLoad) && (
-                          <div className="article-card-wrapper load-more-wrapper"> 
+                          <div className="article-card-wrapper load-more-wrapper">
                             <div className="loading-container" style={{ minHeight: '200px' }}>
                               <div className="spinner"></div>
                               <p>Loading more articles...</p>
@@ -728,9 +728,9 @@ function AppWrapper() {
                   articleTitle={compareModal.articleTitle} // Pass title
                   onClose={() => setCompareModal({ open: false, clusterId: null, articleTitle: '', articleId: null })}
                   onAnalyze={(article) => {
-                    setCompareModal({ open: false, clusterId: null, articleTitle: '', articleId: null }); 
+                    setCompareModal({ open: false, clusterId: null, articleTitle: '', articleId: null });
                     // --- UPDATED: Use new handler ---
-                    handleAnalyzeClick(article); 
+                    handleAnalyzeClick(article);
                   }}
                   showTooltip={showTooltip}
                 />
@@ -756,8 +756,8 @@ function AppWrapper() {
         {/* --- ADD THE ROUTE FOR PROFILE CREATION --- */}
         <Route path="/create-profile" element={<CreateProfile />} />
 
-        {/* --- ADDED THE ROUTE FOR VIEWING PROFILE --- */}
-        <Route path="/profile" element={ profile ? <ProfilePage /> : 
+        {/* --- UPDATED: Route now uses MyNewsBias --- */}
+        <Route path="/profile" element={ profile ? <MyNewsBias /> :
           <div className="loading-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
             <div className="spinner"></div>
           </div>
@@ -921,7 +921,7 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
     { value: 'B Professional (70-79)', label: 'B : Professional' },
     { value: 'C Acceptable (60-69)', label: 'C : Acceptable' },
     { value: 'D-F Poor (0-59)', label: 'D-F : Poor' },
-    { value: 'Review / Opinion', label: 'Review / Opinion' }, 
+    { value: 'Review / Opinion', label: 'Review / Opinion' },
   ];
 
   const sortOptions = ['Latest First', 'Highest Quality', 'Most Covered', 'Lowest Bias'];
@@ -932,9 +932,9 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
   };
 
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : ''}`}> 
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div> {/* Filters Wrapper */}
-        <div className="sidebar-header-mobile"> 
+        <div className="sidebar-header-mobile">
           <h3>Filters</h3>
           <button className="sidebar-close-btn" onClick={onClose} title="Close Filters">×</button>
         </div>
@@ -964,7 +964,7 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
           <CustomSelect
             name="quality"
             value={filters.quality}
-            options={qualityLevels} 
+            options={qualityLevels}
             onChange={handleChange}
           />
         </div>
@@ -993,7 +993,7 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
 // --- UPDATED ArticleCard Component ---
 function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
 
-  const isMobile = () => window.innerWidth <= 768; 
+  const isMobile = () => window.innerWidth <= 768;
 
   const isReview = article.analysisType === 'SentimentOnly';
   const isNonPolitical = article.politicalLean === 'Not Applicable';
@@ -1008,7 +1008,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
   };
 
   const stopMobileClick = (e) => {
-    if (isMobile()) { 
+    if (isMobile()) {
       e.stopPropagation();
     }
   };
@@ -1098,7 +1098,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
               )}
 
               <span
-                  className="sentiment-text" 
+                  className="sentiment-text"
                   title="The article's overall sentiment towards its main subject."
                   onClick={(e) => showTooltip("The article's overall sentiment towards its main subject.", e)}
               >
@@ -1113,7 +1113,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
             {showReadArticleStack ? (
               <>
                 <button
-                  onClick={(e) => { stopMobileClick(e); onShare(article); }} 
+                  onClick={(e) => { stopMobileClick(e); onShare(article); }}
                   className="btn-secondary btn-full-width"
                   title="Share article link"
                 >
@@ -1126,7 +1126,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
                   className="btn-primary btn-full-width"
                   style={{ textDecoration: 'none', textAlign: 'center' }}
                   title="Read the full article on the source's website"
-                  onClick={stopMobileClick} 
+                  onClick={stopMobileClick}
                 >
                   Read Article
                 </a>
@@ -1136,14 +1136,14 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
                 <div className="article-actions-top">
                   <button
                     // --- UPDATED: Use onAnalyze prop ---
-                    onClick={(e) => { stopMobileClick(e); onAnalyze(article); }} 
+                    onClick={(e) => { stopMobileClick(e); onAnalyze(article); }}
                     className="btn-secondary"
                     title="View Detailed Analysis"
                   >
                     Analysis
                   </button>
                   <button
-                    onClick={(e) => { stopMobileClick(e); onShare(article); }} 
+                    onClick={(e) => { stopMobileClick(e); onShare(article); }}
                     className="btn-secondary"
                     title="Share article link"
                   >
@@ -1174,15 +1174,15 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
 function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, showTooltip }) {
   const [clusterData, setClusterData] = useState({ left: [], center: [], right: [], stats: {} });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(null); 
+  const [activeTab, setActiveTab] = useState(null);
 
   useEffect(() => {
     const fetchCluster = async () => {
       if (!clusterId) {
           console.log("No clusterId provided, showing empty compare.");
           setLoading(false);
-          setClusterData({ left: [], center: [], right: [], stats: {} }); 
-          setActiveTab('left'); 
+          setClusterData({ left: [], center: [], right: [], stats: {} });
+          setActiveTab('left');
           return;
       }
       try {
@@ -1275,10 +1275,10 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
 function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
   if (!articleList || articleList.length === 0) return null;
 
-  const isMobile = () => window.innerWidth <= 768; 
+  const isMobile = () => window.innerWidth <= 768;
 
   const stopMobileClick = (e) => {
-    if (isMobile()) { 
+    if (isMobile()) {
       e.stopPropagation();
     }
   };
@@ -1342,7 +1342,7 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
 
 // --- Detailed Analysis Modal ---
 function DetailedAnalysisModal({ article, onClose, showTooltip }) {
-  const [activeTab, setActiveTab] = useState('overview'); 
+  const [activeTab, setActiveTab] = useState('overview');
 
    const handleOverlayClick = (e) => {
        if (e.target === e.currentTarget) {
@@ -1456,7 +1456,7 @@ function OverviewBreakdownTab({ article, showTooltip }) {
     { label: "Headline Framing", value: biasComps.framing?.headlineFraming },
     { label: "Story Selection", value: biasComps.framing?.storySelection },
     { label: "Omission Bias", value: biasComps.framing?.omissionBias },
-  ].map(c => ({ ...c, value: Number(c.value) || 0 })); 
+  ].map(c => ({ ...c, value: Number(c.value) || 0 }));
 
   const credComps = article.credibilityComponents || {};
   const allCredibilityComponents = [
@@ -1499,8 +1499,8 @@ function OverviewBreakdownTab({ article, showTooltip }) {
                 </label>
             </div>
         </div>
-        <div className="divider" /> 
-        <div className="component-grid-v2 section-spacing"> 
+        <div className="divider" />
+        <div className="component-grid-v2 section-spacing">
             {visibleBias.length > 0 ? (
                 visibleBias.map(comp => (
                   <CircularProgressBar
@@ -1518,11 +1518,11 @@ function OverviewBreakdownTab({ article, showTooltip }) {
       </div>
 
       <div className="component-section">
-        <div className="component-section-header"> 
+        <div className="component-section-header">
             <h4>Credibility Details ({article.credibilityScore ?? 'N/V'}/100)</h4>
         </div>
-         <div className="divider" /> 
-        <div className="component-grid-v2 section-spacing"> 
+         <div className="divider" />
+        <div className="component-grid-v2 section-spacing">
             {visibleCredibility.length > 0 ? (
                 visibleCredibility.map(comp => (
                   <CircularProgressBar
@@ -1540,11 +1540,11 @@ function OverviewBreakdownTab({ article, showTooltip }) {
       </div>
 
       <div className="component-section">
-         <div className="component-section-header"> 
+         <div className="component-section-header">
             <h4>Reliability Details ({article.reliabilityScore ?? 'N/V'}/100)</h4>
          </div>
-         <div className="divider" /> 
-        <div className="component-grid-v2 section-spacing"> 
+         <div className="divider" />
+        <div className="component-grid-v2 section-spacing">
             {visibleReliability.length > 0 ? (
                 visibleReliability.map(comp => (
                   <CircularProgressBar
@@ -1576,7 +1576,7 @@ function ScoreBox({ label, value, showTooltip }) {
       tooltip = 'Overall Trust Score (0-100). A combined measure of Credibility and Reliability. Higher is better.';
       break;
     case 'Bias Score':
-      tooltip = 'Overall Bias Score (0-100). Less is better. 0 indicates minimal bias, 100 indicates significant bias.'; 
+      tooltip = 'Overall Bias Score (0-100). Less is better. 0 indicates minimal bias, 100 indicates significant bias.';
       break;
     case 'Credibility':
       tooltip = 'Credibility Score (0-100). Measures the article\'s trustworthiness based on sources, facts, and professionalism.';
@@ -1592,7 +1592,7 @@ function ScoreBox({ label, value, showTooltip }) {
     <div
       className="score-circle"
       title={tooltip}
-      onClick={(e) => showTooltip(tooltip, e)} 
+      onClick={(e) => showTooltip(tooltip, e)}
     >
       <div className="score-value">{value ?? 'N/A'}</div>
       <div className="score-label">{label}</div>
@@ -1601,22 +1601,22 @@ function ScoreBox({ label, value, showTooltip }) {
 }
 
 // --- Circular Progress Bar Component (Donut) ---
-function CircularProgressBar({ label, value, tooltip, showTooltip }) { 
+function CircularProgressBar({ label, value, tooltip, showTooltip }) {
   const numericValue = Math.max(0, Math.min(100, Number(value) || 0));
   const strokeWidth = 8;
   const radius = 40;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (numericValue / 100) * circumference;
 
-  const strokeColor = 'var(--accent-primary)'; 
+  const strokeColor = 'var(--accent-primary)';
   const finalTooltip = tooltip || `${label}: ${numericValue}/100`;
 
   return (
     <div
       className="circle-progress-container"
       title={finalTooltip}
-      onClick={(e) => showTooltip(finalTooltip, e)} 
-    > 
+      onClick={(e) => showTooltip(finalTooltip, e)}
+    >
       <svg className="circle-progress-svg" width="100" height="100" viewBox="0 0 100 100">
         <circle
           className="circle-progress-bg"
@@ -1639,7 +1639,7 @@ function CircularProgressBar({ label, value, tooltip, showTooltip }) {
             r={radius}
             cx="50"
             cy="50"
-            transform="rotate(-90 50 50)" 
+            transform="rotate(-90 50 50)"
           />
         )}
         <text

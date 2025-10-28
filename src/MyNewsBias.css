@@ -13,37 +13,13 @@
 }
 
 /* --- Main Content Flex Wrapper --- */
-.dashboard-content-wrapper {
-  display: flex;
-  flex-grow: 1; 
-  gap: 20px; 
-  overflow: hidden; 
-  width: 100%; 
-  padding: 0; 
-}
+.dashboard-content-wrapper { display: flex; flex-grow: 1; gap: 20px; overflow: hidden; width: 100%; padding: 0; }
 
 /* --- Left Column Styles --- */
-.dashboard-left-column {
-  flex: 0 0 360px; 
-  min-width: 0; 
-  display: flex;
-  flex-direction: column;
-  gap: 12px; 
-  overflow: hidden; 
-  padding-bottom: 15px; 
-  padding-top: 10px; 
-}
+.dashboard-left-column { flex: 0 0 360px; min-width: 0; display: flex; flex-direction: column; gap: 12px; overflow: hidden; padding-bottom: 15px; padding-top: 10px; }
 
 /* --- Right Column Styles --- */
-.dashboard-right-column {
-  flex: 1 1 auto; 
-  overflow-y: auto; /* Scroll happens here */
-  min-width: 0; 
-  padding: 0 10px 20px 10px; 
-  padding-top: 10px; 
-  scrollbar-width: thin;
-  scrollbar-color: var(--accent-primary) var(--bg-secondary);
-}
+.dashboard-right-column { flex: 1 1 auto; overflow-y: auto; min-width: 0; padding: 0 10px 20px 10px; padding-top: 10px; scrollbar-width: thin; scrollbar-color: var(--accent-primary) var(--bg-secondary); }
 .dashboard-right-column::-webkit-scrollbar { width: 8px; }
 .dashboard-right-column::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 4px;}
 .dashboard-right-column::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 4px; }
@@ -51,87 +27,48 @@
 
 
 /* --- Header for Section Title + Actions (Left Col Top) --- */
-.section-title-header {
-  display: flex;
-  justify-content: space-between; 
-  align-items: baseline; 
-  margin-bottom: 10px; 
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--border-color); 
-  padding-bottom: 8px; 
-}
-/* --- *** NEW: Wrapper for items on the right *** --- */
-.header-actions {
-  display: flex;
-  align-items: baseline;
-  gap: 10px; /* Space between date and button */
-}
+.section-title-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; flex-shrink: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+.header-actions { display: flex; align-items: baseline; gap: 10px; }
 
-.date-range-selector span { 
-  font-size: 13px; 
-  padding: 4px 8px; 
-  border: 1px solid var(--border-color); 
-  border-radius: 6px; 
-  background: var(--bg-secondary); 
-  color: var(--text-tertiary);
-  white-space: nowrap; 
-  /* margin-left: 15px; Removed */
-} 
-/* --- *** NEW: Small Button Style *** --- */
-.btn-small {
-  padding: 4px 10px !important; /* Override default button padding */
-  font-size: 10px !important; /* Override font size */
-  line-height: 1.4 !important; /* Adjust line height */
-}
+.date-range-selector span { font-size: 13px; padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); color: var(--text-tertiary); white-space: nowrap; } 
+.btn-small { padding: 4px 10px !important; font-size: 10px !important; line-height: 1.4 !important; flex-shrink: 0; } /* Added flex-shrink */
 
 
 /* --- Section Title --- */
 .section-title {
-   grid-column: 1 / -1; 
-   font-size: 18px; 
-   font-weight: 600; 
-   color: var(--text-primary);
-   margin: 0; /* Reset margin */
-   border-bottom: 1px solid var(--border-color);
-   padding-bottom: 8px; 
-   text-align: left; 
-   width: 100%; 
-   flex-shrink: 0; 
+   grid-column: 1 / -1; font-size: 18px; font-weight: 600; color: var(--text-primary); margin: 0; 
+   border-bottom: 1px solid var(--border-color); padding-bottom: 8px; text-align: left; 
+   width: 100%; flex-shrink: 0; 
 }
-/* --- *** NEW: No border variant *** --- */
-.section-title.no-border {
-   border-bottom: none;
-   padding-bottom: 0;
-}
-/* Title inside the header specifically */
-.section-title-header .section-title {
-    border-bottom: none; 
-    padding-bottom: 0;
-    margin-bottom: 0;
-    margin-right: auto; /* Push actions to the right */
-}
-/* Right column title still needs margin when not sticky */
-.dashboard-right-column > .sticky-header-wrapper + * {
-    margin-top: 15px; /* Add space below sticky header */
-}
-/* Ensure the first non-sticky title has correct spacing */
+.section-title.no-border { border-bottom: none; padding-bottom: 0; }
+.section-title-header .section-title { border-bottom: none; padding-bottom: 0; margin-bottom: 0; margin-right: auto; } 
+
+/* Right column title margin */
+.dashboard-right-column > .sticky-header-wrapper + * { margin-top: 20px; } /* Space below sticky */
+
 .dashboard-left-column > .section-title:not(:first-child),
-.dashboard-right-column > .section-title:not(:first-child) {
+.dashboard-right-column > .section-title:not(:first-child):not(.sticky-title) { /* Don't add margin to sticky */
     margin-top: 10px;
 }
 
 
-/* --- *** NEW: Sticky Header Wrapper for Right Column *** --- */
+/* --- Sticky Header Wrapper for Right Column --- */
 .sticky-header-wrapper {
   position: sticky;
-  top: 0; /* Stick to the top of the scrollable container */
-  background-color: var(--bg-primary); /* Match page background */
-  z-index: 10; /* Ensure it's above scrolling content */
-  padding-top: 5px; /* Add a little space above sticky title */
-  margin-bottom: 5px; /* Add space below sticky title */
+  top: -10px; /* Adjust slightly to account for padding-top */
+  /* --- *** ADDED BACKGROUND & Z-INDEX *** --- */
+  background-color: var(--bg-primary); 
+  z-index: 10; 
+  padding-top: 10px; /* Match column padding-top */
+  margin: 0 -10px; /* Counteract column padding */
+  padding-left: 10px; /* Add padding back inside */
+  padding-right: 10px;
 }
 .sticky-header-wrapper .section-title {
-  margin-top: 0; /* Remove top margin for sticky title */
+  margin-top: 0; 
+  /* --- *** ADDED BACKGROUND & MARGIN *** --- */
+  background-color: var(--bg-primary); 
+  margin-bottom: 10px; /* Space below sticky title */
 }
 
 
@@ -142,20 +79,12 @@
 .dashboard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; } 
 
 /* --- Styles common to all cards --- */
-.dashboard-card {
-  background: var(--bg-card-flat); border: 1px solid var(--border-color);
-  border-radius: 8px; padding: 20px; display: flex; flex-direction: column;
-  box-shadow: var(--shadow-sm); overflow: hidden; 
-  transition: border-color 0.2s ease-in-out; 
-}
+.dashboard-card { background: var(--bg-card-flat); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; box-shadow: var(--shadow-sm); overflow: hidden; transition: border-color 0.2s ease-in-out; } 
 .dashboard-card:hover { border-color: var(--accent-primary); }
 
 
 /* Card Title */
-.dashboard-card h3, .card-header h3 { 
-  font-size: 15px; font-weight: 600; color: var(--text-primary); 
-  margin: 0 0 15px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-} 
+.dashboard-card h3, .card-header h3 { font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 0 0 15px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } 
 
 /* --- Stat Box Styles --- */
 .stat-box { background: var(--bg-secondary); text-align: left; padding: 15px; } 
@@ -209,8 +138,8 @@
   .dashboard-content-wrapper { flex-direction: column; overflow: visible; gap: 0; padding: 0; }
   .dashboard-left-column { flex: 0 0 auto; width: 100%; margin-bottom: 20px; overflow: visible; padding-top: 0; } 
   .dashboard-right-column { overflow-y: visible; max-height: none; padding: 0 0 20px 0; padding-top: 0; } 
-  .sticky-header-wrapper { position: static; background: none; z-index: auto; padding: 0; margin: 0;} /* Disable sticky header */
-  .sticky-header-wrapper .section-title { margin-top: 10px; } /* Add margin back */
+  .sticky-header-wrapper { position: static; background: none; z-index: auto; padding: 0; margin: 0;} 
+  .sticky-header-wrapper .section-title { margin-top: 10px; margin-bottom: 10px;} 
   .stat-box-grid { grid-template-columns: repeat(2, 1fr); }
   .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; } 
   .full-width-chart-card { margin-bottom: 20px; } 
@@ -240,6 +169,6 @@
 @media (max-width: 480px) { /* Smaller mobile adjustments */
    .stat-box-grid { grid-template-columns: 1fr; } /* Stack stat boxes */
    .section-title-header { flex-direction: column; align-items: flex-start; gap: 8px;} 
-   .header-actions { width: 100%; justify-content: space-between;} /* Space out date/button */
+   .header-actions { width: 100%; justify-content: space-between;} 
    .date-range-selector span { margin-left: 0; } 
 }

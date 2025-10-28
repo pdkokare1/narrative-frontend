@@ -1,43 +1,49 @@
 /* In file: src/MyNewsBias.css */
 
 .bias-dashboard-page {
-  max-width: 1400px; /* Increased max-width for wider layout */
+  max-width: 1400px;
   margin: 0 auto;
-  padding: calc(60px + 30px) 30px 50px 30px;
+  /* Remove top padding related to header, header is fixed separately */
+  padding: 30px 30px 50px 30px; 
   color: var(--text-primary);
-  /* Ensure page takes full height for column layout */
-  min-height: calc(100vh - 60px); 
-  display: flex;
-  flex-direction: column;
+  /* Use height relative to viewport AFTER the header */
+  height: calc(100vh - 60px); 
+  margin-top: 60px; /* Push content below fixed header */
+  display: flex; /* Make the page itself a flex container */
+  flex-direction: column; /* Needed for content wrapper */
+  overflow: hidden; /* Prevent the whole page from scrolling */
 }
 
-/* --- *** NEW: Main Content Flex Wrapper *** --- */
+/* --- Main Content Flex Wrapper --- */
 .dashboard-content-wrapper {
   display: flex;
   flex-grow: 1; /* Allow wrapper to fill page height */
   gap: 30px; /* Space between columns */
-  overflow: hidden; /* Prevent body scroll */
+  overflow: hidden; /* Crucial: Prevent this wrapper from scrolling */
+  /* Remove height setting here, flex-grow handles it */
 }
 
-/* --- *** NEW: Left Column Styles *** --- */
+/* --- Left Column Styles --- */
 .dashboard-left-column {
-  flex: 0 0 350px; /* Fixed width, don't grow or shrink */
+  flex: 0 0 380px; /* Slightly wider fixed width */
   display: flex;
   flex-direction: column;
   gap: 20px; /* Space between header/activity */
+  overflow: hidden; /* Prevent this column from scrolling */
 }
 
-/* --- *** NEW: Right Column Styles *** --- */
+/* --- Right Column Styles --- */
 .dashboard-right-column {
   flex: 1 1 auto; /* Grow and shrink, take remaining space */
-  overflow-y: auto; /* Enable vertical scrolling */
+  overflow-y: auto; /* Enable vertical scrolling ONLY here */
   min-width: 0; /* Prevent flex overflow */
+  padding-right: 10px; /* Add some padding for the scrollbar */
   /* Custom scrollbar for this column */
   scrollbar-width: thin;
   scrollbar-color: var(--accent-primary) var(--bg-secondary);
 }
 .dashboard-right-column::-webkit-scrollbar { width: 8px; }
-.dashboard-right-column::-webkit-scrollbar-track { background: var(--bg-secondary); }
+.dashboard-right-column::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 4px;}
 .dashboard-right-column::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 4px; }
 .dashboard-right-column::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
 
@@ -49,30 +55,53 @@
   align-items: flex-start; /* Align left */
   gap: 20px;
   margin-bottom: 0; /* Remove bottom margin */
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
-.user-info-header {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
+.user-info-header { display: flex; align-items: center; gap: 15px; }
 .user-avatar { width: 50px; height: 50px; border-radius: 50%; background-color: var(--accent-primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600; }
 .user-details h2 { font-size: 24px; font-weight: 700; margin: 0 0 5px 0; color: var(--text-primary); }
 .user-details p { font-size: 14px; color: var(--text-secondary); margin: 0; }
 .date-range-selector span { font-size: 14px; color: var(--text-secondary); font-weight: 500; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); }
 
+/* --- Section Title --- */
+.section-title {
+   grid-column: 1 / -1; /* Still needed for cases where it's inside a grid */
+   font-size: 22px;
+   font-weight: 700;
+   color: var(--text-primary);
+   margin-top: 0; /* Reset margin */
+   margin-bottom: 15px; /* Space below title */
+   border-bottom: 1px solid var(--border-color);
+   padding-bottom: 10px;
+   text-align: left; 
+   width: 100%; /* Ensure it takes full width in flex column */
+   flex-shrink: 0; /* Prevent title from shrinking */
+}
+/* Titles directly in columns should have some top margin */
+.dashboard-left-column > .section-title,
+.dashboard-right-column > .section-title {
+    margin-top: 10px; 
+}
+/* Ensure first title in each column has no top margin if it's the very first element */
+.dashboard-left-column > .section-title:first-child,
+.dashboard-right-column > .section-title:first-child {
+    margin-top: 0;
+}
+
+
 /* --- Stat Box Grid (Now in Left Column) --- */
 .stat-box-grid {
   display: grid;
-  grid-template-columns: 1fr; /* Stack boxes in left column */
-  gap: 20px; /* Reduced gap */
+  grid-template-columns: repeat(2, 1fr); /* --- *** THIS IS THE 2x2 GRID *** --- */
+  gap: 20px; 
+  flex-shrink: 0; /* Prevent grid from shrinking */
 }
 
 /* --- Dashboard Grid (Now in Right Column) --- */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* Keep responsive columns */
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* Responsive columns */
   gap: 25px;
 }
 
@@ -87,24 +116,6 @@
 }
 
 .dashboard-card h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 0 0 20px 0; }
-
-.section-title {
-   grid-column: 1 / -1;
-   font-size: 22px;
-   font-weight: 700;
-   color: var(--text-primary);
-   margin-top: 0; /* No margin-top needed now */
-   margin-bottom: 15px; /* Space below title */
-   border-bottom: 1px solid var(--border-color);
-   padding-bottom: 10px;
-   text-align: left; /* Keep left aligned */
-}
-/* Ensure first title in each column has no top margin */
-.dashboard-left-column > .section-title:first-of-type,
-.dashboard-right-column > .section-title:first-of-type {
-    margin-top: 0;
-}
-
 
 /* --- Stat Box Styles --- */
 .stat-box { background: var(--bg-secondary); text-align: left; padding: 20px; }
@@ -129,12 +140,7 @@
 .stories-read-card .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
 .stories-read-card h3 { margin-bottom: 0; }
 
-.chart-container {
-  position: relative;
-  flex-grow: 1;
-  min-height: 350px; /* Increased height for doughnut charts */
-}
-/* Adjust height specifically if needed */
+.chart-container { position: relative; flex-grow: 1; min-height: 350px; }
 .stories-read-chart { height: 300px; min-height: 250px; }
 .article-bias-chart { height: 350px; min-height: 300px; }
 
@@ -149,21 +155,28 @@
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 1024px) { /* Tablet and below */
+  .bias-dashboard-page {
+     height: auto; /* Allow page to grow on smaller screens */
+     margin-top: 60px;
+     overflow: visible; /* Allow normal page scroll */
+  }
   .dashboard-content-wrapper {
     flex-direction: column; /* Stack columns */
-    overflow: visible; /* Allow page scroll */
-    gap: 0; /* Remove gap between stacked columns */
+    overflow: visible; 
+    gap: 0; 
   }
   .dashboard-left-column {
-    flex: 0 0 auto; /* Reset flex basis */
-    width: 100%; /* Take full width */
-    margin-bottom: 30px; /* Add space before right column content */
+    flex: 0 0 auto; 
+    width: 100%; 
+    margin-bottom: 30px; 
+    overflow: visible; /* Ensure content isn't cut off */
   }
   .dashboard-right-column {
     overflow-y: visible; /* Disable scrolling on right column */
-    max-height: none; /* Reset max height */
+    max-height: none; 
+    padding-right: 0; /* Remove scrollbar padding */
   }
-  /* Make stat boxes 2 columns on tablet */
+  /* Keep stat boxes 2 columns on tablet */
   .stat-box-grid {
      grid-template-columns: repeat(2, 1fr);
   }
@@ -171,12 +184,10 @@
 
 @media (max-width: 768px) { /* Mobile */
   .bias-dashboard-page {
-    padding: calc(60px + 20px) 15px 30px 15px;
+    padding: 20px 15px 30px 15px; /* Adjust padding */
+    margin-top: 60px;
   }
-  .dashboard-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+  .dashboard-header { align-items: flex-start; }
   .user-details h2 { font-size: 20px; }
   .user-details p { font-size: 13px; }
 
@@ -187,14 +198,12 @@
   .dashboard-grid {
     grid-template-columns: 1fr; /* Stack chart cards */
   }
-   .section-title {
-      font-size: 20px;
-   }
-   .chart-container {
-      min-height: 280px; /* Slightly smaller charts on mobile */
-   }
-   .stories-read-chart, .article-bias-chart {
-      height: 280px;
-      min-height: 250px;
+   .section-title { font-size: 20px; }
+   .chart-container { min-height: 280px; }
+   .stories-read-chart, .article-bias-chart { height: 280px; min-height: 250px; }
+   
+   /* Ensure link button is not cut off */
+   .dashboard-right-column > div:last-child {
+       margin-bottom: 20px;
    }
 }

@@ -59,10 +59,18 @@
   background: var(--bg-secondary);
 }
 
-/* --- Dashboard Grid --- */
+/* --- *** NEW: Stat Box Grid *** --- */
+.stat-box-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 25px;
+}
+
+
+/* --- *** MODIFIED: Dashboard Grid (for charts) *** --- */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 25px;
 }
 
@@ -88,14 +96,15 @@
    font-size: 22px;
    font-weight: 700;
    color: var(--text-primary);
-   margin-top: 20px; /* Reduced space above section titles */
+   margin-top: 40px; /* MORE space above section titles */
    margin-bottom: 10px; /* Reduce space below title before cards */
    border-bottom: 1px solid var(--border-color);
    padding-bottom: 10px;
+   text-align: left; /* --- *** ADDED THIS LINE *** --- */
 }
-/* First section title has more margin */
-.dashboard-grid > .section-title:first-of-type {
-    margin-top: 40px;
+/* First section title has less margin */
+.bias-dashboard-page > .section-title:first-of-type {
+    margin-top: 20px;
 }
 
 
@@ -201,15 +210,16 @@
 .chart-container {
   position: relative; /* Needed for Chart.js responsiveness */
   flex-grow: 1; /* Allow chart to take available space */
+  min-height: 300px; /* --- *** MODIFIED *** --- */
 }
 
 .stories-read-chart {
-   height: 250px; /* Fixed height for line chart */
-   min-height: 200px;
+   height: 300px; /* --- *** MODIFIED *** --- */
+   min-height: 250px;
 }
 .article-bias-chart {
-   height: 250px; /* Fixed height for bar chart */
-    min-height: 200px;
+   height: 300px; /* --- *** MODIFIED *** --- */
+    min-height: 250px;
 }
 
 .comparison-text {
@@ -267,6 +277,11 @@
   }
   .user-details p {
     font-size: 13px;
+  }
+  
+  /* --- *** MODIFIED *** --- */
+  .stat-box-grid {
+    grid-template-columns: 1fr; /* Stack stat boxes */
   }
   .dashboard-grid {
     grid-template-columns: 1fr; /* Stack cards */

@@ -15,7 +15,9 @@ import {
   Legend,
   TimeScale // Import TimeScale
 } from 'chart.js';
+// --- >>> MAKE SURE THIS LINE IS EXACTLY LIKE THIS <<< ---
 import 'chartjs-adapter-date-fns'; // Import the date adapter
+// --- >>> MAKE SURE THIS LINE IS EXACTLY LIKE THIS <<< ---
 import './App.css'; // Re-use general styles
 import './MyNewsBias.css'; // We'll create this CSS file next
 
@@ -66,7 +68,7 @@ function MyNewsBias() {
     const fetchStats = async () => {
       setError('');
       setLoadingStats(true);
-      
+
       // Determine days based on timeframe selection
       let days = 90; // Default (matches backend default if needed)
       if (timeframe === 'Day') days = 1;
@@ -171,7 +173,7 @@ function MyNewsBias() {
       acc[item.lean] = item.count;
       return acc;
   }, {}) || {};
-  
+
   const leanDistributionData = {
     labels: leanOrder,
     datasets: [
@@ -244,7 +246,7 @@ function MyNewsBias() {
         </div>
         <div className="date-range-selector">
           {/* Add dropdown later if needed */}
-          <span>Last {statsData?.timeframeDays || '...'} days</span> 
+          <span>Last {statsData?.timeframeDays || '...'} days</span>
         </div>
       </div>
 
@@ -304,7 +306,7 @@ function MyNewsBias() {
           </div>
           {/* <p className="comparison-text">You've read X% fewer stories than last week.</p> */}
         </div>
-        
+
         {/* --- Analysis Section Title --- */}
         <h2 className="section-title">Analysis</h2>
 

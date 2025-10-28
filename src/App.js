@@ -83,7 +83,7 @@ function AppWrapper() {
     quality: 'All Quality Levels',
     sort: 'Latest First'
   });
-  const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '' }); // Added title
+  const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '', articleId: null }); // Added articleId
   const [analysisModal, setAnalysisModal] = useState({ open: false, article: null });
   const [totalArticlesCount, setTotalArticlesCount] = useState(0); // Track total count from API
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // NEW: State for mobile sidebar
@@ -278,7 +278,8 @@ function AppWrapper() {
               recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
               clusterId: article.clusterId || null
            };
-           setAnalysisModal({ open: true, article: cleanedArticle });
+           // --- UPDATED: Call the logging function ---
+           handleAnalyzeClick(cleanedArticle);
         }
       } catch (error) {
         console.error('Failed to fetch shared article:', error.response ? error.response.data : error.message);
@@ -502,8 +503,8 @@ function AppWrapper() {
 
 
   const shareArticle = (article) => {
-    // --- ADDED THIS "FIRE AND FORGET" CALL ---
-    axios.post(`${API_URL}/activity/log-share`)
+    // --- UPDATED: Send articleId to backend ---
+    axios.post(`${API_URL}/activity/log-share`, { articleId: article._id })
       .then(res => console.log('Share activity logged', res.data))
       .catch(err => console.error('Failed to log share activity', err));
 
@@ -550,18 +551,18 @@ function AppWrapper() {
   const handleAnalyzeClick = (article) => {
     setAnalysisModal({ open: true, article });
 
-    // --- ADDED THIS "FIRE AND FORGET" CALL ---
-    // The axios interceptor automatically adds the auth token.
-    axios.post(`${API_URL}/activity/log-view`)
+    // --- UPDATED: Send articleId to backend ---
+    axios.post(`${API_URL}/activity/log-view`, { articleId: article._id })
       .then(res => console.log('Activity logged', res.data))
       .catch(err => console.error('Failed to log activity', err));
   };
 
   // --- ADDED THIS NEW HANDLER ---
-  const handleCompareClick = (clusterId, title) => {
-    setCompareModal({ open: true, clusterId, articleTitle: title });
+  const handleCompareClick = (article) => { // Takes the full article object
+    setCompareModal({ open: true, clusterId: article.clusterId, articleTitle: article.headline, articleId: article._id });
+    
     // "Fire and forget" log
-    axios.post(`${API_URL}/activity/log-compare`)
+    axios.post(`${API_URL}/activity/log-compare`, { articleId: article._id })
       .then(res => console.log('Compare activity logged', res.data))
       .catch(err => console.error('Failed to log compare activity', err));
   };
@@ -682,7 +683,7 @@ function AppWrapper() {
                                 <ArticleCard
                                   article={article}
                                   // --- UPDATED: Use new handler ---
-                                  onCompare={handleCompareClick}
+                                  onCompare={() => handleCompareClick(article)}
                                   // --- UPDATED: Use new handler ---
                                   onAnalyze={handleAnalyzeClick} 
                                   onShare={shareArticle}
@@ -725,9 +726,9 @@ function AppWrapper() {
                 <CompareCoverageModal
                   clusterId={compareModal.clusterId}
                   articleTitle={compareModal.articleTitle} // Pass title
-                  onClose={() => setCompareModal({ open: false, clusterId: null, articleTitle: '' })}
+                  onClose={() => setCompareModal({ open: false, clusterId: null, articleTitle: '', articleId: null })}
                   onAnalyze={(article) => {
-                    setCompareModal({ open: false, clusterId: null, articleTitle: '' }); 
+                    setCompareModal({ open: false, clusterId: null, articleTitle: '', articleId: null }); 
                     // --- UPDATED: Use new handler ---
                     handleAnalyzeClick(article); 
                   }}
@@ -1150,7 +1151,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, showTooltip }) {
                   </button>
                 </div>
                 <button
-                  onClick={(e) => { stopMobileClick(e); onCompare(article.clusterId, article.headline); }} 
+                  onClick={(e) => { stopMobileClick(e); onCompare(article); }} // --- UPDATED: Pass full article ---
                   className="btn-primary btn-full-width"
                   title="Compare Coverage Across Perspectives"
                 >
@@ -1450,7 +1451,7 @@ function OverviewBreakdownTab({ article, showTooltip }) {
     { label: "Expert Balance", value: biasComps.sourceSelection?.expertBalance },
     { label: "Attribution Transparency", value: biasComps.sourceSelection?.attributionTransparency },
     { label: "Gender Balance", value: biasComps.demographic?.genderBalance },
-    { label: "Racial Balance", value: biasComps.demographic?.racialBalance },
+    { label:"Racial Balance", value: biasComps.demographic?.racialBalance },
     { label: "Age Representation", value: biasComps.demographic?.ageRepresentation },
     { label: "Headline Framing", value: biasComps.framing?.headlineFraming },
     { label: "Story Selection", value: biasComps.framing?.storySelection },

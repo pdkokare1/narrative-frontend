@@ -61,9 +61,18 @@ function ProfilePage() {
               </p>
               <hr style={{ borderColor: 'var(--border-color)', margin: '20px 0' }} />
               <h2 style={{ fontSize: '18px', color: 'var(--accent-primary)', marginBottom: '15px' }}>📊 Your Stats</h2>
-              <p style={{ fontSize: '16px', marginBottom: '25px' }}>
+              
+              {/* --- UPDATED TO SHOW ALL STATS --- */}
+              <p style={{ fontSize: '16px', marginBottom: '10px' }}>
                 <strong>Articles Analyzed:</strong> {profileData.articlesViewedCount || 0}
+              </Check>
+              <p style={{ fontSize: '16px', marginBottom: '10px' }}>
+                <strong>Comparisons Viewed:</strong> {profileData.comparisonsViewedCount || 0}
               </p>
+              <p style={{ fontSize: '16px', marginBottom: '25px' }}>
+                <strong>Articles Shared:</strong> {profileData.articlesSharedCount || 0}
+              </p>
+
             </div>
           )}
 

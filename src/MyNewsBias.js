@@ -37,15 +37,46 @@ ChartJS.register(
 // Get API URL from environment
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
+// --- *** NEW *** ---
+// Helper to get total count from the new totalCounts array
+const getActionCount = (totals, action) => {
+  const item = totals.find(t => t.action === action);
+  return item ? item.count : 0;
+};
+
+// --- *** NEW *** ---
+// Helper for sorting bar chart data
+const leanOrder = ['Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
+const leanColors = {
+    'Left': '#dc2626', // Red
+    'Left-Leaning': '#f87171', // Lighter Red
+    'Center': '#6b7280', // Gray
+    'Right-Leaning': '#60a5fa', // Lighter Blue
+    'Right': '#2563eb', // Blue
+    'Not Applicable': '#a1a1aa' // Lighter Gray
+};
+const qualityOrder = ['A+ Excellent (90-100)', 'A High (80-89)', 'B Professional (70-79)', 'C Acceptable (60-69)', 'D-F Poor (0-59)', null];
+const qualityColors = {
+    'A+ Excellent (90-100)': '#2563eb', // Blue
+    'A High (80-89)': '#60a5fa', // Light Blue
+    'B Professional (70-79)': '#4CAF50', // Green
+    'C Acceptable (60-69)': '#F59E0B', // Amber
+    'D-F Poor (0-59)': '#dc2626', // Red
+    'null': '#a1a1aa' // Gray for 'N/A'
+};
+
+
 function MyNewsBias() {
   const [profileData, setProfileData] = useState(null);
   const [statsData, setStatsData] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState('');
-  const [timeframe, setTimeframe] = useState('Month'); // Default to Month for Stories Read
+  
+  // --- *** REMOVED TIMEFRAME STATE *** ---
+  // const [timeframe, setTimeframe] = useState('Month'); 
 
-  // Fetch basic profile info
+  // Fetch basic profile info (username, email)
   useEffect(() => {
     const fetchProfile = async () => {
       setError('');
@@ -63,23 +94,16 @@ function MyNewsBias() {
     fetchProfile();
   }, []);
 
-  // Fetch aggregated stats (depends on timeframe indirectly via days logic)
+  // Fetch aggregated stats (ALL-TIME)
   useEffect(() => {
     const fetchStats = async () => {
       setError('');
       setLoadingStats(true);
 
-      // Determine days based on timeframe selection
-      let days = 90; // Default (matches backend default if needed)
-      if (timeframe === 'Day') days = 1;
-      else if (timeframe === 'Week') days = 7;
-      else if (timeframe === 'Month') days = 30;
-      // 'All Time' could fetch without a date range or use a very large number like 3650
-
       try {
-        const response = await axios.get(`${API_URL}/profile/stats`, {
-           params: { days: days } // Pass the calculated days
-        });
+        // --- *** MODIFIED *** ---
+        // No longer sends 'days' param, fetches all-time stats
+        const response = await axios.get(`${API_URL}/profile/stats`);
         setStatsData(response.data);
       } catch (err) {
         console.error('Error fetching stats:', err);
@@ -89,11 +113,176 @@ function MyNewsBias() {
       }
     };
     fetchStats();
-  }, [timeframe]); // Re-fetch stats when timeframe changes
+  }, []); // --- *** REMOVED TIMEFRAME DEPENDENCY *** ---
+
 
   // --- Chart Data Preparation ---
+  
+  // --- *** NEW *** ---
+  // Helper function for bar chart options
+  const getBarChartOptions = (title) => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis: 'y', // Horizontal bar chart
+    scales: {
+      x: {
+        beginAtZero: true,
+        title: { display: true, text: 'Number of Articles', color: 'var(--text-secondary)' },
+        ticks: { color: 'var(--text-tertiary)', stepSize: 1 },
+        grid: { color: 'var(--border-color)' }
+      },
+      y: {
+        ticks: { color: 'var(--text-tertiary)' },
+        grid: { display: false }
+      },
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+         backgroundColor: 'var(--bg-elevated)',
+         titleColor: 'var(--text-primary)',
+         bodyColor: 'var(--text-secondary)',
+      },
+      title: {
+        display: true,
+        text: title,
+        color: 'var(--text-primary)',
+        font: { size: 14 }
+      }
+    },
+  });
 
-  // Stories Read Chart
+  // --- *** NEW *** ---
+  // Helper function to prepare lean data
+  const prepareLeanData = (rawData) => {
+    const counts = (rawData || []).reduce((acc, item) => {
+      acc[item.lean] = item.count;
+      return acc;
+    }, {});
+    return {
+      labels: leanOrder,
+      datasets: [{
+        label: 'Articles',
+        data: leanOrder.map(lean => counts[lean] || 0),
+        backgroundColor: leanOrder.map(lean => leanColors[lean]),
+      }],
+    };
+  };
+
+  // --- *** NEW *** ---
+  // Helper function to prepare category data
+  const prepareCategoryData = (rawData) => {
+    const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10); // Top 10
+    return {
+      labels: sortedData.map(d => d.category),
+      datasets: [{
+        label: 'Articles Read',
+        data: sortedData.map(d => d.count),
+        backgroundColor: 'var(--accent-primary)',
+      }],
+    };
+  };
+
+  // --- *** NEW *** ---
+  // Helper function to prepare quality data
+  const prepareQualityData = (rawData) => {
+    const counts = (rawData || []).reduce((acc, item) => {
+       const key = item.grade === null ? 'null' : item.grade;
+       acc[key] = (acc[key] || 0) + item.count;
+       return acc;
+    }, {});
+    
+    // Map internal grade (e.g., 'A') to the full label
+    const gradeMap = {
+       "A+": "A+ Excellent (90-100)",
+       "A": "A High (80-89)",
+       "B": "B Professional (70-79)",
+       "C": "C Acceptable (60-69)",
+       "D-F": "D-F Poor (0-59)", // Assuming 'D-F' is the grade string
+       "null": "N/A" // Handle null grades
+    };
+    
+    // We need to map the grades we get ('A', 'B', etc.) to the full labels
+    const qualityCounts = {};
+    for (const [key, count] of Object.entries(counts)) {
+       // This is a bit complex, but finds the full label that contains the key
+       let fullLabel = Object.keys(qualityColors).find(label => label.startsWith(key));
+       if (key === 'null') fullLabel = 'N/A';
+       
+       if(fullLabel) {
+           qualityCounts[fullLabel] = count;
+       } else {
+           // Fallback for grades like D, F
+           if (['D', 'F'].includes(key)) {
+               qualityCounts['D-F Poor (0-59)'] = (qualityCounts['D-F Poor (0-59)'] || 0) + count;
+           } else {
+               qualityCounts[key] = count; // e.g. 'A+'
+           }
+       }
+    }
+
+    // Re-map A+, A, etc. to full labels
+    const finalCounts = {};
+    const dbGrades = statsData?.qualityDistribution_read.map(item => item.grade) || [];
+    
+    // Create a map of the counts from the raw data
+    const rawCountsMap = (statsData?.qualityDistribution_read || []).reduce((acc, item) => {
+      acc[item.grade] = item.count;
+      return acc;
+    }, {});
+
+    // Define the display order and labels
+    const displayGrades = [
+      { key: 'A+', label: 'A+ Excellent (90-100)' },
+      { key: 'A', label: 'A High (80-89)' },
+      { key: 'B', label: 'B Professional (70-79)' },
+      { key: 'C', label: 'C Acceptable (60-69)' },
+      { key: 'D-F', label: 'D-F Poor (0-59)' }, // This assumes your backend sends "D-F"
+      // Need to check if backend sends D or F separately
+    ];
+    
+    // This part is tricky, we need to adapt to what the DB sends.
+    // Let's assume the DB sends 'A+', 'A', 'B', 'C', 'D', 'F', null
+    
+    const dbCounts = rawCountsMap;
+    const labels = [
+        'A+ Excellent (90-100)', 
+        'A High (80-89)', 
+        'B Professional (70-79)', 
+        'C Acceptable (60-69)', 
+        'D-F Poor (0-59)',
+        'N/A (Review/Opinion)'
+    ];
+    
+    const data = [
+      dbCounts['A+'] || 0,
+      dbCounts['A'] || 0,
+      dbCounts['B'] || 0,
+      dbCounts['C'] || 0,
+      (dbCounts['D'] || 0) + (dbCounts['F'] || 0) + (dbCounts['D-F'] || 0), // Combine D and F
+      dbCounts[null] || 0 // Count for null grades
+    ];
+    
+    const colors = [
+       qualityColors['A+ Excellent (90-100)'],
+       qualityColors['A High (80-89)'],
+       qualityColors['B Professional (70-79)'],
+       qualityColors['C Acceptable (60-69)'],
+       qualityColors['D-F Poor (0-59)'],
+       qualityColors['null']
+    ];
+    
+    return {
+      labels: labels,
+      datasets: [{
+        label: 'Articles Read',
+        data: data,
+        backgroundColor: colors,
+      }],
+    };
+  };
+
+  // --- Stories Read (Line Chart) ---
   const storiesReadData = {
     labels: statsData?.dailyCounts?.map(item => item.date) || [],
     datasets: [
@@ -111,46 +300,25 @@ function MyNewsBias() {
     maintainAspectRatio: false,
     scales: {
       x: {
-        type: 'time', // Use time scale
+        type: 'time',
         time: {
-          unit: timeframe === 'Day' ? 'hour' : 'day', // Adjust unit based on timeframe
-          tooltipFormat: 'MMM d, yyyy', // Format for tooltips
-          displayFormats: { // How labels are displayed
-             day: 'MMM d'
-          }
+          unit: 'day', // Always day, since it's all-time
+          tooltipFormat: 'MMM d, yyyy',
+          displayFormats: { day: 'MMM d' }
         },
-        title: {
-          display: true,
-          text: 'Date',
-          color: 'var(--text-secondary)',
-        },
-         ticks: {
-          color: 'var(--text-tertiary)',
-         },
-         grid: {
-            color: 'var(--border-color)', // X-axis grid lines
-         }
+        title: { display: true, text: 'Date', color: 'var(--text-secondary)' },
+         ticks: { color: 'var(--text-tertiary)' },
+         grid: { color: 'var(--border-color)' }
       },
       y: {
         beginAtZero: true,
-        title: {
-          display: true,
-          text: 'Number of Stories',
-          color: 'var(--text-secondary)',
-        },
-        ticks: {
-           color: 'var(--text-tertiary)',
-           stepSize: 1, // Ensure whole numbers for counts
-        },
-        grid: {
-            color: 'var(--border-color)', // Y-axis grid lines
-         }
+        title: { display: true, text: 'Number of Stories', color: 'var(--text-secondary)' },
+        ticks: { color: 'var(--text-tertiary)', stepSize: 1 },
+        grid: { color: 'var(--border-color)' }
       },
     },
     plugins: {
-      legend: {
-        display: false, // Hide legend
-      },
+      legend: { display: false },
       tooltip: {
         backgroundColor: 'var(--bg-elevated)',
         titleColor: 'var(--text-primary)',
@@ -159,73 +327,27 @@ function MyNewsBias() {
     },
   };
 
-  // Lean Distribution Chart
-  const leanOrder = ['Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
-  const leanColors = {
-      'Left': '#dc2626', // Red
-      'Left-Leaning': '#f87171', // Lighter Red
-      'Center': '#6b7280', // Gray
-      'Right-Leaning': '#60a5fa', // Lighter Blue
-      'Right': '#2563eb', // Blue
-      'Not Applicable': '#a1a1aa' // Lighter Gray
-  };
-  const leanCounts = statsData?.leanDistribution?.reduce((acc, item) => {
+  // --- Prepare data for all charts ---
+  const leanReadData = prepareLeanData(statsData?.leanDistribution_read);
+  const leanSharedData = prepareLeanData(statsData?.leanDistribution_shared);
+  const categoryReadData = prepareCategoryData(statsData?.categoryDistribution_read);
+  const qualityReadData = prepareQualityData(statsData?.qualityDistribution_read);
+  
+  // --- Calculate totals ---
+  const totals = statsData?.totalCounts || [];
+  const totalAnalyzed = getActionCount(totals, 'view_analysis');
+  const totalShared = getActionCount(totals, 'share_article');
+  const totalCompared = getActionCount(totals, 'view_comparison');
+  const totalRead = getActionCount(totals, 'read_external');
+  
+  // Calculate lean percentages for the top summary bar
+  const totalLeanArticles = statsData?.leanDistribution_read?.reduce((sum, item) => sum + item.count, 0) || 0;
+  const leanReadCounts = (statsData?.leanDistribution_read || []).reduce((acc, item) => {
       acc[item.lean] = item.count;
       return acc;
-  }, {}) || {};
-
-  const leanDistributionData = {
-    labels: leanOrder,
-    datasets: [
-      {
-        label: 'Articles Read by Lean',
-        data: leanOrder.map(lean => leanCounts[lean] || 0),
-        backgroundColor: leanOrder.map(lean => leanColors[lean]),
-        borderColor: leanOrder.map(lean => leanColors[lean]),
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const leanDistributionOptions = {
-     responsive: true,
-     maintainAspectRatio: false,
-     indexAxis: 'y', // Make it a horizontal bar chart
-     scales: {
-       x: {
-         beginAtZero: true,
-         title: {
-           display: true,
-           text: 'Number of Articles',
-           color: 'var(--text-secondary)',
-         },
-         ticks: {
-            color: 'var(--text-tertiary)',
-            stepSize: 1,
-         },
-         grid: { color: 'var(--border-color)' }
-       },
-       y: {
-         ticks: { color: 'var(--text-tertiary)' },
-         grid: { display: false } // Hide Y-axis grid lines for horizontal bars
-       },
-     },
-     plugins: {
-       legend: { display: false },
-       tooltip: {
-          backgroundColor: 'var(--bg-elevated)',
-          titleColor: 'var(--text-primary)',
-          bodyColor: 'var(--text-secondary)',
-       }
-     },
-   };
-
-  const totalStoriesRead = statsData?.dailyCounts?.reduce((sum, item) => sum + item.count, 0) || 0;
-
-  // Calculate lean percentages
-  const totalLeanArticles = statsData?.leanDistribution?.reduce((sum, item) => sum + item.count, 0) || 0;
+  }, {});
   const leanPercentages = leanOrder.reduce((acc, lean) => {
-      const count = leanCounts[lean] || 0;
+      const count = leanReadCounts[lean] || 0;
       acc[lean] = totalLeanArticles > 0 ? Math.round((count / totalLeanArticles) * 100) : 0;
       return acc;
   }, {});
@@ -241,21 +363,50 @@ function MyNewsBias() {
           </div>
           <div className="user-details">
             <h2>{profileData?.username || 'Loading...'}</h2>
-            <p>{totalStoriesRead} Stories · {Object.keys(leanCounts).length} Leans</p> {/* Example stats */}
+            <p>My News Bias Dashboard</p>
           </div>
         </div>
         <div className="date-range-selector">
-          {/* Add dropdown later if needed */}
-          <span>Last {statsData?.timeframeDays || '...'} days</span>
+          <span>Viewing All-Time Stats</span>
         </div>
       </div>
 
       {/* --- Main Content Grid --- */}
       <div className="dashboard-grid">
+      
+        {/* --- *** NEW: Key Stats Section *** --- */}
+        <h2 className="section-title">Your Activity</h2>
+        
+        <div className="dashboard-card stat-box">
+           <h3>Articles Analyzed</h3>
+           <p className="stat-number">{loadingStats ? '...' : totalAnalyzed}</p>
+           <p className="stat-description">Total times you viewed the "Analysis" popup.</p>
+        </div>
+        
+        <div className="dashboard-card stat-box">
+           <h3>Articles Read</h3>
+           <p className="stat-number">{loadingStats ? '...' : totalRead}</p>
+           <p className="stat-description">Total times you clicked "Read Article".</p>
+        </div>
+        
+        <div className="dashboard-card stat-box">
+           <h3>Articles Shared</h3>
+           <p className="stat-number">{loadingStats ? '...' : totalShared}</p>
+           <p className="stat-description">Total articles you've shared with others.</p>
+        </div>
+        
+        <div className="dashboard-card stat-box">
+           <h3>Comparisons Viewed</h3>
+           <p className="stat-number">{loadingStats ? '...' : totalCompared}</p>
+           <p className="stat-description">Total times you clicked "Compare Coverage".</p>
+        </div>
+        
+        {/* --- Analysis Section Title --- */}
+        <h2 className="section-title">Reading Habits</h2>
 
         {/* --- Lean Summary Card --- */}
         <div className="dashboard-card lean-summary-card">
-          <h3>Your News Bias</h3>
+          <h3>Your Reading Bias</h3>
           <div className="lean-bar">
             <div className="lean-segment left" style={{ width: `${leanPercentages['Left'] + leanPercentages['Left-Leaning']}%` }}>
                L {leanPercentages['Left'] + leanPercentages['Left-Leaning']}%
@@ -268,32 +419,29 @@ function MyNewsBias() {
             </div>
           </div>
           <ul className="lean-details">
-             {/* Show breakdown only if there's data */}
              {(leanPercentages['Left'] + leanPercentages['Left-Leaning']) > 0 && (
-                <li><span>{leanPercentages['Left'] + leanPercentages['Left-Leaning']}%</span> of the stories you read lean left.</li>
+                <li><span>{leanPercentages['Left'] + leanPercentages['Left-Leaning']}%</span> of the stories you analyzed lean left.</li>
              )}
               {leanPercentages['Center'] > 0 && (
-                 <li><span>{leanPercentages['Center']}%</span> of the stories you read were balanced.</li>
+                 <li><span>{leanPercentages['Center']}%</span> of the stories you analyzed were balanced.</li>
               )}
                {(leanPercentages['Right'] + leanPercentages['Right-Leaning']) > 0 && (
-                 <li><span>{leanPercentages['Right'] + leanPercentages['Right-Leaning']}%</span> of the stories you read lean right.</li>
+                 <li><span>{leanPercentages['Right'] + leanPercentages['Right-Leaning']}%</span> of the stories you analyzed lean right.</li>
                )}
-                {totalLeanArticles === 0 && (
-                  <li>No article reading data available for this period.</li>
+                {totalLeanArticles === 0 && !loadingStats && (
+                  <li>No article analysis data available for this period.</li>
                 )}
+                 {loadingStats && (
+                  <li>Loading...</li>
+                 )}
           </ul>
         </div>
 
         {/* --- Stories Read Card --- */}
         <div className="dashboard-card stories-read-card">
+           {/* --- *** REMOVED TIMEFRAME BUTTONS *** --- */}
           <div className="card-header">
-            <h3>Stories Read</h3>
-            <div className="timeframe-buttons">
-              <button className={timeframe === 'Day' ? 'active' : ''} onClick={() => setTimeframe('Day')}>Day</button>
-              <button className={timeframe === 'Week' ? 'active' : ''} onClick={() => setTimeframe('Week')}>Week</button>
-              <button className={timeframe === 'Month' ? 'active' : ''} onClick={() => setTimeframe('Month')}>Month</button>
-              {/* <button className={timeframe === 'All' ? 'active' : ''} onClick={() => setTimeframe('All')}>All</button> */}
-            </div>
+            <h3>Stories Analyzed Over Time</h3>
           </div>
           <div className="chart-container stories-read-chart">
              {loadingStats ? (
@@ -301,57 +449,64 @@ function MyNewsBias() {
              ) : (statsData?.dailyCounts?.length > 0) ? (
                  <Line options={storiesReadOptions} data={storiesReadData} />
              ) : (
-                <p className="no-data-msg">No reading data for this period.</p>
+                <p className="no-data-msg">No analysis data for this period.</p>
              )}
           </div>
-          {/* <p className="comparison-text">You've read X% fewer stories than last week.</p> */}
-        </div>
-
-        {/* --- Analysis Section Title --- */}
-        <h2 className="section-title">Analysis</h2>
-
-        {/* --- Most Read Sources (Placeholder) --- */}
-        <div className="dashboard-card locked">
-           <div className="card-header">
-               <h3>Most Read News Sources</h3>
-               <span className="lock-icon">🔒</span>
-           </div>
-           {/* Placeholder content */}
-           <div className="placeholder-content">
-               <p>See your most read news sources across the political spectrum.</p>
-               <button className="upgrade-btn disabled">Upgrade to Premium</button>
-           </div>
         </div>
 
         {/* --- Article Bias (Lean Distribution Chart) --- */}
          <div className="dashboard-card">
-           <h3>Article Bias</h3>
            <div className="chart-container article-bias-chart">
                {loadingStats ? (
                  <div className="loading-container"><div className="spinner"></div></div>
                ) : (totalLeanArticles > 0) ? (
-                 <Bar options={leanDistributionOptions} data={leanDistributionData} />
+                 <Bar options={getBarChartOptions('Political Lean (Analyzed)')} data={leanReadData} />
                ): (
-                  <p className="no-data-msg">No reading data for this period.</p>
+                  <p className="no-data-msg">No analysis data for this period.</p>
                )}
            </div>
-           <p className="chart-description">
-             Do you have a balanced news diet? See what side of the political spectrum you prefer to articles from.
-           </p>
+         </div>
+         
+        {/* --- *** NEW: Shares by Lean *** --- */}
+         <div className="dashboard-card">
+           <div className="chart-container article-bias-chart">
+               {loadingStats ? (
+                 <div className="loading-container"><div className="spinner"></div></div>
+               ) : (totalShared > 0) ? (
+                 <Bar options={getBarChartOptions('Political Lean (Shared)')} data={leanSharedData} />
+               ): (
+                  <p className="no-data-msg">You haven't shared any articles yet.</p>
+               )}
+           </div>
+         </div>
+         
+         {/* --- *** NEW: Top Categories *** --- */}
+         <div className="dashboard-card">
+           <div className="chart-container article-bias-chart">
+               {loadingStats ? (
+                 <div className="loading-container"><div className="spinner"></div></div>
+               ) : (totalAnalyzed > 0) ? (
+                 <Bar options={getBarChartOptions('Top Categories (Analyzed)')} data={categoryReadData} />
+               ): (
+                  <p className="no-data-msg">No analysis data for this period.</p>
+               )}
+           </div>
          </div>
 
+         {/* --- *** NEW: Quality Distribution *** --- */}
+         <div className="dashboard-card">
+           <div className="chart-container article-bias-chart">
+               {loadingStats ? (
+                 <div className="loading-container"><div className="spinner"></div></div>
+               ) : (totalAnalyzed > 0) ? (
+                 <Bar options={getBarChartOptions('Article Quality (Analyzed)')} data={qualityReadData} />
+               ): (
+                  <p className="no-data-msg">No analysis data for this period.</p>
+               )}
+           </div>
+         </div>
 
-        {/* --- Other Placeholder Cards --- */}
-        {/* Add placeholders for Most read topics, Locality Bias, Factuality, Blindspot, etc. */}
-         <div className="dashboard-card locked"><div className="card-header"><h3>Most read topics & people</h3><span className="lock-icon">🔒</span></div> {/* ... placeholder ... */} <button className="upgrade-btn disabled">Upgrade to Premium</button> </div>
-         <div className="dashboard-card locked"><div className="card-header"><h3>Locality Bias</h3><span className="lock-icon">🔒</span></div> {/* ... placeholder ... */} <button className="upgrade-btn disabled">Upgrade to Premium</button></div>
-         <div className="dashboard-card locked"><div className="card-header"><h3>Factuality distribution</h3><span className="lock-icon">🔒</span></div> {/* ... placeholder ... */} <button className="upgrade-btn disabled">Upgrade to Premium</button></div>
-         <div className="dashboard-card locked"><div className="card-header"><h3>Blindspot Stories</h3><span className="lock-icon">🔒</span></div> {/* ... placeholder ... */} <button className="upgrade-btn disabled">Upgrade to Vantage</button></div>
-         <div className="dashboard-card locked"><div className="card-header"><h3>Media Ownership</h3><span className="lock-icon">🔒</span></div> {/* ... placeholder ... */} <button className="upgrade-btn disabled">Upgrade to Vantage</button></div>
-         <div className="dashboard-card locked"><div className="card-header"><h3>Topic Insights</h3><span className="lock-icon">🔒</span></div> {/* ... placeholder ... */} <button className="upgrade-btn disabled">Upgrade to Vantage</button></div>
-         <div className="dashboard-card locked"><div className="card-header"><h3>Countries you've read news about</h3><span className="lock-icon">🔒</span></div> {/* ... placeholder ... */} <button className="upgrade-btn disabled">Upgrade to Vantage</button></div>
-         <div className="dashboard-card locked"><div className="card-header"><h3>Civic Lens</h3><span className="lock-icon">🔒</span></div> {/* ... placeholder ... */} <button className="upgrade-btn disabled">Upgrade to Vantage</button></div>
-
+         {/* --- *** REMOVED ALL PLACEHOLDER/LOCKED CARDS *** --- */}
 
       </div> {/* End dashboard-grid */}
 

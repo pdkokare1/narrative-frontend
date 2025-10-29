@@ -1,33 +1,33 @@
 // In file: src/SavedArticles.js
 import React from 'react';
-import { Link } from 'react-router-dom';
-import './DashboardPages.css'; // Use the new CSS file
+import { NavLink, Link } from 'react-router-dom';
+import './App.css'; // For theme variables
+import './DashboardPages.css'; // New shared CSS file
 
 function SavedArticles() {
   return (
-    <div className="dashboard-page mobile-only-page">
-      <div className="dashboard-content-wrapper">
-        <div className="dashboard-left-column">
-          <div className="section-title-header">
-            <h2 className="section-title no-border">Saved Articles</h2>
-            <div className="header-actions">
-              <Link to="/my-dashboard" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
-                &lt; Back to Dashboard
-              </Link>
-            </div>
-          </div>
-
-          {/* Placeholder Content */}
-          <div className="dashboard-card" style={{ minHeight: '300px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-            <span style={{ fontSize: '48px', marginBottom: '20px' }} role="img" aria-label="tools">🛠️</span>
-            <h3 style={{ margin: 0, color: 'var(--text-primary)'}}>Feature Coming Soon</h3>
-            <p style={{ color: 'var(--text-secondary)', marginTop: '10px' }}>
-              This page will allow you to view your bookmarked articles.
-            </p>
-          </div>
-          
-        </div>
+    <div className="dashboard-page">
+      
+      {/* --- Page Header --- */}
+      <div className="dashboard-header">
+        <h1>Saved Articles</h1>
+        <nav className="dashboard-nav-links">
+          <NavLink to="/my-dashboard" className={({isActive}) => isActive ? "active" : ""}>My Dashboard</NavLink>
+          <NavLink to="/reading-habits" className={({isActive}) => isActive ? "active" : ""}>Reading Habits</NavLink>
+          <NavLink to="/saved-articles" className={({isActive}) => isActive ? "active" : ""}>Saved Articles</NavLink>
+          <NavLink to="/account-settings" className={({isActive}) => isActive ? "active" : ""}>Account</NavLink>
+        </nav>
       </div>
+
+      {/* --- Placeholder Content --- */}
+      <div className="placeholder-page">
+        <h2>Feature Coming Soon!</h2>
+        <p>This page will allow you to view articles you have saved.</p>
+        <Link to="/my-dashboard" className="btn-secondary" style={{ textDecoration: 'none' }}>
+            Back to Dashboard
+        </Link>
+      </div>
+      
     </div>
   );
 }

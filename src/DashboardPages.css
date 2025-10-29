@@ -29,10 +29,10 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px; /* Space between cards/sections */
+  gap: 15px; /* CHANGED: Reduced gap slightly */
   /* overflow-y: auto; */ /* <-- REMOVED */
   padding-bottom: 15px; /* Space at bottom */
-  
+
   /* --- NEW: Make left column sticky --- */
   position: sticky;
   top: 75px; /* 60px header + 15px padding */
@@ -152,11 +152,11 @@ h2.section-title {
    width: 100%; flex-shrink: 0;
    margin-bottom: 10px; /* CHANGED: Was 15px */
 }
-/* --- NEW: Specific margin for reading bias title --- */
+/* --- UPDATED: Specific margin for reading bias title --- */
 h2.section-title.reading-bias-title {
-  margin-top: 10px; /* Add some space above it */
+  margin-top: 15px; /* Increased from 10px */
 }
-/* --- END NEW --- */
+/* --- END UPDATE --- */
 h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bottom: 0; } /* Remove bottom margin if no border */
 
 
@@ -183,12 +183,12 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 }
 .dashboard-card:hover { border-color: var(--accent-primary); }
 /* --- MODIFIED: no-padding now makes wrapper invisible --- */
-.dashboard-card.no-padding { 
-  padding: 0; 
+.dashboard-card.no-padding {
+  padding: 0;
   box-shadow: none;
   border: none;
   background: transparent;
-} 
+}
 
 /* Card Header (Chart Titles) */
 .dashboard-card h3 {
@@ -278,11 +278,11 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 .lean-details li:last-child { margin-bottom: 0; }
 .lean-details li span { font-weight: 600; color: var(--text-primary); margin-right: 6px; min-width: 25px; text-align: right; flex-shrink: 0; }
 
-/* --- NEW: Account Settings Button Margin --- */
+/* --- UPDATED: Account Settings Button Margin --- */
 .account-settings-link {
-  margin-top: 10px; /* Add space above the button */
+  margin-top: 5px; /* Reduced from 10px */
 }
-/* --- END NEW --- */
+/* --- END UPDATE --- */
 
 
 /* --- Sticky Header Wrapper for Right Column --- */
@@ -380,7 +380,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   .date-range-selector span { margin-left: 0; }
 
   .stat-box-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 0; } /* Keep 2 columns, remove padding */
-  .stat-box { 
+  .stat-box {
     padding: 10px;
     /* --- NEW: Make stat boxes square and centered --- */
     aspect-ratio: 1 / 1;
@@ -397,9 +397,9 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   .lean-details { font-size: 11px; }
 
   /* --- NEW: Mobile legend --- */
-  .lean-legend { 
-      gap: 10px; 
-      margin-bottom: 10px; 
+  .lean-legend {
+      gap: 10px;
+      margin-bottom: 10px;
       flex-wrap: wrap; /* Allow legend to wrap */
   }
   .legend-item { font-size: 10px; }

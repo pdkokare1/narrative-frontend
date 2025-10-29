@@ -1,70 +1,66 @@
 // In file: src/ReadingHabits.js
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
-import { Doughnut, Bar } from 'react-chartjs-2';
+import { NavLink } from 'react-router-dom';
+import { Line, Doughnut, Bar } from 'react-chartjs-2';
 import {
-  Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement,
-  Title, Tooltip, Legend
+  Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement,
+  BarElement, ArcElement, Title, Tooltip, Legend, TimeScale
 } from 'chart.js';
-import './DashboardPages.css'; // Use the new CSS file
+import 'chartjs-adapter-date-fns';
+import './App.css'; // For theme variables
+import './DashboardPages.css'; // New shared CSS file
 
 // Register Chart.js components
 ChartJS.register(
-  CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend
+  CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement,
+  Title, Tooltip, Legend, TimeScale
 );
 
 // Get API URL from environment
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
-// --- Chart Colors & Order Definitions ---
+// --- Data & Color Helpers ---
+const getActionCount = (totals, action) => {
+  const item = totals.find(t => t.action === action);
+  return item ? item.count : 0;
+};
 const leanOrder = ['Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
 const leanColors = {
     'Left': '#dc2626', 'Left-Leaning': '#f87171', 'Center': '#6b7280',
     'Right-Leaning': '#60a5fa', 'Right': '#2563eb', 'Not Applicable': '#a1a1aa'
 };
-const qualityLabels = [
-    'A+ Excellent (90-100)', 'A High (80-89)', 'B Professional (70-79)',
-    'C Acceptable (60-69)', 'D-F Poor (0-59)', 'N/A (Review/Opinion)'
-];
-const qualityColors = {
-    'A+ Excellent (90-100)': '#2563eb', 'A High (80-89)': '#60a5fa',
-    'B Professional (70-79)': '#4CAF50', 'C Acceptable (60-69)': '#F59E0B',
-    'D-F Poor (0-59)': '#dc2626', 'N/A (Review/Opinion)': '#a1a1aa'
-};
 const sentimentColors = {
-  'Positive': '#4CAF50',
+  'Positive': '#2563eb',
   'Negative': '#dc2626',
   'Neutral': '#6b7280'
 };
-// Palettes for light/dark themes
 const categoryColorsDark = ['#B38F5F', '#CCA573', '#D9B98A', '#E6CB9F', '#9C7C50', '#8F6B4D', '#C19A6B', '#AE8A53', '#D0B48F', '#B8860B'];
 const categoryColorsLight = ['#2E4E6B', '#3E6A8E', '#5085B2', '#63A0D6', '#243E56', '#1A2D3E', '#4B77A3', '#395D7D', '#5D92C1', '#004E8A'];
-const sourceColorsDark = ['#64B5F6', '#81C784', '#FFB74D', '#E57373', '#BA68C8', '#AED581', '#FFF176', '#FF8A65', '#90A4AE', '#A1887F'];
-const sourceColorsLight = ['#1976D2', '#388E3C', '#FFA000', '#D32F2F', '#7B1FA2', '#689F38', '#FBC02D', '#E64A19', '#546E7A', '#5D4037'];
+// --- End Helpers ---
 
 
 // --- Main Component ---
-// This component is primarily for mobile, but based on feature parity,
-// it could be linked from desktop too. It just shows all the charts.
-function ReadingHabits({ theme }) {
+function ReadingHabits() {
   const [statsData, setStatsData] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState('');
+  
+  // Get theme from body class (App.js sets this)
+  const theme = document.body.className.includes('dark') ? 'dark' : 'light';
 
-  // Define chart colors based on theme
-  const chartColors = useMemo(() => {
-    const isDark = theme === 'dark';
-    return {
-       textPrimary: isDark ? '#EAEAEA' : '#2C2C2C',
-       textSecondary: isDark ? '#B0B0B0' : '#555555',
-       textTertiary: isDark ? '#757575' : '#888888',
-       borderColor: isDark ? '#333333' : '#EAEAEA',
-       tooltipBg: isDark ? '#2C2C2C' : '#FDFDFD',
-       categoryPalette: isDark ? categoryColorsDark : categoryColorsLight,
-       sourcePalette: isDark ? sourceColorsDark : sourceColorsLight,
-    };
-  }, [theme]);
+   const chartColors = useMemo(() => {
+      const isDark = theme === 'dark';
+      return {
+         textPrimary: isDark ? '#EAEAEA' : '#2C2C2C',
+         textSecondary: isDark ? '#B0B0B0' : '#555555',
+         textTertiary: isDark ? '#757575' : '#888888',
+         borderColor: isDark ? '#333333' : '#EAEAEA',
+         tooltipBg: isDark ? '#2C2C2C' : '#FDFDFD',
+         categoryPalette: isDark ? categoryColorsDark : categoryColorsLight,
+         accentPrimary: isDark ? '#B38F5F' : '#2E4E6B'
+      };
+   }, [theme]);
 
   // Fetch aggregated stats
   useEffect(() => {
@@ -73,7 +69,7 @@ function ReadingHabits({ theme }) {
       setLoadingStats(true);
       try { 
         const response = await axios.get(`${API_URL}/profile/stats`); 
-        setStatsData(response.data);
+        setStatsData(response.data); 
       }
       catch (err) { 
         console.error('Error fetching stats:', err); 
@@ -84,11 +80,11 @@ function ReadingHabits({ theme }) {
       }
     }; 
     fetchStats();
-  }, []); // Run once
+  }, []);
 
 
-  // --- Chart Options Definitions ---
-  const getDoughnutChartOptions = useCallback((title) => ({
+  // --- Chart Options ---
+  const getDoughnutChartOptions = useCallback((title) => ({ 
       responsive: true, maintainAspectRatio: false,
       plugins: { 
         legend: { position: 'bottom', labels: { color: chartColors.textSecondary, boxWidth: 12, padding: 15 } }, 
@@ -96,25 +92,61 @@ function ReadingHabits({ theme }) {
         title: { display: true, text: title, color: chartColors.textPrimary, font: { size: 14 } } 
       }, 
       cutout: '60%',
-  }), [chartColors]);
-  
-  const getBarChartOptions = useCallback((title, yLabel = 'Number of Articles') => ({
+   }), [chartColors]);
+   
+    const getBarChartOptions = useCallback((title, axisLabel = 'Number of Articles') => ({ 
       responsive: true, maintainAspectRatio: false,
+      indexAxis: 'y', // --- Make it horizontal ---
       scales: { 
-        x: { ticks: { color: chartColors.textTertiary }, grid: { display: false } }, 
-        y: { beginAtZero: true, title: { display: true, text: yLabel, color: chartColors.textSecondary }, ticks: { color: chartColors.textTertiary, stepSize: 1 }, grid: { color: chartColors.borderColor } }, 
+        x: { 
+          beginAtZero: true, 
+          title: { display: true, text: axisLabel, color: chartColors.textSecondary }, 
+          ticks: { color: chartColors.textTertiary, stepSize: 1 }, 
+          grid: { color: chartColors.borderColor } 
+        },
+        y: { 
+          ticks: { color: chartColors.textSecondary }, 
+          grid: { display: false } 
+        }, 
       },
       plugins: { 
         legend: { display: false }, 
         tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary }, 
         title: { display: true, text: title, color: chartColors.textPrimary, font: { size: 14 } } 
       },
-  }), [chartColors]);
+   }), [chartColors]);
    
+   const storiesReadOptions = useMemo(() => ({ 
+      responsive: true, maintainAspectRatio: false,
+      scales: { 
+        x: { 
+          type: 'time', 
+          time: { unit: 'day', tooltipFormat: 'MMM d, yyyy', displayFormats: { day: 'MMM d' }}, 
+          title: { display: true, text: 'Date', color: chartColors.textSecondary }, 
+          ticks: { color: chartColors.textTertiary }, 
+          grid: { color: chartColors.borderColor }
+        }, 
+        y: { 
+          beginAtZero: true, 
+          title: { display: true, text: 'Stories Analyzed', color: chartColors.textSecondary }, 
+          ticks: { color: chartColors.textTertiary, stepSize: 1 }, 
+          grid: { color: chartColors.borderColor }
+        }, 
+      },
+      plugins: { 
+        legend: { display: false }, 
+        tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary },
+        title: {
+          display: true,
+          text: 'Stories Analyzed Over Time',
+          color: chartColors.textPrimary,
+          font: { size: 14 }
+        }
+      },
+   }), [chartColors]);
 
-  // --- Chart Data Preparation Functions (Copied from MyDashboard) ---
-
-  const prepareLeanData = (rawData) => {
+  // --- Chart Data Preparation ---
+  const prepareLeanData = (rawData) => { 
     const counts = (rawData || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
     const data = leanOrder.map(lean => counts[lean] || 0);
     const backgroundColors = leanOrder.map(lean => leanColors[lean]);
@@ -123,14 +155,14 @@ function ReadingHabits({ theme }) {
     const filteredColors = backgroundColors.filter((_, index) => data[index] > 0);
     return { labels: filteredLabels, datasets: [{ label: 'Articles', data: filteredData, backgroundColor: filteredColors, borderColor: chartColors.borderColor, borderWidth: 1 }] };
   };
-
-  const prepareCategoryData = (rawData) => {
-    const sortedData = (rawData || []).sort((a, b) => b.count - a.count);
+  
+  const prepareCategoryData = (rawData) => { 
+    const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10).reverse(); // Reverse for horizontal bar
     const themeCategoryColors = chartColors.categoryPalette;
     return {
       labels: sortedData.map(d => d.category),
       datasets: [{
-        label: 'Articles Analyzed',
+        label: 'Articles Read',
         data: sortedData.map(d => d.count),
         backgroundColor: sortedData.map((_, i) => themeCategoryColors[i % themeCategoryColors.length]),
         borderColor: chartColors.borderColor,
@@ -138,129 +170,145 @@ function ReadingHabits({ theme }) {
       }],
     };
   };
-  
-  const prepareQualityData = (rawData) => {
-    const rawCountsMap = (rawData || []).reduce((acc, item) => { acc[item.grade] = item.count; return acc; }, {});
-    const dbCounts = rawCountsMap;
-    const data = [ 
-      dbCounts['A+'] || 0, 
-      (dbCounts['A'] || 0) + (dbCounts['A-'] || 0), 
-      (dbCounts['B+'] || 0) + (dbCounts['B'] || 0) + (dbCounts['B-'] || 0), 
-      (dbCounts['C+'] || 0) + (dbCounts['C'] || 0) + (dbCounts['C-'] || 0), 
-      (dbCounts['D+'] || 0) + (dbCounts['D'] || 0) + (dbCounts['D-'] || 0) + (dbCounts['F'] || 0) + (dbCounts['D-F'] || 0), 
-      dbCounts[null] || 0 
-    ];
-    const backgroundColors = qualityLabels.map(label => qualityColors[label] || '#a1a1aa');
-    const filteredLabels = qualityLabels.filter((_, index) => data[index] > 0);
-    const filteredData = data.filter(count => count > 0);
-    const filteredColors = backgroundColors.filter((_, index) => data[index] > 0);
-    return { labels: filteredLabels, datasets: [{ label: 'Articles Analyzed', data: filteredData, backgroundColor: filteredColors, borderColor: chartColors.borderColor, borderWidth: 1 }] };
-  };
 
-  const prepareSourceData = (rawData) => {
-    const sortedData = (rawData || []).sort((a, b) => b.count - a.count);
-    const themeSourceColors = chartColors.sourcePalette;
+  const prepareTopSourcesData = (rawData) => {
+    const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10).reverse(); // Reverse for horizontal bar
     return {
       labels: sortedData.map(d => d.source),
       datasets: [{
         label: 'Articles Analyzed',
         data: sortedData.map(d => d.count),
-        backgroundColor: sortedData.map((_, i) => themeSourceColors[i % themeSourceColors.length]),
-        borderColor: chartColors.borderColor,
-        borderWidth: 1,
-      }],
-    };
-  };
-  
-  const prepareSentimentData = (rawData) => {
-    const sortedData = (rawData || []).sort((a, b) => b.count - a.count);
-    return {
-      labels: sortedData.map(d => d.sentiment),
-      datasets: [{
-        label: 'Articles',
-        data: sortedData.map(d => d.count),
-        backgroundColor: sortedData.map(d => sentimentColors[d.sentiment] || '#a1a1aa'),
-        borderColor: chartColors.borderColor,
-        borderWidth: 1,
+        backgroundColor: chartColors.accentPrimary, // Use single accent color
+        borderWidth: 0,
       }],
     };
   };
 
-  // --- Get All Chart Data ---
-  const leanReadData = prepareLeanData(statsData?.leanDistribution_read);
-  const leanSharedData = prepareLeanData(statsData?.leanDistribution_shared);
-  const categoryReadData = prepareCategoryData(statsData?.categoryDistribution_read);
-  const qualityReadData = prepareQualityData(statsData?.qualityDistribution_read);
-  const topSourcesData = prepareSourceData(statsData?.topSources_read);
-  const sentimentData = prepareSentimentData(statsData?.sentimentDistribution_read);
+  const prepareSentimentData = (rawData) => {
+    const counts = (rawData || []).reduce((acc, item) => { acc[item.sentiment] = item.count; return acc; }, {});
+    const labels = ['Positive', 'Neutral', 'Negative'];
+    const data = labels.map(label => counts[label] || 0);
+    const backgroundColors = labels.map(label => sentimentColors[label]);
+    
+    const filteredLabels = labels.filter((_, index) => data[index] > 0);
+    const filteredData = data.filter(count => count > 0);
+    const filteredColors = backgroundColors.filter((_, index) => data[index] > 0);
+
+    return { 
+      labels: filteredLabels, 
+      datasets: [{ 
+        label: 'Articles', 
+        data: filteredData, 
+        backgroundColor: filteredColors, 
+        borderColor: chartColors.borderColor, 
+        borderWidth: 1 
+      }] 
+    };
+  };
   
-  // Helper to render a chart box
-  const renderChartBox = (title, data, chartType, options) => {
-    const isLoading = loadingStats;
-    const hasData = data && data.labels && data.labels.length > 0;
-    
-    let chartContent;
-    if (isLoading) {
-      chartContent = <div className="loading-container"><div className="spinner"></div></div>;
-    } else if (hasData) {
-      if (chartType === 'Doughnut') {
-        chartContent = <Doughnut options={options} data={data} />;
-      } else if (chartType === 'Bar') {
-        chartContent = <Bar options={options} data={data} />;
-      }
-    } else {
-      chartContent = <p className="no-data-msg">No data available for this chart yet.</p>;
-    }
-    
-    return (
-      <div className="dashboard-card">
-        <div className='chart-container article-bias-chart'>
-          {chartContent}
+  const storiesReadData = useMemo(() => {
+    const labels = statsData?.dailyCounts?.map(item => item.date) || [];
+    const data = statsData?.dailyCounts?.map(item => item.count) || [];
+    const defaultColor = chartColors.accentPrimary;
+    return {
+      labels: labels,
+      datasets: [{
+        label: 'Stories Analyzed',
+        data: data,
+        fill: false,
+        tension: 0.1,
+        borderColor: defaultColor, 
+        pointBackgroundColor: defaultColor,
+        pointBorderColor: defaultColor,
+      }],
+    };
+  }, [statsData?.dailyCounts, chartColors]);
+
+  // Prepare data for all charts
+  const leanReadData = prepareLeanData(statsData?.leanDistribution_read);
+  const categoryReadData = prepareCategoryData(statsData?.categoryDistribution_read);
+  const topSourcesData = prepareTopSourcesData(statsData?.topSources_read);
+  const sentimentReadData = prepareSentimentData(statsData?.sentimentDistribution_read);
+  
+  const totals = statsData?.totalCounts || [];
+  const totalAnalyzed = getActionCount(totals, 'view_analysis');
+  const totalLeanArticles = statsData?.leanDistribution_read?.reduce((sum, item) => sum + item.count, 0) || 0;
+
+  // --- RENDER LOGIC ---
+  return (
+    <div className="dashboard-page reading-habits-page">
+      
+      {/* --- Page Header --- */}
+      <div className="dashboard-header">
+        <h1>Reading Habits</h1>
+        <nav className="dashboard-nav-links">
+          <NavLink to="/my-dashboard" className={({isActive}) => isActive ? "active" : ""}>My Dashboard</NavLink>
+          <NavLink to="/reading-habits" className={({isActive}) => isActive ? "active" : ""}>Reading Habits</NavLink>
+          <NavLink to="/saved-articles" className={({isActive}) => isActive ? "active" : ""}>Saved Articles</NavLink>
+          <NavLink to="/account-settings" className={({isActive}) => isActive ? "active" : ""}>Account</NavLink>
+        </nav>
+      </div>
+
+      {/* --- Section: Detailed Charts --- */}
+      <div className="section-title-header">
+        <h2 className="section-title">Detailed Breakdowns</h2>
+        <div className="header-actions">
+            <div className="date-range-selector"> <span>Viewing All-Time Stats</span> </div>
         </div>
       </div>
-    );
-  };
-  
-  // This is the main component render
-  return (
-    <div className="dashboard-page mobile-only-page">
-      <div className="dashboard-content-wrapper">
-        {/* --- This page uses a single-column layout --- */}
-        <div className="dashboard-left-column">
-           <div className="section-title-header">
-             <h2 className="section-title no-border">Reading Habits</h2>
-             <div className="header-actions"> 
-                 <Link to="/my-dashboard" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
-                   &lt; Back to Dashboard
-                 </Link>
-             </div>
-           </div>
-           
-            <div className="mobile-charts-column full-details-page">
-                
-              {/* Top Categories */}
-              {renderChartBox('Top Categories (Analyzed)', categoryReadData, 'Bar', getBarChartOptions('Top Categories (Analyzed)'))}
 
-              {/* Political Lean (Analyzed) */}
-              {renderChartBox('Political Lean (Analyzed)', leanReadData, 'Doughnut', getDoughnutChartOptions('Political Lean (Analyzed)'))}
-              
-              {/* Article Quality */}
-              {renderChartBox('Article Quality (Analyzed)', qualityReadData, 'Doughnut', getDoughnutChartOptions('Article Quality (Analyzed)'))}
-
-              {/* Top Sources */}
-              {renderChartBox('Top Sources (Analyzed)', topSourcesData, 'Bar', getBarChartOptions('Top Sources (Analyzed)'))}
-              
-              {/* Sentiment Breakdown */}
-              {renderChartBox('Sentiment Breakdown (Analyzed)', sentimentData, 'Doughnut', getDoughnutChartOptions('Sentiment Breakdown (Analyzed)'))}
-              
-              {/* Political Lean (Shared) */}
-              {renderChartBox('Political Lean (Shared)', leanSharedData, 'Doughnut', getDoughnutChartOptions('Political Lean (Shared)'))}
-                
-              {error && <p style={{ color: 'red', textAlign: 'center', marginTop: '20px' }}>{error}</p>}
+      {/* --- This grid is VISIBLE on mobile --- */}
+      <div className="dashboard-grid">
+      
+        {/* Stories Analyzed Over Time (Full Width) */}
+        <div className="dashboard-card full-width-chart-card stories-read-card"> 
+            <div className="chart-container stories-read-chart">
+               {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
+                : (statsData?.dailyCounts?.length > 0) ? ( <Line options={storiesReadOptions} data={storiesReadData} /> )
+                : ( <p className="no-data-msg">No analysis data for this period.</p> )}
             </div>
+        </div>
+        
+        {/* Top Categories (Bar Chart) */}
+         <div className="dashboard-card">
+           <div className="chart-container article-bias-chart">
+               {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
+               : (totalAnalyzed > 0 && categoryReadData.labels.length > 0) ? ( <Bar options={getBarChartOptions('Top Categories (Analyzed)')} data={categoryReadData} /> ) 
+               : ( <p className="no-data-msg">No category data for this period.</p> )}
+           </div>
+         </div>
 
-        </div> {/* --- End Left Column --- */}
-      </div> {/* --- End Content Wrapper --- */}
+        {/* Top Sources (Bar Chart) */}
+         <div className="dashboard-card">
+           <div className="chart-container article-bias-chart">
+               {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
+               : (totalAnalyzed > 0 && topSourcesData.labels.length > 0) ? ( <Bar options={getBarChartOptions('Top Sources (Analyzed)')} data={topSourcesData} /> ) 
+               : ( <p className="no-data-msg">No source data for this period.</p> )}
+           </div>
+         </div>
+
+        {/* Political Lean (Analyzed - Doughnut) */}
+         <div className="dashboard-card">
+           <div className="chart-container article-bias-chart">
+               {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
+               : (totalLeanArticles > 0) ? ( <Doughnut options={getDoughnutChartOptions('Political Lean (Analyzed)')} data={leanReadData} /> )
+               : ( <p className="no-data-msg">No lean data for this period.</p> )}
+           </div>
+         </div>
+         
+         {/* Sentiment Breakdown (Doughnut Chart) */}
+         <div className="dashboard-card">
+           <div className="chart-container article-bias-chart">
+               {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
+               : (totalAnalyzed > 0 && sentimentReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('Sentiment Breakdown (Analyzed)')} data={sentimentReadData} /> ) 
+               : ( <p className="no-data-msg">No sentiment data for this period.</p> )}
+           </div>
+         </div>
+         
+      </div> {/* End dashboard-grid */}
+
+      {error && <p style={{ color: 'red', textAlign: 'center', marginTop: '20px' }}>{error}</p>}
+
     </div> // End dashboard-page
   );
 }

@@ -773,8 +773,9 @@ function AppWrapper() {
         {/* --- ADD THE ROUTE FOR PROFILE CREATION --- */}
         <Route path="/create-profile" element={<CreateProfile />} />
 
-        {/* --- UPDATED: Route now uses MyNewsBias --- */}
-        <Route path="/profile" element={ profile ? <MyNewsBias /> :
+        {/* --- *** MODIFICATION HERE *** --- */}
+        {/* --- Pass the 'theme' prop to MyNewsBias --- */}
+        <Route path="/profile" element={ profile ? <MyNewsBias theme={theme} /> :
           <div className="loading-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
             <div className="spinner"></div>
           </div>
@@ -929,7 +930,7 @@ function CustomSelect({ name, value, options, onChange }) {
 // --- Sidebar (UPDATED with CustomSelect and new Quality Labels) ---
 function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
-  const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
+  const leans = ['All Leans', 'All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
 
   const qualityLevels = [
     { value: 'All Quality Levels', label: 'All Quality Levels' },

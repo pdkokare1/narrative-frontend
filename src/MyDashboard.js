@@ -58,7 +58,10 @@ function MyDashboard() {
          borderColor: isDark ? '#333333' : '#EAEAEA',
          tooltipBg: isDark ? '#2C2C2C' : '#FDFDFD',
          categoryPalette: isDark ? categoryColorsDark : categoryColorsLight,
-         accentPrimary: isDark ? '#B38F5F' : '#2E4E6B'
+         accentPrimary: isDark ? '#B38F5F' : '#2E4E6B',
+         // --- ADDED: Hardcoded trend colors ---
+         trendUp: isDark ? '#4CAF50' : '#2E7D32',
+         trendDown: isDark ? '#E57373' : '#C62828',
       };
    }, [theme]);
 
@@ -173,13 +176,16 @@ function MyDashboard() {
 
   const prepareTopSourcesData = (rawData) => {
     const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10).reverse();
+    // --- UPDATED: Use same logic as prepareCategoryData ---
+    const themeCategoryColors = chartColors.categoryPalette;
     return {
       labels: sortedData.map(d => d.source),
       datasets: [{
         label: 'Articles Analyzed',
         data: sortedData.map(d => d.count),
-        backgroundColor: chartColors.accentPrimary,
-        borderWidth: 0,
+        backgroundColor: sortedData.map((_, i) => themeCategoryColors[i % themeCategoryColors.length]),
+        borderColor: chartColors.borderColor,
+        borderWidth: 1,
       }],
     };
   };
@@ -207,7 +213,25 @@ function MyDashboard() {
   const storiesReadData = useMemo(() => {
     const labels = statsData?.dailyCounts?.map(item => item.date) || [];
     const data = statsData?.dailyCounts?.map(item => item.count) || [];
-    const defaultColor = chartColors.accentPrimary;
+    
+    // --- UPDATED: Conditional coloring logic ---
+    const getSegmentBorderColor = (ctx) => {
+      const y1 = ctx.p0.parsed.y;
+      const y2 = ctx.p1.parsed.y;
+      if (y2 > y1) return chartColors.trendUp;
+      if (y2 < y1) return chartColors.trendDown;
+      return chartColors.textTertiary; // Neutral color for no change
+    };
+
+    const getPointBackgroundColor = (ctx) => {
+      if (ctx.dataIndex === 0) return chartColors.accentPrimary; // First point
+      const y1 = ctx.chart.data.datasets[0].data[ctx.dataIndex - 1];
+      const y2 = ctx.chart.data.datasets[0].data[ctx.dataIndex];
+      if (y2 > y1) return chartColors.trendUp;
+      if (y2 < y1) return chartColors.trendDown;
+      return chartColors.textTertiary;
+    };
+    
     return {
       labels: labels,
       datasets: [{
@@ -215,12 +239,17 @@ function MyDashboard() {
         data: data,
         fill: false,
         tension: 0.1,
-        borderColor: defaultColor,
-        pointBackgroundColor: defaultColor,
-        pointBorderColor: defaultColor,
+        // --- UPDATED: Use conditional segment/point colors ---
+        segment: {
+          borderColor: getSegmentBorderColor,
+        },
+        pointBackgroundColor: getPointBackgroundColor,
+        pointBorderColor: (ctx) => getPointBackgroundColor(ctx), // Match border
+        // --- END OF UPDATE ---
       }],
     };
   }, [statsData?.dailyCounts, chartColors]);
+  // --- END OF UPDATE ---
 
   const leanReadData = prepareLeanData(statsData?.leanDistribution_read);
   const categoryReadData = prepareCategoryData(statsData?.categoryDistribution_read);

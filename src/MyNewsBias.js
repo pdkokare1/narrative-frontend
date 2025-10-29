@@ -46,16 +46,12 @@ const categoryColorsLight = ['#2E4E6B', '#3E6A8E', '#5085B2', '#63A0D6', '#243E5
 
 
 // --- Main Component ---
-// --- *** MODIFICATION: Added 'theme' prop ---
 function MyNewsBias({ theme }) {
   const [statsData, setStatsData] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState('');
 
-  // --- *** REMOVED: Internal theme state and useEffect no longer needed ---
-
    const chartColors = useMemo(() => {
-      // --- *** MODIFICATION: Use 'theme' prop directly ---
       const isDark = theme === 'dark';
       return {
          textPrimary: isDark ? '#EAEAEA' : '#2C2C2C',
@@ -65,7 +61,7 @@ function MyNewsBias({ theme }) {
          tooltipBg: isDark ? '#2C2C2C' : '#FDFDFD',
          categoryPalette: isDark ? categoryColorsDark : categoryColorsLight,
       };
-   }, [theme]); // --- *** MODIFICATION: Depend on 'theme' prop ---
+   }, [theme]);
 
   // Fetch aggregated stats
   useEffect(() => {
@@ -89,21 +85,18 @@ function MyNewsBias({ theme }) {
       plugins: { legend: { display: false }, tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary }, title: { display: true, text: title, color: chartColors.textPrimary, font: { size: 14 } } },
    }), [chartColors]);
    
-   // --- *** MODIFICATION: Added title to storiesReadOptions *** ---
    const storiesReadOptions = useMemo(() => ({ /* ... */
       responsive: true, maintainAspectRatio: false,
       scales: { x: { type: 'time', time: { unit: 'day', tooltipFormat: 'MMM d, yyyy', displayFormats: { day: 'MMM d' }}, title: { display: true, text: 'Date', color: chartColors.textSecondary }, ticks: { color: chartColors.textTertiary }, grid: { color: chartColors.borderColor }}, y: { beginAtZero: true, title: { display: true, text: 'Number of Stories', color: chartColors.textSecondary }, ticks: { color: chartColors.textTertiary, stepSize: 1 }, grid: { color: chartColors.borderColor }}, },
       plugins: { 
         legend: { display: false }, 
         tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary },
-        // --- *** ADDED THIS TITLE BLOCK *** ---
         title: {
           display: true,
           text: 'Stories Analyzed Over Time',
           color: chartColors.textPrimary,
           font: { size: 14 }
         }
-        // --- *** END OF ADDED BLOCK *** ---
       },
    }), [chartColors]);
 
@@ -132,11 +125,9 @@ function MyNewsBias({ theme }) {
     };
   };
   
-  // --- *** MODIFICATION: Updated prepareQualityData to group +/- grades *** ---
   const prepareQualityData = (rawData) => { /* ... */
     const rawCountsMap = (rawData || []).reduce((acc, item) => { acc[item.grade] = item.count; return acc; }, {});
     const dbCounts = rawCountsMap;
-    // --- *** THIS LOGIC IS UPDATED *** ---
     const data = [ 
       dbCounts['A+'] || 0, 
       (dbCounts['A'] || 0) + (dbCounts['A-'] || 0), 
@@ -145,7 +136,6 @@ function MyNewsBias({ theme }) {
       (dbCounts['D+'] || 0) + (dbCounts['D'] || 0) + (dbCounts['D-'] || 0) + (dbCounts['F'] || 0) + (dbCounts['D-F'] || 0), 
       dbCounts[null] || 0 
     ];
-    // --- *** END OF UPDATE *** ---
     const backgroundColors = qualityLabels.map(label => qualityColors[label] || '#a1a1aa');
     const filteredLabels = qualityLabels.filter((_, index) => data[index] > 0);
     const filteredData = data.filter(count => count > 0);
@@ -153,12 +143,10 @@ function MyNewsBias({ theme }) {
     return { labels: filteredLabels, datasets: [{ label: 'Articles Read', data: filteredData, backgroundColor: filteredColors, borderColor: chartColors.borderColor, borderWidth: 1 }] };
   };
 
-  // --- *** MODIFICATION: Added Green/Red color logic *** ---
   const storiesReadData = useMemo(() => {
     const labels = statsData?.dailyCounts?.map(item => item.date) || [];
     const data = statsData?.dailyCounts?.map(item => item.count) || [];
 
-    // --- NEW: Segment color logic ---
     const defaultColor = 'var(--accent-primary)';
     const upColor = '#4CAF50'; // Green
     const downColor = '#dc2626'; // Red
@@ -170,10 +158,8 @@ function MyNewsBias({ theme }) {
         data: data,
         fill: false,
         tension: 0.1,
-        // --- ADD SEGMENT STYLING ---
         segment: {
           borderColor: (ctx) => {
-            // ctx.p0 is the first point, ctx.p1 is the second point of the line
             if (ctx.p0.skip || ctx.p1.skip || !ctx.p1.raw || !ctx.p0.raw) {
               return defaultColor; // Use default for gaps or missing data
             }
@@ -186,7 +172,6 @@ function MyNewsBias({ theme }) {
             return defaultColor; // Default for no change
           }
         },
-        // --- Set the point colors too for consistency ---
         pointBackgroundColor: (ctx) => {
           if (ctx.dataIndex === 0) return defaultColor;
           const current = data[ctx.dataIndex];
@@ -244,12 +229,11 @@ function MyNewsBias({ theme }) {
 
         {/* --- Left Column (Fixed) --- */}
         <div className="dashboard-left-column">
-           {/* Section Title + Time Selector + Back Button Aligned */}
+           {/* --- *** MODIFICATION: Removed date-range-selector *** --- */}
            <div className="section-title-header">
              <h2 className="section-title no-border">Your Activity</h2>
              <div className="header-actions"> 
-                 <div className="date-range-selector"> <span>Viewing All-Time Stats</span> </div>
-                 {/* --- *** RESTORED Back Button HERE *** --- */}
+                 {/* --- "Viewing All-Time Stats" was moved --- */}
                  <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
                    Back to Articles
                  </Link>
@@ -307,9 +291,14 @@ function MyNewsBias({ theme }) {
 
         {/* --- Right Column (Scrollable) --- */}
         <div className="dashboard-right-column">
-          {/* Sticky Header Wrapper */}
+          {/* --- *** MODIFICATION: Replaced simple h2 with a .section-title-header *** --- */}
           <div className="sticky-header-wrapper">
-             <h2 className="section-title">Your Reading Habits Dashboard</h2> 
+             <div className="section-title-header">
+                <h2 className="section-title no-border">Your Reading Habits Dashboard</h2>
+                <div className="header-actions">
+                    <div className="date-range-selector"> <span>Viewing All-Time Stats</span> </div>
+                </div>
+             </div>
           </div>
 
           {/* Stories Analyzed Over Time (Full Width) */}
@@ -346,7 +335,7 @@ function MyNewsBias({ theme }) {
              <div className="dashboard-card">
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && qualityReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('Article Quality (Analyzed)')} data={qualityReadData} /> )
+                   : (totalAnalyzed > 0 && qualityReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('Article Quality (Analyzed)')} data={qualityReadData} /> ) 
                    : ( <p className="no-data-msg">No analysis data for this period.</p> )}
                </div>
              </div>
@@ -363,8 +352,6 @@ function MyNewsBias({ theme }) {
           </div> {/* End dashboard-grid (right column) */}
 
           {error && <p style={{ color: 'red', textAlign: 'center', marginTop: '20px' }}>{error}</p>}
-
-          {/* Removed Back Button */}
 
         </div> {/* --- End Right Column --- */}
       </div> {/* --- End Content Wrapper --- */}

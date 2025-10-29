@@ -567,7 +567,7 @@ function AppWrapper() {
           toggleTheme={toggleTheme}
           onToggleSidebar={toggleSidebar}
           user={authState.user}
-          onLogout={handleLogout}
+          // onLogout={handleLogout} // --- REMOVED from Header ---
           username={profile.username}
         />
       )}
@@ -596,6 +596,7 @@ function AppWrapper() {
                   articleCount={totalArticlesCount}
                   isOpen={isSidebarOpen}
                   onClose={closeSidebar} // Pass closeSidebar here
+                  onLogout={handleLogout} // --- ADDED: Pass logout ---
                 />
 
 
@@ -758,7 +759,8 @@ function CustomTooltip({ visible, text, x, y }) {
 
 
 // --- Header ---
-function Header({ theme, toggleTheme, onToggleSidebar, user, username, onLogout }) {
+// --- UPDATED: Removed user, onLogout props ---
+function Header({ theme, toggleTheme, onToggleSidebar, username }) {
   return (
     <header className="header">
       <div className="header-left">
@@ -777,20 +779,25 @@ function Header({ theme, toggleTheme, onToggleSidebar, user, username, onLogout 
       </div>
 
       <div className="header-right">
-        {user && (
-          <div className="user-info">
-            <Link to="/my-dashboard" className="user-email" title="View your dashboard" style={{textDecoration: 'none'}}>
-              {username}
-            </Link>
-            <button onClick={onLogout} className="logout-btn" title="Sign Out">
-              Sign Out
-            </button>
-          </div>
-        )}
+        {/* --- REMOVED user-info div and desktop logout --- */}
+        {/* {user && ( ... )} */}
+
+        {/* --- ADDED: Display username directly on desktop --- */}
+        <Link to="/my-dashboard" className="user-email header-username-desktop" title="View your dashboard" style={{textDecoration: 'none'}}>
+          {username}
+        </Link>
+        {/* --- END ADDED --- */}
+
 
         <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
           {theme === 'dark' ? '🌙' : '☀️'}
         </button>
+
+        {/* --- Mobile Only Logout Button --- */}
+         <button onClick={null /* Handled in Sidebar now */} className="logout-btn header-logout-mobile" title="Sign Out">
+           Sign Out
+         </button>
+        {/* --- End Mobile Only --- */}
       </div>
     </header>
   );
@@ -859,8 +866,9 @@ function CustomSelect({ name, value, options, onChange }) {
   );
 }
 
-// --- Sidebar (Updated User Nav) ---
-function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
+// --- Sidebar ---
+// --- UPDATED: Added onLogout prop ---
+function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose, onLogout }) {
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
   const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
   const regions = [
@@ -888,84 +896,86 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
     onFilterChange({ ...filters, [name]: value });
   };
 
-  // Use NavLink for active styling and pass onClose
+  // --- UPDATED: Use simple NavLink now ---
   const SidebarNavLink = ({ to, children }) => (
     <NavLink
       to={to}
-      className={({isActive}) => "sidebar-user-link " + (isActive ? "active" : "")}
+      className={({ isActive }) => isActive ? "active-link" : ""}
       onClick={onClose} // Close sidebar on nav click
     >
       {children}
     </NavLink>
   );
+  // --- END UPDATE ---
 
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
-      <div>
+      {/* --- Main Content Sections (User Nav, Filters, Sort) --- */}
+      <div className="sidebar-main-content">
         <div className="sidebar-header-mobile">
           <h3>Menu</h3>
           <button className="sidebar-close-btn" onClick={onClose} title="Close Menu">×</button>
         </div>
 
         {/* --- User Navigation Section --- */}
-        <div className="filter-section sidebar-user-nav">
+        <div className="sidebar-section sidebar-user-nav">
           <h3>Your Account</h3>
-          <SidebarNavLink to="/my-dashboard">Dashboard</SidebarNavLink> {/* Removed Reading Habits */}
-          <SidebarNavLink to="/saved-articles">Saved Articles</SidebarNavLink>
-          <SidebarNavLink to="/account-settings">Account Settings</SidebarNavLink>
+          <ul>
+            <li><SidebarNavLink to="/my-dashboard">Dashboard</SidebarNavLink></li>
+            <li><SidebarNavLink to="/saved-articles">Saved Articles</SidebarNavLink></li>
+            <li><SidebarNavLink to="/account-settings">Account Settings</SidebarNavLink></li>
+          </ul>
         </div>
         {/* --- End User Nav --- */}
 
-        <div className="filter-section">
-          <h3>Filters</h3>
-          <CustomSelect
-            name="region"
-            value={filters.region}
-            options={regions}
-            onChange={handleChange}
-          />
+        {/* --- Filters Section --- */}
+        <div className="sidebar-section">
+          <h3>Filters</h3> {/* --- UPDATED: General Filters Heading --- */}
+          <div className="filter-group"> {/* Wrapper for individual filters */}
+            <CustomSelect
+              name="region"
+              value={filters.region}
+              options={regions}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="filter-group">
+            <CustomSelect
+              name="articleType"
+              value={filters.articleType}
+              options={articleTypes}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="filter-group">
+            <CustomSelect
+              name="category"
+              value={filters.category}
+              options={categories}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="filter-group">
+            <CustomSelect
+              name="lean"
+              value={filters.lean}
+              options={leans}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="filter-group">
+            <CustomSelect
+              name="quality"
+              value={filters.quality}
+              options={qualityLevels}
+              onChange={handleChange}
+            />
+          </div>
         </div>
+        {/* --- End Filters --- */}
 
-        <div className="filter-section">
-          <CustomSelect
-            name="articleType"
-            value={filters.articleType}
-            options={articleTypes}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="filter-section">
-          <h3>Category</h3>
-          <CustomSelect
-            name="category"
-            value={filters.category}
-            options={categories}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="filter-section">
-          <h3>Political Leaning</h3>
-          <CustomSelect
-            name="lean"
-            value={filters.lean}
-            options={leans}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="filter-section">
-          <h3>Quality Level</h3>
-          <CustomSelect
-            name="quality"
-            value={filters.quality}
-            options={qualityLevels}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="filter-section">
+        {/* --- Sort By Section --- */}
+        <div className="sidebar-section">
           <h3>Sort By</h3>
           <CustomSelect
             name="sort"
@@ -974,13 +984,23 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
             onChange={handleChange}
           />
         </div>
+        {/* --- End Sort By --- */}
       </div>
 
-      {articleCount > 0 && (
-        <div className="filter-results">
-          <p>{articleCount} stories found</p>
-        </div>
-      )}
+      {/* --- Footer Area (Results, Logout) --- */}
+      <div className="sidebar-footer">
+        {/* --- NEW: Logout Button --- */}
+        <button onClick={onLogout} className="sidebar-logout-btn">
+          Sign Out
+        </button>
+        {/* --- END NEW --- */}
+
+        {articleCount > 0 && (
+          <div className="filter-results">
+            <p>{articleCount} stories found</p>
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

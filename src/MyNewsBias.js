@@ -229,11 +229,10 @@ function MyNewsBias({ theme }) {
 
         {/* --- Left Column (Fixed) --- */}
         <div className="dashboard-left-column">
-           {/* --- *** MODIFICATION: Removed date-range-selector *** --- */}
+           {/* This layout matches your request */}
            <div className="section-title-header">
              <h2 className="section-title no-border">Your Activity</h2>
              <div className="header-actions"> 
-                 {/* --- "Viewing All-Time Stats" was moved --- */}
                  <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
                    Back to Articles
                  </Link>
@@ -291,7 +290,7 @@ function MyNewsBias({ theme }) {
 
         {/* --- Right Column (Scrollable) --- */}
         <div className="dashboard-right-column">
-          {/* --- *** MODIFICATION: Replaced simple h2 with a .section-title-header *** --- */}
+          {/* This layout matches your request */}
           <div className="sticky-header-wrapper">
              <div className="section-title-header">
                 <h2 className="section-title no-border">Your Reading Habits Dashboard</h2>

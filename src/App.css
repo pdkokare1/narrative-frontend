@@ -243,7 +243,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  /* justify-content: space-between; */ /* MOVED */
   flex-shrink: 0; /* NEW: Prevent sidebar from shrinking */
   transition: margin-left 0.3s ease-in-out; /* (FIX) Animate margin */
   margin-left: 0;
@@ -279,18 +279,82 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 /* --- End Mobile Sidebar --- */
 
 
-.filter-section {
-  margin-bottom: 20px; /* (FIX) Reduced margin */
+/* --- UPDATED: Sidebar Content Sections --- */
+/* Container for main sidebar content (nav, filters, sort) */
+.sidebar-main-content {
+  flex-grow: 1; /* Allows footer to be pushed down */
+  overflow-y: auto; /* Scroll main content if needed */
+  /* Hide scrollbar */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
+.sidebar-main-content::-webkit-scrollbar { display: none; }
 
-.filter-section h3 {
-  font-size: 10px; /* (FIX) Scaled down from 11px */
+.sidebar-section { margin-bottom: 25px; } /* Increased spacing */
+.sidebar-section h3 {
+  font-size: 10px;
   font-weight: 600;
   color: var(--accent-primary);
-  margin-bottom: 10px; /* (FIX) Reduced margin */
+  margin-bottom: 12px; /* Increased spacing */
   text-transform: uppercase;
   letter-spacing: 0.8px;
 }
+
+.filter-group { margin-bottom: 15px; } /* Increased spacing between filter dropdowns */
+
+/* Styles specific to User Nav list */
+.sidebar-user-nav ul { list-style: none; padding: 0; margin: 0; }
+.sidebar-user-nav li { margin-bottom: 5px; } /* Increased spacing */
+.sidebar-user-nav a {
+  display: block;
+  padding: 8px 10px; /* Smaller padding */
+  font-size: 12px; /* Smaller font */
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+.sidebar-user-nav a:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+.sidebar-user-nav a.active-link { /* Style for active route */
+  background: var(--accent-primary);
+  color: white;
+  font-weight: 600;
+}
+
+/* Sidebar Footer Area */
+.sidebar-footer {
+  margin-top: auto; /* Push to bottom */
+  padding-top: 15px; /* Space above footer items */
+  border-top: 1px solid var(--border-light);
+}
+
+/* --- UPDATED: Sidebar Logout Button Styling --- */
+.sidebar-logout-btn {
+  display: block;
+  width: 100%;
+  padding: 10px 12px; /* Consistent padding */
+  margin-bottom: 15px; /* Space between logout and results */
+  font-size: 12px; /* Consistent font size */
+  font-weight: 600; /* Bold */
+  color: var(--text-secondary); /* Match nav links */
+  background-color: transparent; /* Transparent background */
+  border: 1px solid var(--border-color); /* Subtle border */
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+.sidebar-logout-btn:hover {
+  background-color: var(--bg-elevated); /* Match nav link hover */
+  color: var(--accent-primary); /* Accent color on hover */
+  border-color: var(--accent-primary); /* Accent border on hover */
+}
+/* --- END UPDATE --- */
+
 
 /* --- (FIX) Custom Select Styling (Moved outside media query) --- */
 .custom-select-container {
@@ -371,7 +435,9 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 
 
 .filter-results {
-  margin-top: 20px;
+  /* margin-top: auto; */ /* No longer needed */
+  /* padding-top: 20px; */ /* No longer needed */
+  margin-top: 0;
   padding: 10px; /* (FIX) Reduced padding */
   background: var(--bg-primary);
   border-radius: 6px;
@@ -1219,58 +1285,27 @@ button:disabled, button:disabled:hover {
   /* --- *** NEW: User Navigation Mobile Styles *** --- */
   .sidebar-user-nav {
     display: block; /* Show on mobile */
-    margin-bottom: 25px;
+    /* margin-bottom: 25px; */ /* Handled by sidebar-section */
     padding-bottom: 20px;
     border-bottom: 1px solid var(--border-color);
   }
-  .sidebar-user-nav h3 {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--accent-primary);
-    margin-bottom: 15px;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-  }
   .sidebar-user-nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+    /* Styles moved to .sidebar-user-nav a/li */
   }
   .sidebar-user-nav li {
-    margin-bottom: 5px;
-  }
-  .sidebar-user-nav li:last-child {
-    margin-bottom: 0;
+    /* Styles moved to .sidebar-user-nav a/li */
   }
   .sidebar-user-nav a {
-    display: block;
-    padding: 10px 12px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    text-decoration: none;
+    /* Styles moved to .sidebar-user-nav a/li */
   }
   .sidebar-user-nav a:hover {
-    background: var(--bg-elevated);
-    color: var(--text-primary);
+    /* Styles moved to .sidebar-user-nav a/li */
   }
   .sidebar-user-nav a.active-link { /* Style for active route */
-    background: var(--accent-primary);
-    color: white;
-    font-weight: 600;
+    /* Styles moved to .sidebar-user-nav a/li */
   }
   /* --- *** END NEW STYLES *** --- */
 
-  /* --- *** NEW: Separate Filters Wrapper *** --- */
-  .sidebar-filters-wrapper {
-      flex-grow: 1; /* Allow filters to take remaining space if needed */
-      /* No other specific styles needed, it just contains the filters */
-  }
-  /* --- *** END NEW WRAPPER *** --- */
-
-  .filter-results { margin-top: auto; /* Push to bottom */ padding-top: 20px; }
 
   /* --- (FIX) Content Area Scroll --- */
   .content {
@@ -1436,95 +1471,76 @@ button:disabled, button:disabled:hover {
 
 
 /* ==================== HEADER USER INFO ==================== */
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 8px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-}
+/* --- REMOVED user-info div styles --- */
+/* .user-info { ... } */
+/* .user-email { ... } */
+/* .logout-btn { ... } */
 
-.user-email {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  /* Truncate long emails */
-  max-width: 150px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* --- UPDATED: Header Username (Desktop Only) --- */
+.header-username-desktop {
+  display: none; /* Hide by default */
 }
+@media (min-width: 769px) { /* Show only on desktop */
+  .header-username-desktop {
+    display: block; /* Show it */
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 6px 10px; /* Adjusted padding */
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+  }
+  .header-username-desktop:hover {
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+    text-decoration: none; /* Keep no underline */
+  }
+}
+/* --- END UPDATE --- */
 
-.logout-btn {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--accent-primary);
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 4px 6px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-.logout-btn:hover {
-  background: var(--accent-primary);
-  color: white;
-}
+/* Hide mobile logout button in header on desktop */
+.header-logout-mobile { display: none; }
 
 /* --- Mobile styles for user info --- */
 @media (max-width: 768px) {
-  .header-right {
-    gap: 10px;
-  }
-  
-  .user-info {
-    /* Hide the full user info box on mobile */
-    display: none;
-  }
-  
-  /* --- We will show a logout button in the sidebar instead --- */
-  /* --- (For a future update, this is fine for now) --- */
-  /* --- Or, if we want to show it, we can hide the email --- */
-  
-  .user-info {
-    display: flex; /* Let's show it */
-    padding: 0;
-    background: none;
-    border: none;
-  }
-  
-  .user-email {
-    display: none; /* Hide email on mobile */
-  }
-  
-  .logout-btn {
-    /* Style it like the theme toggle */
-    width: 36px;
-    height: 36px;
-    font-size: 10px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-elevated);
-    color: var(--text-tertiary);
-  }
-  .logout-btn:hover {
-     background: var(--bg-elevated);
-     color: var(--accent-primary);
-     border-color: var(--accent-primary);
-  }
+  /* --- REMOVED old mobile rules --- */
+  /* .header-right { ... } */
+  /* .user-info { ... } */
+  /* .user-email { ... } */
+  /* .logout-btn { ... } */
+
+   /* --- REMOVED: Hide mobile logout button in header if sidebar exists --- */
+   /* Handled by moving logout button to sidebar only */
+   /* .header-logout-mobile { display: none; } */
 }
 
-/* --- *** NEW: Hide User Nav on Desktop *** --- */
+
+/* --- *** Sidebar desktop/mobile visibility *** --- */
 @media (min-width: 769px) {
-  .sidebar-user-nav {
-    display: none;
-  }
-  .sidebar {
-      /* Revert mobile changes */
-      justify-content: space-between;
-  }
+   /* --- Re-enable justify-content only on desktop --- */
+   .sidebar {
+       justify-content: space-between;
+   }
+   .sidebar-main-content { overflow-y: visible; } /* No scroll needed on desktop */
 }
-/* --- *** END NEW RULE *** --- */
+
+/* --- Mobile Sidebar adjustments --- */
+@media (max-width: 768px) {
+    /* --- REMOVE justify-content for mobile scroll --- */
+    .sidebar {
+        justify-content: flex-start;
+    }
+    .sidebar-main-content {
+        flex-grow: 1; /* Take up space */
+        overflow-y: auto; /* Allow scrolling */
+    }
+    .sidebar-footer {
+        flex-shrink: 0; /* Prevent footer shrinking */
+        margin-top: 15px; /* Ensure some space if content is short */
+    }
+}

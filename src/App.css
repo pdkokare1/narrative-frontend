@@ -192,7 +192,9 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 
 
 .header-right {
-  /* No changes needed, flexbox handles positioning */
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Add gap between elements */
 }
 
 .theme-toggle {
@@ -410,6 +412,11 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   justify-content: center;
   min-height: 400px;
 }
+/* --- NEW: Loading for full pages --- */
+.loading-container.page-loader {
+  min-height: calc(100vh - 60px); /* Fill page below header */
+  background-color: var(--bg-primary);
+}
 
 .spinner {
   width: 48px;
@@ -441,7 +448,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   font-weight: 500;
   /* (FIX) Position absolutely at the top of the .content area */
   position: absolute;
-  top: 0; 
+  top: 0;
   left: 0;
   right: 0;
   z-index: 1; /* (FIX) Changed from 0 */
@@ -891,10 +898,10 @@ button:disabled, button:disabled:hover {
   flex-shrink: 0; width: 120px; height: 120px; background: var(--bg-secondary);
   border-radius: 6px; overflow: hidden; border: 1px solid var(--border-light);
 }
-.coverage-image img { 
-  width: 100%; 
-  height: 100%; 
-  object-fit: cover; 
+.coverage-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   object-position: center; /* (FIX) Added */
 }
 .image-placeholder-small {
@@ -1111,7 +1118,7 @@ button:disabled, button:disabled:hover {
 
 /* --- (FIX) MOBILE STYLES (Req 4, 5, 6) --- */
 @media (max-width: 768px) {
-  body { 
+  body {
     font-size: 14px; /* (FIX) Reset font size for mobile */
     line-height: 1.6; /* (FIX) Reset line height for mobile */
     /* --- NEW: Prevent body scroll on mobile --- */
@@ -1151,7 +1158,8 @@ button:disabled, button:disabled:hover {
     padding: 25px 20px; /* Reset padding */
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    /* --- MODIFIED: Remove justify-content for scroll --- */
+    /* justify-content: space-between; */
     overflow-y: auto;
     /* Remove old mobile styles */
     border-bottom: none;
@@ -1172,6 +1180,12 @@ button:disabled, button:disabled:hover {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    /* --- NEW: Stick filter header only inside filter section --- */
+    position: sticky;
+    top: 0;
+    background: var(--bg-secondary);
+    z-index: 1; /* Keep above filters */
+    padding-bottom: 10px; /* Space below header */
   }
   .sidebar-header-mobile h3 {
     font-size: 16px;
@@ -1201,7 +1215,62 @@ button:disabled, button:disabled:hover {
     transform: scale(0.9);
     background: var(--bg-elevated);
   }
-  .filter-results { margin-top: 20px; } /* Ensure margin on mobile */
+
+  /* --- *** NEW: User Navigation Mobile Styles *** --- */
+  .sidebar-user-nav {
+    display: block; /* Show on mobile */
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .sidebar-user-nav h3 {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-primary);
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .sidebar-user-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .sidebar-user-nav li {
+    margin-bottom: 5px;
+  }
+  .sidebar-user-nav li:last-child {
+    margin-bottom: 0;
+  }
+  .sidebar-user-nav a {
+    display: block;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+  .sidebar-user-nav a:hover {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+  }
+  .sidebar-user-nav a.active-link { /* Style for active route */
+    background: var(--accent-primary);
+    color: white;
+    font-weight: 600;
+  }
+  /* --- *** END NEW STYLES *** --- */
+
+  /* --- *** NEW: Separate Filters Wrapper *** --- */
+  .sidebar-filters-wrapper {
+      flex-grow: 1; /* Allow filters to take remaining space if needed */
+      /* No other specific styles needed, it just contains the filters */
+  }
+  /* --- *** END NEW WRAPPER *** --- */
+
+  .filter-results { margin-top: auto; /* Push to bottom */ padding-top: 20px; }
 
   /* --- (FIX) Content Area Scroll --- */
   .content {
@@ -1234,7 +1303,7 @@ button:disabled, button:disabled:hover {
   }
   .pull-indicator {
     position: absolute; /* Keep absolute within .content */
-    top: 0; 
+    top: 0;
     left: 0;
     right: 0;
     z-index: 1; /* (FIX) Ensure it's on top of content */
@@ -1243,7 +1312,7 @@ button:disabled, button:disabled:hover {
 
  /* (FIX) NEW: Ensure the wrapper doesn't interfere with scroll */
   .content-scroll-wrapper {
-     /* No specific styles needed here for mobile, 
+     /* No specific styles needed here for mobile,
         transform is applied inline */
   }
 
@@ -1312,13 +1381,13 @@ button:disabled, button:disabled:hover {
   }
 
   .article-headline { font-size: 16px; } /* Reset for mobile */
-  .article-summary { font-size: 12px; line-height: 1.5; } 
+  .article-summary { font-size: 12px; line-height: 1.5; }
   .article-image { height: 160px; }
   .article-content { padding: 16px; } /* Keep internal padding */
 
   .modal-overlay { padding: 10px;} .compare-modal, .analysis-modal { max-height: 95vh; }
-  .modal-header { padding: 15px 20px; } 
-  .modal-header h2 { 
+  .modal-header { padding: 15px 20px; }
+  .modal-header h2 {
     font-size: 16px; /* (FIX) Smaller title font */
   }
   
@@ -1327,8 +1396,8 @@ button:disabled, button:disabled:hover {
     transform: none; /* Remove base rotation */
   }
   .close-btn:hover {
-    background: var(--accent-primary); 
-    color: white; 
+    background: var(--accent-primary);
+    color: white;
     transform: none; /* Remove desktop hover animation */
   }
   .close-btn:active {
@@ -1337,8 +1406,8 @@ button:disabled, button:disabled:hover {
   }
   /* --- End Close Button Mobile --- */
 
-  .modal-tabs button { font-size: 11px; padding: 10px 12px; } 
-  .modal-body, .modal-content { 
+  .modal-tabs button { font-size: 11px; padding: 10px 12px; }
+  .modal-body, .modal-content {
     padding: 40px 20px; /* (FIX) More T/B padding */
   }
   .overview-grid { grid-template-columns: 1fr 1fr; gap: 15px;} .score-value { font-size: 24px;} .score-label { font-size: 10px;}
@@ -1367,12 +1436,6 @@ button:disabled, button:disabled:hover {
 
 
 /* ==================== HEADER USER INFO ==================== */
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 15px; /* Add gap between elements */
-}
-
 .user-info {
   display: flex;
   align-items: center;
@@ -1453,3 +1516,15 @@ button:disabled, button:disabled:hover {
      border-color: var(--accent-primary);
   }
 }
+
+/* --- *** NEW: Hide User Nav on Desktop *** --- */
+@media (min-width: 769px) {
+  .sidebar-user-nav {
+    display: none;
+  }
+  .sidebar {
+      /* Revert mobile changes */
+      justify-content: space-between;
+  }
+}
+/* --- *** END NEW RULE *** --- */

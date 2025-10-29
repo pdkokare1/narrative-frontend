@@ -1,78 +1,125 @@
 /* In file: src/DashboardPages.css */
+/* This file replaces MyNewsBias.css and styles all new dashboard pages */
 
-/* This is the main page container for dashboard pages */
+/* --- Page Wrapper --- */
 .dashboard-page {
   margin: 0 auto; 
   padding: 15px 15px 30px 15px; 
-  margin-top: 60px; /* Height of header */
+  margin-top: 60px; /* Header height */
   color: var(--text-primary);
   height: calc(100vh - 60px); 
   display: flex; 
   flex-direction: column; 
-  overflow: hidden; 
+  overflow-y: auto; /* Make the whole page scrollable */
   width: 100%; 
-}
 
-/* --- Main Content Flex Wrapper --- */
-.dashboard-content-wrapper { 
-  display: flex; 
-  flex-grow: 1; 
-  gap: 20px; 
-  overflow: hidden; 
-  width: 100%; 
-  padding: 0; 
-}
-
-/* --- Left Column Styles (Desktop) --- */
-/* On desktop, this is the fixed-width summary column */
-.dashboard-left-column { 
-  flex: 0 0 360px; 
-  min-width: 0; 
-  display: flex; 
-  flex-direction: column; 
-  gap: 12px; 
-  overflow-y: auto; /* Allow this column to scroll if content overflows */
-  padding-bottom: 15px; 
-  padding-top: 0; 
-  
-  /* Scrollbar styling */
+  /* Custom scrollbar for this page */
   scrollbar-width: thin; 
-  scrollbar-color: var(--accent-primary) var(--bg-secondary); 
+  scrollbar-color: var(--accent-primary) var(--bg-secondary);
 }
-.dashboard-left-column::-webkit-scrollbar { width: 8px; }
-.dashboard-left-column::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 4px;}
-.dashboard-left-column::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 4px; }
-.dashboard-left-column::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
+.dashboard-page::-webkit-scrollbar { width: 8px; }
+.dashboard-page::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 4px;}
+.dashboard-page::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 4px; }
+.dashboard-page::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
 
-
-/* --- Right Column Styles (Desktop) --- */
-/* This column holds all the charts on desktop */
-.dashboard-right-column { 
-  flex: 1 1 auto; 
-  overflow-y: auto; 
-  min-width: 0; 
-  padding: 0 10px 20px 10px; 
-  padding-top: 0; 
-  scrollbar-width: thin; 
-  scrollbar-color: var(--accent-primary) var(--bg-secondary); 
+/* --- Page Header (Title + Links) --- */
+.dashboard-header {
+  display: flex;
+  flex-direction: column; /* Stack title and nav on mobile */
+  justify-content: space-between;
+  align-items: flex-start; /* Align left */
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 15px;
+  gap: 15px; /* Space between title and nav */
 }
-.dashboard-right-column::-webkit-scrollbar { width: 8px; }
-.dashboard-right-column::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 4px;}
-.dashboard-right-column::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 4px; }
-.dashboard-right-column::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
 
+.dashboard-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
 
-/* --- Header for Section Title + Actions --- */
+.dashboard-nav-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap; /* Allow links to wrap on small screens */
+}
+
+.dashboard-nav-links a,
+.dashboard-nav-links a:visited {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+}
+
+.dashboard-nav-links a:hover {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: var(--bg-elevated);
+}
+
+/* Style for the active link */
+.dashboard-nav-links a.active {
+  color: white;
+  background: var(--gradient-accent);
+  border-color: var(--accent-primary);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* --- Responsive Placeholder Page (Saved, Account) --- */
+.placeholder-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  min-height: 300px;
+  gap: 10px;
+}
+.placeholder-page h2 {
+  font-size: 18px;
+  color: var(--text-secondary);
+}
+.placeholder-page p {
+  color: var(--text-tertiary);
+  margin-bottom: 20px;
+}
+
+/* --- Section Title Header (Used inside pages) --- */
 .section-title-header { 
   display: flex; 
   justify-content: space-between; 
   align-items: baseline; 
-  margin-bottom: 10px; 
+  margin-bottom: 15px; 
   flex-shrink: 0; 
   border-bottom: 1px solid var(--border-color); 
-  padding-bottom: 8px; 
-  padding-top: 10px; 
+  padding-bottom: 10px; 
+  padding-top: 10px;
   width: 100%;
+}
+.section-title-header .section-title {
+  font-size: 18px; 
+  font-weight: 600; 
+  color: var(--text-primary); 
+  margin: 0;
+  /* Flex properties to prevent squishing */
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .header-actions { 
   display: flex; 
@@ -80,7 +127,6 @@
   gap: 10px; 
   flex-shrink: 0; 
 }
-
 .date-range-selector span { 
   font-size: 13px; 
   padding: 4px 8px; 
@@ -89,92 +135,16 @@
   background: var(--bg-secondary); 
   color: var(--text-tertiary); 
   white-space: nowrap; 
-} 
-.btn-small { 
-  padding: 4px 10px !important; 
-  font-size: 10px !important; 
-  line-height: 1.4 !important; 
-  flex-shrink: 0; 
 }
 
-
-/* --- Section Title --- */
-.section-title {
-   grid-column: 1 / -1; 
-   font-size: 18px; 
-   font-weight: 600; 
-   color: var(--text-primary); 
-   margin: 0; 
-   border-bottom: 1px solid var(--border-color); 
-   padding-bottom: 8px; 
-   text-align: left; 
-   width: 100%; 
-   flex-shrink: 0; 
-}
-.section-title.no-border { border-bottom: none; padding-bottom: 0; }
-
-/* NEW: Smaller title for subsections */
-.section-title-small {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--accent-primary);
-  margin-bottom: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-top: 10px;
-}
-/* No top margin for the first one */
-.dashboard-left-column > .section-title-small:first-of-type {
-  margin-top: 0;
-}
-
-
-.section-title-header .section-title { 
-  border-bottom: none; 
-  padding-bottom: 0; 
-  margin-bottom: 0; 
-  margin-right: auto; /* Pushes buttons to the right */
-  flex-grow: 1; 
-  flex-shrink: 1; 
-  min-width: 0; 
-  white-space: nowrap; 
-  overflow: hidden; 
-  text-overflow: ellipsis; 
-} 
-
-
-/* --- Sticky Header Wrapper for Right Column (Desktop) --- */
-.sticky-header-wrapper {
-  position: sticky;
-  top: 0; 
-  background-color: var(--bg-primary); 
-  z-index: 10; 
-  margin: 0 -10px; /* Counteract column padding */
-  padding-left: 10px; 
-  padding-right: 10px;
-  padding-bottom: 10px; /* Space below the line */
-}
-.sticky-header-wrapper .section-title-header {
-  margin-bottom: 0; 
-}
-
-
-/* --- Stat Box Grid --- */
+/* --- Stat Box Grid (Re-used from MyNewsBias.css) --- */
 .stat-box-grid { 
   display: grid; 
-  grid-template-columns: repeat(2, 1fr); 
+  grid-template-columns: repeat(4, 1fr); /* Default to 4 columns */
   gap: 15px; 
   flex-shrink: 0; 
+  margin-bottom: 20px;
 } 
-
-/* --- Dashboard Grid (Desktop Right Column) --- */
-.dashboard-grid { 
-  display: grid; 
-  grid-template-columns: repeat(2, 1fr); 
-  gap: 20px; 
-} 
-
-/* --- Styles common to all cards --- */
 .dashboard-card { 
   background: var(--bg-card-flat); 
   border: 1px solid var(--border-color); 
@@ -189,20 +159,6 @@
 .dashboard-card:hover { 
   border-color: var(--accent-primary); 
 }
-
-
-/* Card Title */
-.dashboard-card h3, .card-header h3 { 
-  font-size: 15px; 
-  font-weight: 600; 
-  color: var(--text-primary); 
-  margin: 0 0 15px 0; 
-  white-space: nowrap; 
-  overflow: hidden; 
-  text-overflow: ellipsis; 
-} 
-
-/* --- Stat Box Styles --- */
 .stat-box { 
   background: var(--bg-secondary); 
   text-align: left; 
@@ -211,14 +167,16 @@
 .stat-box h3 { 
   font-size: 12px; 
   margin-bottom: 6px; 
-  color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 } 
 .stat-number { 
   font-size: 28px; 
   margin-bottom: 6px; 
+  font-weight: 700;
   color: var(--text-primary);
-  font-weight: 600;
 } 
 .stat-description { 
   font-size: 11px; 
@@ -227,13 +185,13 @@
   line-height: 1.3; 
 } 
 
-
-/* --- Lean Summary Card Styles --- */
+/* --- Lean Summary Card (Re-used) --- */
 .lean-summary-card { 
   flex-grow: 1; 
   min-height: 130px; 
   justify-content: center; 
-  padding: 15px; 
+  padding: 20px; 
+  margin-bottom: 20px;
 } 
 .lean-bar { 
   display: flex; 
@@ -258,8 +216,6 @@
 .lean-segment.left { background-color: #dc2626; }
 .lean-segment.center { background-color: #6b7280; }
 .lean-segment.right { background-color: #2563eb; }
-.lean-segment.not-applicable { background-color: #a1a1aa; } /* NEW */
-
 .lean-details { 
   list-style: none; 
   padding: 0; 
@@ -277,32 +233,53 @@
   font-weight: 600; 
   color: var(--text-primary); 
   margin-right: 6px; 
-  min-width: 35px; /* Increased min-width */
+  min-width: 25px; 
   text-align: right; 
   flex-shrink: 0; 
 } 
 
-/* --- Chart Container Styles --- */
+/* --- Dashboard Chart Grid (Re-used) --- */
+.dashboard-grid { 
+  display: grid; 
+  /* --- Desktop: 2x2 grid for charts --- */
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 20px; 
+} 
+.dashboard-card h3, .card-header h3 { 
+  font-size: 15px; 
+  font-weight: 600; 
+  color: var(--text-primary); 
+  margin: 0 0 15px 0; 
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+} 
+
+/* --- Chart Container Styles (Re-used) --- */
 .chart-container { 
   position: relative; 
   flex-grow: 1; 
   min-height: 280px; 
 } 
-.stories-read-chart { 
-  height: 280px; 
-  min-height: 240px; 
-} 
-.article-bias-chart { 
-  height: 320px; 
-  min-height: 280px; 
-} 
+.stories-read-chart { height: 280px; min-height: 240px; } 
+.article-bias-chart { height: 320px; min-height: 280px; } 
+
+/* Stories Read Card (Full width) */
 .full-width-chart-card { 
   grid-column: 1 / -1; 
   margin-bottom: 20px; 
 } 
+.stories-read-card .card-header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-bottom: 15px; 
+  flex-wrap: wrap; 
+  gap: 10px; 
+} 
+.stories-read-card h3 { margin-bottom: 0; }
 
-
-/* --- Loading and No Data States --- */
+/* --- Loading and No Data States (Re-used) --- */
 .loading-container { 
   display: flex; 
   flex-direction: column; 
@@ -327,111 +304,63 @@
   justify-content: center; 
   padding: 15px; 
 } 
-
-/* Simple/Small Loading/NoData states */
 .loading-container.simple { min-height: 40px; }
-.spinner.small { 
-  width: 16px; 
-  height: 16px; 
-  border-width: 2px; 
-  margin: auto; 
-} 
-.no-data-msg.small { 
-  font-size: 11px; 
-  padding: 8px; 
-  margin: auto; 
-} 
+.spinner.small { width: 16px; height: 16px; border-width: 2px; margin: auto; } 
+.no-data-msg.small { font-size: 11px; padding: 8px; margin: auto; } 
 
-/* NEW: Mobile-specific chart column */
-.mobile-charts-column {
-  display: none; /* Hidden on desktop */
-  flex-direction: column;
-  gap: 15px;
-  margin-top: 20px;
+/* --- NEW: Mobile-Only Elements --- */
+.mobile-only {
+  display: none; /* Hide on desktop */
 }
-.mobile-view-details-link {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--accent-primary);
-  text-decoration: none;
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  z-index: 5;
-}
-
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 1024px) { /* Tablet and below */
   .dashboard-page { 
     height: auto; 
-    margin-top: 60px; 
     overflow: visible; 
     padding: 20px 15px 30px 15px; 
   }
-  .dashboard-content-wrapper { 
-    flex-direction: column; 
-    overflow: visible; 
-    gap: 0; 
-    padding: 0; 
+  .dashboard-header {
+    flex-direction: row; /* Title and nav side-by-side */
+    align-items: center;
   }
-  .dashboard-left-column { 
-    flex: 0 0 auto; 
-    width: 100%; 
-    margin-bottom: 20px; 
-    overflow: visible; 
-    padding-top: 0; 
-  } 
-  .dashboard-right-column { 
-    overflow-y: visible; 
-    max-height: none; 
-    padding: 0 0 20px 0; 
-    padding-top: 0; 
-  } 
-  .sticky-header-wrapper { 
-    position: static; 
-    background: none; 
-    z-index: auto; 
-    padding: 0; 
-    margin: 0;
-  } 
-  .sticky-header-wrapper .section-title-header { 
-    margin-top: 10px; 
-    margin-bottom: 10px;
-  } 
   .stat-box-grid { 
     grid-template-columns: repeat(2, 1fr); 
   }
   .dashboard-grid { 
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+    grid-template-columns: 1fr; /* Stack charts */
     gap: 15px; 
   } 
   .full-width-chart-card { 
-    margin-bottom: 20px; 
+    margin-bottom: 15px; 
   } 
 }
 
 @media (max-width: 768px) { /* Mobile */
   .dashboard-page { 
     padding: 15px 10px 20px 10px; 
-    margin-top: 60px; 
-    height: calc(100vh - 60px); /* Full height on mobile */
-    overflow: hidden; /* Prevent body scroll */
   } 
-  .dashboard-content-wrapper {
-    overflow: hidden; /* Hide overflow */
+  .dashboard-header {
+    flex-direction: column; /* Stack title and nav */
+    align-items: flex-start;
+    gap: 15px;
   }
-  .dashboard-left-column { 
-    flex-basis: auto; 
-    gap: 10px; 
-    overflow-y: auto; /* THIS COLUMN SCROLLS ON MOBILE */
-    margin-bottom: 0;
-  } 
+  .dashboard-header h1 {
+    font-size: 20px;
+  }
   .section-title-header { 
     margin-bottom: 15px; 
-    padding-top: 5px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
   } 
-  .date-range-selector span { margin-left: 10px; } 
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .date-range-selector span { 
+    margin-left: 0; 
+  } 
   .stat-box-grid { 
     grid-template-columns: repeat(2, 1fr); 
     gap: 10px;
@@ -439,60 +368,60 @@
   .stat-box { padding: 12px; }
   .stat-number { font-size: 24px; }
   .stat-description { font-size: 10px; }
-  .lean-summary-card { padding: 12px; min-height: 110px;}
+
+  .lean-summary-card { 
+    padding: 15px; 
+    min-height: 110px;
+    margin-bottom: 15px;
+  }
   .lean-details { font-size: 11px; }
+
   .dashboard-grid { 
     grid-template-columns: 1fr; 
     gap: 15px; 
   }
-  .section-title { 
-    font-size: 16px; 
-    margin-bottom: 10px; 
-    padding-bottom: 6px; 
-  } 
+  .section-title-header .section-title { font-size: 16px; } 
+
   .chart-container { min-height: 260px; }
   .stories-read-chart, .article-bias-chart { 
     height: 260px; 
     min-height: 220px; 
   }
-  .dashboard-card { 
-    padding: 15px; 
-    position: relative; /* For the "View Details" link */
-  } 
+  .full-width-chart-card { margin-bottom: 15px; }
+  .dashboard-card { padding: 15px; } 
   .dashboard-card h3, .card-header h3 { 
     font-size: 14px; 
     margin-bottom: 12px; 
   }
-  
-  /* --- HIDE DESKTOP, SHOW MOBILE --- */
-  .dashboard-right-column {
-    display: none; /* Hide desktop chart column */
-  }
-  .mobile-charts-column {
-    display: flex; /* Show mobile chart column */
-  }
-  
-  /* Styles for the "ReadingHabits" page (which is mobile-only) */
-  .dashboard-page.mobile-only-page .dashboard-left-column {
-    padding-bottom: 30px; /* Add padding at the bottom */
-  }
-  .mobile-charts-column.full-details-page {
-    margin-top: 10px;
-  }
-}
 
-@media (max-width: 480px) { /* Smaller mobile adjustments */
-   .stat-box-grid { 
-     grid-template-columns: 1fr; /* Stack stat boxes */
-   } 
-   .section-title-header { 
-     flex-direction: column; 
-     align-items: flex-start; 
-     gap: 8px;
-   } 
-   .header-actions { 
-     width: 100%; 
-     justify-content: space-between;
-   } 
-   .date-range-selector span { margin-left: 0; } 
+  /* --- NEW: Smart Layout Hiding --- */
+  /* On mobile, the .my-dashboard-page hides the detailed .dashboard-grid */
+  .my-dashboard-page .dashboard-grid {
+    display: none;
+  }
+
+  /* --- NEW: Mobile-Only Elements --- */
+  .mobile-only {
+    display: block; /* Show on mobile */
+  }
+
+  /* Link-like button for mobile */
+  .mobile-view-more-link {
+    display: block;
+    text-align: center;
+    width: 100%;
+    padding: 10px 15px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--accent-primary);
+    font-weight: 600;
+    font-size: 12px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  .mobile-view-more-link:hover {
+    background: var(--bg-elevated);
+    border-color: var(--accent-primary);
+  }
 }

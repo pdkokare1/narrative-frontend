@@ -1,10 +1,11 @@
 // In file: src/App.js
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import './App.css'; // Ensure App.css is imported
+import './App.css'; // Main CSS
+import './DashboardPages.css'; // --- NEW: Import dashboard styles ---
 
 // --- NEW: React Router imports ---
-import { Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Link, NavLink } from 'react-router-dom';
 
 // --- NEW: Firebase Auth Imports ---
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -14,8 +15,12 @@ import Login from './Login'; // Import the Login component
 // --- NEW: Import the CreateProfile page ---
 import CreateProfile from './CreateProfile';
 
-// --- UPDATED: Import the NEW dashboard page ---
-import MyNewsBias from './MyNewsBias'; // Changed from ProfilePage
+// --- UPDATED: Import the NEW dashboard pages ---
+import MyDashboard from './MyDashboard';
+import ReadingHabits from './ReadingHabits';
+import SavedArticles from './SavedArticles';
+import AccountSettings from './AccountSettings';
+
 
 // Use environment variable for API URL, fallback to localhost for local dev
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
@@ -53,58 +58,44 @@ const getBreakdownTooltip = (label) => {
   return tooltips[label] || label; // Return explanation or the label itself as fallback
 };
 
-// --- *** MOVED HELPER FUNCTION HERE *** ---
-// This function is now globally available in this file
-const getSentimentClass = (sentiment) => {
-  if (sentiment === 'Positive') return 'sentiment-positive';
-  if (sentiment === 'Negative') return 'sentiment-negative';
-  return 'sentiment-neutral'; // Neutral or any other value
-};
-// --- *** END MODIFICATION *** ---
-
 // --- NEW: AppWrapper ---
-// We need this wrapper so we can use "useNavigate" (a router hook)
-// inside the component that has all our logic.
 function AppWrapper() {
-  // --- NEW: Auth State ---
+  // --- Auth State ---
   const [authState, setAuthState] = useState({
     isLoading: true,
     user: null,
   });
 
-  // --- NEW: Profile State ---
+  // --- Profile State ---
   const [profile, setProfile] = useState(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
 
-  // --- NEW: Router hooks ---
+  // --- Router hooks ---
   const navigate = useNavigate();
   const location = useLocation(); // To check which page we are on
 
   // --- Existing States ---
   const [displayedArticles, setDisplayedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [initialLoad, setInitialLoad] = useState(true); // Track initial load
-  const [isRefreshing, setIsRefreshing] = useState(false); // NEW: For pull-to-refresh
+  const [initialLoad, setInitialLoad] = useState(true); 
+  const [isRefreshing, setIsRefreshing] = useState(false); 
   const [theme, setTheme] = useState('dark');
-  
-  // --- *** MODIFIED: Added 'region' and 'type' filters *** ---
   const [filters, setFilters] = useState({
     category: 'All Categories',
     lean: 'All Leans',
     quality: 'All Quality Levels',
     sort: 'Latest First',
-    region: 'Global', // NEW
-    type: 'All Types' // NEW
+    // --- NEW FILTERS ---
+    region: 'Global', // Default to Global
+    articleType: 'All Types'
   });
-  // --- *** END MODIFICATION *** ---
-
-  const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '', articleId: null }); // Added articleId
+  const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '', articleId: null }); 
   const [analysisModal, setAnalysisModal] = useState({ open: false, article: null });
-  const [totalArticlesCount, setTotalArticlesCount] = useState(0); // Track total count from API
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // NEW: State for mobile sidebar
-  const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true); // NEW: State for desktop sidebar
+  const [totalArticlesCount, setTotalArticlesCount] = useState(0); 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); 
+  const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true); 
 
-  // --- (FIX) UPDATED: Custom Tooltip/Popup State ---
+  // --- Custom Tooltip/Popup State ---
   const [tooltip, setTooltip] = useState({
     visible: false,
     text: '',
@@ -113,30 +104,27 @@ function AppWrapper() {
   });
   const isMobile = () => window.innerWidth <= 768;
 
-  // --- (FIX) Refs for Pull-to-Refresh ---
-  const contentRef = useRef(null); // Ref for the main scrollable .content area
+  // --- Refs for Pull-to-Refresh ---
+  const contentRef = useRef(null); 
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
-  const [pullDistance, setPullDistance] = useState(0); // NEW: State for visual pull
-  const pullThreshold = 120; // (FIX) Defined pull threshold here
+  const [pullDistance, setPullDistance] = useState(0); 
+  const pullThreshold = 120; 
 
-  // --- (FIX) UPDATED: Custom Tooltip/Popup Handlers (for Mobile Tap) ---
+  // --- Custom Tooltip/Popup Handlers (for Mobile Tap) ---
   const showTooltip = (text, e) => {
     if (!isMobile() || !text) return;
-    e.stopPropagation(); // Stop tap from triggering other clicks
+    e.stopPropagation(); 
 
-    // Get click/tap position
     const x = e.clientX || (e.touches && e.touches[0].clientX);
     const y = e.clientY || (e.touches && e.touches[0].clientY);
 
-    if (!x || !y) return; // Exit if no coords
+    if (!x || !y) return; 
 
-    // Toggle logic
     if (tooltip.visible && tooltip.text === text) {
-      setTooltip({ visible: false, text: '', x: 0, y: 0 }); // Hide if tapping the same element
+      setTooltip({ visible: false, text: '', x: 0, y: 0 }); 
     } else {
-      // Show new tooltip, positioned above the tap
-      setTooltip({ visible: true, text, x: x, y: y }); // Position relative to tap
+      setTooltip({ visible: true, text, x: x, y: y }); 
     }
   };
 
@@ -146,91 +134,68 @@ function AppWrapper() {
     }
   };
 
-  // NEW: Effect to hide tooltip on outside click
+  // Effect to hide tooltip on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
-      // Check if the click is outside the tooltip element
       if (tooltip.visible && !e.target.closest('.tooltip-custom')) {
         hideTooltip();
       }
     };
-
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [tooltip.visible]); // Re-run when tooltip visibility changes
+  }, [tooltip.visible]); 
   // --- End Tooltip Handlers ---
 
 
-  // --- NEW: Firebase Auth Listener Effect ---
+  // --- Firebase Auth Listener Effect ---
   useEffect(() => {
-    // onAuthStateChanged returns an "unsubscribe" function
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        // User is signed in
         setAuthState({ isLoading: false, user: user });
       } else {
-        // User is signed out
         setAuthState({ isLoading: false, user: null });
-        setProfile(null); // <-- ADDED: Clear profile on logout
-        setIsProfileLoading(false); // <-- ADDED
+        setProfile(null); 
+        setIsProfileLoading(false); 
       }
     });
-
-    // Cleanup function to unsubscribe when the component unmounts
     return () => unsubscribe();
-  }, []); // Empty dependency array so this runs only once on mount
+  }, []); 
 
-  // --- NEW: Profile Checking Effect ---
+  // --- Profile Checking Effect ---
   useEffect(() => {
-    // This effect runs when the user state changes
     if (authState.user && !profile) {
-      // User is logged in, but we don't have a profile for them yet
       setIsProfileLoading(true);
-
       const checkProfile = async () => {
         try {
-          // The axios interceptor (below) will automatically add the auth token
           const response = await axios.get(`${API_URL}/profile/me`);
-
-          // Profile exists! Save it and we're good to go.
           setProfile(response.data);
 
-          // If they were on the create-profile page, send them to the homepage
           if (location.pathname === '/create-profile') {
             navigate('/');
           }
-
         } catch (error) {
           if (error.response && error.response.status === 404) {
-            // 404 means "Profile not found". Send them to create one.
             console.log('Profile not found, redirecting to create-profile');
-            // --- *** BUG FIX *** ---
-            // --- REMOVED faulty 'if' condition. Always redirect if 404. ---
             navigate('/create-profile');
-            
           } else {
             console.error('Failed to fetch profile', error);
-            // Handle other errors (e.g., show an error message)
           }
         }
         setIsProfileLoading(false);
       };
-
       checkProfile();
     }
-    // --- UPDATED: Allow redirect from /profile if profile is created ---
-  }, [authState.user, profile, navigate, location.pathname]); // Re-run if user or profile changes
+  }, [authState.user, profile, navigate, location.pathname]); 
 
 
-  // --- NEW: Axios Token Interceptor Effect ---
+  // --- Axios Token Interceptor Effect ---
   useEffect(() => {
-    // This interceptor automatically adds the auth token to all axios requests
     const interceptor = axios.interceptors.request.use(
       async (config) => {
-        const user = auth.currentUser; // Get the user at the time of the request
+        const user = auth.currentUser; 
         if (user) {
-          const token = await user.getIdToken(); // Get their Firebase ID token
-          config.headers.Authorization = `Bearer ${token}`; // Add it to the header
+          const token = await user.getIdToken(); 
+          config.headers.Authorization = `Bearer ${token}`; 
         }
         return config;
       },
@@ -238,12 +203,10 @@ function AppWrapper() {
         return Promise.reject(error);
       }
     );
-
-    // Cleanup function to remove the interceptor when the app unmounts
     return () => {
       axios.interceptors.request.eject(interceptor);
     };
-  }, []); // Empty dependency array, run once
+  }, []); 
 
 
   // Effect to set initial theme from localStorage
@@ -253,21 +216,17 @@ function AppWrapper() {
     document.body.className = savedTheme + '-mode';
   }, []);
 
-  // --- (FIX) NEW: Effect to check for shared article on load ---
+  // --- Effect to check for shared article on load ---
   useEffect(() => {
     const fetchAndShowArticle = async (id) => {
-      // Basic sanitization
       if (!id || !/^[a-f\d]{24}$/i.test(id)) {
          console.error('Invalid article ID format from URL');
          return;
       }
       try {
         console.log(`Fetching shared article: ${id}`);
-
-        // Interceptor will add auth token
         const response = await axios.get(`${API_URL}/articles/${id}`);
         if (response.data) {
-          // Manually clean/default this single article just in case
            const article = response.data;
            const cleanedArticle = {
               _id: article._id || article.url,
@@ -291,50 +250,49 @@ function AppWrapper() {
               reliabilityComponents: article.reliabilityComponents && typeof article.reliabilityComponents === 'object' ? article.reliabilityComponents : {},
               keyFindings: Array.isArray(article.keyFindings) ? article.keyFindings : [],
               recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
-              clusterId: article.clusterId || null
+              clusterId: article.clusterId || null,
+              clusterCount: article.clusterCount || 1 // --- ADDED clusterCount ---
            };
-           // --- UPDATED: Call the logging function ---
            handleAnalyzeClick(cleanedArticle);
         }
       } catch (error) {
         console.error('Failed to fetch shared article:', error.response ? error.response.data : error.message);
-        // Don't alert user, just fail silently
       }
     };
 
     const urlParams = new URLSearchParams(window.location.search);
     const articleId = urlParams.get('article');
 
-    // --- UPDATED: Runs only when user AND profile are available ---
     if (articleId && authState.user && profile) {
        fetchAndShowArticle(articleId);
-       // Optional: Clean the URL
-       // window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, [authState.user, profile]); // --- UPDATED: Runs when profile is loaded
+  }, [authState.user, profile]); 
 
   // Effect to fetch articles when filters change or on initial load
   useEffect(() => {
-    // --- UPDATED: Don't fetch if we don't have a user OR profile ---
     if (!authState.user || !profile) return;
 
-    // --- NEW: Don't fetch if we are on the profile page ---
-    if (location.pathname === '/profile') return;
+    // --- NEW: Don't fetch if we are on a dashboard page ---
+    const isDashboardPage = location.pathname.startsWith('/my-dashboard') ||
+                            location.pathname.startsWith('/reading-habits') ||
+                            location.pathname.startsWith('/saved-articles') ||
+                            location.pathname.startsWith('/account-settings');
+    
+    if (isDashboardPage) return;
 
     fetchArticles();
-  }, [filters, authState.user, profile, location.pathname]); // --- UPDATED: Re-fetch when filters, user, profile, or path changes
+  }, [filters, authState.user, profile, location.pathname]); // Re-fetch when filters, user, profile, or path changes
 
-  // --- (FIXED) ---
   // Close sidebar on filter change (for mobile)
   useEffect(() => {
     if (isSidebarOpen) {
       setIsSidebarOpen(false);
     }
-  }, [filters]); // Note: isSidebarOpen dependency removed
+  }, [filters]); 
 
-  // --- (FIX) Pull-to-Refresh Effects ---
+  // --- Pull-to-Refresh Effects ---
   useEffect(() => {
-    const contentEl = contentRef.current; // Use the main content ref
+    const contentEl = contentRef.current; 
     if (!contentEl || !isMobile()) return;
 
     const handleTouchStart = (e) => {
@@ -373,7 +331,7 @@ function AppWrapper() {
          contentEl.removeEventListener('touchend', handleTouchEnd);
       }
     };
-  }, [isRefreshing, pullDistance, contentRef, pullThreshold]); // <-- contentRef added as dependency
+  }, [isRefreshing, pullDistance, contentRef, pullThreshold]); 
 
 
   // --- NEW: Logout Function ---
@@ -381,7 +339,6 @@ function AppWrapper() {
     signOut(auth).catch((error) => {
       console.error('Logout Error:', error);
     });
-    // onAuthStateChanged will handle the state update and UI change
   };
 
 
@@ -394,29 +351,24 @@ function AppWrapper() {
       const limit = 12; // Articles per page/load
       const offset = loadMore ? displayedArticles.length : 0;
 
-      // --- *** MODIFIED: Send all new filters to backend *** ---
-      const queryParams = { 
-        ...filters, 
-        limit, 
-        offset 
-      };
-      
-      // --- REMOVED old quality/analysisType logic ---
-      // --- The backend now handles this logic based on the 'type' filter ---
+      const queryParams = { ...filters, limit, offset };
 
-      // --- UPDATED: Request will now send auth token via interceptor ---
+      // --- UPDATED: Filter logic is simplified ---
+      // 'quality' filter no longer handles 'Review / Opinion'
+      // 'articleType' filter now handles this
+      // The backend now handles all this logic
+      
       const response = await axios.get(`${API_URL}/articles`, {
-        params: queryParams // Use the modified params
+        params: queryParams 
       });
-      // --- *** END MODIFICATION *** ---
 
       const articlesData = response.data.articles || [];
       const paginationData = response.data.pagination || { total: 0 };
       setTotalArticlesCount(paginationData.total || 0);
 
-      // --- Data Cleaning and Defaulting (Important) ---
+      // --- Data Cleaning and Defaulting ---
       const uniqueNewArticles = articlesData
-        .filter(article => article && article.url) // Ensure article and URL exist
+        .filter(article => article && article.url) 
         .map(article => ({
             _id: article._id || article.url,
             headline: article.headline || article.title || 'No Headline Available',
@@ -440,8 +392,8 @@ function AppWrapper() {
             keyFindings: Array.isArray(article.keyFindings) ? article.keyFindings : [],
             recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
             clusterId: article.clusterId || null,
-            // --- *** NEW: Add clusterCount from backend *** ---
-            clusterCount: Number(article.clusterCount) || 1 // Default to 1
+            // --- *** ADDED clusterCount *** ---
+            clusterCount: Number(article.clusterCount) || 1
         }));
       // --- End Data Cleaning ---
 
@@ -456,14 +408,14 @@ function AppWrapper() {
 
       setLoading(false);
       setInitialLoad(false);
-      setIsRefreshing(false); // NEW: Ensure refreshing stops
+      setIsRefreshing(false); 
 
     } catch (error) {
       console.error('❌ Error fetching articles:', error.response ? error.response.data : error.message);
 
       if (error.response && (error.response.status === 401 || error.response.status === 403)) {
          console.error("Auth token invalid, logging out.");
-         handleLogout(); // Log the user out if their token is bad
+         handleLogout(); 
       }
 
       setLoading(false);
@@ -494,7 +446,7 @@ function AppWrapper() {
     let timeoutId;
     const scrollableElement = window.innerWidth <= 768 ? contentRef.current : window;
 
-    if (!scrollableElement) return; // Exit if element not found yet
+    if (!scrollableElement) return; 
 
     const handleScroll = () => {
         clearTimeout(timeoutId);
@@ -519,17 +471,16 @@ function AppWrapper() {
           scrollableElement.removeEventListener('scroll', handleScroll);
         }
     };
-  }, [loading, displayedArticles, totalArticlesCount, contentRef]); // <-- contentRef added as dependency
+  }, [loading, displayedArticles, totalArticlesCount, contentRef]); 
 
 
   const shareArticle = (article) => {
-    // --- UPDATED: Send articleId to backend ---
     axios.post(`${API_URL}/activity/log-share`, { articleId: article._id })
       .then(res => console.log('Share activity logged', res.data))
       .catch(err => console.error('Failed to log share activity', err));
 
     const appUrl = window.location.origin;
-    const shareUrl = `${appUrl}?article=${article._id}`; // Use internal _id
+    const shareUrl = `${appUrl}?article=${article._id}`; 
     const shareTitle = article.headline;
     const shareText = `Check out this analysis on The Gamut: ${article.headline}`;
 
@@ -549,16 +500,16 @@ function AppWrapper() {
     }
   };
 
-  // --- NEW: Combined Sidebar Toggle Logic ---
+  // --- Combined Sidebar Toggle Logic ---
   const toggleSidebar = () => {
     if (isMobile()) {
-      setIsSidebarOpen(!isSidebarOpen); // Toggle mobile overlay
+      setIsSidebarOpen(!isSidebarOpen); 
     } else {
-      setIsDesktopSidebarVisible(!isDesktopSidebarVisible); // Toggle desktop minimize
+      setIsDesktopSidebarVisible(!isDesktopSidebarVisible); 
     }
   };
 
-  // --- NEW: Combined Sidebar Close Logic ---
+  // --- Combined Sidebar Close Logic ---
   const closeSidebar = () => {
     if (isMobile()) {
       setIsSidebarOpen(false);
@@ -567,42 +518,32 @@ function AppWrapper() {
     }
   };
 
-  // --- NEW: Activity Logging ---
+  // --- Activity Logging ---
   const handleAnalyzeClick = (article) => {
     setAnalysisModal({ open: true, article });
-
-    // --- UPDATED: Send articleId to backend ---
     axios.post(`${API_URL}/activity/log-view`, { articleId: article._id })
       .then(res => console.log('Activity logged', res.data))
       .catch(err => console.error('Failed to log activity', err));
   };
 
-  // --- ADDED THIS NEW HANDLER ---
-  const handleCompareClick = (article) => { // Takes the full article object
+  const handleCompareClick = (article) => { 
     setCompareModal({ open: true, clusterId: article.clusterId, articleTitle: article.headline, articleId: article._id });
-
-    // "Fire and forget" log
     axios.post(`${API_URL}/activity/log-compare`, { articleId: article._id })
       .then(res => console.log('Compare activity logged', res.data))
       .catch(err => console.error('Failed to log compare activity', err));
   };
-
-  // --- *** NEW FUNCTION *** ---
-  // --- ADDED THIS NEW HANDLER FOR LOGGING "READ ARTICLE" ---
+  
   const handleReadClick = (article) => {
-    // Log the activity to the new endpoint
-    // We do this as "fire and forget" - we don't wait for the response
     axios.post(`${API_URL}/activity/log-read`, { articleId: article._id })
       .then(res => console.log('Read activity logged', res.data))
       .catch(err => console.error('Failed to log read activity', err));
       
-    // Immediately open the article in a new tab
     window.open(article.url, '_blank', 'noopener,noreferrer');
   };
   // --- *** END NEW FUNCTION *** ---
 
 
-  // --- NEW: Main App Render Logic ---
+  // --- Main App Render Logic ---
 
   // 1. Show main loader while checking auth OR profile
   if (authState.isLoading || (authState.user && isProfileLoading)) {
@@ -623,16 +564,11 @@ function AppWrapper() {
 
   // 3. User exists, but no profile?
   // The <CreateProfile> page will be shown by the Router.
-  // We just need to make sure we don't render the main app.
 
   // 4. User and Profile exist! Show the app.
-  // We use <Routes> to handle showing the main app vs. the create profile page.
   return (
     <div className="app">
-      {/* --- This Header is now shared by all routes --- */}
-      {/* We only show it if the user is logged in (which they are at this point) */}
-      {/* And we only show it if they have a profile */}
-      {/* OR if they are ON the create-profile page */}
+      {/* This Header is now shared by all routes */}
       {profile && (
         <Header
           theme={theme}
@@ -640,7 +576,6 @@ function AppWrapper() {
           onToggleSidebar={toggleSidebar}
           user={authState.user}
           onLogout={handleLogout}
-          // --- UPDATED: Pass username from profile ---
           username={profile.username}
         />
       )}
@@ -648,8 +583,6 @@ function AppWrapper() {
       <Routes>
         {/* --- Main App Page (Homepage) --- */}
         <Route path="/" element={
-          // This is your main app content
-          // We only render this if the profile exists
           profile ? (
             <>
               <CustomTooltip
@@ -658,8 +591,6 @@ function AppWrapper() {
                 x={tooltip.x}
                 y={tooltip.y}
               />
-
-              {/* HEADER MOVED OUTSIDE */}
 
               <div className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''}`}>
                 <div
@@ -717,13 +648,10 @@ function AppWrapper() {
                               <div className="article-card-wrapper" key={article._id || article.url}>
                                 <ArticleCard
                                   article={article}
-                                  // --- UPDATED: Use new handler ---
                                   onCompare={() => handleCompareClick(article)}
-                                  // --- UPDATED: Use new handler ---
                                   onAnalyze={handleAnalyzeClick}
                                   onShare={shareArticle}
-                                  // --- *** NEW PROP *** ---
-                                  onRead={handleReadClick} // Pass the new handler
+                                  onRead={handleReadClick} 
                                   showTooltip={showTooltip}
                                 />
                               </div>
@@ -762,11 +690,10 @@ function AppWrapper() {
               {compareModal.open && (
                 <CompareCoverageModal
                   clusterId={compareModal.clusterId}
-                  articleTitle={compareModal.articleTitle} // Pass title
+                  articleTitle={compareModal.articleTitle} 
                   onClose={() => setCompareModal({ open: false, clusterId: null, articleTitle: '', articleId: null })}
                   onAnalyze={(article) => {
                     setCompareModal({ open: false, clusterId: null, articleTitle: '', articleId: null });
-                    // --- UPDATED: Use new handler ---
                     handleAnalyzeClick(article);
                   }}
                   showTooltip={showTooltip}
@@ -782,34 +709,30 @@ function AppWrapper() {
               )}
             </>
           ) : (
-             // If no profile, but on '/', redirect to create-profile
-             // This happens if the checkProfile effect hasn't redirected yet
              <div className="loading-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
                <div className="spinner"></div>
              </div>
           )
         } />
 
-        {/* --- ADD THE ROUTE FOR PROFILE CREATION --- */}
+        {/* --- ROUTE FOR PROFILE CREATION --- */}
         <Route path="/create-profile" element={<CreateProfile />} />
 
-        {/* --- *** MODIFICATION HERE *** --- */}
-        {/* --- Pass the 'theme' prop to MyNewsBias --- */}
-        <Route path="/profile" element={ profile ? <MyNewsBias theme={theme} /> :
-          <div className="loading-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
-            <div className="spinner"></div>
-          </div>
-        } />
+        {/* --- *** NEW DASHBOARD ROUTES *** --- */}
+        <Route path="/my-dashboard" element={ profile ? <MyDashboard /> : null } />
+        <Route path="/reading-habits" element={ profile ? <ReadingHabits /> : null } />
+        <Route path="/saved-articles" element={ profile ? <SavedArticles /> : null } />
+        <Route path="/account-settings" element={ profile ? <AccountSettings /> : null } />
+        
+        {/* --- *** REMOVED old /profile route *** --- */}
 
       </Routes>
     </div>
   );
 }
 
-// --- NEW: Main App component just renders the wrapper ---
+// --- Main App component just renders the wrapper ---
 function App() {
-  // This is now the top-level component.
-  // AppWrapper is inside it, so AppWrapper can use router hooks.
   return <AppWrapper />;
 }
 
@@ -819,7 +742,7 @@ export default App;
 
 // === Sub-Components ===
 
-// --- NEW: Custom Tooltip Component ---
+// --- Custom Tooltip Component ---
 function CustomTooltip({ visible, text, x, y }) {
   if (!visible) return null;
 
@@ -843,13 +766,12 @@ function CustomTooltip({ visible, text, x, y }) {
 }
 
 
-// --- Header (Text Logo, Toggle Fix, NEW Hamburger) ---
-// --- UPDATED: Added user, username, and onLogout props ---
+// --- Header ---
 function Header({ theme, toggleTheme, onToggleSidebar, user, username, onLogout }) {
   return (
     <header className="header">
       <div className="header-left">
-         <button className="hamburger-btn" onClick={onToggleSidebar} title="Open Filters">
+         <button className="hamburger-btn" onClick={onToggleSidebar} title="Open Menu">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="3" y1="12" x2="21" y2="12"></line>
               <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -866,8 +788,8 @@ function Header({ theme, toggleTheme, onToggleSidebar, user, username, onLogout 
       <div className="header-right">
         {user && (
           <div className="user-info">
-            {/* --- UPDATED: Changed <span> to <Link> --- */}
-            <Link to="/profile" className="user-email" title="View your profile" style={{textDecoration: 'none'}}>
+            {/* --- *** UPDATED: Link to new dashboard page *** --- */}
+            <Link to="/my-dashboard" className="user-email" title="View your dashboard" style={{textDecoration: 'none'}}>
               {username}
             </Link>
             <button onClick={onLogout} className="logout-btn" title="Sign Out">
@@ -884,7 +806,7 @@ function Header({ theme, toggleTheme, onToggleSidebar, user, username, onLogout 
   );
 }
 
-// --- NEW: Custom Select Component ---
+// --- Custom Select Component ---
 function CustomSelect({ name, value, options, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef(null);
@@ -947,26 +869,26 @@ function CustomSelect({ name, value, options, onChange }) {
   );
 }
 
-// --- *** MODIFIED: Sidebar with new Region and Type filters *** ---
+// --- *** UPDATED: Sidebar with User Nav & New Filters *** ---
 function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
   const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
   
-  // --- NEW: Region Filter Options ---
+  // --- NEW: Region Filter ---
   const regions = [
+    { value: 'All', label: 'All Regions' },
     { value: 'Global', label: 'Global' },
     { value: 'India', label: 'India' },
-    { value: 'All', label: 'All Regions' }
   ];
-
-  // --- NEW: Article Type Filter Options ---
+  
+  // --- NEW: Article Type Filter ---
   const articleTypes = [
-    { value: 'All Types', label: 'All Types' },
+    { value: 'All Types', label: 'All Article Types' },
     { value: 'Hard News', label: 'Hard News' },
-    { value: 'Opinion & Reviews', label: 'Opinion & Reviews' }
+    { value: 'Opinion & Reviews', label: 'Opinion & Reviews' },
   ];
 
-  // --- MODIFIED: Removed 'Review / Opinion' ---
+  // --- UPDATED: Quality Filter (Removed Review/Opinion) ---
   const qualityLevels = [
     { value: 'All Quality Levels', label: 'All Quality Levels' },
     { value: 'A+ Excellent (90-100)', label: 'A+ : Excellent' },
@@ -975,7 +897,6 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
     { value: 'C Acceptable (60-69)', label: 'C : Acceptable' },
     { value: 'D-F Poor (0-59)', label: 'D-F : Poor' },
   ];
-  // --- END MODIFICATION ---
 
   const sortOptions = ['Latest First', 'Highest Quality', 'Most Covered', 'Lowest Bias'];
 
@@ -984,20 +905,38 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
     onFilterChange({ ...filters, [name]: value });
   };
   
-  // --- NEW: Disable Quality filter if 'Opinion & Reviews' is selected ---
-  const isQualityDisabled = filters.type === 'Opinion & Reviews';
+  // Use NavLink for active styling
+  const SidebarNavLink = ({ to, children }) => (
+    <NavLink 
+      to={to} 
+      className={({isActive}) => "sidebar-user-link " + (isActive ? "active" : "")}
+      onClick={onClose} // Close sidebar on nav click
+    >
+      {children}
+    </NavLink>
+  );
 
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
-      <div> {/* Filters Wrapper */}
+      <div> 
         <div className="sidebar-header-mobile">
-          <h3>Filters</h3>
-          <button className="sidebar-close-btn" onClick={onClose} title="Close Filters">×</button>
+          <h3>Menu</h3>
+          <button className="sidebar-close-btn" onClick={onClose} title="Close Menu">×</button>
         </div>
-        
-        {/* --- NEW: Region Filter --- */}
+
+        {/* --- *** NEW: User Navigation Section *** --- */}
+        <div className="filter-section sidebar-user-nav">
+          <h3>Your Account</h3>
+          <SidebarNavLink to="/my-dashboard">My Dashboard</SidebarNavLink>
+          <SidebarNavLink to="/reading-habits">Reading Habits</SidebarNavLink>
+          <SidebarNavLink to="/saved-articles">Saved Articles</SidebarNavLink>
+          <SidebarNavLink to="/account-settings">Account Settings</SidebarNavLink>
+        </div>
+        {/* --- End User Nav --- */}
+
         <div className="filter-section">
-          <h3>Region</h3>
+          <h3>Filters</h3>
+          {/* --- NEW: Region Filter --- */}
           <CustomSelect
             name="region"
             value={filters.region}
@@ -1005,13 +944,12 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
             onChange={handleChange}
           />
         </div>
-
-        {/* --- NEW: Article Type Filter --- */}
+        
         <div className="filter-section">
-          <h3>Article Type</h3>
+           {/* --- NEW: Article Type Filter --- */}
           <CustomSelect
-            name="type"
-            value={filters.type}
+            name="articleType"
+            value={filters.articleType}
             options={articleTypes}
             onChange={handleChange}
           />
@@ -1037,17 +975,15 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
           />
         </div>
 
-        {/* --- MODIFIED: Added disabled logic --- */}
-        <div className="filter-section" style={{ opacity: isQualityDisabled ? 0.5 : 1, pointerEvents: isQualityDisabled ? 'none' : 'auto' }}>
+        <div className="filter-section">
           <h3>Quality Level</h3>
           <CustomSelect
             name="quality"
-            value={isQualityDisabled ? 'All Quality Levels' : filters.quality}
+            value={filters.quality}
             options={qualityLevels}
             onChange={handleChange}
           />
         </div>
-        {/* --- END MODIFICATION --- */}
 
         <div className="filter-section">
           <h3>Sort By</h3>
@@ -1062,30 +998,28 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
 
       {articleCount > 0 && (
         <div className="filter-results">
-          <p>{articleCount} articles analyzed</p>
+          <p>{articleCount} stories found</p>
         </div>
       )}
     </aside>
   );
 }
-// --- *** END MODIFIED SIDEBAR *** ---
 
 
-// --- *** MODIFIED COMPONENT *** ---
-// --- UPDATED ArticleCard Component ---
+// --- *** UPDATED: ArticleCard with Smart Button Logic *** ---
 function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showTooltip }) {
 
   const isMobile = () => window.innerWidth <= 768;
 
   const isReview = article.analysisType === 'SentimentOnly';
-  const isNonPolitical = article.politicalLean === 'Not Applicable';
   
   // --- *** NEW: Smart Button Logic *** ---
-  // Show "Compare" on reviews *only if* there are other articles in the cluster
-  const showCompareForReview = isReview && article.clusterCount > 1;
-  // Show "Read Article" stack if it's a review with *no* comparisons, OR if it's non-political
-  const showReadArticleStack = (isReview && !showCompareForReview) || isNonPolitical;
-  // --- *** END NEW LOGIC *** ---
+  // Show "Compare" if it's a review AND there are other articles in the cluster.
+  const showCompareOnReview = isReview && (article.clusterCount > 1);
+  
+  // Show "Read Article" if it's a review AND it's the *only* one in the cluster.
+  const showReadOnReview = isReview && (article.clusterCount <= 1);
+  // --- End Smart Button Logic ---
 
   const handleImageError = (e) => {
     e.target.style.display = 'none';
@@ -1101,8 +1035,12 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
     }
   };
 
-  // --- *** DELETED getSentimentClass function from here *** ---
-  // It is now a global helper at the top of the file
+  const getSentimentClass = (sentiment) => {
+    if (sentiment === 'Positive') return 'sentiment-positive';
+    if (sentiment === 'Negative') return 'sentiment-negative';
+    return 'sentiment-neutral'; // Neutral or any other value
+  };
+
 
   return (
     <div className="article-card">
@@ -1122,11 +1060,10 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
 
       <div className="article-content">
         <div className="article-content-top">
-          {/* The <a> tag is now a button-like div that calls onRead */}
           <div
               className="article-headline-link"
               onClick={(e) => { stopMobileClick(e); onRead(article); }} // Call onRead
-              style={{ cursor: 'pointer' }} // Make it look clickable
+              style={{ cursor: 'pointer' }} 
               title="Read the full article (logs click)"
           >
               <h3 className="article-headline">{article.headline}</h3>
@@ -1169,7 +1106,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
                       title="This article is an opinion, review, or summary."
                       onClick={(e) => showTooltip("This article is an opinion, review, or summary.", e)}
                   >
-                    Review / Opinion
+                    Opinion / Review
                   </span>
               ) : (
                   <span
@@ -1194,9 +1131,57 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
           </div>
 
           <div className="article-actions">
-            {/* --- *** MODIFIED: Use new smart logic *** --- */}
-            {showReadArticleStack ? (
-              // --- This is for Non-Political OR (Review AND clusterCount <= 1) ---
+            {/* --- Case 1: Hard News (Full Analysis) --- */}
+            {!isReview && (
+              <>
+                <div className="article-actions-top">
+                  <button
+                    onClick={(e) => { stopMobileClick(e); onAnalyze(article); }}
+                    className="btn-secondary"
+                    title="View Detailed Analysis"
+                  >
+                    Analysis
+                  </button>
+                  <button
+                    onClick={(e) => { stopMobileClick(e); onShare(article); }}
+                    className="btn-secondary"
+                    title="Share article link"
+                  >
+                    Share
+                  </button>
+                </div>
+                <button
+                  onClick={(e) => { stopMobileClick(e); onCompare(article); }}
+                  className="btn-primary btn-full-width"
+                  title={article.clusterCount > 1 ? `Compare with ${article.clusterCount - 1} other articles` : "Find other perspectives"}
+                >
+                  {article.clusterCount > 1 ? `Compare Coverage (${article.clusterCount})` : "Compare Coverage"}
+                </button>
+              </>
+            )}
+            
+            {/* --- Case 2: Opinion/Review with other articles to compare --- */}
+            {showCompareOnReview && (
+              <>
+                <button
+                  onClick={(e) => { stopMobileClick(e); onShare(article); }}
+                  className="btn-secondary btn-full-width"
+                  title="Share article link"
+                >
+                  Share
+                </button>
+                <button
+                  onClick={(e) => { stopMobileClick(e); onCompare(article); }}
+                  className="btn-primary btn-full-width"
+                  title={`Compare with ${article.clusterCount - 1} other articles`}
+                >
+                  Compare Coverage ({article.clusterCount})
+                </button>
+              </>
+            )}
+            
+            {/* --- Case 3: Opinion/Review with NO other articles to compare --- */}
+            {showReadOnReview && (
               <>
                 <button
                   onClick={(e) => { stopMobileClick(e); onShare(article); }}
@@ -1213,41 +1198,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
                   Read Article
                 </button>
               </>
-            ) : (
-              // --- This is for Hard News (Full) OR (Review AND clusterCount > 1) ---
-              <>
-                <div className="article-actions-top">
-                  <button
-                    onClick={(e) => { stopMobileClick(e); onAnalyze(article); }}
-                    className="btn-secondary"
-                    title="View Detailed Analysis"
-                    // --- Disable Analysis button for Reviews ---
-                    disabled={isReview} 
-                    style={{ display: isReview ? 'none' : 'block' }} // Hide if review
-                  >
-                    Analysis
-                  </button>
-                  <button
-                    onClick={(e) => { stopMobileClick(e); onShare(article); }}
-                    className="btn-secondary"
-                    title="Share article link"
-                    // --- Make Share full-width if Analysis is hidden ---
-                    style={{ gridColumn: isReview ? '1 / -1' : 'auto' }}
-                  >
-                    Share
-                  </button>
-                </div>
-                <button
-                  onClick={(e) => { stopMobileClick(e); onCompare(article); }}
-                  className="btn-primary btn-full-width"
-                  title="Compare Coverage Across Perspectives"
-                >
-                  {/* --- NEW: Show count if available --- */}
-                  Compare Coverage {article.clusterCount > 1 ? `(${article.clusterCount})` : ''}
-                </button>
-              </>
             )}
-            {/* --- *** END MODIFICATION *** --- */}
+            
           </div>
         </div> {/* End article-content-bottom */}
       </div>
@@ -1261,7 +1213,7 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
 
 // --- Compare Coverage Modal ---
 function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, showTooltip }) {
-  const [clusterData, setClusterData] = useState({ left: [], center: [], right: [], stats: {} });
+  const [clusterData, setClusterData] = useState({ left: [], center: [], right: [], reviews: [], stats: {} });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(null);
 
@@ -1270,19 +1222,19 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
       if (!clusterId) {
           console.log("No clusterId provided, showing empty compare.");
           setLoading(false);
-          setClusterData({ left: [], center: [], right: [], stats: {} });
+          setClusterData({ left: [], center: [], right: [], reviews: [], stats: {} });
           setActiveTab('left');
           return;
       }
       try {
         setLoading(true);
-        // Interceptor will add auth token
         const response = await axios.get(`${API_URL}/cluster/${clusterId}`);
 
         const data = {
             left: response.data.left || [],
             center: response.data.center || [],
             right: response.data.right || [],
+            reviews: response.data.reviews || [], // --- NEW: Get reviews
             stats: response.data.stats || {}
         };
         setClusterData(data);
@@ -1290,6 +1242,7 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
         if (data.left.length > 0) setActiveTab('left');
         else if (data.center.length > 0) setActiveTab('center');
         else if (data.right.length > 0) setActiveTab('right');
+        else if (data.reviews.length > 0) setActiveTab('reviews'); // --- NEW: Fallback to reviews
         else setActiveTab('left'); // Fallback
 
         setLoading(false);
@@ -1302,7 +1255,7 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
     fetchCluster();
   }, [clusterId]);
 
-   const totalArticles = (clusterData.left?.length || 0) + (clusterData.center?.length || 0) + (clusterData.right?.length || 0);
+   const totalArticles = (clusterData.left?.length || 0) + (clusterData.center?.length || 0) + (clusterData.right?.length || 0) + (clusterData.reviews?.length || 0);
 
    const handleOverlayClick = (e) => {
        if (e.target === e.currentTarget) {
@@ -1328,6 +1281,10 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
           <button className={activeTab === 'right' ? 'active' : ''} onClick={() => setActiveTab('right')}>
             Right ({clusterData.right.length})
           </button>
+          {/* --- NEW: Reviews Tab --- */}
+          <button className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>
+            Opinions ({clusterData.reviews.length})
+          </button>
         </div>
 
 
@@ -1346,6 +1303,8 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
               {activeTab === 'left' && renderArticleGroup(clusterData.left, 'Left', onAnalyze, showTooltip)}
               {activeTab === 'center' && renderArticleGroup(clusterData.center, 'Center', onAnalyze, showTooltip)}
               {activeTab === 'right' && renderArticleGroup(clusterData.right, 'Right', onAnalyze, showTooltip)}
+              {/* --- NEW: Render Reviews Tab --- */}
+              {activeTab === 'reviews' && renderArticleGroup(clusterData.reviews, 'Opinions', onAnalyze, showTooltip)}
 
               {activeTab && clusterData[activeTab]?.length === 0 && (
                  <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}>
@@ -1376,77 +1335,70 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
   return (
     <div className="perspective-section">
       <h3 className={`perspective-title ${perspective.toLowerCase()}`}>{perspective} Perspective</h3>
-      {articleList.map(article => (
-        <div key={article._id || article.url} className="coverage-article">
-          <div className="coverage-content">
-             {/* This now calls the onRead function from App.js, which is not available here */}
-             {/* We will just keep this as a standard link for now, as onRead isn't passed down this deep */}
-            <a href={article.url} target="_blank" rel="noopener noreferrer" onClick={stopMobileClick}>
-              <h4>{article.headline || 'No Headline'}</h4>
-            </a>
-            <p>
-              {(article.summary || '').substring(0, 150)}{article.summary && article.summary.length > 150 ? '...' : ''}
-            </p>
-
-            {/* --- *** MODIFIED: Show scores only for 'Full' analysis articles *** --- */}
-            {article.analysisType === 'Full' ? (
-              <div className="article-scores">
-                <span
-                  title="Bias Score (0-100, lower is less biased)"
-                  onClick={(e) => showTooltip("Bias Score (0-100, lower is less biased)", e)}
-                >
-                  Bias: {article.biasScore != null ? <span className="accent-text">{article.biasScore}</span> : 'N/A'}
-                </span>
-                <span
-                  title="Overall Trust Score (0-100, higher is more trustworthy)"
-                  onClick={(e) => showTooltip("Overall Trust Score (0-100, higher is more trustworthy)", e)}
-                >
-                  Trust: {article.trustScore != null ? <span className="accent-text">{article.trustScore}</span> : 'N/A'}
-                </span>
-                <span
-                  title="Credibility Grade (A+ to F)"
-                  onClick={(e) => showTooltip("Credibility Grade (A+ to F)", e)}
-                >
-                  Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}
-                </span>
-              </div>
-            ) : (
-              // --- Show this for 'SentimentOnly' articles ---
-              <div className="article-scores">
-                <span 
-                  title="This is an opinion/review article."
-                  onClick={(e) => showTooltip("This is an opinion/review article.", e)}
-                >
-                  Opinion / Review
-                </span>
-              </div>
-            )}
-            {/* --- *** END MODIFICATION *** --- */}
-            
-            <div className="coverage-actions">
-               {/* This also becomes a standard link */}
-              <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1}} onClick={stopMobileClick}>
-                  <button style={{width: '100%'}} onClick={stopMobileClick}>Read Article</button>
+      {articleList.map(article => {
+        const isReview = article.analysisType === 'SentimentOnly';
+        return (
+          <div key={article._id || article.url} className="coverage-article">
+            <div className="coverage-content">
+              <a href={article.url} target="_blank" rel="noopener noreferrer" onClick={stopMobileClick}>
+                <h4>{article.headline || 'No Headline'}</h4>
               </a>
-              {/* --- UPDATED: Use onAnalyze prop, but disable for reviews --- */}
-              <button 
-                onClick={(e) => { stopMobileClick(e); onAnalyze(article); }}
-                disabled={article.analysisType === 'SentimentOnly'}
-              >
-                View Analysis
-              </button>
+              <p>
+                {(article.summary || '').substring(0, 150)}{article.summary && article.summary.length > 150 ? '...' : ''}
+              </p>
+
+              <div className="article-scores">
+                {!isReview ? (
+                  <>
+                    <span
+                      title="Bias Score (0-100, lower is less biased)"
+                      onClick={(e) => showTooltip("Bias Score (0-100, lower is less biased)", e)}
+                    >
+                      Bias: {article.biasScore != null ? <span className="accent-text">{article.biasScore}</span> : 'N/A'}
+                    </span>
+                    <span
+                      title="Overall Trust Score (0-100, higher is more trustworthy)"
+                      onClick={(e) => showTooltip("Overall Trust Score (0-100, higher is more trustworthy)", e)}
+                    >
+                      Trust: {article.trustScore != null ? <span className="accent-text">{article.trustScore}</span> : 'N/A'}
+                    </span>
+                    <span
+                      title="Credibility Grade (A+ to F)"
+                      onClick={(e) => showTooltip("Credibility Grade (A+ to F)", e)}
+                    >
+                      Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}
+                    </span>
+                  </>
+                ) : (
+                  <span
+                    title="The article's overall sentiment"
+                    onClick={(e) => showTooltip("The article's overall sentiment", e)}
+                  >
+                    Sentiment: <span className={article.sentiment === 'Positive' ? 'sentiment-positive' : article.sentiment === 'Negative' ? 'sentiment-negative' : 'sentiment-neutral'}>{article.sentiment || 'N/A'}</span>
+                  </span>
+                )}
+              </div>
+              <div className="coverage-actions">
+                <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1}} onClick={stopMobileClick}>
+                    <button style={{width: '100%'}} onClick={stopMobileClick}>Read Article</button>
+                </a>
+                {/* --- Only show View Analysis button for 'Full' articles --- */}
+                {!isReview && (
+                  <button onClick={(e) => { stopMobileClick(e); onAnalyze(article); }}>View Analysis</button>
+                )}
+              </div>
+            </div>
+
+            <div className="coverage-image">
+              {article.imageUrl ? (
+                <img src={article.imageUrl} alt="Article thumbnail" loading="lazy" />
+              ) : (
+                <div className="image-placeholder-small">📰</div>
+              )}
             </div>
           </div>
-
-          <div className="coverage-image">
-            {article.imageUrl ? (
-              <img src={article.imageUrl} alt="Article thumbnail" loading="lazy" />
-            ) : (
-              <div className="image-placeholder-small">📰</div>
-            )}
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -1477,45 +1429,8 @@ function DetailedAnalysisModal({ article, onClose, showTooltip }) {
         </div>
     );
   }
-  
-  // --- *** NEW: Handle SentimentOnly articles *** ---
-  if (article.analysisType === 'SentimentOnly') {
-     return (
-        <div className="modal-overlay" onClick={handleOverlayClick}>
-          <div className="analysis-modal" onClick={(e) => e.stopPropagation()} style={{maxWidth: '600px'}}>
-            <div className="modal-header">
-              <h2>Opinion / Review</h2>
-              <button className="close-btn" onClick={onClose}>×</button>
-            </div>
-            <div className="modal-content" style={{textAlign: 'center', padding: '40px 20px'}}>
-                 <h3 style={{color: 'var(--text-primary)', marginBottom: '10px'}}>{article.headline}</h3>
-                 <p style={{color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '30px'}}>
-                   This article is classified as an **Opinion / Review**. 
-                   Full bias and credibility analysis is not applicable.
-                 </p>
-                 <div className="overview-grid" style={{gridTemplateColumns: '1fr', maxWidth: '200px', margin: '0 auto 30px auto'}}>
-                    <div className="score-circle">
-                       {/* --- *** THIS IS THE CORRECTED LINE *** --- */}
-                       <div className={`score-value ${getSentimentClass(article.sentiment)}`} style={{fontSize: '20px', color: ''}}>
-                         {article.sentiment}
-                       </div>
-                       <div className="score-label">Overall Sentiment</div>
-                    </div>
-                 </div>
-                 <button 
-                   onClick={onClose} 
-                   className="btn-primary" 
-                   style={{padding: '10px 20px', fontSize: '12px'}}
-                 >
-                   Close
-                 </button>
-            </div>
-          </div>
-        </div>
-    );
-  }
-  // --- *** END NEW LOGIC *** ---
 
+  const isReview = article.analysisType === 'SentimentOnly';
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
@@ -1525,18 +1440,26 @@ function DetailedAnalysisModal({ article, onClose, showTooltip }) {
           <button className="close-btn" onClick={onClose} title="Close analysis">×</button>
         </div>
 
-        <div className="modal-tabs">
-          <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>
-            Overview
-          </button>
-          <button className={activeTab === 'breakdown' ? 'active' : ''} onClick={() => setActiveTab('breakdown')}>
-            Overview Breakdown
-          </button>
-        </div>
+        {!isReview && (
+          <div className="modal-tabs">
+            <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>
+              Overview
+            </button>
+            <button className={activeTab === 'breakdown' ? 'active' : ''} onClick={() => setActiveTab('breakdown')}>
+              Overview Breakdown
+            </button>
+          </div>
+        )}
 
         <div className="modal-content">
-          {activeTab === 'overview' && <OverviewTab article={article} showTooltip={showTooltip} />}
-          {activeTab === 'breakdown' && <OverviewBreakdownTab article={article} showTooltip={showTooltip} />}
+          {isReview ? (
+            <ReviewOverviewTab article={article} showTooltip={showTooltip} />
+          ) : (
+            <>
+              {activeTab === 'overview' && <OverviewTab article={article} showTooltip={showTooltip} />}
+              {activeTab === 'breakdown' && <OverviewBreakdownTab article={article} showTooltip={showTooltip} />}
+            </>
+          )}
         </div>
 
         <div className="modal-footer">
@@ -1548,6 +1471,39 @@ function DetailedAnalysisModal({ article, onClose, showTooltip }) {
 }
 
 // --- Analysis Tab Components ---
+
+// --- NEW: Tab for "SentimentOnly" articles ---
+function ReviewOverviewTab({ article, showTooltip }) {
+  const getSentimentClass = (sentiment) => {
+    if (sentiment === 'Positive') return 'sentiment-positive';
+    if (sentiment === 'Negative') return 'sentiment-negative';
+    return 'sentiment-neutral';
+  };
+  
+  return (
+    <div className="tab-content" style={{ textAlign: 'center', padding: '20px' }}>
+      <h3 style={{ color: 'var(--text-tertiary)', fontWeight: '600', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px' }}>
+        Opinion / Review Analysis
+      </h3>
+      <p style={{ fontSize: '14px', color: 'var(--text-secondary)', maxWidth: '450px', margin: '10px auto 25px auto' }}>
+        This article is identified as an opinion, review, or summary. A full bias and credibility analysis is not applicable.
+      </p>
+      
+      <div 
+        className="score-circle" 
+        style={{ maxWidth: '200px', margin: '0 auto' }}
+        title="The article's overall sentiment towards its main subject."
+        onClick={(e) => showTooltip("The article's overall sentiment towards its main subject.", e)}
+      >
+        <div className={`score-value ${getSentimentClass(article.sentiment)}`} style={{ fontSize: '28px' }}>
+          {article.sentiment}
+        </div>
+        <div className="score-label">Overall Sentiment</div>
+      </div>
+    </div>
+  );
+}
+
 
 function OverviewTab({ article, showTooltip }) {
   return (
@@ -1732,7 +1688,7 @@ function ScoreBox({ label, value, showTooltip }) {
       tooltip = 'Credibility Score (0-100). Measures the article\'s trustworthiness based on sources, facts, and professionalism.';
       break;
     case 'Reliability':
-      tooltip = 'Reliability Score (0-100). Measures the source\'s consistency, standards, and corrections policy over time.';
+      tooltip = 'Reliability Score (0-1S00). Measures the source\'s consistency, standards, and corrections policy over time.';
       break;
     default:
       tooltip = `${label} (0-100)`;

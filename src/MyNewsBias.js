@@ -221,10 +221,10 @@ function MyNewsBias({ theme }) {
 
   // --- *** MODIFICATION: Updated stat box descriptions *** ---
   const statBoxes = [
-    { key: 'analyzed', title: 'Articles Analyzed', value: totalAnalyzed, desc: 'The total no. of articles you have analyzed.' },
-    { key: 'read', title: 'Articles Read', value: totalRead, desc: 'The total no. of articles you have read through the source link.' },
-    { key: 'shared', title: 'Articles Shared', value: totalShared, desc: 'Total no. of articles shared with others.' },
-    { key: 'compared', title: 'Comparisons Viewed', value: totalCompared, desc: "Total no. of articles you've compared for a balanced perspective." }
+    { key: 'analyzed', title: 'Articles Analyzed', value: totalAnalyzed, desc: 'No. of articles you have analyzed.' },
+    { key: 'read', title: 'Articles Read', value: totalRead, desc: 'No. of articles you have read through the source link.' },
+    { key: 'shared', title: 'Articles Shared', value: totalShared, desc: 'No. of articles shared with others.' },
+    { key: 'compared', title: 'Comparisons Viewed', value: totalCompared, desc: "No. of articles you've compared for a balanced perspective." }
   ];
 
   // --- RENDER LOGIC ---

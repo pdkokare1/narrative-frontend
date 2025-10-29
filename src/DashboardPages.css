@@ -6,9 +6,10 @@
   padding: 0; /* Remove padding for full control */
   margin-top: 60px; /* Header height */
   color: var(--text-primary);
-  height: calc(100vh - 60px);
+  /* height: calc(100vh - 60px); */ /* <-- REMOVED */
+  min-height: calc(100vh - 60px); /* <-- ADDED */
   display: flex; /* Changed to flex */
-  overflow: hidden; /* Prevent body scroll */
+  /* overflow: hidden; */ /* <-- REMOVED */
   width: 100%;
 }
 
@@ -17,7 +18,7 @@
   display: flex;
   flex-grow: 1;
   gap: 20px; /* Space between columns */
-  overflow: hidden; /* Important */
+  /* overflow: hidden; */ /* <-- REMOVED */
   width: 100%;
   padding: 15px; /* Add padding here */
 }
@@ -29,8 +30,16 @@
   display: flex;
   flex-direction: column;
   gap: 20px; /* Space between cards/sections */
-  overflow-y: auto; /* Allow left col to scroll if needed */
+  /* overflow-y: auto; */ /* <-- REMOVED */
   padding-bottom: 15px; /* Space at bottom */
+  
+  /* --- NEW: Make left column sticky --- */
+  position: sticky;
+  top: 75px; /* 60px header + 15px padding */
+  height: calc(100vh - 90px); /* 75px top + 15px bottom */
+  overflow-y: auto; /* <-- NOW it scrolls if it's too tall */
+  /* --- END NEW --- */
+
   /* Custom scrollbar for left column */
   scrollbar-width: thin;
   scrollbar-color: var(--accent-primary) var(--bg-secondary);
@@ -43,7 +52,7 @@
 /* --- Right Column Styles --- */
 .dashboard-right-column {
   flex: 1 1 auto; /* Grow to fill remaining space */
-  overflow-y: auto; /* Main scroll area */
+  /* overflow-y: auto; */ /* <-- REMOVED */
   min-width: 0;
   padding-right: 10px; /* Space for scrollbar */
   padding-left: 5px; /* Slight padding */
@@ -52,10 +61,11 @@
   scrollbar-width: thin;
   scrollbar-color: var(--accent-primary) var(--bg-secondary);
 }
-.dashboard-right-column::-webkit-scrollbar { width: 8px; }
-.dashboard-right-column::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 4px;}
-.dashboard-right-column::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 4px; }
-.dashboard-right-column::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
+/* --- REMOVED right column scrollbar styles --- */
+.dashboard-right-column::-webkit-scrollbar { display: none; }
+.dashboard-right-column::-webkit-scrollbar-track { display: none; }
+.dashboard-right-column::-webkit-scrollbar-thumb { display: none; }
+.dashboard-right-column::-webkit-scrollbar-thumb:hover { display: none; }
 
 
 /* --- Responsive Placeholder Page (Saved, Account) --- */
@@ -151,7 +161,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   grid-template-columns: repeat(2, 1fr); /* 2 columns in left pane */
   gap: 15px;
   flex-shrink: 0;
-  padding: 15px; /* Add padding inside the wrapper card */
+  padding: 0; /* CHANGED: Was 15px */
 }
 
 /* --- Dashboard Card Styling (Applied to wrappers) --- */
@@ -167,7 +177,13 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   transition: border-color 0.2s ease-in-out;
 }
 .dashboard-card:hover { border-color: var(--accent-primary); }
-.dashboard-card.no-padding { padding: 0; } /* Utility class */
+/* --- MODIFIED: no-padding now makes wrapper invisible --- */
+.dashboard-card.no-padding { 
+  padding: 0; 
+  box-shadow: none;
+  border: none;
+  background: transparent;
+} 
 
 /* Card Header (Chart Titles) */
 .dashboard-card h3 {
@@ -184,11 +200,12 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 
 /* Stat Box (Individual box) */
 .stat-box {
-  background: var(--bg-secondary); /* Different bg for contrast */
+  background: var(--bg-card-flat); /* CHANGED: Match chart cards */
   text-align: left;
   padding: 15px;
-  border-radius: 6px; /* Slightly rounded corners */
-  border: 1px solid var(--border-light);
+  border-radius: 8px; /* CHANGED: Match chart cards */
+  border: 1px solid var(--border-color); /* CHANGED: Match chart cards */
+  box-shadow: var(--shadow-sm); /* ADDED: Match chart cards */
 }
 .stat-box h3 {
   font-size: 11px; /* Smaller */
@@ -202,7 +219,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 }
 .stat-number {
   font-size: 26px; /* Slightly smaller */
-  margin-bottom: 4px;
+  margin-bottom: 8px; /* CHANGED: Was 4px, increased spacing */
   font-weight: 600; /* Less bold */
   color: var(--text-primary);
   line-height: 1.1;
@@ -283,8 +300,9 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 /* --- Responsive Adjustments --- */
 @media (max-width: 1024px) { /* Tablet and below */
   .dashboard-page {
-    height: auto;
-    overflow: visible; /* Allow page to scroll */
+    /* height: auto; */ /* <-- REMOVED */
+    /* overflow: visible; */ /* <-- REMOVED */
+    min-height: 0; /* <-- ADDED: Let content define height */
   }
   .dashboard-content-wrapper {
     flex-direction: column; /* Stack columns */
@@ -298,6 +316,9 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
     margin-bottom: 20px;
     overflow: visible; /* Don't scroll */
     padding-bottom: 0; /* Remove bottom padding */
+    /* --- NEW: Un-stick on mobile --- */
+    position: static;
+    height: auto;
   }
   .dashboard-right-column {
     overflow-y: visible; /* Don't scroll */
@@ -325,8 +346,17 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   .header-actions { width: 100%; justify-content: space-between; }
   .date-range-selector span { margin-left: 0; }
 
-  .stat-box-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }
-  .stat-box { padding: 10px; }
+  .stat-box-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 0; } /* Keep 2 columns, remove padding */
+  .stat-box { 
+    padding: 10px;
+    /* --- NEW: Make stat boxes square and centered --- */
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
   .stat-number { font-size: 22px; }
   .stat-description { font-size: 9px; }
 
@@ -345,7 +375,6 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 
 /* Specific fix for stat box wrapper padding on mobile */
 @media (max-width: 480px) {
-  .dashboard-left-column > .dashboard-card.no-padding .stat-box-grid {
-      grid-template-columns: 1fr; /* Stack stat boxes */
-   }
+  /* --- REMOVED this rule that forced 1-column layout --- */
+  /* .dashboard-left-column > .dashboard-card.no-padding .stat-box-grid { ... } */
 }

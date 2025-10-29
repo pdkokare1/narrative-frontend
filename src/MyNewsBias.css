@@ -15,38 +15,34 @@
 /* --- Main Content Flex Wrapper --- */
 .dashboard-content-wrapper { display: flex; flex-grow: 1; gap: 20px; overflow: hidden; width: 100%; padding: 0; }
 
-/* --- Left Column Styles --- */
-.dashboard-left-column { flex: 0 0 360px; min-width: 0; display: flex; flex-direction: column; gap: 12px; overflow: hidden; padding-bottom: 15px; padding-top: 10px; }
+/* --- *** MODIFICATION: Removed padding-top *** --- */
+.dashboard-left-column { flex: 0 0 360px; min-width: 0; display: flex; flex-direction: column; gap: 12px; overflow: hidden; padding-bottom: 15px; padding-top: 0; }
 
-/* --- Right Column Styles --- */
-.dashboard-right-column { flex: 1 1 auto; overflow-y: auto; min-width: 0; padding: 0 10px 20px 10px; padding-top: 10px; scrollbar-width: thin; scrollbar-color: var(--accent-primary) var(--bg-secondary); }
+/* --- *** MODIFICATION: Removed padding-top *** --- */
+.dashboard-right-column { flex: 1 1 auto; overflow-y: auto; min-width: 0; padding: 0 10px 20px 10px; padding-top: 0; scrollbar-width: thin; scrollbar-color: var(--accent-primary) var(--bg-secondary); }
 .dashboard-right-column::-webkit-scrollbar { width: 8px; }
 .dashboard-right-column::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 4px;}
 .dashboard-right-column::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 4px; }
 .dashboard-right-column::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
 
 
-/* --- *** MODIFIED: Header for Section Title + Actions (Left Col Top) *** --- */
-.section-title-header {
-  display: flex;
-  flex-direction: column; /* Stack title and actions */
-  justify-content: flex-start;
-  align-items: flex-start; /* Align all to the left */
-  margin-bottom: 10px;
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 8px;
-  width: 100%;
+/* --- *** MODIFICATION: Restored original layout, added padding-top *** --- */
+.section-title-header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: baseline; 
+  margin-bottom: 10px; 
+  flex-shrink: 0; 
+  border-bottom: 1px solid var(--border-color); 
+  padding-bottom: 8px; 
+  padding-top: 10px; /* Added for alignment */
 }
-.header-actions {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-top: 8px; /* Add space above actions */
-  width: 100%;
-  justify-content: space-between; /* Keep "Viewing" left and "Back" right */
+/* --- *** MODIFICATION: Restored original layout *** --- */
+.header-actions { 
+  display: flex; 
+  align-items: baseline; 
+  gap: 10px; 
 }
-/* --- *** END OF MODIFICATION *** --- */
 
 .date-range-selector span { font-size: 13px; padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); color: var(--text-tertiary); white-space: nowrap; } 
 .btn-small { padding: 4px 10px !important; font-size: 10px !important; line-height: 1.4 !important; flex-shrink: 0; } /* Added flex-shrink */
@@ -70,23 +66,27 @@
 }
 
 
-/* --- Sticky Header Wrapper for Right Column --- */
+/* --- *** MODIFICATION: Fixed sticky jump *** --- */
 .sticky-header-wrapper {
   position: sticky;
-  top: -10px; /* Adjust slightly to account for padding-top */
-  /* --- *** ADDED BACKGROUND & Z-INDEX *** --- */
+  top: 0; /* --- FIXED: Was -10px --- */
   background-color: var(--bg-primary); 
   z-index: 10; 
   padding-top: 10px; /* Match column padding-top */
   margin: 0 -10px; /* Counteract column padding */
   padding-left: 10px; /* Add padding back inside */
   padding-right: 10px;
+  /* --- ADDED: Border & padding now live on the header *inside* --- */
 }
+/* --- *** MODIFICATION: Removed margin-bottom *** --- */
 .sticky-header-wrapper .section-title {
   margin-top: 0; 
-  /* --- *** ADDED BACKGROUND & MARGIN *** --- */
   background-color: var(--bg-primary); 
-  margin-bottom: 10px; /* Space below sticky title */
+  /* margin-bottom: 10px; <-- REMOVED */
+}
+/* --- *** NEW: Ensure the new header inside sticky wrapper has no extra margin *** --- */
+.sticky-header-wrapper .section-title-header {
+  margin-bottom: 0;
 }
 
 
@@ -157,7 +157,8 @@
   .dashboard-left-column { flex: 0 0 auto; width: 100%; margin-bottom: 20px; overflow: visible; padding-top: 0; } 
   .dashboard-right-column { overflow-y: visible; max-height: none; padding: 0 0 20px 0; padding-top: 0; } 
   .sticky-header-wrapper { position: static; background: none; z-index: auto; padding: 0; margin: 0;} 
-  .sticky-header-wrapper .section-title { margin-top: 10px; margin-bottom: 10px;} 
+  /* --- MODIFICATION: Align mobile sticky header --- */
+  .sticky-header-wrapper .section-title-header { margin-top: 10px; margin-bottom: 10px;} 
   .stat-box-grid { grid-template-columns: repeat(2, 1fr); }
   .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; } 
   .full-width-chart-card { margin-bottom: 20px; } 
@@ -186,10 +187,8 @@
 
 @media (max-width: 480px) { /* Smaller mobile adjustments */
    .stat-box-grid { grid-template-columns: 1fr; } /* Stack stat boxes */
-   
-   /* --- *** REMOVED: Redundant layout rules now handled by desktop styles *** --- */
-   /* .section-title-header { ... } */
-   /* .header-actions { ... } */
-   
+   /* --- MODIFICATION: Stack and align headers on mobile --- */
+   .section-title-header { flex-direction: column; align-items: flex-start; gap: 8px;} 
+   .header-actions { width: 100%; justify-content: space-between;} 
    .date-range-selector span { margin-left: 0; } 
 }

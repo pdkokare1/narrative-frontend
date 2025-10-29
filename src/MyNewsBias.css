@@ -15,10 +15,10 @@
 /* --- Main Content Flex Wrapper --- */
 .dashboard-content-wrapper { display: flex; flex-grow: 1; gap: 20px; overflow: hidden; width: 100%; padding: 0; }
 
-/* --- *** MODIFICATION: Removed padding-top *** --- */
+/* --- Left Column Styles --- */
 .dashboard-left-column { flex: 0 0 360px; min-width: 0; display: flex; flex-direction: column; gap: 12px; overflow: hidden; padding-bottom: 15px; padding-top: 0; }
 
-/* --- *** MODIFICATION: Removed padding-top *** --- */
+/* --- Right Column Styles --- */
 .dashboard-right-column { flex: 1 1 auto; overflow-y: auto; min-width: 0; padding: 0 10px 20px 10px; padding-top: 0; scrollbar-width: thin; scrollbar-color: var(--accent-primary) var(--bg-secondary); }
 .dashboard-right-column::-webkit-scrollbar { width: 8px; }
 .dashboard-right-column::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 4px;}
@@ -26,7 +26,7 @@
 .dashboard-right-column::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
 
 
-/* --- *** MODIFICATION: Added padding-top for alignment *** --- */
+/* --- Header for Section Title + Actions --- */
 .section-title-header { 
   display: flex; 
   justify-content: space-between; 
@@ -36,13 +36,14 @@
   border-bottom: 1px solid var(--border-color); 
   padding-bottom: 8px; 
   padding-top: 10px; /* This ensures alignment */
+  width: 100%; /* Ensure it spans full width */
 }
-/* --- *** MODIFICATION: Added flex-shrink: 0 *** --- */
+/* --- This stops the buttons from being squished --- */
 .header-actions { 
   display: flex; 
   align-items: baseline; 
   gap: 10px; 
-  flex-shrink: 0; /* This stops the buttons from being squished */
+  flex-shrink: 0; 
 }
 
 .date-range-selector span { font-size: 13px; padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); color: var(--text-tertiary); white-space: nowrap; } 
@@ -56,10 +57,22 @@
    width: 100%; flex-shrink: 0; 
 }
 .section-title.no-border { border-bottom: none; padding-bottom: 0; }
-.section-title-header .section-title { border-bottom: none; padding-bottom: 0; margin-bottom: 0; margin-right: auto; } 
 
-/* --- *** REMOVED: This rule is no longer needed *** --- */
-/* .dashboard-right-column > .sticky-header-wrapper + * { margin-top: 20px; } */
+/* --- *** MODIFICATION: This rule fixes the squishing *** --- */
+.section-title-header .section-title { 
+  border-bottom: none; 
+  padding-bottom: 0; 
+  margin-bottom: 0; 
+  margin-right: auto; /* Pushes buttons to the right */
+  
+  /* --- NEW FIXES --- */
+  flex-grow: 1; /* Allow it to grow */
+  flex-shrink: 1; /* Allow it to shrink if needed */
+  min-width: 0; /* CRITICAL: Allows flex items to shrink below their content size */
+  white-space: nowrap; /* Keep title on one line */
+  overflow: hidden; /* Hide overflow */
+  text-overflow: ellipsis; /* Add "..." if title is too long */
+} 
 
 
 .dashboard-left-column > .section-title:not(:first-child),
@@ -68,13 +81,12 @@
 }
 
 
-/* --- *** MODIFICATION: Fixed sticky jump and scrolling *** --- */
+/* --- Sticky Header Wrapper for Right Column --- */
 .sticky-header-wrapper {
   position: sticky;
   top: 0; /* This stops the "jump" */
   background-color: var(--bg-primary); 
   z-index: 10; 
-  /* padding-top: 10px; <-- This is now on the header inside */
   margin: 0 -10px; /* Counteract column padding */
   padding-left: 10px; /* Add padding back inside */
   padding-right: 10px;
@@ -83,7 +95,6 @@
 .sticky-header-wrapper .section-title {
   margin-top: 0; 
   background-color: var(--bg-primary); 
-  /* margin-bottom: 10px; <-- Removed */
 }
 .sticky-header-wrapper .section-title-header {
   margin-bottom: 0; /* Remove margin from the header *inside* the wrapper */

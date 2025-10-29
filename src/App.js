@@ -53,6 +53,15 @@ const getBreakdownTooltip = (label) => {
   return tooltips[label] || label; // Return explanation or the label itself as fallback
 };
 
+// --- *** MOVED HELPER FUNCTION HERE *** ---
+// This function is now globally available in this file
+const getSentimentClass = (sentiment) => {
+  if (sentiment === 'Positive') return 'sentiment-positive';
+  if (sentiment === 'Negative') return 'sentiment-negative';
+  return 'sentiment-neutral'; // Neutral or any other value
+};
+// --- *** END MODIFICATION *** ---
+
 // --- NEW: AppWrapper ---
 // We need this wrapper so we can use "useNavigate" (a router hook)
 // inside the component that has all our logic.
@@ -1092,12 +1101,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
     }
   };
 
-  const getSentimentClass = (sentiment) => {
-    if (sentiment === 'Positive') return 'sentiment-positive';
-    if (sentiment === 'Negative') return 'sentiment-negative';
-    return 'sentiment-neutral'; // Neutral or any other value
-  };
-
+  // --- *** DELETED getSentimentClass function from here *** ---
+  // It is now a global helper at the top of the file
 
   return (
     <div className="article-card">
@@ -1374,7 +1379,6 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
       {articleList.map(article => (
         <div key={article._id || article.url} className="coverage-article">
           <div className="coverage-content">
-             {/* --- *** MODIFICATION HERE *** --- */}
              {/* This now calls the onRead function from App.js, which is not available here */}
              {/* We will just keep this as a standard link for now, as onRead isn't passed down this deep */}
             <a href={article.url} target="_blank" rel="noopener noreferrer" onClick={stopMobileClick}>
@@ -1491,6 +1495,7 @@ function DetailedAnalysisModal({ article, onClose, showTooltip }) {
                  </p>
                  <div className="overview-grid" style={{gridTemplateColumns: '1fr', maxWidth: '200px', margin: '0 auto 30px auto'}}>
                     <div className="score-circle">
+                       {/* --- *** THIS IS THE CORRECTED LINE *** --- */}
                        <div className={`score-value ${getSentimentClass(article.sentiment)}`} style={{fontSize: '20px', color: ''}}>
                          {article.sentiment}
                        </div>

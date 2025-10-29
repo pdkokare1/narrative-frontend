@@ -26,7 +26,7 @@
 .dashboard-right-column::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
 
 
-/* --- *** MODIFICATION: Restored original layout, added padding-top *** --- */
+/* --- *** MODIFICATION: Added padding-top for alignment *** --- */
 .section-title-header { 
   display: flex; 
   justify-content: space-between; 
@@ -35,17 +35,18 @@
   flex-shrink: 0; 
   border-bottom: 1px solid var(--border-color); 
   padding-bottom: 8px; 
-  padding-top: 10px; /* Added for alignment */
+  padding-top: 10px; /* This ensures alignment */
 }
-/* --- *** MODIFICATION: Restored original layout *** --- */
+/* --- *** MODIFICATION: Added flex-shrink: 0 *** --- */
 .header-actions { 
   display: flex; 
   align-items: baseline; 
   gap: 10px; 
+  flex-shrink: 0; /* This stops the buttons from being squished */
 }
 
 .date-range-selector span { font-size: 13px; padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); color: var(--text-tertiary); white-space: nowrap; } 
-.btn-small { padding: 4px 10px !important; font-size: 10px !important; line-height: 1.4 !important; flex-shrink: 0; } /* Added flex-shrink */
+.btn-small { padding: 4px 10px !important; font-size: 10px !important; line-height: 1.4 !important; flex-shrink: 0; }
 
 
 /* --- Section Title --- */
@@ -57,36 +58,35 @@
 .section-title.no-border { border-bottom: none; padding-bottom: 0; }
 .section-title-header .section-title { border-bottom: none; padding-bottom: 0; margin-bottom: 0; margin-right: auto; } 
 
-/* Right column title margin */
-.dashboard-right-column > .sticky-header-wrapper + * { margin-top: 20px; } /* Space below sticky */
+/* --- *** REMOVED: This rule is no longer needed *** --- */
+/* .dashboard-right-column > .sticky-header-wrapper + * { margin-top: 20px; } */
+
 
 .dashboard-left-column > .section-title:not(:first-child),
-.dashboard-right-column > .section-title:not(:first-child):not(.sticky-title) { /* Don't add margin to sticky */
+.dashboard-right-column > .section-title:not(:first-child):not(.sticky-title) {
     margin-top: 10px;
 }
 
 
-/* --- *** MODIFICATION: Fixed sticky jump *** --- */
+/* --- *** MODIFICATION: Fixed sticky jump and scrolling *** --- */
 .sticky-header-wrapper {
   position: sticky;
-  top: 0; /* --- FIXED: Was -10px --- */
+  top: 0; /* This stops the "jump" */
   background-color: var(--bg-primary); 
   z-index: 10; 
-  padding-top: 10px; /* Match column padding-top */
+  /* padding-top: 10px; <-- This is now on the header inside */
   margin: 0 -10px; /* Counteract column padding */
   padding-left: 10px; /* Add padding back inside */
   padding-right: 10px;
-  /* --- ADDED: Border & padding now live on the header *inside* --- */
+  padding-bottom: 10px; /* This adds space below the line */
 }
-/* --- *** MODIFICATION: Removed margin-bottom *** --- */
 .sticky-header-wrapper .section-title {
   margin-top: 0; 
   background-color: var(--bg-primary); 
-  /* margin-bottom: 10px; <-- REMOVED */
+  /* margin-bottom: 10px; <-- Removed */
 }
-/* --- *** NEW: Ensure the new header inside sticky wrapper has no extra margin *** --- */
 .sticky-header-wrapper .section-title-header {
-  margin-bottom: 0;
+  margin-bottom: 0; /* Remove margin from the header *inside* the wrapper */
 }
 
 
@@ -157,7 +157,6 @@
   .dashboard-left-column { flex: 0 0 auto; width: 100%; margin-bottom: 20px; overflow: visible; padding-top: 0; } 
   .dashboard-right-column { overflow-y: visible; max-height: none; padding: 0 0 20px 0; padding-top: 0; } 
   .sticky-header-wrapper { position: static; background: none; z-index: auto; padding: 0; margin: 0;} 
-  /* --- MODIFICATION: Align mobile sticky header --- */
   .sticky-header-wrapper .section-title-header { margin-top: 10px; margin-bottom: 10px;} 
   .stat-box-grid { grid-template-columns: repeat(2, 1fr); }
   .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; } 
@@ -187,7 +186,6 @@
 
 @media (max-width: 480px) { /* Smaller mobile adjustments */
    .stat-box-grid { grid-template-columns: 1fr; } /* Stack stat boxes */
-   /* --- MODIFICATION: Stack and align headers on mobile --- */
    .section-title-header { flex-direction: column; align-items: flex-start; gap: 8px;} 
    .header-actions { width: 100%; justify-content: space-between;} 
    .date-range-selector span { margin-left: 0; } 

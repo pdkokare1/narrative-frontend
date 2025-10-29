@@ -26,10 +26,14 @@ const getActionCount = (totals, action) => {
   return item ? item.count : 0;
 };
 const leanOrder = ['Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
+
+// --- UPDATED: Center color is now green ---
 const leanColors = {
-    'Left': '#dc2626', 'Left-Leaning': '#f87171', 'Center': '#6b7280',
+    'Left': '#dc2626', 'Left-Leaning': '#f87171', 'Center': '#4CAF50', // Was '#6b7280'
     'Right-Leaning': '#60a5fa', 'Right': '#2563eb', 'Not Applicable': '#a1a1aa'
 };
+// --- END UPDATE ---
+
 const sentimentColors = {
   'Positive': '#2563eb',
   'Negative': '#dc2626',
@@ -327,6 +331,20 @@ function MyDashboard() {
            <div className="dashboard-card lean-summary-card"> {/* Already a card */}
               {loadingStats ? <div className="loading-container simple"><div className="spinner small"></div></div> : totalLeanArticles > 0 ? (
                 <>
+                  {/* --- NEW: Visual Key / Legend --- */}
+                  <div className="lean-legend">
+                    <div className="legend-item">
+                      <span className="legend-dot" style={{ backgroundColor: '#dc2626' }}></span> Left
+                    </div>
+                    <div className="legend-item">
+                      <span className="legend-dot" style={{ backgroundColor: '#4CAF50' }}></span> Center
+                    </div>
+                    <div className="legend-item">
+                      <span className="legend-dot" style={{ backgroundColor: '#2563eb' }}></span> Right
+                    </div>
+                  </div>
+                  {/* --- END NEW --- */}
+
                   <div className="lean-bar">
                      { leftCombinedPerc > 0 && <div className="lean-segment left" style={{ width: `${leftCombinedPerc}%` }}>{leftCombinedPerc >= 10 ? `L ${leftCombinedPerc}%` : ''}</div> }
                      { centerPerc > 0 && <div className="lean-segment center" style={{ width: `${centerPerc}%` }}>{centerPerc >= 10 ? `C ${centerPerc}%` : ''}</div> }
@@ -341,8 +359,11 @@ function MyDashboard() {
               ) : ( <p className="no-data-msg small">No analysis data available yet.</p> )}
             </div>
 
-            {/* --- REMOVED Navigation Links from Left Column --- */}
-            {/* <div className="left-column-nav"> ... </div> */}
+            {/* --- NEW: Account Settings Button --- */}
+            <Link to="/account-settings" className="btn-secondary btn-full-width" style={{ textDecoration: 'none', marginTop: '10px' }}>
+              Account Settings
+            </Link>
+            {/* --- END NEW --- */}
 
         </div> {/* --- End Left Column --- */}
 

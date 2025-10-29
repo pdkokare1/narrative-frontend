@@ -27,11 +27,25 @@
 
 
 /* --- Header for Section Title + Actions (Left Col Top) --- */
-.section-title-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; flex-shrink: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
-.header-actions { display: flex; align-items: baseline; gap: 10px; }
+.section-title-header {
+  display: flex;
+  /* justify-content: space-between; Removed */
+  align-items: baseline; 
+  margin-bottom: 10px; 
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-color); 
+  padding-bottom: 8px; 
+  gap: 15px; /* --- *** ADDED GAP *** --- */
+}
+/* Removed .header-actions wrapper */
 
 .date-range-selector span { font-size: 13px; padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); color: var(--text-tertiary); white-space: nowrap; } 
-.btn-small { padding: 4px 10px !important; font-size: 10px !important; line-height: 1.4 !important; flex-shrink: 0; } /* Added flex-shrink */
+.btn-small { padding: 4px 10px !important; font-size: 10px !important; line-height: 1.4 !important; flex-shrink: 0; } 
+/* --- *** NEW: Specific style for Back button placement *** --- */
+.btn-back-activity {
+    order: -1; /* Move button to the start */
+    margin-right: auto; /* Push title to the right */
+}
 
 
 /* --- Section Title --- */
@@ -41,13 +55,13 @@
    width: 100%; flex-shrink: 0; 
 }
 .section-title.no-border { border-bottom: none; padding-bottom: 0; }
-.section-title-header .section-title { border-bottom: none; padding-bottom: 0; margin-bottom: 0; margin-right: auto; } 
+.section-title-header .section-title { border-bottom: none; padding-bottom: 0; margin-bottom: 0; width: auto; /* Allow title to shrink */ } 
 
 /* Right column title margin */
-.dashboard-right-column > .sticky-header-wrapper + * { margin-top: 20px; } /* Space below sticky */
+.dashboard-right-column > .sticky-header-wrapper + * { margin-top: 20px; } 
 
 .dashboard-left-column > .section-title:not(:first-child),
-.dashboard-right-column > .section-title:not(:first-child):not(.sticky-title) { /* Don't add margin to sticky */
+.dashboard-right-column > .section-title:not(.sticky-title):not(:first-of-type) { /* Adjusted selector */
     margin-top: 10px;
 }
 
@@ -55,20 +69,30 @@
 /* --- Sticky Header Wrapper for Right Column --- */
 .sticky-header-wrapper {
   position: sticky;
-  top: -10px; /* Adjust slightly to account for padding-top */
-  /* --- *** ADDED BACKGROUND & Z-INDEX *** --- */
+  top: -10px; 
   background-color: var(--bg-primary); 
   z-index: 10; 
-  padding-top: 10px; /* Match column padding-top */
-  margin: 0 -10px; /* Counteract column padding */
-  padding-left: 10px; /* Add padding back inside */
+  padding-top: 10px; 
+  margin: 0 -10px; 
+  padding-left: 10px; 
   padding-right: 10px;
+  /* --- *** ADDED FLEX for alignment *** --- */
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid var(--border-color); /* Add border here */
+  padding-bottom: 8px; /* Match left header padding */
+  margin-bottom: 5px; 
 }
 .sticky-header-wrapper .section-title {
   margin-top: 0; 
-  /* --- *** ADDED BACKGROUND & MARGIN *** --- */
   background-color: var(--bg-primary); 
-  margin-bottom: 10px; /* Space below sticky title */
+  margin-bottom: 0; /* Remove margin */
+  border-bottom: none; /* Remove duplicate border */
+  padding-bottom: 0; /* Remove padding */
+}
+.sticky-header-wrapper .date-range-selector {
+    margin-left: 15px; /* Space between title and date */
 }
 
 
@@ -160,7 +184,7 @@
   .section-title { font-size: 16px; margin-bottom: 10px; padding-bottom: 6px; } 
   .chart-container { min-height: 260px; }
   .stories-read-chart, .article-bias-chart, .category-chart-container { height: 260px; min-height: 220px; }
-  .dashboard-right-column > div:last-child { margin-bottom: 15px; }
+  .dashboard-right-column > div:last-child { margin-bottom: 15px; } /* Adjust if back button was last */
   .full-width-chart-card { margin-bottom: 15px; }
   .dashboard-card { padding: 15px; } 
   .dashboard-card h3, .card-header h3 { font-size: 14px; margin-bottom: 12px; }
@@ -171,4 +195,5 @@
    .section-title-header { flex-direction: column; align-items: flex-start; gap: 8px;} 
    .header-actions { width: 100%; justify-content: space-between;} 
    .date-range-selector span { margin-left: 0; } 
+   .btn-back-activity { order: 0; margin-right: 0; } /* Reset button order */
 }

@@ -1,7 +1,7 @@
 // In file: src/MyDashboard.js
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
-import { Link, NavLink } from 'react-router-dom'; // Use Link for Back to Articles
+import { Link } from 'react-router-dom'; // Use Link for Back to Articles
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement,
@@ -96,7 +96,7 @@ function MyDashboard() {
 
     const getBarChartOptions = useCallback((title, axisLabel = 'Number of Articles') => ({
       responsive: true, maintainAspectRatio: false,
-      indexAxis: 'y', // --- Make it horizontal ---
+      indexAxis: 'y',
       scales: {
         x: {
           beginAtZero: true,
@@ -157,7 +157,7 @@ function MyDashboard() {
   };
 
   const prepareCategoryData = (rawData) => {
-    const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10).reverse(); // Reverse for horizontal bar
+    const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10).reverse();
     const themeCategoryColors = chartColors.categoryPalette;
     return {
       labels: sortedData.map(d => d.category),
@@ -172,13 +172,13 @@ function MyDashboard() {
   };
 
   const prepareTopSourcesData = (rawData) => {
-    const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10).reverse(); // Reverse for horizontal bar
+    const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10).reverse();
     return {
       labels: sortedData.map(d => d.source),
       datasets: [{
         label: 'Articles Analyzed',
         data: sortedData.map(d => d.count),
-        backgroundColor: chartColors.accentPrimary, // Use single accent color
+        backgroundColor: chartColors.accentPrimary,
         borderWidth: 0,
       }],
     };
@@ -189,11 +189,9 @@ function MyDashboard() {
     const labels = ['Positive', 'Neutral', 'Negative'];
     const data = labels.map(label => counts[label] || 0);
     const backgroundColors = labels.map(label => sentimentColors[label]);
-
     const filteredLabels = labels.filter((_, index) => data[index] > 0);
     const filteredData = data.filter(count => count > 0);
     const filteredColors = backgroundColors.filter((_, index) => data[index] > 0);
-
     return {
       labels: filteredLabels,
       datasets: [{
@@ -224,44 +222,24 @@ function MyDashboard() {
     };
   }, [statsData?.dailyCounts, chartColors]);
 
-  // Prepare data for all charts
   const leanReadData = prepareLeanData(statsData?.leanDistribution_read);
   const categoryReadData = prepareCategoryData(statsData?.categoryDistribution_read);
   const topSourcesData = prepareTopSourcesData(statsData?.topSources_read);
   const sentimentReadData = prepareSentimentData(statsData?.sentimentDistribution_read);
-  // --- NEW: Prepare data for Quality Chart (from MyNewsBias) ---
   const qualityReadData = useMemo(() => {
-    const qualityLabels = [
-        'A+ Excellent (90-100)', 'A High (80-89)', 'B Professional (70-79)',
-        'C Acceptable (60-69)', 'D-F Poor (0-59)', 'N/A (Review/Opinion)'
-    ];
-    const qualityColorsMap = {
-        'A+ Excellent (90-100)': '#2563eb', 'A High (80-89)': '#60a5fa',
-        'B Professional (70-79)': '#4CAF50', 'C Acceptable (60-69)': '#F59E0B',
-        'D-F Poor (0-59)': '#dc2626', 'N/A (Review/Opinion)': '#a1a1aa'
-    };
+    const qualityLabels = ['A+ Excellent (90-100)', 'A High (80-89)', 'B Professional (70-79)', 'C Acceptable (60-69)', 'D-F Poor (0-59)', 'N/A (Review/Opinion)'];
+    const qualityColorsMap = {'A+ Excellent (90-100)': '#2563eb', 'A High (80-89)': '#60a5fa', 'B Professional (70-79)': '#4CAF50', 'C Acceptable (60-69)': '#F59E0B', 'D-F Poor (0-59)': '#dc2626', 'N/A (Review/Opinion)': '#a1a1aa'};
     const rawData = statsData?.qualityDistribution_read;
     const rawCountsMap = (rawData || []).reduce((acc, item) => { acc[item.grade] = item.count; return acc; }, {});
     const dbCounts = rawCountsMap;
-    // Handle null grade (which corresponds to N/A / SentimentOnly)
-    const data = [
-      dbCounts['A+'] || 0,
-      (dbCounts['A'] || 0) + (dbCounts['A-'] || 0),
-      (dbCounts['B+'] || 0) + (dbCounts['B'] || 0) + (dbCounts['B-'] || 0),
-      (dbCounts['C+'] || 0) + (dbCounts['C'] || 0) + (dbCounts['C-'] || 0),
-      (dbCounts['D+'] || 0) + (dbCounts['D'] || 0) + (dbCounts['D-'] || 0) + (dbCounts['F'] || 0) + (dbCounts['D-F'] || 0),
-      dbCounts[null] || 0 // Count where grade is null
-    ];
+    const data = [dbCounts['A+'] || 0, (dbCounts['A'] || 0) + (dbCounts['A-'] || 0), (dbCounts['B+'] || 0) + (dbCounts['B'] || 0) + (dbCounts['B-'] || 0), (dbCounts['C+'] || 0) + (dbCounts['C'] || 0) + (dbCounts['C-'] || 0), (dbCounts['D+'] || 0) + (dbCounts['D'] || 0) + (dbCounts['D-'] || 0) + (dbCounts['F'] || 0) + (dbCounts['D-F'] || 0), dbCounts[null] || 0];
     const backgroundColors = qualityLabels.map(label => qualityColorsMap[label] || '#a1a1aa');
     const filteredLabels = qualityLabels.filter((_, index) => data[index] > 0);
     const filteredData = data.filter(count => count > 0);
     const filteredColors = backgroundColors.filter((_, index) => data[index] > 0);
     return { labels: filteredLabels, datasets: [{ label: 'Articles Read', data: filteredData, backgroundColor: filteredColors, borderColor: chartColors.borderColor, borderWidth: 1 }] };
   }, [statsData?.qualityDistribution_read, chartColors.borderColor]);
-
-  // --- NEW: Prepare data for Political Lean (Shared) Chart ---
   const leanSharedData = prepareLeanData(statsData?.leanDistribution_shared);
-
 
   // Calculate totals
   const totals = statsData?.totalCounts || [];
@@ -274,7 +252,6 @@ function MyDashboard() {
   const totalLeanArticles = statsData?.leanDistribution_read?.reduce((sum, item) => sum + item.count, 0) || 0;
   const leanReadCounts = (statsData?.leanDistribution_read || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
   const leanPercentages = leanOrder.reduce((acc, lean) => { const count = leanReadCounts[lean] || 0; acc[lean] = totalLeanArticles > 0 ? Math.round((count / totalLeanArticles) * 100) : 0; return acc; }, {});
-
   const leftCombinedPerc = leanPercentages['Left'] + leanPercentages['Left-Leaning'];
   const centerPerc = leanPercentages['Center'];
   const rightCombinedPerc = leanPercentages['Right'] + leanPercentages['Right-Leaning'];
@@ -288,13 +265,12 @@ function MyDashboard() {
 
   // --- RENDER LOGIC ---
   return (
-    <div className="dashboard-page"> {/* Use the base class */}
-      {/* --- NEW: Two-Column Layout Wrapper --- */}
+    <div className="dashboard-page">
       <div className="dashboard-content-wrapper">
 
         {/* --- Left Column --- */}
         <div className="dashboard-left-column">
-           <div className="section-title-header no-border-bottom"> {/* Adjusted header */}
+           <div className="section-title-header no-border-bottom">
              <h2 className="section-title no-border">Your Activity</h2>
              <div className="header-actions">
                  <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
@@ -303,59 +279,41 @@ function MyDashboard() {
              </div>
            </div>
 
-          {/* Activity Stat Boxes */}
-          <div className="stat-box-grid">
-            {statBoxes.map(box => (
-              <div key={box.key} className="dashboard-card stat-box">
-                 <h3>{box.title}</h3>
-                 <p className="stat-number">{loadingStats ? '...' : box.value}</p>
-                 <p className="stat-description">{box.desc}</p>
-              </div>
-            ))}
+          {/* Activity Stat Boxes (now wrapped) */}
+          <div className="dashboard-card no-padding"> {/* Add no-padding if needed */}
+            <div className="stat-box-grid">
+              {statBoxes.map(box => (
+                <div key={box.key} className="stat-box"> {/* Removed dashboard-card from here */}
+                   <h3>{box.title}</h3>
+                   <p className="stat-number">{loadingStats ? '...' : box.value}</p>
+                   <p className="stat-description">{box.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
+
 
           {/* Reading Bias Card */}
           <h2 className="section-title">Reading Bias</h2>
-           <div className="dashboard-card lean-summary-card">
+           <div className="dashboard-card lean-summary-card"> {/* Already a card */}
               {loadingStats ? <div className="loading-container simple"><div className="spinner small"></div></div> : totalLeanArticles > 0 ? (
                 <>
                   <div className="lean-bar">
-                     { leftCombinedPerc > 0 &&
-                       <div className="lean-segment left" style={{ width: `${leftCombinedPerc}%` }}>
-                          {leftCombinedPerc >= 10 ? `L ${leftCombinedPerc}%` : ''}
-                       </div> }
-                     { centerPerc > 0 &&
-                       <div className="lean-segment center" style={{ width: `${centerPerc}%` }}>
-                           {centerPerc >= 10 ? `C ${centerPerc}%` : ''}
-                       </div> }
-                     { rightCombinedPerc > 0 &&
-                       <div className="lean-segment right" style={{ width: `${rightCombinedPerc}%` }}>
-                           {rightCombinedPerc >= 10 ? `R ${rightCombinedPerc}%` : ''}
-                       </div> }
+                     { leftCombinedPerc > 0 && <div className="lean-segment left" style={{ width: `${leftCombinedPerc}%` }}>{leftCombinedPerc >= 10 ? `L ${leftCombinedPerc}%` : ''}</div> }
+                     { centerPerc > 0 && <div className="lean-segment center" style={{ width: `${centerPerc}%` }}>{centerPerc >= 10 ? `C ${centerPerc}%` : ''}</div> }
+                     { rightCombinedPerc > 0 && <div className="lean-segment right" style={{ width: `${rightCombinedPerc}%` }}>{rightCombinedPerc >= 10 ? `R ${rightCombinedPerc}%` : ''}</div> }
                   </div>
                   <ul className="lean-details">
-                     {leftCombinedPerc > 0 && (
-                        <li><span>{leftCombinedPerc}%</span> analyzed lean left.</li>
-                     )}
-                      {centerPerc > 0 && (
-                         <li><span>{centerPerc}%</span> analyzed were balanced.</li>
-                      )}
-                       {rightCombinedPerc > 0 && (
-                         <li><span>{rightCombinedPerc}%</span> analyzed lean right.</li>
-                       )}
+                     {leftCombinedPerc > 0 && (<li><span>{leftCombinedPerc}%</span> analyzed lean left.</li>)}
+                     {centerPerc > 0 && (<li><span>{centerPerc}%</span> analyzed were balanced.</li>)}
+                     {rightCombinedPerc > 0 && (<li><span>{rightCombinedPerc}%</span> analyzed lean right.</li>)}
                   </ul>
                 </>
-              ) : (
-                <p className="no-data-msg small">No analysis data available yet.</p>
-              )}
+              ) : ( <p className="no-data-msg small">No analysis data available yet.</p> )}
             </div>
 
-            {/* --- NEW: Navigation Links in Left Column --- */}
-            <div className="left-column-nav">
-                <NavLink to="/saved-articles" className={({isActive}) => isActive ? "active" : ""}>Saved Articles</NavLink>
-                <NavLink to="/account-settings" className={({isActive}) => isActive ? "active" : ""}>Account Settings</NavLink>
-            </div>
-
+            {/* --- REMOVED Navigation Links from Left Column --- */}
+            {/* <div className="left-column-nav"> ... </div> */}
 
         </div> {/* --- End Left Column --- */}
 
@@ -372,7 +330,7 @@ function MyDashboard() {
           </div>
 
           {/* Stories Analyzed Over Time (Full Width) */}
-          <div className="dashboard-card full-width-chart-card stories-read-card">
+          <div className="dashboard-card full-width-chart-card stories-read-card"> {/* Already a card */}
               <div className="chart-container stories-read-chart">
                  {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
                   : (statsData?.dailyCounts?.length > 0) ? ( <Line options={storiesReadOptions} data={storiesReadData} /> )
@@ -383,56 +341,57 @@ function MyDashboard() {
           {/* Grid for Remaining Charts */}
           <div className="dashboard-grid">
 
-            {/* Top Categories (Bar Chart) */}
+            {/* Each chart is now wrapped in dashboard-card */}
              <div className="dashboard-card">
+               <h3>Top Categories (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && categoryReadData.labels.length > 0) ? ( <Bar options={getBarChartOptions('Top Categories (Analyzed)')} data={categoryReadData} /> )
+                   : (totalAnalyzed > 0 && categoryReadData.labels.length > 0) ? ( <Bar options={getBarChartOptions('', 'Articles Analyzed')} data={categoryReadData} /> ) // Remove title from options
                    : ( <p className="no-data-msg">No category data for this period.</p> )}
                </div>
              </div>
 
-            {/* Top Sources (Bar Chart) */}
              <div className="dashboard-card">
+               <h3>Top Sources (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && topSourcesData.labels.length > 0) ? ( <Bar options={getBarChartOptions('Top Sources (Analyzed)')} data={topSourcesData} /> )
+                   : (totalAnalyzed > 0 && topSourcesData.labels.length > 0) ? ( <Bar options={getBarChartOptions('', 'Articles Analyzed')} data={topSourcesData} /> ) // Remove title from options
                    : ( <p className="no-data-msg">No source data for this period.</p> )}
                </div>
              </div>
 
-            {/* Political Lean (Analyzed - Doughnut) */}
              <div className="dashboard-card">
+               <h3>Political Lean (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalLeanArticles > 0) ? ( <Doughnut options={getDoughnutChartOptions('Political Lean (Analyzed)')} data={leanReadData} /> )
+                   : (totalLeanArticles > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={leanReadData} /> ) // Remove title from options
                    : ( <p className="no-data-msg">No lean data for this period.</p> )}
                </div>
              </div>
 
-             {/* Sentiment Breakdown (Doughnut Chart) */}
              <div className="dashboard-card">
+               <h3>Sentiment Breakdown (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && sentimentReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('Sentiment Breakdown (Analyzed)')} data={sentimentReadData} /> )
+                   : (totalAnalyzed > 0 && sentimentReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={sentimentReadData} /> ) // Remove title from options
                    : ( <p className="no-data-msg">No sentiment data for this period.</p> )}
                </div>
              </div>
 
-             {/* --- ADDED: Article Quality Chart --- */}
              <div className="dashboard-card">
+               <h3>Article Quality (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && qualityReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('Article Quality (Analyzed)')} data={qualityReadData} /> )
+                   : (totalAnalyzed > 0 && qualityReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={qualityReadData} /> ) // Remove title from options
                    : ( <p className="no-data-msg">No quality data for this period.</p> )}
                </div>
              </div>
 
-            {/* --- ADDED: Political Lean (Shared) Chart --- */}
              <div className="dashboard-card">
+               <h3>Political Lean (Shared)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalShared > 0 && leanSharedData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('Political Lean (Shared)')} data={leanSharedData} /> )
+                   : (totalShared > 0 && leanSharedData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={leanSharedData} /> ) // Remove title from options
                    : ( <p className="no-data-msg">You haven't shared articles yet.</p> )}
                </div>
              </div>

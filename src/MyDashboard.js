@@ -281,13 +281,20 @@ function MyDashboard() {
   const totalCompared = getActionCount(totals, 'view_comparison');
   const totalRead = getActionCount(totals, 'read_external');
 
-  // Calculate lean percentages
-  const totalLeanArticles = statsData?.leanDistribution_read?.reduce((sum, item) => sum + item.count, 0) || 0;
+  // Calculate lean percentages for BAR
   const leanReadCounts = (statsData?.leanDistribution_read || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
-  const leanPercentages = leanOrder.reduce((acc, lean) => { const count = leanReadCounts[lean] || 0; acc[lean] = totalLeanArticles > 0 ? Math.round((count / totalLeanArticles) * 100) : 0; return acc; }, {});
-  const leftCombinedPerc = leanPercentages['Left'] + leanPercentages['Left-Leaning'];
-  const centerPerc = leanPercentages['Center'];
-  const rightCombinedPerc = leanPercentages['Right'] + leanPercentages['Right-Leaning'];
+  const totalApplicableLeanArticles = (leanReadCounts['Left'] || 0) + (leanReadCounts['Left-Leaning'] || 0) + (leanReadCounts['Center'] || 0) + (leanReadCounts['Right-Leaning'] || 0) + (leanReadCounts['Right'] || 0);
+
+  const calculateBarPercentage = (leanTypes) => {
+    if (totalApplicableLeanArticles === 0) return 0;
+    const count = leanTypes.reduce((sum, type) => sum + (leanReadCounts[type] || 0), 0);
+    return Math.round((count / totalApplicableLeanArticles) * 100);
+  };
+
+  const leftCombinedPerc = calculateBarPercentage(['Left', 'Left-Leaning']);
+  const centerPerc = calculateBarPercentage(['Center']);
+  const rightCombinedPerc = calculateBarPercentage(['Right-Leaning', 'Right']);
+  // --- END BAR CALC ---
 
   const statBoxes = [
     { key: 'analyzed', title: 'Articles Analyzed', value: totalAnalyzed, desc: 'No. of articles you have analyzed.' },
@@ -327,40 +334,42 @@ function MyDashboard() {
 
 
           {/* Reading Bias Card */}
-          <h2 className="section-title">Reading Bias</h2>
+          <h2 className="section-title reading-bias-title">Reading Bias</h2> {/* ADDED CLASS */}
            <div className="dashboard-card lean-summary-card"> {/* Already a card */}
-              {loadingStats ? <div className="loading-container simple"><div className="spinner small"></div></div> : totalLeanArticles > 0 ? (
+              {loadingStats ? <div className="loading-container simple"><div className="spinner small"></div></div> : totalApplicableLeanArticles > 0 ? ( // USE APPLICABLE TOTAL
                 <>
                   {/* --- NEW: Visual Key / Legend --- */}
                   <div className="lean-legend">
                     <div className="legend-item">
-                      <span className="legend-dot" style={{ backgroundColor: '#dc2626' }}></span> Left
+                      <span className="legend-dot" style={{ backgroundColor: leanColors['Left'] }}></span> Left
                     </div>
                     <div className="legend-item">
-                      <span className="legend-dot" style={{ backgroundColor: '#4CAF50' }}></span> Center
+                      <span className="legend-dot" style={{ backgroundColor: leanColors['Center'] }}></span> Center
                     </div>
                     <div className="legend-item">
-                      <span className="legend-dot" style={{ backgroundColor: '#2563eb' }}></span> Right
+                      <span className="legend-dot" style={{ backgroundColor: leanColors['Right'] }}></span> Right
                     </div>
                   </div>
                   {/* --- END NEW --- */}
 
                   <div className="lean-bar">
+                     {/* --- UPDATED: Use calculated percentages --- */}
                      { leftCombinedPerc > 0 && <div className="lean-segment left" style={{ width: `${leftCombinedPerc}%` }}>{leftCombinedPerc >= 10 ? `L ${leftCombinedPerc}%` : ''}</div> }
                      { centerPerc > 0 && <div className="lean-segment center" style={{ width: `${centerPerc}%` }}>{centerPerc >= 10 ? `C ${centerPerc}%` : ''}</div> }
                      { rightCombinedPerc > 0 && <div className="lean-segment right" style={{ width: `${rightCombinedPerc}%` }}>{rightCombinedPerc >= 10 ? `R ${rightCombinedPerc}%` : ''}</div> }
                   </div>
                   <ul className="lean-details">
+                     {/* --- UPDATED: Use calculated percentages --- */}
                      {leftCombinedPerc > 0 && (<li><span>{leftCombinedPerc}%</span> analyzed lean left.</li>)}
                      {centerPerc > 0 && (<li><span>{centerPerc}%</span> analyzed were balanced.</li>)}
                      {rightCombinedPerc > 0 && (<li><span>{rightCombinedPerc}%</span> analyzed lean right.</li>)}
                   </ul>
                 </>
-              ) : ( <p className="no-data-msg small">No analysis data available yet.</p> )}
+              ) : ( <p className="no-data-msg small">No applicable analysis data available yet.</p> )}
             </div>
 
             {/* --- NEW: Account Settings Button --- */}
-            <Link to="/account-settings" className="btn-secondary btn-full-width" style={{ textDecoration: 'none', marginTop: '10px' }}>
+            <Link to="/account-settings" className="btn-secondary btn-full-width account-settings-link" style={{ textDecoration: 'none' }}> {/* ADDED CLASS */}
               Account Settings
             </Link>
             {/* --- END NEW --- */}
@@ -414,7 +423,7 @@ function MyDashboard() {
                <h3>Political Lean (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalLeanArticles > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={leanReadData} /> ) // Remove title from options
+                   : (totalApplicableLeanArticles > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={leanReadData} /> ) // USE APPLICABLE TOTAL
                    : ( <p className="no-data-msg">No lean data for this period.</p> )}
                </div>
              </div>

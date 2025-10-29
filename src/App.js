@@ -77,12 +77,18 @@ function AppWrapper() {
   const [initialLoad, setInitialLoad] = useState(true); // Track initial load
   const [isRefreshing, setIsRefreshing] = useState(false); // NEW: For pull-to-refresh
   const [theme, setTheme] = useState('dark');
+  
+  // --- *** MODIFIED: Added 'region' and 'type' filters *** ---
   const [filters, setFilters] = useState({
     category: 'All Categories',
     lean: 'All Leans',
     quality: 'All Quality Levels',
-    sort: 'Latest First'
+    sort: 'Latest First',
+    region: 'Global', // NEW
+    type: 'All Types' // NEW
   });
+  // --- *** END MODIFICATION *** ---
+
   const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '', articleId: null }); // Added articleId
   const [analysisModal, setAnalysisModal] = useState({ open: false, article: null });
   const [totalArticlesCount, setTotalArticlesCount] = useState(0); // Track total count from API
@@ -379,18 +385,21 @@ function AppWrapper() {
       const limit = 12; // Articles per page/load
       const offset = loadMore ? displayedArticles.length : 0;
 
-      const queryParams = { ...filters, limit, offset };
-      if (filters.quality === 'Review / Opinion') {
-        queryParams.quality = null;
-        queryParams.analysisType = 'SentimentOnly';
-      } else {
-        queryParams.analysisType = null;
-      }
+      // --- *** MODIFIED: Send all new filters to backend *** ---
+      const queryParams = { 
+        ...filters, 
+        limit, 
+        offset 
+      };
+      
+      // --- REMOVED old quality/analysisType logic ---
+      // --- The backend now handles this logic based on the 'type' filter ---
 
       // --- UPDATED: Request will now send auth token via interceptor ---
       const response = await axios.get(`${API_URL}/articles`, {
         params: queryParams // Use the modified params
       });
+      // --- *** END MODIFICATION *** ---
 
       const articlesData = response.data.articles || [];
       const paginationData = response.data.pagination || { total: 0 };
@@ -421,7 +430,9 @@ function AppWrapper() {
             reliabilityComponents: article.reliabilityComponents && typeof article.reliabilityComponents === 'object' ? article.reliabilityComponents : {},
             keyFindings: Array.isArray(article.keyFindings) ? article.keyFindings : [],
             recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
-            clusterId: article.clusterId || null
+            clusterId: article.clusterId || null,
+            // --- *** NEW: Add clusterCount from backend *** ---
+            clusterCount: Number(article.clusterCount) || 1 // Default to 1
         }));
       // --- End Data Cleaning ---
 
@@ -927,11 +938,26 @@ function CustomSelect({ name, value, options, onChange }) {
   );
 }
 
-// --- Sidebar (UPDATED with CustomSelect and new Quality Labels) ---
+// --- *** MODIFIED: Sidebar with new Region and Type filters *** ---
 function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
-  const leans = ['All Leans', 'All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
+  const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
+  
+  // --- NEW: Region Filter Options ---
+  const regions = [
+    { value: 'Global', label: 'Global' },
+    { value: 'India', label: 'India' },
+    { value: 'All', label: 'All Regions' }
+  ];
 
+  // --- NEW: Article Type Filter Options ---
+  const articleTypes = [
+    { value: 'All Types', label: 'All Types' },
+    { value: 'Hard News', label: 'Hard News' },
+    { value: 'Opinion & Reviews', label: 'Opinion & Reviews' }
+  ];
+
+  // --- MODIFIED: Removed 'Review / Opinion' ---
   const qualityLevels = [
     { value: 'All Quality Levels', label: 'All Quality Levels' },
     { value: 'A+ Excellent (90-100)', label: 'A+ : Excellent' },
@@ -939,8 +965,8 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
     { value: 'B Professional (70-79)', label: 'B : Professional' },
     { value: 'C Acceptable (60-69)', label: 'C : Acceptable' },
     { value: 'D-F Poor (0-59)', label: 'D-F : Poor' },
-    { value: 'Review / Opinion', label: 'Review / Opinion' },
   ];
+  // --- END MODIFICATION ---
 
   const sortOptions = ['Latest First', 'Highest Quality', 'Most Covered', 'Lowest Bias'];
 
@@ -948,6 +974,9 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
     const { name, value } = e.target;
     onFilterChange({ ...filters, [name]: value });
   };
+  
+  // --- NEW: Disable Quality filter if 'Opinion & Reviews' is selected ---
+  const isQualityDisabled = filters.type === 'Opinion & Reviews';
 
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
@@ -955,6 +984,28 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
         <div className="sidebar-header-mobile">
           <h3>Filters</h3>
           <button className="sidebar-close-btn" onClick={onClose} title="Close Filters">×</button>
+        </div>
+        
+        {/* --- NEW: Region Filter --- */}
+        <div className="filter-section">
+          <h3>Region</h3>
+          <CustomSelect
+            name="region"
+            value={filters.region}
+            options={regions}
+            onChange={handleChange}
+          />
+        </div>
+
+        {/* --- NEW: Article Type Filter --- */}
+        <div className="filter-section">
+          <h3>Article Type</h3>
+          <CustomSelect
+            name="type"
+            value={filters.type}
+            options={articleTypes}
+            onChange={handleChange}
+          />
         </div>
 
         <div className="filter-section">
@@ -977,15 +1028,17 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
           />
         </div>
 
-        <div className="filter-section">
+        {/* --- MODIFIED: Added disabled logic --- */}
+        <div className="filter-section" style={{ opacity: isQualityDisabled ? 0.5 : 1, pointerEvents: isQualityDisabled ? 'none' : 'auto' }}>
           <h3>Quality Level</h3>
           <CustomSelect
             name="quality"
-            value={filters.quality}
+            value={isQualityDisabled ? 'All Quality Levels' : filters.quality}
             options={qualityLevels}
             onChange={handleChange}
           />
         </div>
+        {/* --- END MODIFICATION --- */}
 
         <div className="filter-section">
           <h3>Sort By</h3>
@@ -1006,6 +1059,7 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose }) {
     </aside>
   );
 }
+// --- *** END MODIFIED SIDEBAR *** ---
 
 
 // --- *** MODIFIED COMPONENT *** ---
@@ -1016,7 +1070,13 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
 
   const isReview = article.analysisType === 'SentimentOnly';
   const isNonPolitical = article.politicalLean === 'Not Applicable';
-  const showReadArticleStack = isReview || isNonPolitical;
+  
+  // --- *** NEW: Smart Button Logic *** ---
+  // Show "Compare" on reviews *only if* there are other articles in the cluster
+  const showCompareForReview = isReview && article.clusterCount > 1;
+  // Show "Read Article" stack if it's a review with *no* comparisons, OR if it's non-political
+  const showReadArticleStack = (isReview && !showCompareForReview) || isNonPolitical;
+  // --- *** END NEW LOGIC *** ---
 
   const handleImageError = (e) => {
     e.target.style.display = 'none';
@@ -1057,7 +1117,6 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
 
       <div className="article-content">
         <div className="article-content-top">
-          {/* --- *** MODIFICATION HERE *** --- */}
           {/* The <a> tag is now a button-like div that calls onRead */}
           <div
               className="article-headline-link"
@@ -1130,7 +1189,9 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
           </div>
 
           <div className="article-actions">
+            {/* --- *** MODIFIED: Use new smart logic *** --- */}
             {showReadArticleStack ? (
+              // --- This is for Non-Political OR (Review AND clusterCount <= 1) ---
               <>
                 <button
                   onClick={(e) => { stopMobileClick(e); onShare(article); }}
@@ -1139,8 +1200,6 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
                 >
                   Share
                 </button>
-                {/* --- *** MODIFICATION HERE *** --- */}
-                {/* This button now calls onRead */}
                 <button
                   onClick={(e) => { stopMobileClick(e); onRead(article); }}
                   className="btn-primary btn-full-width"
@@ -1150,13 +1209,16 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
                 </button>
               </>
             ) : (
+              // --- This is for Hard News (Full) OR (Review AND clusterCount > 1) ---
               <>
                 <div className="article-actions-top">
                   <button
-                    // --- UPDATED: Use onAnalyze prop ---
                     onClick={(e) => { stopMobileClick(e); onAnalyze(article); }}
                     className="btn-secondary"
                     title="View Detailed Analysis"
+                    // --- Disable Analysis button for Reviews ---
+                    disabled={isReview} 
+                    style={{ display: isReview ? 'none' : 'block' }} // Hide if review
                   >
                     Analysis
                   </button>
@@ -1164,19 +1226,23 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
                     onClick={(e) => { stopMobileClick(e); onShare(article); }}
                     className="btn-secondary"
                     title="Share article link"
+                    // --- Make Share full-width if Analysis is hidden ---
+                    style={{ gridColumn: isReview ? '1 / -1' : 'auto' }}
                   >
                     Share
                   </button>
                 </div>
                 <button
-                  onClick={(e) => { stopMobileClick(e); onCompare(article); }} // --- UPDATED: Pass full article ---
+                  onClick={(e) => { stopMobileClick(e); onCompare(article); }}
                   className="btn-primary btn-full-width"
                   title="Compare Coverage Across Perspectives"
                 >
-                  Compare Coverage
+                  {/* --- NEW: Show count if available --- */}
+                  Compare Coverage {article.clusterCount > 1 ? `(${article.clusterCount})` : ''}
                 </button>
               </>
             )}
+            {/* --- *** END MODIFICATION *** --- */}
           </div>
         </div> {/* End article-content-bottom */}
       </div>
@@ -1318,34 +1384,53 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
               {(article.summary || '').substring(0, 150)}{article.summary && article.summary.length > 150 ? '...' : ''}
             </p>
 
-            <div className="article-scores">
-              <span
-                title="Bias Score (0-100, lower is less biased)"
-                onClick={(e) => showTooltip("Bias Score (0-100, lower is less biased)", e)}
-              >
-                Bias: {article.biasScore != null ? <span className="accent-text">{article.biasScore}</span> : 'N/A'}
-              </span>
-              <span
-                title="Overall Trust Score (0-100, higher is more trustworthy)"
-                onClick={(e) => showTooltip("Overall Trust Score (0-100, higher is more trustworthy)", e)}
-              >
-                Trust: {article.trustScore != null ? <span className="accent-text">{article.trustScore}</span> : 'N/A'}
-              </span>
-              <span
-                title="Credibility Grade (A+ to F)"
-                onClick={(e) => showTooltip("Credibility Grade (A+ to F)", e)}
-              >
-                Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}
-              </span>
-            </div>
+            {/* --- *** MODIFIED: Show scores only for 'Full' analysis articles *** --- */}
+            {article.analysisType === 'Full' ? (
+              <div className="article-scores">
+                <span
+                  title="Bias Score (0-100, lower is less biased)"
+                  onClick={(e) => showTooltip("Bias Score (0-100, lower is less biased)", e)}
+                >
+                  Bias: {article.biasScore != null ? <span className="accent-text">{article.biasScore}</span> : 'N/A'}
+                </span>
+                <span
+                  title="Overall Trust Score (0-100, higher is more trustworthy)"
+                  onClick={(e) => showTooltip("Overall Trust Score (0-100, higher is more trustworthy)", e)}
+                >
+                  Trust: {article.trustScore != null ? <span className="accent-text">{article.trustScore}</span> : 'N/A'}
+                </span>
+                <span
+                  title="Credibility Grade (A+ to F)"
+                  onClick={(e) => showTooltip("Credibility Grade (A+ to F)", e)}
+                >
+                  Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}
+                </span>
+              </div>
+            ) : (
+              // --- Show this for 'SentimentOnly' articles ---
+              <div className="article-scores">
+                <span 
+                  title="This is an opinion/review article."
+                  onClick={(e) => showTooltip("This is an opinion/review article.", e)}
+                >
+                  Opinion / Review
+                </span>
+              </div>
+            )}
+            {/* --- *** END MODIFICATION *** --- */}
+            
             <div className="coverage-actions">
-               {/* --- *** MODIFICATION HERE *** --- */}
                {/* This also becomes a standard link */}
               <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1}} onClick={stopMobileClick}>
                   <button style={{width: '100%'}} onClick={stopMobileClick}>Read Article</button>
               </a>
-              {/* --- UPDATED: Use onAnalyze prop --- */}
-              <button onClick={(e) => { stopMobileClick(e); onAnalyze(article); }}>View Analysis</button>
+              {/* --- UPDATED: Use onAnalyze prop, but disable for reviews --- */}
+              <button 
+                onClick={(e) => { stopMobileClick(e); onAnalyze(article); }}
+                disabled={article.analysisType === 'SentimentOnly'}
+              >
+                View Analysis
+              </button>
             </div>
           </div>
 
@@ -1388,6 +1473,43 @@ function DetailedAnalysisModal({ article, onClose, showTooltip }) {
         </div>
     );
   }
+  
+  // --- *** NEW: Handle SentimentOnly articles *** ---
+  if (article.analysisType === 'SentimentOnly') {
+     return (
+        <div className="modal-overlay" onClick={handleOverlayClick}>
+          <div className="analysis-modal" onClick={(e) => e.stopPropagation()} style={{maxWidth: '600px'}}>
+            <div className="modal-header">
+              <h2>Opinion / Review</h2>
+              <button className="close-btn" onClick={onClose}>×</button>
+            </div>
+            <div className="modal-content" style={{textAlign: 'center', padding: '40px 20px'}}>
+                 <h3 style={{color: 'var(--text-primary)', marginBottom: '10px'}}>{article.headline}</h3>
+                 <p style={{color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '30px'}}>
+                   This article is classified as an **Opinion / Review**. 
+                   Full bias and credibility analysis is not applicable.
+                 </p>
+                 <div className="overview-grid" style={{gridTemplateColumns: '1fr', maxWidth: '200px', margin: '0 auto 30px auto'}}>
+                    <div className="score-circle">
+                       <div className={`score-value ${getSentimentClass(article.sentiment)}`} style={{fontSize: '20px', color: ''}}>
+                         {article.sentiment}
+                       </div>
+                       <div className="score-label">Overall Sentiment</div>
+                    </div>
+                 </div>
+                 <button 
+                   onClick={onClose} 
+                   className="btn-primary" 
+                   style={{padding: '10px 20px', fontSize: '12px'}}
+                 >
+                   Close
+                 </button>
+            </div>
+          </div>
+        </div>
+    );
+  }
+  // --- *** END NEW LOGIC *** ---
 
 
   return (

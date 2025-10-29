@@ -46,19 +46,22 @@ const categoryColorsLight = ['#2E4E6B', '#3E6A8E', '#5085B2', '#63A0D6', '#243E5
 
 
 // --- Main Component ---
-function MyNewsBias() {
+// --- FIX 1: Accept 'theme' as a prop from App.js ---
+function MyNewsBias({ theme }) {
   const [statsData, setStatsData] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState('');
 
-  const [currentTheme, setCurrentTheme] = useState('dark');
-   useEffect(() => {
-     const savedTheme = localStorage.getItem('theme') || 'dark';
-     setCurrentTheme(savedTheme);
-   }, []);
+  // --- FIX 1: Remove local theme state and effect, use prop directly ---
+  // const [currentTheme, setCurrentTheme] = useState('dark');
+  //  useEffect(() => {
+  //    const savedTheme = localStorage.getItem('theme') || 'dark';
+  //    setCurrentTheme(savedTheme);
+  //  }, []);
 
    const chartColors = useMemo(() => {
-      const isDark = currentTheme === 'dark';
+      // --- FIX 1: Use 'theme' prop instead of 'currentTheme' state ---
+      const isDark = theme === 'dark';
       return {
          textPrimary: isDark ? '#EAEAEA' : '#2C2C2C',
          textSecondary: isDark ? '#B0B0B0' : '#555555',
@@ -67,7 +70,7 @@ function MyNewsBias() {
          tooltipBg: isDark ? '#2C2C2C' : '#FDFDFD',
          categoryPalette: isDark ? categoryColorsDark : categoryColorsLight,
       };
-   }, [currentTheme]);
+   }, [theme]); // --- FIX 1: Depend on 'theme' prop ---
 
   // Fetch aggregated stats
   useEffect(() => {
@@ -80,7 +83,7 @@ function MyNewsBias() {
   }, []);
 
 
-  // --- Chart Options (Functions remain the same) ---
+  // --- Chart Options ---
    const getDoughnutChartOptions = useCallback((title) => ({ /* ... */
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { position: 'bottom', labels: { color: chartColors.textSecondary } }, tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary }, title: { display: true, text: title, color: chartColors.textPrimary, font: { size: 14 } } }, cutout: '60%',
@@ -90,13 +93,25 @@ function MyNewsBias() {
       scales: { x: { ticks: { color: chartColors.textTertiary }, grid: { display: false } }, y: { beginAtZero: true, title: { display: true, text: 'Number of Articles', color: chartColors.textSecondary }, ticks: { color: chartColors.textTertiary, stepSize: 1 }, grid: { color: chartColors.borderColor } }, },
       plugins: { legend: { display: false }, tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary }, title: { display: true, text: title, color: chartColors.textPrimary, font: { size: 14 } } },
    }), [chartColors]);
-   const storiesReadOptions = useMemo(() => ({ /* ... */
+   
+   // --- FIX 2: Add title to storiesReadOptions ---
+   const storiesReadOptions = useMemo(() => ({
       responsive: true, maintainAspectRatio: false,
       scales: { x: { type: 'time', time: { unit: 'day', tooltipFormat: 'MMM d, yyyy', displayFormats: { day: 'MMM d' }}, title: { display: true, text: 'Date', color: chartColors.textSecondary }, ticks: { color: chartColors.textTertiary }, grid: { color: chartColors.borderColor }}, y: { beginAtZero: true, title: { display: true, text: 'Number of Stories', color: chartColors.textSecondary }, ticks: { color: chartColors.textTertiary, stepSize: 1 }, grid: { color: chartColors.borderColor }}, },
-      plugins: { legend: { display: false }, tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary } },
+      plugins: { 
+         legend: { display: false }, 
+         tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary },
+         // --- ADDED THIS TITLE BLOCK ---
+         title: { 
+            display: true, 
+            text: 'Stories Analyzed Over Time', 
+            color: chartColors.textPrimary, 
+            font: { size: 14 } 
+         }
+      },
    }), [chartColors]);
 
-  // --- Chart Data Preparation (Functions remain the same) ---
+  // --- Chart Data Preparation ---
   const prepareLeanData = (rawData) => { /* ... */
     const counts = (rawData || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
     const data = leanOrder.map(lean => counts[lean] || 0);
@@ -120,21 +135,93 @@ function MyNewsBias() {
       }],
     };
   };
-  const prepareQualityData = (rawData) => { /* ... */
-    const rawCountsMap = (rawData || []).reduce((acc, item) => { acc[item.grade] = item.count; return acc; }, {});
-    const dbCounts = rawCountsMap;
-    const data = [ dbCounts['A+'] || 0, dbCounts['A'] || 0, dbCounts['B'] || 0, dbCounts['C'] || 0, (dbCounts['D'] || 0) + (dbCounts['F'] || 0) + (dbCounts['D-F'] || 0), dbCounts[null] || 0 ];
+  
+  // --- FIX 4: Update quality data binning to include all grades (A, A-, B+, etc.) ---
+  const prepareQualityData = (rawData) => {
+    // 1. Group all raw data by grade
+    const dbCounts = (rawData || []).reduce((acc, item) => {
+      // Handle potential 'null' or 'undefined' grades
+      const gradeKey = item.grade === null || typeof item.grade === 'undefined' ? 'null' : item.grade;
+      acc[gradeKey] = (acc[gradeKey] || 0) + item.count;
+      return acc;
+    }, {});
+    
+    // 2. Bin the grades into the 6 qualityLabels categories
+    const countA_plus = dbCounts['A+'] || 0;
+    const countA = (dbCounts['A'] || 0) + (dbCounts['A-'] || 0);
+    const countB = (dbCounts['B+'] || 0) + (dbCounts['B'] || 0) + (dbCounts['B-'] || 0);
+    const countC = (dbCounts['C+'] || 0) + (dbCounts['C'] || 0) + (dbCounts['C-'] || 0);
+    const countDF = (dbCounts['D+'] || 0) + (dbCounts['D'] || 0) + (dbCounts['D-'] || 0) + (dbCounts['F'] || 0) + (dbCounts['D-F'] || 0);
+    
+    // 'N/A' comes from backend for 'SentimentOnly'. 
+    // 'null' comes from 'Full' analysis with no grade. Group them.
+    const countNA = (dbCounts['N/A'] || 0) + (dbCounts['null'] || 0); 
+    
+    const data = [
+      countA_plus, // A+ Excellent
+      countA,      // A High
+      countB,      // B Professional
+      countC,      // C Acceptable
+      countDF,     // D-F Poor
+      countNA      // N/A
+    ];
+    
+    // 3. Filter out empty slices
     const backgroundColors = qualityLabels.map(label => qualityColors[label] || '#a1a1aa');
-    const filteredLabels = qualityLabels.filter((_, index) => data[index] > 0);
-    const filteredData = data.filter(count => count > 0);
-    const filteredColors = backgroundColors.filter((_, index) => data[index] > 0);
-    return { labels: filteredLabels, datasets: [{ label: 'Articles Read', data: filteredData, backgroundColor: filteredColors, borderColor: chartColors.borderColor, borderWidth: 1 }] };
+    const filteredLabels = [];
+    const filteredData = [];
+    const filteredColors = [];
+
+    data.forEach((count, index) => {
+      if (count > 0) {
+        filteredLabels.push(qualityLabels[index]);
+        filteredData.push(count);
+        filteredColors.push(backgroundColors[index]);
+      }
+    });
+
+    // 4. Return Chart.js data object
+    return {
+      labels: filteredLabels,
+      datasets: [{
+        label: 'Articles Read',
+        data: filteredData,
+        backgroundColor: filteredColors,
+        borderColor: chartColors.borderColor,
+        borderWidth: 1
+      }]
+    };
   };
 
-  const storiesReadData = useMemo(() => ({ /* ... */
+  // --- FIX 3: Add dynamic segment coloring for line chart ---
+  const storiesReadData = useMemo(() => ({
     labels: statsData?.dailyCounts?.map(item => item.date) || [],
-    datasets: [{ label: 'Stories Analyzed', data: statsData?.dailyCounts?.map(item => item.count) || [], fill: false, borderColor: 'var(--accent-primary)', tension: 0.1 }],
-  }), [statsData?.dailyCounts]);
+    datasets: [{ 
+      label: 'Stories Analyzed', 
+      data: statsData?.dailyCounts?.map(item => item.count) || [], 
+      fill: false, 
+      // borderColor: 'var(--accent-primary)', // <-- Removed
+      tension: 0.1,
+      segment: { // <-- ADDED THIS BLOCK
+        borderColor: (ctx) => {
+          // ctx.p0 is the previous point, ctx.p1 is the current point
+          if (!ctx.p0 || !ctx.p1) {
+            return 'var(--accent-primary)'; // Default for first point
+          }
+          
+          const y1 = ctx.p0.parsed.y;
+          const y2 = ctx.p1.parsed.y;
+
+          if (y2 > y1) {
+            return '#4CAF50'; // Green for increase
+          } else if (y2 < y1) {
+            return '#dc2626'; // Red for decrease
+          }
+          return 'var(--accent-primary)'; // Default/no change color
+        },
+      }
+    }],
+  }), [statsData?.dailyCounts]); // Dependency is correct
 
   // Prepare data for all charts
   const leanReadData = prepareLeanData(statsData?.leanDistribution_read);
@@ -142,19 +229,17 @@ function MyNewsBias() {
   const categoryReadData = prepareCategoryData(statsData?.categoryDistribution_read);
   const qualityReadData = prepareQualityData(statsData?.qualityDistribution_read);
   
-  // Calculate totals
+  // ... (rest of the calculations are fine) ...
   const totals = statsData?.totalCounts || [];
   const totalAnalyzed = getActionCount(totals, 'view_analysis');
   const totalShared = getActionCount(totals, 'share_article');
   const totalCompared = getActionCount(totals, 'view_comparison');
   const totalRead = getActionCount(totals, 'read_external');
   
-  // Calculate lean percentages
   const totalLeanArticles = statsData?.leanDistribution_read?.reduce((sum, item) => sum + item.count, 0) || 0;
   const leanReadCounts = (statsData?.leanDistribution_read || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
   const leanPercentages = leanOrder.reduce((acc, lean) => { const count = leanReadCounts[lean] || 0; acc[lean] = totalLeanArticles > 0 ? Math.round((count / totalLeanArticles) * 100) : 0; return acc; }, {});
   
-  // Combine left/right lean percentages
   const leftCombinedPerc = leanPercentages['Left'] + leanPercentages['Left-Leaning'];
   const centerPerc = leanPercentages['Center'];
   const rightCombinedPerc = leanPercentages['Right'] + leanPercentages['Right-Leaning'];
@@ -173,16 +258,21 @@ function MyNewsBias() {
 
         {/* --- Left Column (Fixed) --- */}
         <div className="dashboard-left-column">
-           {/* Section Title + Time Selector + Back Button Aligned */}
+           {/* --- FIX 4: Layout change to match screenshot --- */}
+           {/* --- NEW: Top actions bar --- */}
+           <div className="header-actions-bar">
+             <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
+               Back to Articles
+             </Link>
+             <div className="date-range-selector">
+               <span>Viewing All-Time Stats</span>
+             </div>
+           </div>
+ 
+           {/* --- Original header, now just a title --- */}
            <div className="section-title-header">
              <h2 className="section-title no-border">Your Activity</h2>
-             <div className="header-actions"> 
-                 <div className="date-range-selector"> <span>Viewing All-Time Stats</span> </div>
-                 {/* --- *** RESTORED Back Button HERE *** --- */}
-                 <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
-                   Back to Articles
-                 </Link>
-             </div>
+             {/* --- MOVED: header-actions div and its contents --- */}
            </div>
 
           {/* Activity Stat Boxes */}
@@ -292,8 +382,6 @@ function MyNewsBias() {
           </div> {/* End dashboard-grid (right column) */}
 
           {error && <p style={{ color: 'red', textAlign: 'center', marginTop: '20px' }}>{error}</p>}
-
-          {/* Removed Back Button */}
 
         </div> {/* --- End Right Column --- */}
       </div> {/* --- End Content Wrapper --- */}

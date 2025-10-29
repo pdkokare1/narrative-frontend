@@ -60,6 +60,8 @@ function MyNewsBias({ theme }) {
          borderColor: isDark ? '#333333' : '#EAEAEA',
          tooltipBg: isDark ? '#2C2C2C' : '#FDFDFD',
          categoryPalette: isDark ? categoryColorsDark : categoryColorsLight,
+         // --- *** ADDED THIS LINE *** ---
+         accentPrimary: isDark ? '#B38F5F' : '#2E4E6B'
       };
    }, [theme]);
 
@@ -143,11 +145,13 @@ function MyNewsBias({ theme }) {
     return { labels: filteredLabels, datasets: [{ label: 'Articles Read', data: filteredData, backgroundColor: filteredColors, borderColor: chartColors.borderColor, borderWidth: 1 }] };
   };
 
+  // --- *** MODIFICATION: Fixed chart dot color *** ---
   const storiesReadData = useMemo(() => {
     const labels = statsData?.dailyCounts?.map(item => item.date) || [];
     const data = statsData?.dailyCounts?.map(item => item.count) || [];
 
-    const defaultColor = 'var(--accent-primary)';
+    // --- USE THE RESOLVED HEX COLOR FROM chartColors ---
+    const defaultColor = chartColors.accentPrimary;
     const upColor = '#4CAF50'; // Green
     const downColor = '#dc2626'; // Red
           
@@ -169,11 +173,11 @@ function MyNewsBias({ theme }) {
             if (ctx.p1.raw < ctx.p0.raw) {
               return downColor; // Red for decrease
             }
-            return defaultColor; // Default for no change
+            return defaultColor;
           }
         },
         pointBackgroundColor: (ctx) => {
-          if (ctx.dataIndex === 0) return defaultColor;
+          if (ctx.dataIndex === 0) return defaultColor; // <-- This now uses the resolved hex color
           const current = data[ctx.dataIndex];
           const prev = data[ctx.dataIndex - 1];
           if (current > prev) return upColor;
@@ -181,7 +185,7 @@ function MyNewsBias({ theme }) {
           return defaultColor;
         },
         pointBorderColor: (ctx) => {
-          if (ctx.dataIndex === 0) return defaultColor;
+          if (ctx.dataIndex === 0) return defaultColor; // <-- This now uses the resolved hex color
           const current = data[ctx.dataIndex];
           const prev = data[ctx.dataIndex - 1];
           if (current > prev) return upColor;
@@ -190,7 +194,7 @@ function MyNewsBias({ theme }) {
         }
       }],
     };
-  }, [statsData?.dailyCounts]);
+  }, [statsData?.dailyCounts, chartColors]); // --- ADDED chartColors as dependency
 
   // Prepare data for all charts
   const leanReadData = prepareLeanData(statsData?.leanDistribution_read);
@@ -215,11 +219,12 @@ function MyNewsBias({ theme }) {
   const centerPerc = leanPercentages['Center'];
   const rightCombinedPerc = leanPercentages['Right'] + leanPercentages['Right-Leaning'];
 
-  const statBoxes = [ /* ... (no changes) ... */
-    { key: 'analyzed', title: 'Articles Analyzed', value: totalAnalyzed, desc: 'Total times you viewed the "Analysis" popup.' },
-    { key: 'read', title: 'Articles Read', value: totalRead, desc: 'Total times you clicked "Read Article".' },
-    { key: 'shared', title: 'Articles Shared', value: totalShared, desc: "Total articles you've shared with others." },
-    { key: 'compared', title: 'Comparisons Viewed', value: totalCompared, desc: 'Total times you clicked "Compare Coverage".' }
+  // --- *** MODIFICATION: Updated stat box descriptions *** ---
+  const statBoxes = [
+    { key: 'analyzed', title: 'Articles Analyzed', value: totalAnalyzed, desc: 'The total no. of articles you have analyzed.' },
+    { key: 'read', title: 'Articles Read', value: totalRead, desc: 'The total no. of articles you have read through the source link.' },
+    { key: 'shared', title: 'Articles Shared', value: totalShared, desc: 'Total no. of articles shared with others.' },
+    { key: 'compared', title: 'Comparisons Viewed', value: totalCompared, desc: "Total no. of articles you've compared for a balanced perspective." }
   ];
 
   // --- RENDER LOGIC ---

@@ -238,10 +238,35 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   justify-content: center;
   /* padding: 20px; Already handled by .dashboard-card */
 }
+
+/* --- NEW: Lean Legend Styles --- */
+.lean-legend {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 5px;
+  border: 1px solid var(--border-color);
+}
+/* --- END NEW --- */
+
 .lean-bar { display: flex; height: 20px; border-radius: 4px; overflow: hidden; margin-bottom: 15px; background-color: var(--bg-primary); }
 .lean-segment { display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); transition: width 0.5s ease-in-out; overflow: hidden; white-space: nowrap; }
 .lean-segment.left { background-color: #dc2626; }
-.lean-segment.center { background-color: #6b7280; }
+/* --- UPDATED: Center color --- */
+.lean-segment.center { background-color: #4CAF50; } /* Was #6b7280 */
+/* --- END UPDATE --- */
 .lean-segment.right { background-color: #2563eb; }
 .lean-details { list-style: none; padding: 0; margin: 0; font-size: 11px; color: var(--text-secondary); }
 .lean-details li { margin-bottom: 5px; display: flex; align-items: baseline; }
@@ -362,6 +387,15 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 
   .lean-summary-card { padding: 15px; }
   .lean-details { font-size: 11px; }
+
+  /* --- NEW: Mobile legend --- */
+  .lean-legend { 
+      gap: 10px; 
+      margin-bottom: 10px; 
+      flex-wrap: wrap; /* Allow legend to wrap */
+  }
+  .legend-item { font-size: 10px; }
+  .legend-dot { width: 8px; height: 8px; }
 
   .dashboard-grid { grid-template-columns: 1fr; gap: 15px; margin-top: 15px; } /* Stack charts */
   .section-title-header .section-title,

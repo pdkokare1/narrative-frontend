@@ -7,13 +7,13 @@ import './DashboardPages.css'; // New shared CSS file
 function SavedArticles() {
   return (
     <div className="dashboard-page">
-      
+
       {/* --- Page Header --- */}
       <div className="dashboard-header">
         <h1>Saved Articles</h1>
         <nav className="dashboard-nav-links">
-          <NavLink to="/my-dashboard" className={({isActive}) => isActive ? "active" : ""}>My Dashboard</NavLink>
-          <NavLink to="/reading-habits" className={({isActive}) => isActive ? "active" : ""}>Reading Habits</NavLink>
+          {/* Removed Reading Habits Link */}
+          <NavLink to="/my-dashboard" className={({isActive}) => isActive ? "active" : ""}>Dashboard</NavLink>
           <NavLink to="/saved-articles" className={({isActive}) => isActive ? "active" : ""}>Saved Articles</NavLink>
           <NavLink to="/account-settings" className={({isActive}) => isActive ? "active" : ""}>Account</NavLink>
         </nav>
@@ -27,7 +27,7 @@ function SavedArticles() {
             Back to Dashboard
         </Link>
       </div>
-      
+
     </div>
   );
 }

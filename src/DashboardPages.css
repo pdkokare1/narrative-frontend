@@ -29,10 +29,10 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 15px; /* CHANGED: Reduced gap slightly */
+  gap: 20px; /* CHANGED: Was 15px. This is the new spacing. */
   /* overflow-y: auto; */ /* <-- REMOVED */
   padding-bottom: 15px; /* Space at bottom */
-
+  
   /* --- NEW: Make left column sticky --- */
   position: sticky;
   top: 75px; /* 60px header + 15px padding */
@@ -150,13 +150,11 @@ h2.section-title {
    border-bottom: 1px solid var(--border-color);
    padding-bottom: 8px; text-align: left;
    width: 100%; flex-shrink: 0;
-   margin-bottom: 10px; /* CHANGED: Was 15px */
+   /* margin-bottom: 10px; */ /* REMOVED: Handled by parent 'gap' */
 }
-/* --- UPDATED: Specific margin for reading bias title --- */
-h2.section-title.reading-bias-title {
-  margin-top: 15px; /* Increased from 10px */
-}
-/* --- END UPDATE --- */
+/* --- REMOVED: Specific margin for reading bias title --- */
+/* h2.section-title.reading-bias-title { ... } */
+/* --- END REMOVAL --- */
 h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bottom: 0; } /* Remove bottom margin if no border */
 
 
@@ -278,11 +276,9 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 .lean-details li:last-child { margin-bottom: 0; }
 .lean-details li span { font-weight: 600; color: var(--text-primary); margin-right: 6px; min-width: 25px; text-align: right; flex-shrink: 0; }
 
-/* --- UPDATED: Account Settings Button Margin --- */
-.account-settings-link {
-  margin-top: 5px; /* Reduced from 10px */
-}
-/* --- END UPDATE --- */
+/* --- REMOVED: Account Settings Button Margin --- */
+/* .account-settings-link { ... } */
+/* --- END REMOVAL --- */
 
 
 /* --- Sticky Header Wrapper for Right Column --- */

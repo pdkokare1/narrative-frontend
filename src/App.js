@@ -84,7 +84,7 @@ function AppWrapper() {
     lean: 'All Leans',
     quality: 'All Quality Levels',
     sort: 'Latest First',
-    region: 'All Regions',
+    region: 'Global',
     articleType: 'All Types'
   });
   const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '', articleId: null });

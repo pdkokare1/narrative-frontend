@@ -89,7 +89,7 @@ function AppWrapper() {
   });
   const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '', articleId: null });
   const [analysisModal, setAnalysisModal] = useState({ open: false, article: null });
-  const [totalArticlesCount, setTotalArticlesCount] = useState(0);
+  const [totalArticlesCount, setTotalArticlesCount] = useState(0); // Still used for Load More logic
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
 
@@ -566,8 +566,7 @@ function AppWrapper() {
           theme={theme}
           toggleTheme={toggleTheme}
           onToggleSidebar={toggleSidebar}
-          user={authState.user}
-          // onLogout={handleLogout} // --- REMOVED from Header ---
+          // user={authState.user} // --- REMOVED ---
           username={profile.username}
         />
       )}
@@ -593,7 +592,7 @@ function AppWrapper() {
                 <Sidebar
                   filters={filters}
                   onFilterChange={handleFilterChange}
-                  articleCount={totalArticlesCount}
+                  // articleCount={totalArticlesCount} // --- REMOVED ---
                   isOpen={isSidebarOpen}
                   onClose={closeSidebar} // Pass closeSidebar here
                   onLogout={handleLogout} // --- ADDED: Pass logout ---
@@ -759,7 +758,6 @@ function CustomTooltip({ visible, text, x, y }) {
 
 
 // --- Header ---
-// --- UPDATED: Removed user, onLogout props ---
 function Header({ theme, toggleTheme, onToggleSidebar, username }) {
   return (
     <header className="header">
@@ -779,25 +777,26 @@ function Header({ theme, toggleTheme, onToggleSidebar, username }) {
       </div>
 
       <div className="header-right">
-        {/* --- REMOVED user-info div and desktop logout --- */}
-        {/* {user && ( ... )} */}
-
-        {/* --- ADDED: Display username directly on desktop --- */}
-        <Link to="/my-dashboard" className="user-email header-username-desktop" title="View your dashboard" style={{textDecoration: 'none'}}>
-          {username}
-        </Link>
-        {/* --- END ADDED --- */}
+        {/* --- UPDATED: Show Username and Dashboard Link on Desktop --- */}
+        <div className="header-user-desktop">
+          <Link to="/my-dashboard" className="header-dashboard-link" title="View your dashboard">
+            Dashboard
+          </Link>
+          <span className="header-user-divider">|</span>
+          <span className="header-username-desktop" title="Username">
+            {username}
+          </span>
+        </div>
+        {/* --- END UPDATE --- */}
 
 
         <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
           {theme === 'dark' ? '🌙' : '☀️'}
         </button>
 
-        {/* --- Mobile Only Logout Button --- */}
-         <button onClick={null /* Handled in Sidebar now */} className="logout-btn header-logout-mobile" title="Sign Out">
-           Sign Out
-         </button>
-        {/* --- End Mobile Only --- */}
+        {/* --- REMOVED Mobile Only Logout Button --- */}
+         {/* <button onClick={null} className="logout-btn header-logout-mobile" title="Sign Out"> ... </button> */}
+        {/* --- End Removal --- */}
       </div>
     </header>
   );
@@ -867,8 +866,8 @@ function CustomSelect({ name, value, options, onChange }) {
 }
 
 // --- Sidebar ---
-// --- UPDATED: Added onLogout prop ---
-function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose, onLogout }) {
+// --- UPDATED: Removed articleCount prop, reordered ---
+function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
   const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
   const regions = [
@@ -896,17 +895,15 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose, onLog
     onFilterChange({ ...filters, [name]: value });
   };
 
-  // --- UPDATED: Use simple NavLink now ---
   const SidebarNavLink = ({ to, children }) => (
     <NavLink
       to={to}
-      className={({ isActive }) => isActive ? "active-link" : ""}
+      className={({ isActive }) => "sidebar-nav-link " + (isActive ? "active-link" : "")}
       onClick={onClose} // Close sidebar on nav click
     >
       {children}
     </NavLink>
   );
-  // --- END UPDATE ---
 
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
@@ -917,21 +914,18 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose, onLog
           <button className="sidebar-close-btn" onClick={onClose} title="Close Menu">×</button>
         </div>
 
-        {/* --- User Navigation Section --- */}
-        <div className="sidebar-section sidebar-user-nav">
-          <h3>Your Account</h3>
+        {/* --- Top Nav Links --- */}
+        <div className="sidebar-section sidebar-top-nav">
           <ul>
-            <li><SidebarNavLink to="/my-dashboard">Dashboard</SidebarNavLink></li>
             <li><SidebarNavLink to="/saved-articles">Saved Articles</SidebarNavLink></li>
-            <li><SidebarNavLink to="/account-settings">Account Settings</SidebarNavLink></li>
+            {/* Removed Dashboard Link */}
           </ul>
         </div>
-        {/* --- End User Nav --- */}
 
         {/* --- Filters Section --- */}
         <div className="sidebar-section">
-          <h3>Filters</h3> {/* --- UPDATED: General Filters Heading --- */}
-          <div className="filter-group"> {/* Wrapper for individual filters */}
+          <h3>Filters</h3>
+          <div className="filter-group">
             <CustomSelect
               name="region"
               value={filters.region}
@@ -985,21 +979,26 @@ function Sidebar({ filters, onFilterChange, articleCount, isOpen, onClose, onLog
           />
         </div>
         {/* --- End Sort By --- */}
+
+        {/* --- Account Link --- */}
+        <div className="sidebar-section sidebar-account-nav">
+           <ul>
+              <li><SidebarNavLink to="/account-settings">Account Settings</SidebarNavLink></li>
+           </ul>
+        </div>
+
       </div>
 
-      {/* --- Footer Area (Results, Logout) --- */}
+      {/* --- Footer Area (Logout) --- */}
       <div className="sidebar-footer">
-        {/* --- NEW: Logout Button --- */}
+        {/* --- Logout Button --- */}
         <button onClick={onLogout} className="sidebar-logout-btn">
           Sign Out
         </button>
-        {/* --- END NEW --- */}
+        {/* --- END Logout --- */}
 
-        {articleCount > 0 && (
-          <div className="filter-results">
-            <p>{articleCount} stories found</p>
-          </div>
-        )}
+        {/* --- REMOVED Filter Results --- */}
+        {/* {articleCount > 0 && ( ... )} */}
       </div>
     </aside>
   );

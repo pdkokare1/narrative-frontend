@@ -291,6 +291,8 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 .sidebar-main-content::-webkit-scrollbar { display: none; }
 
 .sidebar-section { margin-bottom: 25px; } /* Increased spacing */
+.sidebar-section:last-child { margin-bottom: 0; } /* No margin on last section */
+
 .sidebar-section h3 {
   font-size: 10px;
   font-weight: 600;
@@ -301,11 +303,20 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 }
 
 .filter-group { margin-bottom: 15px; } /* Increased spacing between filter dropdowns */
+.filter-group:last-child { margin-bottom: 0; } /* No margin on last filter */
 
-/* Styles specific to User Nav list */
-.sidebar-user-nav ul { list-style: none; padding: 0; margin: 0; }
-.sidebar-user-nav li { margin-bottom: 5px; } /* Increased spacing */
-.sidebar-user-nav a {
+/* --- UPDATED: Styles for ALL Nav Links in Sidebar --- */
+.sidebar-top-nav ul,
+.sidebar-account-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.sidebar-top-nav li,
+.sidebar-account-nav li {
+  margin-bottom: 5px; /* Increased spacing */
+}
+.sidebar-nav-link {
   display: block;
   padding: 8px 10px; /* Smaller padding */
   font-size: 12px; /* Smaller font */
@@ -315,15 +326,16 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   transition: all 0.2s ease;
   text-decoration: none;
 }
-.sidebar-user-nav a:hover {
+.sidebar-nav-link:hover {
   background: var(--bg-elevated);
   color: var(--text-primary);
 }
-.sidebar-user-nav a.active-link { /* Style for active route */
+.sidebar-nav-link.active-link { /* Style for active route */
   background: var(--accent-primary);
   color: white;
   font-weight: 600;
 }
+/* --- END UPDATE --- */
 
 /* Sidebar Footer Area */
 .sidebar-footer {
@@ -337,7 +349,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   display: block;
   width: 100%;
   padding: 10px 12px; /* Consistent padding */
-  margin-bottom: 15px; /* Space between logout and results */
+  /* margin-bottom: 15px; */ /* REMOVED margin */
   font-size: 12px; /* Consistent font size */
   font-weight: 600; /* Bold */
   color: var(--text-secondary); /* Match nav links */
@@ -443,6 +455,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   border-radius: 6px;
   text-align: center;
   border: 1px solid var(--border-light);
+  display: none; /* --- HIDE Article Count --- */
 }
 
 .filter-results p {
@@ -1230,7 +1243,7 @@ button:disabled, button:disabled:hover {
     /* Remove old mobile styles */
     border-bottom: none;
     margin-left: 0; /* (FIX) Override desktop margin */
-    padding-bottom: 70px; /* (FIX) Add padding for mobile nav */
+    padding-bottom: 25px; /* (FIX) Reset padding */
   }
   .sidebar.open {
     transform: translateX(0);
@@ -1248,10 +1261,12 @@ button:disabled, button:disabled:hover {
     margin-bottom: 20px;
     /* --- NEW: Stick filter header only inside filter section --- */
     position: sticky;
-    top: 0;
+    top: -25px; /* Pull up to padding */
+    margin-left: -20px; /* Expand to edges */
+    margin-right: -20px; /* Expand to edges */
+    padding: 20px 20px 10px 20px; /* Add padding back */
     background: var(--bg-secondary);
     z-index: 1; /* Keep above filters */
-    padding-bottom: 10px; /* Space below header */
   }
   .sidebar-header-mobile h3 {
     font-size: 16px;
@@ -1283,29 +1298,14 @@ button:disabled, button:disabled:hover {
   }
 
   /* --- *** NEW: User Navigation Mobile Styles *** --- */
-  .sidebar-user-nav {
+  .sidebar-top-nav {
     display: block; /* Show on mobile */
-    /* margin-bottom: 25px; */ /* Handled by sidebar-section */
     padding-bottom: 20px;
     border-bottom: 1px solid var(--border-color);
   }
-  .sidebar-user-nav ul {
-    /* Styles moved to .sidebar-user-nav a/li */
+  .sidebar-account-nav {
+    display: block; /* Show on mobile */
   }
-  .sidebar-user-nav li {
-    /* Styles moved to .sidebar-user-nav a/li */
-  }
-  .sidebar-user-nav a {
-    /* Styles moved to .sidebar-user-nav a/li */
-  }
-  .sidebar-user-nav a:hover {
-    /* Styles moved to .sidebar-user-nav a/li */
-  }
-  .sidebar-user-nav a.active-link { /* Style for active route */
-    /* Styles moved to .sidebar-user-nav a/li */
-  }
-  /* --- *** END NEW STYLES *** --- */
-
 
   /* --- (FIX) Content Area Scroll --- */
   .content {
@@ -1471,52 +1471,53 @@ button:disabled, button:disabled:hover {
 
 
 /* ==================== HEADER USER INFO ==================== */
-/* --- REMOVED user-info div styles --- */
-/* .user-info { ... } */
-/* .user-email { ... } */
-/* .logout-btn { ... } */
-
 /* --- UPDATED: Header Username (Desktop Only) --- */
-.header-username-desktop {
+.header-user-desktop {
   display: none; /* Hide by default */
 }
 @media (min-width: 769px) { /* Show only on desktop */
-  .header-username-desktop {
-    display: block; /* Show it */
+  .header-user-desktop {
+    display: flex; /* Use flex to align items */
+    align-items: center;
     font-size: 11px;
     font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 6px 10px; /* Adjusted padding */
+  }
+  
+  .header-dashboard-link {
+    color: var(--text-tertiary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: color 0.2s ease;
+  }
+  .header-dashboard-link:hover {
+    color: var(--accent-primary);
+    text-decoration: none;
+  }
+
+  .header-user-divider {
+    color: var(--border-color);
+    margin: 0 8px;
+  }
+  
+  .header-username-desktop {
     color: var(--text-secondary);
     max-width: 150px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    padding: 6px 10px; /* Adjusted padding */
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-  }
-  .header-username-desktop:hover {
-    color: var(--accent-primary);
-    border-color: var(--accent-primary);
-    text-decoration: none; /* Keep no underline */
   }
 }
 /* --- END UPDATE --- */
 
-/* Hide mobile logout button in header on desktop */
-.header-logout-mobile { display: none; }
-
 /* --- Mobile styles for user info --- */
 @media (max-width: 768px) {
-  /* --- REMOVED old mobile rules --- */
-  /* .header-right { ... } */
-  /* .user-info { ... } */
-  /* .user-email { ... } */
-  /* .logout-btn { ... } */
-
-   /* --- REMOVED: Hide mobile logout button in header if sidebar exists --- */
-   /* Handled by moving logout button to sidebar only */
-   /* .header-logout-mobile { display: none; } */
+  /* All mobile user info is in the sidebar */
 }
 
 
@@ -1524,9 +1525,15 @@ button:disabled, button:disabled:hover {
 @media (min-width: 769px) {
    /* --- Re-enable justify-content only on desktop --- */
    .sidebar {
-       justify-content: space-between;
+       justify-content: flex-start; /* CHANGED: No longer space-between */
    }
    .sidebar-main-content { overflow-y: visible; } /* No scroll needed on desktop */
+   
+   /* --- HIDE mobile nav sections on desktop --- */
+   .sidebar-top-nav,
+   .sidebar-account-nav {
+     display: none;
+   }
 }
 
 /* --- Mobile Sidebar adjustments --- */

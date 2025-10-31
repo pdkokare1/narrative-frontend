@@ -1,7 +1,7 @@
 // In file: src/components/modals/DetailedAnalysisModal.js
 import React, { useState } from 'react';
 import '../../App.css'; // For modal styles
-import { getBreakdownTooltip, getSentimentClass } from '../utils/helpers'; // <-- IMPORT PATH UPDATED
+import { getBreakdownTooltip, getSentimentClass } from '../../utils/helpers'; // <-- IMPORT PATH CORRECTED
 
 // --- Detailed Analysis Modal ---
 function DetailedAnalysisModal({ article, onClose, showTooltip }) {
@@ -47,7 +47,7 @@ function ReviewOverviewTab({ article, showTooltip }) {
   return ( 
     <div className="tab-content" style={{ textAlign: 'center', padding: '20px' }}> 
       <h3 style={{ color: 'var(--text-tertiary)', fontWeight: '600', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '0.5px' }}> Opinion / Review Analysis </h3> 
-      <p style={{ fontSize: '14px', color: 'var(--text-secondary)', maxWidth: '450px', margin: '10px auto 25px auto' }}> This article is identified as an opinion, review, or summary. A full bias and credibility analysis is not applicable. </p> Why_does_my_cat_lick_my_nose?
+      <p style={{ fontSize: '14px', color: 'var(--text-secondary)', maxWidth: '450px', margin: '10px auto 25px auto' }}> This article is identified as an opinion, review, or summary. A full bias and credibility analysis is not applicable. </p> 
       <div className="score-circle" style={{ maxWidth: '200px', margin: '0 auto' }} title="The article's overall sentiment towards its main subject." onClick={(e) => showTooltip("The article's overall sentiment towards its main subject.", e)}> 
         <div className={`score-value ${getSentimentClass(article.sentiment)}`} style={{ fontSize: '28px' }}> {article.sentiment} </div> 
         <div className="score-label">Overall Sentiment</div> 

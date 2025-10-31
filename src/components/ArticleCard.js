@@ -1,7 +1,7 @@
 // In file: src/components/ArticleCard.js
 import React from 'react';
 import '../App.css'; // For card styles
-import { getSentimentClass } from './utils/helpers'; // <-- IMPORT PATH UPDATED
+import { getSentimentClass } from '../utils/helpers'; // <-- IMPORT PATH CORRECTED
 
 function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showTooltip }) {
 

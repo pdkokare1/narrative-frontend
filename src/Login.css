@@ -21,8 +21,8 @@
   position: relative;
   overflow: hidden; /* Ensure backgrounds are contained */
 
-  /* --- Mobile First: Use mobile image as full background --- */
-  background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/v1761582659/login-bg-mobile.png_wctrjs.png');
+  /* --- Mobile First: Use mobile image as full background (OPTIMIZED URL) --- */
+  background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/q_auto,f_auto,w_800/v1761582659/login-bg-mobile.png_wctrjs.png');
   background-size: cover;
   background-position: center center;
 }
@@ -85,8 +85,8 @@
 /* --- Desktop Styles --- */
 @media (min-width: 769px) {
   .login-page-wrapper {
-    /* --- Desktop image as THE main background, 35% brightness --- */
-    background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/v1761582649/login-bg-desktop.png_qvrwhm.png');
+    /* --- Desktop image as THE main background (OPTIMIZED URL) --- */
+    background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/q_auto,f_auto,w_1920/v1761582649/login-bg-desktop.png_qvrwhm.png');
   }
 
   /* Desktop wrapper overlay for 35% brightness */

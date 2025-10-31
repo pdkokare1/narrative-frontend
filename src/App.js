@@ -15,14 +15,14 @@ import Login from './Login'; // Import the Login component
 // --- Import the CreateProfile page ---
 import CreateProfile from './CreateProfile';
 
+// --- Import the new PageLoader component ---
+import PageLoader from './components/PageLoader'; // <-- MOVED UP
+
 // --- UPDATED: Import the NEW dashboard pages using React.lazy ---
 // This splits them into their own files
 const MyDashboard = lazy(() => import('./MyDashboard'));
 const SavedArticles = lazy(() => import('./SavedArticles'));
 const AccountSettings = lazy(() => import('./AccountSettings'));
-
-// --- Import the new PageLoader component ---
-import PageLoader from './components/PageLoader';
 
 
 // Use environment variable for API URL, fallback to localhost for local dev
@@ -43,7 +43,7 @@ const getBreakdownTooltip = (label) => {
     "Age Representation": "Checks for biases related to age groups in reporting.",
     "Headline Framing": "Analyzes if the headline presents a neutral or skewed perspective of the story.",
     "Story Selection": "Considers if the choice of this story over others indicates a potential bias.",
-    "Omission Bias": "EvaluATES if significant facts or contexts are left out, creating a misleading picture.",
+    "Omission Bias": "Evaluates if significant facts or contexts are left out, creating a misleading picture.",
     "Source Credibility": "Assesses the reputation and track record of the news source itself.",
     "Fact Verification": "Evaluates the rigor of the fact-checking processes evident in the article.",
     "Professionalism": "Measures adherence to journalistic standards like objectivity and transparency.",
@@ -1275,7 +1275,7 @@ function OverviewBreakdownTab({ article, showTooltip }) {
   const allReliabilityComponents = [ { label: "Consistency", value: relComps.consistency }, { label: "Temporal Stability", value: relComps.temporalStability }, { label: "Quality Control", value: relComps.qualityControl }, { label: "Publication Standards", value: relComps.publicationStandards }, { label: "Corrections Policy", value: relComps.correctionsPolicy }, { label: "Update Maintenance", value: relComps.updateMaintenance }, ].map(c => ({ ...c, value: Number(c.value) || 0 }));
   const visibleBias = allBiasComponents.filter(c => c.value > 0 || showZeroScores);
   const visibleCredibility = allCredibilityComponents.filter(c => c.value > 0 || showZeroScores);
-  const visibleReliability = allReliabilityComponents.filter(c => c.value > 0 || showZeroScores);
+S  const visibleReliability = allReliabilityComponents.filter(c => c.value > 0 || showZeroScores);
   return ( <div className="tab-content"> <div className="component-section"> <div className="component-section-header"> <h4>Bias Details ({article.biasScore ?? 'N/A'}/100)</h4> <div className="toggle-zero-scores"> <label> <input type="checkbox" checked={showZeroScores} onChange={() => setShowZeroScores(!showZeroScores)} /> Show Parameters Not Scored </label> </div> </div> <div className="divider" /> <div className="component-grid-v2 section-spacing"> {visibleBias.length > 0 ? ( visibleBias.map(comp => ( <CircularProgressBar key={comp.label} label={comp.label} value={comp.value} tooltip={getBreakdownTooltip(comp.label)} showTooltip={showTooltip} /> )) ) : ( <p className="zero-score-note">All bias components scored 0. Enable toggle to see them.</p> )} </div> </div> <div className="component-section"> <div className="component-section-header"> <h4>Credibility Details ({article.credibilityScore ?? 'N/V'}/100)</h4> </div> <div className="divider" /> <div className="component-grid-v2 section-spacing"> {visibleCredibility.length > 0 ? ( visibleCredibility.map(comp => ( <CircularProgressBar key={comp.label} label={comp.label} value={comp.value} tooltip={getBreakdownTooltip(comp.label)} showTooltip={showTooltip} /> )) ) : ( <p className="zero-score-note">All credibility components scored 0. Enable toggle to see them.</p> )} </div> </div> <div className="component-section"> <div className="component-section-header"> <h4>Reliability Details ({article.reliabilityScore ?? 'N/V'}/100)</h4> </div> <div className="divider" /> <div className="component-grid-v2 section-spacing"> {visibleReliability.length > 0 ? ( visibleReliability.map(comp => ( <CircularProgressBar key={comp.label} label={comp.label} value={comp.value} tooltip={getBreakdownTooltip(comp.label)} showTooltip={showTooltip} /> )) ) : ( <p className="zero-score-note">All reliability components scored 0. Enable toggle to see them.</p> )} </div> </div> </div> );
 }
 

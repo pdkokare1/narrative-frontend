@@ -18,14 +18,14 @@ import CreateProfile from './CreateProfile';
 // --- Import the new PageLoader component ---
 import PageLoader from './components/PageLoader';
 
+// --- UPDATED: Import the NEW UI components ---
+import CustomTooltip from './components/ui/CustomTooltip';
+import CustomSelect from './components/ui/CustomSelect';
+
 // --- UPDATED: Import the NEW lazy-loaded dashboard pages ---
 const MyDashboard = lazy(() => import('./MyDashboard'));
 const SavedArticles = lazy(() => import('./SavedArticles'));
 const AccountSettings = lazy(() => import('./AccountSettings'));
-
-// --- UPDATED: Import the NEW UI components ---
-import CustomTooltip from './components/ui/CustomTooltip';
-import CustomSelect from './components/ui/CustomSelect';
 
 
 // Use environment variable for API URL, fallback to localhost for local dev

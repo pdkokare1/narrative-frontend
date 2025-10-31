@@ -1,5 +1,5 @@
 // In file: src/App.js
-import React, { useState, useEffect, useRef, Suspense, lazy } from 'react'; // <-- ADDED Suspense, lazy
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
 import './DashboardPages.css'; // --- Import dashboard styles ---
@@ -16,13 +16,16 @@ import Login from './Login'; // Import the Login component
 import CreateProfile from './CreateProfile';
 
 // --- Import the new PageLoader component ---
-import PageLoader from './components/PageLoader'; // <-- MOVED UP
+import PageLoader from './components/PageLoader';
 
-// --- UPDATED: Import the NEW dashboard pages using React.lazy ---
-// This splits them into their own files
+// --- UPDATED: Import the NEW lazy-loaded dashboard pages ---
 const MyDashboard = lazy(() => import('./MyDashboard'));
 const SavedArticles = lazy(() => import('./SavedArticles'));
 const AccountSettings = lazy(() => import('./AccountSettings'));
+
+// --- UPDATED: Import the NEW UI components ---
+import CustomTooltip from './components/ui/CustomTooltip';
+import CustomSelect from './components/ui/CustomSelect';
 
 
 // Use environment variable for API URL, fallback to localhost for local dev
@@ -736,27 +739,7 @@ export default App;
 // === Sub-Components ===
 
 // --- Custom Tooltip Component ---
-function CustomTooltip({ visible, text, x, y }) {
-  if (!visible) return null;
-
-  const style = {
-    position: 'fixed',
-    left: `${x}px`,
-    top: `${y}px`,
-    transform: 'translate(-50%, -100%)',
-    marginTop: '-10px',
-  };
-
-  return (
-    <div
-      className="tooltip-custom"
-      style={style}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {text}
-    </div>
-  );
-}
+// --- MOVED TO src/components/ui/CustomTooltip.js ---
 
 
 // --- Header ---
@@ -805,67 +788,7 @@ function Header({ theme, toggleTheme, onToggleSidebar, username }) {
 }
 
 // --- Custom Select Component ---
-function CustomSelect({ name, value, options, onChange }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const selectRef = useRef(null);
-
-  const selectedOption = options.find(option => (option.value || option) === value);
-  const displayLabel = selectedOption?.label || selectedOption || value;
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (selectRef.current && !selectRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [selectRef]);
-
-  const handleSelectOption = (optionValue) => {
-    onChange({ target: { name, value: optionValue } });
-    setIsOpen(false);
-  };
-
-  return (
-    <div className="custom-select-container" ref={selectRef}>
-      <button
-        type="button"
-        className={`custom-select-value ${isOpen ? 'open' : ''}`}
-        onClick={() => setIsOpen(!isOpen)}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-      >
-        <span>{displayLabel}</span>
-        <svg className="custom-select-arrow" xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="20" viewBox="0 0 24 24" width="20">
-          <path d="M7 10l5 5 5-5z"></path><path d="M0 0h24v24H0z" fill="none"></path>
-        </svg>
-      </button>
-
-      {isOpen && (
-        <ul className="custom-select-options" role="listbox">
-          {options.map((option, index) => {
-            const optionValue = option.value || option;
-            const optionLabel = option.label || option;
-            const isSelected = optionValue === value;
-
-            return (
-              <li
-                key={index}
-                className={`custom-select-option ${isSelected ? 'selected' : ''}`}
-                onClick={() => handleSelectOption(optionValue)}
-                role="option"
-                aria-selected={isSelected}
-              >
-                {optionLabel}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
-  );
-}
+// --- MOVED TO src/components/ui/CustomSelect.js ---
 
 // --- Sidebar ---
 // --- UPDATED: Removed articleCount prop, reordered ---

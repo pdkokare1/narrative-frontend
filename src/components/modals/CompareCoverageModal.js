@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../../App.css'; // For modal styles
-import { getSentimentClass } from '../utils/helpers'; // <-- IMPORT PATH UPDATED
+import { getSentimentClass } from '../../utils/helpers'; // <-- IMPORT PATH CORRECTED
 
 // Get API URL from environment
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';

@@ -1,4 +1,7 @@
 // In file: src/App.js
+// --- FIX: Added isMobile() helper function definition ---
+// --- FIX: Added state and useEffect for isMobileView to fix resize bug ---
+// --- FIX: Passed theme prop to MyDashboard route ---
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
@@ -37,6 +40,9 @@ const AccountSettings = lazy(() => import('./AccountSettings'));
 // Use environment variable for API URL, fallback to localhost for local dev
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
+// --- (FIX) Moved isMobile helper function here so it can be re-used ---
+const isMobile = () => window.innerWidth <= 768;
+
 // --- AppWrapper ---
 function AppWrapper() {
   // --- Auth State ---
@@ -73,6 +79,9 @@ function AppWrapper() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
 
+  // --- (FIX) State to track mobile view for resize bug ---
+  const [isMobileView, setIsMobileView] = useState(isMobile());
+
   // --- Custom Tooltip/Popup State ---
   const [tooltip, setTooltip] = useState({
     visible: false,
@@ -80,7 +89,7 @@ function AppWrapper() {
     x: 0,
     y: 0,
   });
-  const isMobile = () => window.innerWidth <= 768;
+  // const isMobile = () => window.innerWidth <= 768; // (FIX) Moved to top
 
   // --- Refs for Pull-to-Refresh ---
   const contentRef = useRef(null);
@@ -89,9 +98,18 @@ function AppWrapper() {
   const [pullDistance, setPullDistance] = useState(0);
   const pullThreshold = 120;
 
+  // --- (FIX) useEffect to update isMobileView on window resize ---
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(isMobile());
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []); // Empty array ensures this runs only once
+
   // --- Custom Tooltip/Popup Handlers (for Mobile Tap) ---
   const showTooltip = (text, e) => {
-    if (!isMobile() || !text) return;
+    if (!isMobileView || !text) return; // (FIX) Use isMobileView state
     e.stopPropagation();
 
     const x = e.clientX || (e.touches && e.touches[0].clientX);
@@ -269,7 +287,7 @@ function AppWrapper() {
   // --- Pull-to-Refresh Effects ---
   useEffect(() => {
     const contentEl = contentRef.current;
-    if (!contentEl || !isMobile()) return;
+    if (!contentEl || !isMobileView) return; // (FIX) Use isMobileView state
 
     const handleTouchStart = (e) => {
       touchStartY.current = e.touches[0].clientY;
@@ -307,7 +325,7 @@ function AppWrapper() {
          contentEl.removeEventListener('touchend', handleTouchEnd);
       }
     };
-  }, [isRefreshing, pullDistance, contentRef, pullThreshold]);
+  }, [isRefreshing, pullDistance, contentRef, pullThreshold, isMobileView]); // (FIX) Add isMobileView
 
 
   // --- Logout Function ---
@@ -414,7 +432,8 @@ function AppWrapper() {
   // Debounced scroll handler
   useEffect(() => {
     let timeoutId;
-    const scrollableElement = window.innerWidth <= 768 ? contentRef.current : window;
+    // --- (FIX) Use isMobileView state to determine scroll element ---
+    const scrollableElement = isMobileView ? contentRef.current : window;
 
     if (!scrollableElement) return;
 
@@ -441,7 +460,7 @@ function AppWrapper() {
           scrollableElement.removeEventListener('scroll', handleScroll);
         }
     };
-  }, [loading, displayedArticles, totalArticlesCount, contentRef]);
+  }, [loading, displayedArticles, totalArticlesCount, contentRef, isMobileView]); // (FIX) Add isMobileView dependency
 
 
   const shareArticle = (article) => {
@@ -472,7 +491,7 @@ function AppWrapper() {
 
   // --- Combined Sidebar Toggle Logic ---
   const toggleSidebar = () => {
-    if (isMobile()) {
+    if (isMobileView) { // (FIX) Use isMobileView state
       setIsSidebarOpen(!isSidebarOpen);
     } else {
       setIsDesktopSidebarVisible(!isDesktopSidebarVisible);
@@ -481,7 +500,7 @@ function AppWrapper() {
 
   // --- Combined Sidebar Close Logic ---
   const closeSidebar = () => {
-    if (isMobile()) {
+    if (isMobileView) { // (FIX) Use isMobileView state
       setIsSidebarOpen(false);
     }
     // --- Keep desktop sidebar state on close ---
@@ -691,7 +710,7 @@ function AppWrapper() {
 
           {/* --- DASHBOARD ROUTES --- */}
           {/* These routes are now lazy-loaded */}
-          <Route path="/my-dashboard" element={ profile ? <MyDashboard /> : null } />
+          <Route path="/my-dashboard" element={ profile ? <MyDashboard theme={theme} /> : null } /> {/* (FIX) Pass theme prop */}
           <Route path="/saved-articles" element={ profile ? <SavedArticles /> : null } />
           <Route path="/account-settings" element={ profile ? <AccountSettings /> : null } />
 

@@ -1,4 +1,5 @@
 // In file: src/components/Sidebar.js
+// --- UPDATED: Simplified layout to make Nav links always visible ---
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import CustomSelect from './ui/CustomSelect'; // Import the CustomSelect component
@@ -51,13 +52,16 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
           <button className="sidebar-close-btn" onClick={onClose} title="Close Menu">×</button>
         </div>
 
-        {/* --- Top Nav Links --- */}
-        <div className="sidebar-section sidebar-top-nav">
+        {/* --- *** NEW: Main Navigation Section (Always Visible) *** --- */}
+        <div className="sidebar-section">
+          <h3>Navigation</h3>
           <ul>
             <li><SidebarNavLink to="/saved-articles">Saved Articles</SidebarNavLink></li>
-            {/* Removed Dashboard Link */}
+            <li><SidebarNavLink to="/account-settings">Account Settings</SidebarNavLink></li>
           </ul>
         </div>
+        {/* --- *** END NEW SECTION *** --- */}
+
 
         {/* --- Filters Section --- */}
         <div className="sidebar-section">
@@ -117,13 +121,7 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
         </div>
         {/* --- End Sort By --- */}
 
-        {/* --- Account Link --- */}
-        <div className="sidebar-section sidebar-account-nav">
-           <ul>
-              <li><SidebarNavLink to="/account-settings">Account Settings</SidebarNavLink></li>
-           </ul>
-        </div>
-
+        {/* --- *** REMOVED Old Nav Sections *** --- */}
       </div>
 
       {/* --- Footer Area (Logout) --- */}
@@ -133,9 +131,6 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
           Sign Out
         </button>
         {/* --- END Logout --- */}
-
-        {/* --- REMOVED Filter Results --- */}
-        {/* {articleCount > 0 && ( ... )} */}
       </div>
     </aside>
   );

@@ -1564,3 +1564,21 @@ button:disabled, button:disabled:hover {
   padding-top: 60px; /* Account for fixed header */
   background-color: var(--bg-primary);
 }
+
+
+/* In file: src/App.css */
+/* Find the .article-actions-top rule and replace it */
+
+/* ... (keep all css before this) ... */
+
+.article-actions-top {
+  display: grid;
+  /* --- UPDATED: This now allows 2 or 3 buttons to fit --- */
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 8px;
+}
+.article-actions-top > a {
+  display: block; text-decoration: none;
+}
+
+/* ... (keep all css after this) ... */

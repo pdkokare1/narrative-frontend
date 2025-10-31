@@ -19,10 +19,10 @@ import CreateProfile from './CreateProfile';
 import PageLoader from './components/PageLoader';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import ArticleCard from './components/ArticleCard'; // <-- IMPORTED
 
 // --- Import UI Components ---
 import CustomTooltip from './components/ui/CustomTooltip';
-// --- CustomSelect is no longer needed in App.js, it's used inside Sidebar.js ---
 
 // --- Import Lazy-Loaded Pages ---
 const MyDashboard = lazy(() => import('./MyDashboard'));
@@ -739,97 +739,7 @@ export default App;
 
 
 // === Sub-Components ===
-// --- Header MOVED to src/components/Header.js ---
-// --- Sidebar MOVED to src/components/Sidebar.js ---
-
-
-// --- ArticleCard (Logic updated earlier) ---
-function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showTooltip }) {
-
-  const isMobile = () => window.innerWidth <= 768;
-  const isReview = article.analysisType === 'SentimentOnly';
-  const showCompareOnReview = isReview && (article.clusterCount > 1);
-  const showReadOnReview = isReview && (article.clusterCount <= 1);
-
-  const handleImageError = (e) => {
-    e.target.style.display = 'none';
-    const placeholder = e.target.nextElementSibling;
-    if (placeholder && placeholder.classList.contains('image-placeholder')) {
-      placeholder.style.display = 'flex';
-    }
-  };
-
-  const stopMobileClick = (e) => { if (isMobile()) { e.stopPropagation(); } };
-  const getSentimentClass = (sentiment) => {
-    if (sentiment === 'Positive') return 'sentiment-positive';
-    if (sentiment === 'Negative') return 'sentiment-negative';
-    return 'sentiment-neutral';
-  };
-
-  return (
-    <div className="article-card">
-      <div className="article-image">
-        {article.imageUrl ? (
-          <img src={article.imageUrl} alt={`Image for ${article.headline}`} onError={handleImageError} loading="lazy" />
-        ) : null}
-        <div className="image-placeholder" style={{ display: article.imageUrl ? 'none' : 'flex' }}>📰</div>
-      </div>
-      <div className="article-content">
-        <div className="article-content-top">
-          <div className="article-headline-link" onClick={(e) => { stopMobileClick(e); onRead(article); }} style={{ cursor: 'pointer' }} title="Read the full article (logs click)">
-              <h3 className="article-headline">{article.headline}</h3>
-          </div>
-          <p className="article-summary">{article.summary}</p>
-        </div>
-        <div className="article-content-bottom">
-          <div className="article-meta-v2">
-            <span className="source" title={article.source}>{article.source}</span>
-            {!isReview && (
-              <>
-                <span className="meta-divider">|</span>
-                <span className="bias-score-card" title="Bias Score (0-100). Less is better." onClick={(e) => showTooltip("Bias Score (0-100). Less is better.", e)}>Bias: <span className="accent-text">{article.biasScore}</span></span>
-                <span className="meta-divider">|</span>
-                <span className="political-lean-card" title="Detected political leaning." onClick={(e) => showTooltip("Detected political leaning.", e)}><span className={article.politicalLean !== 'Not Applicable' ? 'accent-text' : ''}>{article.politicalLean}</span></span>
-              </>
-            )}
-          </div>
-          <div className="quality-display-v2">
-              {isReview ? (
-                  <span className="quality-grade-text" title="This article is an opinion, review, or summary." onClick={(e) => showTooltip("This article is an opinion, review, or summary.", e)}>Opinion / Review</span>
-              ) : (
-                  <span className="quality-grade-text" title="This grade (A+ to F) is based on the article's Credibility and Reliability." onClick={(e) => showTooltip("This grade (A+ to F) is based on the article's Credibility and Reliability.", e)}>Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}</span>
-              )}
-              <span className="sentiment-text" title="The article's overall sentiment towards its main subject." onClick={(e) => showTooltip("The article's overall sentiment towards its main subject.", e)}>Sentiment: <span className={getSentimentClass(article.sentiment)}>{' '}{article.sentiment}</span></span>
-          </div>
-          <div className="article-actions">
-            {!isReview && (
-              <>
-                <div className="article-actions-top">
-                  <button onClick={(e) => { stopMobileClick(e); onAnalyze(article); }} className="btn-secondary" title="View Detailed Analysis">Analysis</button>
-                  <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary" title="Share article link">Share</button>
-                </div>
-                <button onClick={(e) => { stopMobileClick(e); onCompare(article); }} className="btn-primary btn-full-width" title={article.clusterCount > 1 ? `Compare with ${article.clusterCount - 1} other articles` : "Find other perspectives"}>{article.clusterCount > 1 ? `Compare Coverage (${article.clusterCount})` : "Compare Coverage"}</button>
-              </>
-            )}
-            {showCompareOnReview && (
-              <>
-                <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary btn-full-width" title="Share article link">Share</button>
-                <button onClick={(e) => { stopMobileClick(e); onCompare(article); }} className="btn-primary btn-full-width" title={`Compare with ${article.clusterCount - 1} other articles`}>Compare Coverage ({article.clusterCount})</button>
-              </>
-            )}
-            {showReadOnReview && (
-              <>
-                <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary btn-full-width" title="Share article link">Share</button>
-                <button onClick={(e) => { stopMobileClick(e); onRead(article); }} className="btn-primary btn-full-width" title="Read the full article on the source's website">Read Article</button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-// --- END of ArticleCard ---
+// --- ArticleCard MOVED to src/components/ArticleCard.js ---
 
 
 // --- Modal Components ---
@@ -932,7 +842,7 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
                     <span title="Credibility Grade (A+ to F)" onClick={(e) => showTooltip("Credibility Grade (A+ to F)", e)}>Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}</span>
                   </>
                 ) : (
-                  <span title="The article's overall sentiment" onClick={(e) => showTooltip("The article's overall sentiment", e)}>Sentiment: <span className={article.sentiment === 'Positive' ? 'sentiment-positive' : article.sentiment === 'Negative' ? 'sentiment-negative' : 'sentiment-neutral'}>{article.sentiment || 'N/A'}</span></span>
+                  <span title="The article's overall sentiment" onClick={(e) => showTooltip("The article's overall sentiment", e)}>Sentiment: <span className={getSentimentClass(article.sentiment)}>{article.sentiment || 'N/A'}</span></span>
                 )}
               </div>
               <div className="coverage-actions">
@@ -1018,6 +928,6 @@ function OverviewBreakdownTab({ article, showTooltip }) {
 
 // --- Reusable UI Components ---
 // ScoreBox remains the same
-function ScoreBox({ label, value, showTooltip }) { let tooltip = ''; switch(label) { case 'Trust Score': tooltip = 'Overall Trust Score (0-100). Higher is better.'; break; case 'Bias Score': tooltip = 'Overall Bias Score (0-100). Less is better.'; break; case 'Credibility': tooltip = 'Credibility Score (0-100).'; break; case 'Reliability': tooltip = 'Reliability Score (0-100).'; break; default: tooltip = `${label} (0-100)`; } return ( <div className="score-circle" title={tooltip} onClick={(e) => showTooltip(tooltip, e)}> <div className="score-value">{value ?? 'N/A'}</div> <div className="score-label">{label}</div> </div> ); }
+function ScoreBox({ label, value, showTooltip }) { let tooltip = ''; switch(label) { case 'Trust Score': tooltip = 'Overall Trust Score (0-1S00). Higher is better.'; break; case 'Bias Score': tooltip = 'Overall Bias Score (0-100). Less is better.'; break; case 'Credibility': tooltip = 'Credibility Score (0-100).'; break; case 'Reliability': tooltip = 'Reliability Score (0-100).'; break; default: tooltip = `${label} (0-100)`; } return ( <div className="score-circle" title={tooltip} onClick={(e) => showTooltip(tooltip, e)}> <div className="score-value">{value ?? 'N/A'}</div> <div className="score-label">{label}</div> </div> ); }
 // CircularProgressBar remains the same
 function CircularProgressBar({ label, value, tooltip, showTooltip }) { const numericValue = Math.max(0, Math.min(100, Number(value) || 0)); const strokeWidth = 8; const radius = 40; const circumference = 2 * Math.PI * radius; const offset = circumference - (numericValue / 100) * circumference; const strokeColor = 'var(--accent-primary)'; const finalTooltip = tooltip || `${label}: ${numericValue}/100`; return ( <div className="circle-progress-container" title={finalTooltip} onClick={(e) => showTooltip(finalTooltip, e)}> <svg className="circle-progress-svg" width="100" height="100" viewBox="0 0 100 100"> <circle className="circle-progress-bg" stroke="var(--bg-elevated)" strokeWidth={strokeWidth} fill="transparent" r={radius} cx="50" cy="50" /> {numericValue > 0 && ( <circle className="circle-progress-bar" stroke={strokeColor} strokeWidth={strokeWidth} strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" fill="transparent" r={radius} cx="50" cy="50" transform="rotate(-90 50 50)" /> )} <text x="50" y="50" className="circle-progress-text-value" dominantBaseline="middle" textAnchor="middle"> {numericValue} </text> </svg> <div className="circle-progress-label">{label}</div> </div> ); }

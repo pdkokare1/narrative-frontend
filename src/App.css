@@ -1,3 +1,6 @@
+/* In file: src/App.css */
+/* --- FIX: Removed the rule that hid sidebar nav on desktop --- */
+
 /* ==================== PREMIUM THEME VARIABLES ==================== */
 .dark-mode {
   --bg-primary: #121212;
@@ -790,7 +793,8 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 
 .article-actions-top {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* --- UPDATED: This now allows 2 or 3 buttons to fit --- */
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
   gap: 8px;
 }
 .article-actions-top > a {
@@ -1529,11 +1533,14 @@ button:disabled, button:disabled:hover {
    }
    .sidebar-main-content { overflow-y: visible; } /* No scroll needed on desktop */
    
-   /* --- HIDE mobile nav sections on desktop --- */
+   /* --- *** THIS IS THE FIX: I AM REMOVING THE HIDE RULE *** --- */
+   /*
    .sidebar-top-nav,
    .sidebar-account-nav {
      display: none;
    }
+   */
+   /* --- *** END OF FIX *** --- */
 }
 
 /* --- Mobile Sidebar adjustments --- */
@@ -1550,6 +1557,17 @@ button:disabled, button:disabled:hover {
         flex-shrink: 0; /* Prevent footer shrinking */
         margin-top: 15px; /* Ensure some space if content is short */
     }
+    
+    /* --- *** ADDED: Ensure nav links are visible on mobile *** --- */
+    .sidebar-top-nav,
+    .sidebar-account-nav {
+      display: block; /* Explicitly show on mobile */
+    }
+    .sidebar-top-nav {
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    /* --- *** END ADDED *** --- */
 }
 
 /* --- NEW STYLE FOR PAGE LOADER --- */
@@ -1564,21 +1582,3 @@ button:disabled, button:disabled:hover {
   padding-top: 60px; /* Account for fixed header */
   background-color: var(--bg-primary);
 }
-
-
-/* In file: src/App.css */
-/* Find the .article-actions-top rule and replace it */
-
-/* ... (keep all css before this) ... */
-
-.article-actions-top {
-  display: grid;
-  /* --- UPDATED: This now allows 2 or 3 buttons to fit --- */
-  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-  gap: 8px;
-}
-.article-actions-top > a {
-  display: block; text-decoration: none;
-}
-
-/* ... (keep all css after this) ... */

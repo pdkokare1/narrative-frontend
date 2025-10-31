@@ -1,4 +1,6 @@
 // In file: src/MyDashboard.js
+// --- FIX: Component now accepts `theme` as a prop ---
+// --- FIX: Removed the line `const theme = document.body.className...` ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom'; // Use Link for Back to Articles
@@ -45,15 +47,17 @@ const categoryColorsLight = ['#2E4E6B', '#3E6A8E', '#5085B2', '#63A0D6', '#243E5
 
 
 // --- Main Component ---
-function MyDashboard() {
+// --- (FIX) Accept `theme` as a prop ---
+function MyDashboard({ theme }) {
   const [statsData, setStatsData] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState('');
 
-  // Get theme from body class (App.js sets this)
-  const theme = document.body.className.includes('dark') ? 'dark' : 'light';
+  // --- (FIX) Removed this line:
+  // const theme = document.body.className.includes('dark') ? 'dark' : 'light';
 
    const chartColors = useMemo(() => {
+      // --- (FIX) Use the `theme` prop directly ---
       const isDark = theme === 'dark';
       return {
          textPrimary: isDark ? '#EAEAEA' : '#2C2C2C',
@@ -67,7 +71,7 @@ function MyDashboard() {
          trendUp: isDark ? '#4CAF50' : '#2E7D32',
          trendDown: isDark ? '#E57373' : '#C62828',
       };
-   }, [theme]);
+   }, [theme]); // (FIX) Now depends on the `theme` prop
 
   // Fetch aggregated stats
   useEffect(() => {

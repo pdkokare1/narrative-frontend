@@ -1,9 +1,20 @@
 // In file: src/components/ArticleCard.js
+// --- UPDATED: Added isSaved and onToggleSave props ---
+// --- UPDATED: Added a Save/Unsave button to all card types ---
 import React from 'react';
 import '../App.css'; // For card styles
 import { getSentimentClass } from '../utils/helpers'; // <-- IMPORT PATH CORRECTED
 
-function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showTooltip }) {
+function ArticleCard({ 
+  article, 
+  onCompare, 
+  onAnalyze, 
+  onShare, 
+  onRead, 
+  showTooltip, 
+  isSaved,      // <-- NEW PROP
+  onToggleSave  // <-- NEW PROP
+}) {
 
   const isMobile = () => window.innerWidth <= 768;
   const isReview = article.analysisType === 'SentimentOnly';
@@ -21,6 +32,18 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
   const stopMobileClick = (e) => { if (isMobile()) { e.stopPropagation(); } };
 
   // --- getSentimentClass function is now imported from helpers.js ---
+  
+  // --- NEW: Reusable Save Button Component ---
+  const SaveButton = () => (
+    <button 
+      onClick={(e) => { stopMobileClick(e); onToggleSave(article); }} 
+      className="btn-secondary" 
+      title={isSaved ? "Remove from saved" : "Save article"}
+    >
+      {isSaved ? 'Unsave' : 'Save'}
+    </button>
+  );
+  // --- END NEW ---
 
   return (
     <div className="article-card">
@@ -63,19 +86,28 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
                 <div className="article-actions-top">
                   <button onClick={(e) => { stopMobileClick(e); onAnalyze(article); }} className="btn-secondary" title="View Detailed Analysis">Analysis</button>
                   <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary" title="Share article link">Share</button>
+                  <SaveButton /> {/* <-- ADDED SAVE BUTTON */}
                 </div>
                 <button onClick={(e) => { stopMobileClick(e); onCompare(article); }} className="btn-primary btn-full-width" title={article.clusterCount > 1 ? `Compare with ${article.clusterCount - 1} other articles` : "Find other perspectives"}>{article.clusterCount > 1 ? `Compare Coverage (${article.clusterCount})` : "Compare Coverage"}</button>
               </>
             )}
             {showCompareOnReview && (
               <>
-                <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary btn-full-width" title="Share article link">Share</button>
+                {/* --- UPDATED: Use article-actions-top grid --- */}
+                <div className="article-actions-top">
+                  <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary" title="Share article link">Share</button>
+                  <SaveButton /> {/* <-- ADDED SAVE BUTTON */}
+                </div>
                 <button onClick={(e) => { stopMobileClick(e); onCompare(article); }} className="btn-primary btn-full-width" title={`Compare with ${article.clusterCount - 1} other articles`}>Compare Coverage ({article.clusterCount})</button>
               </>
             )}
             {showReadOnReview && (
               <>
-                <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary btn-full-width" title="Share article link">Share</button>
+                {/* --- UPDATED: Use article-actions-top grid --- */}
+                <div className="article-actions-top">
+                  <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary" title="Share article link">Share</button>
+                  <SaveButton /> {/* <-- ADDED SAVE BUTTON */}
+                </div>
                 <button onClick={(e) => { stopMobileClick(e); onRead(article); }} className="btn-primary btn-full-width" title="Read the full article on the source's website">Read Article</button>
               </>
             )}

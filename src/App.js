@@ -1,5 +1,5 @@
 // In file: src/App.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react'; // <-- ADDED Suspense, lazy
 import axios from 'axios';
 import './App.css'; // Main CSS
 import './DashboardPages.css'; // --- Import dashboard styles ---
@@ -15,11 +15,14 @@ import Login from './Login'; // Import the Login component
 // --- Import the CreateProfile page ---
 import CreateProfile from './CreateProfile';
 
-// --- UPDATED: Import the NEW dashboard pages ---
-import MyDashboard from './MyDashboard';
-// import ReadingHabits from './ReadingHabits'; // --- REMOVED ---
-import SavedArticles from './SavedArticles';
-import AccountSettings from './AccountSettings';
+// --- UPDATED: Import the NEW dashboard pages using React.lazy ---
+// This splits them into their own files
+const MyDashboard = lazy(() => import('./MyDashboard'));
+const SavedArticles = lazy(() => import('./SavedArticles'));
+const AccountSettings = lazy(() => import('./AccountSettings'));
+
+// --- Import the new PageLoader component ---
+import PageLoader from './components/PageLoader';
 
 
 // Use environment variable for API URL, fallback to localhost for local dev
@@ -40,7 +43,7 @@ const getBreakdownTooltip = (label) => {
     "Age Representation": "Checks for biases related to age groups in reporting.",
     "Headline Framing": "Analyzes if the headline presents a neutral or skewed perspective of the story.",
     "Story Selection": "Considers if the choice of this story over others indicates a potential bias.",
-    "Omission Bias": "Evaluates if significant facts or contexts are left out, creating a misleading picture.",
+    "Omission Bias": "EvaluATES if significant facts or contexts are left out, creating a misleading picture.",
     "Source Credibility": "Assesses the reputation and track record of the news source itself.",
     "Fact Verification": "Evaluates the rigor of the fact-checking processes evident in the article.",
     "Professionalism": "Measures adherence to journalistic standards like objectivity and transparency.",
@@ -540,12 +543,8 @@ function AppWrapper() {
   // 1. Show main loader while checking auth OR profile
   if (authState.isLoading || (authState.user && isProfileLoading)) {
      return (
-       <div className="loading-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
-         <div className="spinner"></div>
-         <p style={{ color: 'var(--text-secondary)', marginTop: '20px' }}>
-           {authState.isLoading ? 'Authenticating...' : 'Loading profile...'}
-         </p>
-       </div>
+       // --- UPDATED: Use the PageLoader component ---
+       <PageLoader />
      );
   }
 
@@ -571,153 +570,156 @@ function AppWrapper() {
         />
       )}
 
-      <Routes>
-        {/* --- Main App Page (Homepage) --- */}
-        <Route path="/" element={
-          profile ? (
-            <>
-              <CustomTooltip
-                visible={tooltip.visible}
-                text={tooltip.text}
-                x={tooltip.x}
-                y={tooltip.y}
-              />
-
-              <div className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''}`}>
-                <div
-                  className={`sidebar-mobile-overlay ${isSidebarOpen ? 'open' : ''}`}
-                  onClick={() => setIsSidebarOpen(false)}
-                ></div>
-
-                <Sidebar
-                  filters={filters}
-                  onFilterChange={handleFilterChange}
-                  // articleCount={totalArticlesCount} // --- REMOVED ---
-                  isOpen={isSidebarOpen}
-                  onClose={closeSidebar} // Pass closeSidebar here
-                  onLogout={handleLogout} // --- ADDED: Pass logout ---
+      {/* --- WRAP ROUTES IN SUSPENSE --- */}
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* --- Main App Page (Homepage) --- */}
+          <Route path="/" element={
+            profile ? (
+              <>
+                <CustomTooltip
+                  visible={tooltip.visible}
+                  text={tooltip.text}
+                  x={tooltip.x}
+                  y={tooltip.y}
                 />
 
-
-                <main className="content" ref={contentRef}>
+                <div className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''}`}>
                   <div
-                    className="pull-indicator"
-                    style={{
-                      opacity: Math.min(pullDistance / pullThreshold, 1),
-                    }}
-                  >
-                    <span
-                      className="pull-indicator-arrow"
+                    className={`sidebar-mobile-overlay ${isSidebarOpen ? 'open' : ''}`}
+                    onClick={() => setIsSidebarOpen(false)}
+                  ></div>
+
+                  <Sidebar
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    // articleCount={totalArticlesCount} // --- REMOVED ---
+                    isOpen={isSidebarOpen}
+                    onClose={closeSidebar} // Pass closeSidebar here
+                    onLogout={handleLogout} // --- ADDED: Pass logout ---
+                  />
+
+
+                  <main className="content" ref={contentRef}>
+                    <div
+                      className="pull-indicator"
                       style={{
-                        transform: `rotate(${pullDistance > pullThreshold ? '180deg' : '0deg'})`
+                        opacity: Math.min(pullDistance / pullThreshold, 1),
                       }}
                     >
-                      ↓
-                    </span>
-                    <span>{pullDistance > pullThreshold ? 'Release to refresh' : 'Pull to refresh'}</span>
-                  </div>
+                      <span
+                        className="pull-indicator-arrow"
+                        style={{
+                          transform: `rotate(${pullDistance > pullThreshold ? '180deg' : '0deg'})`
+                        }}
+                      >
+                        ↓
+                      </span>
+                      <span>{pullDistance > pullThreshold ? 'Release to refresh' : 'Pull to refresh'}</span>
+                    </div>
 
-                  <div
-                    className="pull-to-refresh-container" // Spinner
-                    style={{
-                      display: isRefreshing ? 'flex' : 'none'
-                    }}
-                  >
-                    <div className="spinner-small"></div>
-                    <p>Refreshing...</p>
-                  </div>
+                    <div
+                      className="pull-to-refresh-container" // Spinner
+                      style={{
+                        display: isRefreshing ? 'flex' : 'none'
+                      }}
+                    >
+                      <div className="spinner-small"></div>
+                      <p>Refreshing...</p>
+                    </div>
 
-                  <div className="content-scroll-wrapper">
-                    {(loading && initialLoad) ? ( // Initial load spinner
-                      <div className="loading-container">
-                        <div className="spinner"></div>
-                        <p>Loading articles...</p>
-                      </div>
-                    ) : (
-                      <>
-                        {displayedArticles.length > 0 ? (
-                          <div className="articles-grid">
-                            {displayedArticles.map((article) => (
-                              <div className="article-card-wrapper" key={article._id || article.url}>
-                                <ArticleCard
-                                  article={article}
-                                  onCompare={() => handleCompareClick(article)}
-                                  onAnalyze={handleAnalyzeClick}
-                                  onShare={shareArticle}
-                                  onRead={handleReadClick}
-                                  showTooltip={showTooltip}
-                                />
+                    <div className="content-scroll-wrapper">
+                      {(loading && initialLoad) ? ( // Initial load spinner
+                        <div className="loading-container">
+                          <div className="spinner"></div>
+                          <p>Loading articles...</p>
+                        </div>
+                      ) : (
+                        <>
+                          {displayedArticles.length > 0 ? (
+                            <div className="articles-grid">
+                              {displayedArticles.map((article) => (
+                                <div className="article-card-wrapper" key={article._id || article.url}>
+                                  <ArticleCard
+                                    article={article}
+                                    onCompare={() => handleCompareClick(article)}
+                                    onAnalyze={handleAnalyzeClick}
+                                    onShare={shareArticle}
+                                    onRead={handleReadClick}
+                                    showTooltip={showTooltip}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
+                                <p>No articles found matching your current filters.</p>
+                            </div>
+                          )}
+
+                          {(loading && !initialLoad) && (
+                            <div className="article-card-wrapper load-more-wrapper">
+                              <div className="loading-container" style={{ minHeight: '200px' }}>
+                                <div className="spinner"></div>
+                                <p>Loading more articles...</p>
                               </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
-                              <p>No articles found matching your current filters.</p>
-                          </div>
-                        )}
-
-                        {(loading && !initialLoad) && (
-                          <div className="article-card-wrapper load-more-wrapper">
-                            <div className="loading-container" style={{ minHeight: '200px' }}>
-                              <div className="spinner"></div>
-                              <p>Loading more articles...</p>
                             </div>
-                          </div>
-                        )}
+                          )}
 
-                        {!loading && displayedArticles.length < totalArticlesCount && (
-                          <div className="article-card-wrapper load-more-wrapper">
-                            <div className="load-more">
-                              <button onClick={loadMoreArticles} className="load-more-btn">
-                                Load More ({totalArticlesCount - displayedArticles.length} remaining)
-                              </button>
+                          {!loading && displayedArticles.length < totalArticlesCount && (
+                            <div className="article-card-wrapper load-more-wrapper">
+                              <div className="load-more">
+                                <button onClick={loadMoreArticles} className="load-more-btn">
+                                  Load More ({totalArticlesCount - displayedArticles.length} remaining)
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div> {/* --- End content-scroll-wrapper --- */}
-                </main>
-              </div>
+                          )}
+                        </>
+                      )}
+                    </div> {/* --- End content-scroll-wrapper --- */}
+                  </main>
+                </div>
 
-              {compareModal.open && (
-                <CompareCoverageModal
-                  clusterId={compareModal.clusterId}
-                  articleTitle={compareModal.articleTitle}
-                  onClose={() => setCompareModal({ open: false, clusterId: null, articleTitle: '', articleId: null })}
-                  onAnalyze={(article) => {
-                    setCompareModal({ open: false, clusterId: null, articleTitle: '', articleId: null });
-                    handleAnalyzeClick(article);
-                  }}
-                  showTooltip={showTooltip}
-                />
-              )}
+                {compareModal.open && (
+                  <CompareCoverageModal
+                    clusterId={compareModal.clusterId}
+                    articleTitle={compareModal.articleTitle}
+                    onClose={() => setCompareModal({ open: false, clusterId: null, articleTitle: '', articleId: null })}
+                    onAnalyze={(article) => {
+                      setCompareModal({ open: false, clusterId: null, articleTitle: '', articleId: null });
+                      handleAnalyzeClick(article);
+                    }}
+                    showTooltip={showTooltip}
+                  />
+                )}
 
-              {analysisModal.open && (
-                <DetailedAnalysisModal
-                  article={analysisModal.article}
-                  onClose={() => setAnalysisModal({ open: false, article: null })}
-                  showTooltip={showTooltip}
-                />
-              )}
-            </>
-          ) : (
-             <div className="loading-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
-               <div className="spinner"></div>
-             </div>
-          )
-        } />
+                {analysisModal.open && (
+                  <DetailedAnalysisModal
+                    article={analysisModal.article}
+                    onClose={() => setAnalysisModal({ open: false, article: null })}
+                    showTooltip={showTooltip}
+                  />
+                )}
+              </>
+            ) : (
+               <div className="loading-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
+                 <div className="spinner"></div>
+               </div>
+            )
+          } />
 
-        {/* --- ROUTE FOR PROFILE CREATION --- */}
-        <Route path="/create-profile" element={<CreateProfile />} />
+          {/* --- ROUTE FOR PROFILE CREATION --- */}
+          <Route path="/create-profile" element={<CreateProfile />} />
 
-        {/* --- DASHBOARD ROUTES --- */}
-        <Route path="/my-dashboard" element={ profile ? <MyDashboard /> : null } />
-        {/* <Route path="/reading-habits" element={ profile ? <ReadingHabits /> : null } /> */} {/* --- REMOVED --- */}
-        <Route path="/saved-articles" element={ profile ? <SavedArticles /> : null } />
-        <Route path="/account-settings" element={ profile ? <AccountSettings /> : null } />
+          {/* --- DASHBOARD ROUTES --- */}
+          {/* These routes are now lazy-loaded */}
+          <Route path="/my-dashboard" element={ profile ? <MyDashboard /> : null } />
+          <Route path="/saved-articles" element={ profile ? <SavedArticles /> : null } />
+          <Route path="/account-settings" element={ profile ? <AccountSettings /> : null } />
 
-      </Routes>
+        </Routes>
+      </Suspense> {/* --- END SUSPENSE WRAPPER --- */}
     </div>
   );
 }

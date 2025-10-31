@@ -1,7 +1,8 @@
 // In file: src/App.js
-// --- FIX: Added isMobile() helper function definition ---
-// --- FIX: Added state and useEffect for isMobileView to fix resize bug ---
-// --- FIX: Passed theme prop to MyDashboard route ---
+// --- UPDATED: Added savedArticleIds state ---
+// --- UPDATED: checkProfile now populates savedArticleIds ---
+// --- UPDATED: Added handleToggleSave function ---
+// --- UPDATED: Passed new props to ArticleCard and SavedArticles route ---
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
@@ -40,7 +41,7 @@ const AccountSettings = lazy(() => import('./AccountSettings'));
 // Use environment variable for API URL, fallback to localhost for local dev
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
-// --- (FIX) Moved isMobile helper function here so it can be re-used ---
+// (FIX) Moved isMobile helper function here so it can be re-used
 const isMobile = () => window.innerWidth <= 768;
 
 // --- AppWrapper ---
@@ -75,12 +76,16 @@ function AppWrapper() {
   });
   const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '', articleId: null });
   const [analysisModal, setAnalysisModal] = useState({ open: false, article: null });
-  const [totalArticlesCount, setTotalArticlesCount] = useState(0); // Still used for Load More logic
+  const [totalArticlesCount, setTotalArticlesCount] = useState(0); 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
 
-  // --- (FIX) State to track mobile view for resize bug ---
+  // (FIX) State to track mobile view for resize bug
   const [isMobileView, setIsMobileView] = useState(isMobile());
+
+  // --- *** NEW: State for Saved Articles *** ---
+  const [savedArticleIds, setSavedArticleIds] = useState(new Set());
+  // --- *** END NEW *** ---
 
   // --- Custom Tooltip/Popup State ---
   const [tooltip, setTooltip] = useState({
@@ -89,7 +94,6 @@ function AppWrapper() {
     x: 0,
     y: 0,
   });
-  // const isMobile = () => window.innerWidth <= 768; // (FIX) Moved to top
 
   // --- Refs for Pull-to-Refresh ---
   const contentRef = useRef(null);
@@ -98,18 +102,18 @@ function AppWrapper() {
   const [pullDistance, setPullDistance] = useState(0);
   const pullThreshold = 120;
 
-  // --- (FIX) useEffect to update isMobileView on window resize ---
+  // (FIX) useEffect to update isMobileView on window resize
   useEffect(() => {
     const handleResize = () => {
       setIsMobileView(isMobile());
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []); // Empty array ensures this runs only once
+  }, []); 
 
   // --- Custom Tooltip/Popup Handlers (for Mobile Tap) ---
   const showTooltip = (text, e) => {
-    if (!isMobileView || !text) return; // (FIX) Use isMobileView state
+    if (!isMobileView || !text) return; 
     e.stopPropagation();
 
     const x = e.clientX || (e.touches && e.touches[0].clientX);
@@ -165,6 +169,9 @@ function AppWrapper() {
         try {
           const response = await axios.get(`${API_URL}/profile/me`);
           setProfile(response.data);
+          // --- *** NEW: Populate saved articles state *** ---
+          setSavedArticleIds(new Set(response.data.savedArticles || []));
+          // --- *** END NEW *** ---
 
           if (location.pathname === '/create-profile') {
             navigate('/');
@@ -503,11 +510,43 @@ function AppWrapper() {
     if (isMobileView) { // (FIX) Use isMobileView state
       setIsSidebarOpen(false);
     }
-    // --- Keep desktop sidebar state on close ---
-    // else {
-    //   setIsDesktopSidebarVisible(false);
-    // }
   };
+
+  // --- *** NEW: Save/Unsave Handler *** ---
+  const handleToggleSave = async (article) => {
+    const articleId = article._id;
+    if (!articleId) return;
+
+    // Optimistic UI Update: Update the state immediately
+    const newSavedArticleIds = new Set(savedArticleIds);
+    if (newSavedArticleIds.has(articleId)) {
+      newSavedArticleIds.delete(articleId);
+    } else {
+      newSavedArticleIds.add(articleId);
+    }
+    setSavedArticleIds(newSavedArticleIds);
+
+    // Call the backend to sync the change
+    try {
+      await axios.post(`${API_URL}/articles/${articleId}/save`);
+      // Optional: We could re-sync state from response, but optimistic is usually fine
+      // const response = await axios.post(`${API_URL}/articles/${articleId}/save`);
+      // setSavedArticleIds(new Set(response.data.savedArticles));
+    } catch (error) {
+      console.error('Failed to toggle save state:', error);
+      // Revert UI on error
+      const revertedSavedArticleIds = new Set(savedArticleIds);
+      if (revertedSavedArticleIds.has(articleId)) {
+        revertedSavedArticleIds.delete(articleId);
+      } else {
+        revertedSavedArticleIds.add(articleId);
+      }
+      setSavedArticleIds(revertedSavedArticleIds);
+      alert('Error saving article. Please try again.');
+    }
+  };
+  // --- *** END NEW *** ---
+
 
   // --- Activity Logging ---
   const handleAnalyzeClick = (article) => {
@@ -539,7 +578,6 @@ function AppWrapper() {
   // 1. Show main loader while checking auth OR profile
   if (authState.isLoading || (authState.user && isProfileLoading)) {
      return (
-       // --- UPDATED: Use the PageLoader component ---
        <PageLoader />
      );
   }
@@ -561,7 +599,6 @@ function AppWrapper() {
           theme={theme}
           toggleTheme={toggleTheme}
           onToggleSidebar={toggleSidebar}
-          // user={authState.user} // --- REMOVED ---
           username={profile.username}
         />
       )}
@@ -589,10 +626,9 @@ function AppWrapper() {
                   <Sidebar
                     filters={filters}
                     onFilterChange={handleFilterChange}
-                    // articleCount={totalArticlesCount} // --- REMOVED ---
                     isOpen={isSidebarOpen}
-                    onClose={closeSidebar} // Pass closeSidebar here
-                    onLogout={handleLogout} // --- ADDED: Pass logout ---
+                    onClose={closeSidebar} 
+                    onLogout={handleLogout} 
                   />
 
 
@@ -643,6 +679,10 @@ function AppWrapper() {
                                     onShare={shareArticle}
                                     onRead={handleReadClick}
                                     showTooltip={showTooltip}
+                                    // --- *** NEW PROPS *** ---
+                                    isSaved={savedArticleIds.has(article._id)}
+                                    onToggleSave={() => handleToggleSave(article)}
+                                    // --- *** END NEW *** ---
                                   />
                                 </div>
                               ))}
@@ -709,9 +749,23 @@ function AppWrapper() {
           <Route path="/create-profile" element={<CreateProfile />} />
 
           {/* --- DASHBOARD ROUTES --- */}
-          {/* These routes are now lazy-loaded */}
-          <Route path="/my-dashboard" element={ profile ? <MyDashboard theme={theme} /> : null } /> {/* (FIX) Pass theme prop */}
-          <Route path="/saved-articles" element={ profile ? <SavedArticles /> : null } />
+          <Route path="/my-dashboard" element={ profile ? <MyDashboard theme={theme} /> : null } />
+          <Route 
+            path="/saved-articles" 
+            element={ 
+              profile ? (
+                <SavedArticles 
+                  savedArticleIds={savedArticleIds}
+                  onToggleSave={handleToggleSave}
+                  onCompare={handleCompareClick}
+                  onAnalyze={handleAnalyzeClick}
+                  onShare={shareArticle}
+                  onRead={handleReadClick}
+                  showTooltip={showTooltip}
+                /> 
+              ) : null 
+            } 
+          />
           <Route path="/account-settings" element={ profile ? <AccountSettings /> : null } />
 
         </Routes>

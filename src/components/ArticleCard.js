@@ -1,6 +1,7 @@
 // In file: src/components/ArticleCard.js
 import React from 'react';
 import '../App.css'; // For card styles
+import { getSentimentClass } from '../utils/helpers'; // <-- IMPORT THE HELPER
 
 function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showTooltip }) {
 
@@ -18,11 +19,8 @@ function ArticleCard({ article, onCompare, onAnalyze, onShare, onRead, showToolt
   };
 
   const stopMobileClick = (e) => { if (isMobile()) { e.stopPropagation(); } };
-  const getSentimentClass = (sentiment) => {
-    if (sentiment === 'Positive') return 'sentiment-positive';
-    if (sentiment === 'Negative') return 'sentiment-negative';
-    return 'sentiment-neutral';
-  };
+
+  // --- getSentimentClass function is now imported from helpers.js ---
 
   return (
     <div className="article-card">

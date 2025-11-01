@@ -1,5 +1,6 @@
 /* In file: src/App.css */
 /* --- FIX: Removed the rule that hid sidebar nav on desktop --- */
+/* --- FIX: Removed mobile scroll-snap, overflow:hidden, and overscroll-behavior --- */
 
 /* ==================== PREMIUM THEME VARIABLES ==================== */
 .dark-mode {
@@ -126,7 +127,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 
 /* ==================== HEADER ==================== */
 .header {
-  position: fixed;
+  position: sticky; /* <-- CHANGED from fixed */
   top: 0;
   left: 0;
   right: 0;
@@ -229,8 +230,8 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   max-width: 1800px;
   width: 100%;
   margin: 0 auto;
-  padding-top: 60px; /* SCALED: Was 65px */
-  min-height: 100vh;
+  padding-top: 0; /* <-- CHANGED from 60px */
+  min-height: calc(100vh - 60px); /* <-- CHANGED */
   transition: all 0.3s ease-in-out; /* NEW: For sidebar transitions */
 }
 
@@ -473,15 +474,12 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   padding: 30px 40px; /* SCALED: Was 40px 50px */
   transition: all 0.3s ease-in-out; /* NEW: For sidebar transitions */
   min-width: 0; /* NEW: Fix flexbox overflow */
-  position: relative; /* (FIX) Needed for pull-to-refresh indicators */
-  /* (FIX) Overflow is now handled by the .content element on mobile */
+  position: relative; 
 }
 
 /* (FIX) NEW: Wrapper for the actual scrollable content (articles, loading, etc.) */
 .content-scroll-wrapper {
-  /* This div will be transformed for pull-to-refresh */
-  position: relative; /* Needed for z-index stacking if required */
-  /* (FIX) REMOVED z-index: 1; */
+  position: relative; 
 }
 
 .content-header { display: none; }
@@ -528,35 +526,10 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   color: var(--accent-primary); /* (FIX) Accent color */
   font-size: 12px;
   font-weight: 500;
-  /* (FIX) Position absolutely at the top of the .content area */
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1; /* (FIX) Changed from 0 */
+  /* (FIX) Position is now set inline */
 }
 
-/* (FIX) NEW: Pull-to-refresh Indicator */
-.pull-indicator {
-  position: absolute;
-  top: 0; /* (FIX) Position at the top */
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 12px;
-  color: var(--accent-primary); /* (FIX) Accent color */
-  font-weight: 500;
-  z-index: 1; /* (FIX) Changed from 0 */
-  height: 56px; /* Match spinner container height */
-  /* Opacity and visibility controlled by inline style */
-}
-.pull-indicator-arrow {
-  font-size: 16px;
-  margin-right: 8px;
-  transition: transform 0.2s ease;
-}
+/* --- DELETED: .pull-indicator rules --- */
 
 
 /* ==================== ARTICLES GRID ==================== */
@@ -1204,11 +1177,14 @@ button:disabled, button:disabled:hover {
   body {
     font-size: 14px; /* (FIX) Reset font size for mobile */
     line-height: 1.6; /* (FIX) Reset line height for mobile */
-    /* --- NEW: Prevent body scroll on mobile --- */
-    overflow: hidden;
-    overscroll-behavior-y: contain; /* (FIX) Add this line to prevent bounce */
+    /* --- REMOVED: overflow: hidden --- */
+    /* --- REMOVED: overscroll-behavior-y: contain --- */
   }
-  .header { height: 60px; padding: 0 15px; /* SCALED: Was 15px 20px */ position: fixed; }
+  .header { 
+    height: 60px; 
+    padding: 0 15px;
+    position: sticky; /* <-- CHANGED from fixed */
+  }
   .header-left { position: static; width: auto; justify-content: flex-start; padding: 0; gap: 10px; } /* Adjust logo position */
   .logo-container { align-items: flex-start; }
   .header-right { position: static; margin-left: auto; }
@@ -1219,11 +1195,10 @@ button:disabled, button:disabled:hover {
   /* --- NEW: Main Container Scroll --- */
   .main-container {
     flex-direction: column;
-    padding-top: 60px; /* Match header */
+    padding-top: 0; /* <-- CHANGED */
     max-width: 100%;
-    /* NEW: Prevent body scroll */
-    overflow-y: hidden;
-    height: 100vh;
+    /* --- REMOVED: overflow-y: hidden --- */
+    /* --- REMOVED: height: 100vh --- */
   }
 
   /* --- NEW: Sidebar Mobile --- */
@@ -1313,80 +1288,24 @@ button:disabled, button:disabled:hover {
 
   /* --- (FIX) Content Area Scroll --- */
   .content {
-    padding: 0; /* NEW: Remove all padding */
-    height: calc(100vh - 60px); /* Fill remaining height */
-    overflow-y: auto; /* (FIX) Scroll is now on the .content */
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
-
-    /* --- (FIX) Add Snap scroll for vertical snapping --- */
-    scroll-snap-type: y mandatory;
-    scroll-behavior: smooth; /* (FIX) NEW: Add smooth scroll animation */
-    overscroll-behavior-y: contain; /* (FIX) THIS PREVENTS BOUNCE/OVERSCROLL */
-
-    /* --- NEW: Hide Scrollbar --- */
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-  }
-  .content::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+    padding: 25px 15px; /* <-- CHANGED: Add padding back */
+    /* --- REMOVED: All height, overflow, and scroll-snap rules --- */
   }
 
-  /* (FIX) Adjust pull indicator positions for mobile */
-  .pull-to-refresh-container {
-     position: absolute; /* Keep absolute within .content */
-     top: 0;
-     left: 0;
-     right: 0;
-     z-index: 1; /* (FIX) Ensure it's on top of content */
-  }
-  .pull-indicator {
-    position: absolute; /* Keep absolute within .content */
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1; /* (FIX) Ensure it's on top of content */
-    height: 56px; /* Match spinner container */
-  }
-
- /* (FIX) NEW: Ensure the wrapper doesn't interfere with scroll */
-  .content-scroll-wrapper {
-     /* No specific styles needed here for mobile,
-        transform is applied inline */
-  }
+  /* --- DELETED: All .pull-to-refresh-container and .pull-indicator rules --- */
+ 
+  /* --- DELETED: .content-scroll-wrapper rules --- */
 
 
   /* --- (FIX) Card Grid & Snap --- */
   .articles-grid {
-    display: block; /* Use block layout */
-    gap: 0;
-    padding: 0; /* No padding on the grid itself */
+    display: grid; /* <-- CHANGED: Back to grid */
+    gap: 20px; /* <-- ADDED: Add gap */
+    padding: 0; 
     grid-template-columns: 1fr; /* Force single column */
   }
 
-  /* --- (FIX) NEW: Wrapper for Card to handle snap and viewport sizing --- */
-  .article-card-wrapper {
-    /* This is the snap target */
-    scroll-snap-align: start;
-    /* Fill the viewport */
-    height: calc(100vh - 60px);
-    width: 100%;
-    /* Center the card inside */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 35px 16px 90px 16px; /* (FIX) More B margin */
-    overflow: hidden; /* Prevent card overflow issues */
-    /* animation: cardSnapIn 0.5s cubic-bezier(0.25, 0.8, 0.25, 1); */ /* (FIX) Removed animation */
-  }
-  .article-card-wrapper .load-more {
-     margin: 0; /* (FIX) Reset margins for load more button */
-  }
-  /* (FIX) NEW: Wrapper for loading spinner */
-  .load-more-wrapper {
-    animation: cardSnapIn 0.5s cubic-bezier(0.25, 0.8, 0.25, 1); /* Only animate these */
-  }
-
+  /* --- DELETED: .article-card-wrapper rules --- */
 
   /* --- (FIX) Article Card (Remove sticky/stacking) --- */
   .article-card {
@@ -1395,19 +1314,12 @@ button:disabled, button:disabled:hover {
     background: var(--bg-card-flat); /* Use solid background */
     border-bottom: 1px solid var(--border-color); /* Separate cards */
     
-    /* Center the card (already in wrapper, but set max-width) */
-    width: 100%;
-    max-width: 500px;
-    margin: 0; /* Remove auto margins */
-
-    /* --- NEW: Prevent card from shrinking and allow scrolling if content overflows --- */
-    flex-shrink: 0; /* Don't shrink inside flex wrapper */
-    max-height: 100%; /* Don't exceed wrapper height */
-    overflow-y: auto; /* Allow card itself to scroll if content is too tall */
+    /* --- REMOVED: width, max-width, margin --- */
+    
+    /* --- REMOVED: flex-shrink, max-height, overflow-y --- */
   }
-  /* Hide scrollbar inside card */
-  .article-card::-webkit-scrollbar { display: none; }
-  .article-card { scrollbar-width: none; -ms-overflow-style: none; }
+  /* --- DELETED: .article-card scrollbar rules --- */
+
 
   /* (FIX) Taller mobile buttons */
   .btn-primary, .btn-secondary {
@@ -1416,7 +1328,8 @@ button:disabled, button:disabled:hover {
   }
 
   .load-more {
-    padding: 30px 16px; /* NEW: Add padding */
+    padding: 0; /* <-- REMOVED padding */
+    margin: 30px 0; /* <-- ADDED margin */
   }
 
   .article-headline { font-size: 16px; } /* Reset for mobile */
@@ -1579,6 +1492,6 @@ button:disabled, button:disabled:hover {
   /* Fill the viewport below the 60px header */
   min-height: calc(100vh - 60px); 
   width: 100%;
-  padding-top: 60px; /* Account for fixed header */
+  padding-top: 0; /* <-- CHANGED */
   background-color: var(--bg-primary);
 }

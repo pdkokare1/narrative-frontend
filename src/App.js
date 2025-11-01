@@ -1,8 +1,7 @@
 // In file: src/App.js
-// --- UPDATED: Added savedArticleIds state ---
-// --- UPDATED: checkProfile now populates savedArticleIds ---
-// --- UPDATED: Added handleToggleSave function ---
-// --- UPDATED: Passed new props to ArticleCard and SavedArticles route ---
+// --- UPDATED: Removed all custom pull-to-refresh logic (refs, state, effects) ---
+// --- UPDATED: Removed all "article-card-wrapper" divs from JSX ---
+// --- UPDATED: Fixed "load more" scroll handler to always use `window` ---
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
@@ -64,7 +63,7 @@ function AppWrapper() {
   const [displayedArticles, setDisplayedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false); // Kept for spinner logic
   const [theme, setTheme] = useState('dark');
   const [filters, setFilters] = useState({
     category: 'All Categories',
@@ -95,12 +94,12 @@ function AppWrapper() {
     y: 0,
   });
 
-  // --- Refs for Pull-to-Refresh ---
-  const contentRef = useRef(null);
-  const touchStartY = useRef(0);
-  const touchEndY = useRef(0);
-  const [pullDistance, setPullDistance] = useState(0);
-  const pullThreshold = 120;
+  // --- REMOVED: Refs for Pull-to-Refresh ---
+  // const contentRef = useRef(null); // <-- DELETED
+  // const touchStartY = useRef(0); // <-- DELETED
+  // const touchEndY = useRef(0); // <-- DELETED
+  // const [pullDistance, setPullDistance] = useState(0); // <-- DELETED
+  // const pullThreshold = 120; // <-- DELETED
 
   // (FIX) useEffect to update isMobileView on window resize
   useEffect(() => {
@@ -281,7 +280,10 @@ function AppWrapper() {
 
     if (!isFeedPage) return; // Don't fetch if not on the main feed page
 
-    fetchArticles();
+    // --- We still set isRefreshing to true to show the spinner on native pull-to-refresh ---
+    setIsRefreshing(true); 
+    fetchArticles().finally(() => setIsRefreshing(false));
+
   }, [filters, authState.user, profile, location.pathname]); // Re-fetch when filters, user, profile, or path changes
 
   // Close sidebar on filter change (for mobile)
@@ -291,48 +293,7 @@ function AppWrapper() {
     }
   }, [filters]);
 
-  // --- Pull-to-Refresh Effects ---
-  useEffect(() => {
-    const contentEl = contentRef.current;
-    if (!contentEl || !isMobileView) return; // (FIX) Use isMobileView state
-
-    const handleTouchStart = (e) => {
-      touchStartY.current = e.touches[0].clientY;
-      touchEndY.current = e.touches[0].clientY;
-    };
-
-    const handleTouchMove = (e) => {
-      touchEndY.current = e.touches[0].clientY;
-      const currentPullDistance = touchEndY.current - touchStartY.current;
-
-      if (contentEl.scrollTop === 0 && currentPullDistance > 0 && !isRefreshing) {
-        setPullDistance(currentPullDistance);
-        e.preventDefault();
-      } else if (contentEl.scrollTop !== 0 || currentPullDistance <= 0) {
-        setPullDistance(0);
-      }
-    };
-
-    const handleTouchEnd = () => {
-      if (contentEl.scrollTop === 0 && pullDistance > pullThreshold && !isRefreshing) {
-        setIsRefreshing(true);
-        fetchArticles().finally(() => setIsRefreshing(false));
-      }
-      setPullDistance(0);
-    };
-
-    contentEl.addEventListener('touchstart', handleTouchStart, { passive: true });
-    contentEl.addEventListener('touchmove', handleTouchMove, { passive: false });
-    contentEl.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-    return () => {
-      if (contentEl) {
-         contentEl.removeEventListener('touchstart', handleTouchStart);
-         contentEl.removeEventListener('touchmove', handleTouchMove);
-         contentEl.removeEventListener('touchend', handleTouchEnd);
-      }
-    };
-  }, [isRefreshing, pullDistance, contentRef, pullThreshold, isMobileView]); // (FIX) Add isMobileView
+  // --- DELETED: Pull-to-Refresh Effects ---
 
 
   // --- Logout Function ---
@@ -439,18 +400,16 @@ function AppWrapper() {
   // Debounced scroll handler
   useEffect(() => {
     let timeoutId;
-    // --- (FIX) Use isMobileView state to determine scroll element ---
-    const scrollableElement = isMobileView ? contentRef.current : window;
+    // --- (FIX) Always use `window` for scrolling ---
+    const scrollableElement = window; 
 
     if (!scrollableElement) return;
 
     const handleScroll = () => {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
-            const isWindow = scrollableElement === window;
-            const scrollHeight = isWindow ? document.body.offsetHeight : scrollableElement.scrollHeight;
-            const scrollTop = isWindow ? window.scrollY : scrollableElement.scrollTop;
-            const clientHeight = isWindow ? window.innerHeight : scrollableElement.clientHeight;
+            // --- (FIX) Simplified scroll logic for `window` ---
+            const { scrollHeight, scrollTop, clientHeight } = document.documentElement;
 
             if (clientHeight + scrollTop >= scrollHeight - 800) {
                 if (!loading && displayedArticles.length < totalArticlesCount) {
@@ -467,7 +426,7 @@ function AppWrapper() {
           scrollableElement.removeEventListener('scroll', handleScroll);
         }
     };
-  }, [loading, displayedArticles, totalArticlesCount, contentRef, isMobileView]); // (FIX) Add isMobileView dependency
+  }, [loading, displayedArticles, totalArticlesCount]); // (FIX) Removed contentRef and isMobileView
 
 
   const shareArticle = (article) => {
@@ -632,28 +591,17 @@ function AppWrapper() {
                   />
 
 
-                  <main className="content" ref={contentRef}>
-                    <div
-                      className="pull-indicator"
-                      style={{
-                        opacity: Math.min(pullDistance / pullThreshold, 1),
-                      }}
-                    >
-                      <span
-                        className="pull-indicator-arrow"
-                        style={{
-                          transform: `rotate(${pullDistance > pullThreshold ? '180deg' : '0deg'})`
-                        }}
-                      >
-                        ↓
-                      </span>
-                      <span>{pullDistance > pullThreshold ? 'Release to refresh' : 'Pull to refresh'}</span>
-                    </div>
+                  <main className="content">
+                    {/* --- DELETED: Pull to refresh custom UI --- */}
 
+                    {/* --- This spinner is now only for native refresh --- */}
                     <div
                       className="pull-to-refresh-container" // Spinner
                       style={{
-                        display: isRefreshing ? 'flex' : 'none'
+                        display: isRefreshing ? 'flex' : 'none',
+                        position: 'relative', // No longer absolute
+                        marginTop: '-10px', // Pull it up a bit
+                        marginBottom: '15px'
                       }}
                     >
                       <div className="spinner-small"></div>
@@ -671,9 +619,10 @@ function AppWrapper() {
                           {displayedArticles.length > 0 ? (
                             <div className="articles-grid">
                               {displayedArticles.map((article) => (
-                                <div className="article-card-wrapper" key={article._id || article.url}>
+                                // --- DELETED: article-card-wrapper ---
                                   <ArticleCard
                                     article={article}
+                                    key={article._id || article.url} // Key moved to card
                                     onCompare={() => handleCompareClick(article)}
                                     onAnalyze={handleAnalyzeClick}
                                     onShare={shareArticle}
@@ -684,7 +633,7 @@ function AppWrapper() {
                                     onToggleSave={() => handleToggleSave(article)}
                                     // --- *** END NEW *** ---
                                   />
-                                </div>
+                                // --- DELETED: article-card-wrapper ---
                               ))}
                             </div>
                           ) : (
@@ -694,21 +643,19 @@ function AppWrapper() {
                           )}
 
                           {(loading && !initialLoad) && (
-                            <div className="article-card-wrapper load-more-wrapper">
-                              <div className="loading-container" style={{ minHeight: '200px' }}>
-                                <div className="spinner"></div>
-                                <p>Loading more articles...</p>
-                              </div>
+                            // --- DELETED: article-card-wrapper ---
+                            <div className="loading-container" style={{ minHeight: '200px', marginTop: '20px' }}>
+                              <div className="spinner"></div>
+                              <p>Loading more articles...</p>
                             </div>
                           )}
 
                           {!loading && displayedArticles.length < totalArticlesCount && (
-                            <div className="article-card-wrapper load-more-wrapper">
-                              <div className="load-more">
-                                <button onClick={loadMoreArticles} className="load-more-btn">
-                                  Load More ({totalArticlesCount - displayedArticles.length} remaining)
-                                </button>
-                              </div>
+                            // --- DELETED: article-card-wrapper ---
+                            <div className="load-more">
+                              <button onClick={loadMoreArticles} className="load-more-btn">
+                                Load More ({totalArticlesCount - displayedArticles.length} remaining)
+                              </button>
                             </div>
                           )}
                         </>

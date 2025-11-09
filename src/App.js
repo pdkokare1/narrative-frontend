@@ -1,8 +1,6 @@
 // In file: src/App.js
-// --- UPDATED: Removed all custom pull-to-refresh logic (refs, state, effects) ---
-// --- UPDATED: Removed all "article-card-wrapper" divs from JSX ---
-// --- UPDATED: Fixed "load more" scroll handler to always use `window` ---
-import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react'; // <-- ADDED useCallback
+// --- UPDATED: Fixed infinite loop on create-profile page ---
+import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
 import './DashboardPages.css'; // --- Import dashboard styles ---
@@ -156,6 +154,13 @@ function AppWrapper() {
 
   // --- Profile Checking Effect ---
   useEffect(() => {
+    // --- *** FIX: Stop infinite loop on create-profile page *** ---
+    if (location.pathname === '/create-profile') {
+      setIsProfileLoading(false); // Stop the main loader
+      return; // Do not check for a profile if we are already on this page
+    }
+    // --- *** END FIX *** ---
+
     if (authState.user && !profile) {
       setIsProfileLoading(true);
       const checkProfile = async () => {

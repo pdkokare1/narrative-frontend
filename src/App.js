@@ -2,7 +2,7 @@
 // --- UPDATED: Removed all custom pull-to-refresh logic (refs, state, effects) ---
 // --- UPDATED: Removed all "article-card-wrapper" divs from JSX ---
 // --- UPDATED: Fixed "load more" scroll handler to always use `window` ---
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react'; // <-- ADDED useCallback
 import axios from 'axios';
 import './App.css'; // Main CSS
 import './DashboardPages.css'; // --- Import dashboard styles ---
@@ -94,13 +94,6 @@ function AppWrapper() {
     y: 0,
   });
 
-  // --- REMOVED: Refs for Pull-to-Refresh ---
-  // const contentRef = useRef(null); // <-- DELETED
-  // const touchStartY = useRef(0); // <-- DELETED
-  // const touchEndY = useRef(0); // <-- DELETED
-  // const [pullDistance, setPullDistance] = useState(0); // <-- DELETED
-  // const pullThreshold = 120; // <-- DELETED
-
   // (FIX) useEffect to update isMobileView on window resize
   useEffect(() => {
     const handleResize = () => {
@@ -127,11 +120,12 @@ function AppWrapper() {
     }
   };
 
-  const hideTooltip = () => {
+  // --- FIX: Wrapped in useCallback ---
+  const hideTooltip = useCallback(() => {
     if (tooltip.visible) {
       setTooltip({ ...tooltip, visible: false });
     }
-  };
+  }, [tooltip]);
 
   // Effect to hide tooltip on outside click
   useEffect(() => {
@@ -142,7 +136,7 @@ function AppWrapper() {
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [tooltip.visible, hideTooltip]); // <-- FIX: Added hideTooltip
+  }, [tooltip.visible, hideTooltip]); // <-- FIX: hideTooltip is now a stable dependency
   // --- End Tooltip Handlers ---
 
 
@@ -218,7 +212,104 @@ function AppWrapper() {
     document.body.className = savedTheme + '-mode';
   }, []);
 
-  // --- Effect to check for shared article on load ---
+  // --- Logout Function ---
+  const handleLogout = useCallback(() => {
+    signOut(auth).catch((error) => {
+      console.error('Logout Error:', error);
+    });
+  }, []);
+
+  // --- FIX: Wrapped fetchArticles in useCallback ---
+  const fetchArticles = useCallback(async (loadMore = false) => {
+    try {
+      setLoading(true);
+      if (!loadMore) {
+        setInitialLoad(true);
+      }
+      const limit = 12; // Articles per page/load
+      const offset = loadMore ? displayedArticles.length : 0;
+
+      const queryParams = { ...filters, limit, offset };
+
+      const response = await axios.get(`${API_URL}/articles`, {
+        params: queryParams
+      });
+
+      const articlesData = response.data.articles || [];
+      const paginationData = response.data.pagination || { total: 0 };
+      setTotalArticlesCount(paginationData.total || 0);
+
+      // --- Data Cleaning and Defaulting ---
+      const uniqueNewArticles = articlesData
+        .filter(article => article && article.url)
+        .map(article => ({
+            _id: article._id || article.url,
+            headline: article.headline || article.title || 'No Headline Available',
+            summary: article.summary || article.description || 'No summary available.',
+            source: article.source || 'Unknown Source',
+            category: article.category || 'General',
+            politicalLean: article.politicalLean || 'Center',
+            url: article.url,
+            imageUrl: article.imageUrl || null,
+            publishedAt: article.publishedAt || new Date().toISOString(),
+            analysisType: ['Full', 'SentimentOnly'].includes(article.analysisType) ? article.analysisType : 'Full',
+            sentiment: ['Positive', 'Negative', 'Neutral'].includes(article.sentiment) ? article.sentiment : 'Neutral',
+            biasScore: Number(article.biasScore) || 0,
+            trustScore: Number(article.trustScore) || 0,
+            credibilityScore: Number(article.credibilityScore) || 0,
+            reliabilityScore: Number(article.reliabilityScore) || 0,
+            credibilityGrade: article.credibilityGrade || null,
+            biasComponents: article.biasComponents && typeof article.biasComponents === 'object' ? article.biasComponents : {},
+            credibilityComponents: article.credibilityComponents && typeof article.credibilityComponents === 'object' ? article.credibilityComponents : {},
+            reliabilityComponents: article.reliabilityComponents && typeof article.reliabilityComponents === 'object' ? article.reliabilityComponents : {},
+            keyFindings: Array.isArray(article.keyFindings) ? article.keyFindings : [],
+            recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
+            clusterId: article.clusterId || null,
+            clusterCount: Number(article.clusterCount) || 1 // Ensure clusterCount is added
+        }));
+      // --- End Data Cleaning ---
+
+      if (loadMore) {
+         const currentUrls = new Set(displayedArticles.map(a => a.url));
+         const trulyNewArticles = uniqueNewArticles.filter(a => !currentUrls.has(a.url));
+         setDisplayedArticles(prev => [...prev, ...trulyNewArticles]);
+      } else {
+         setDisplayedArticles(uniqueNewArticles);
+      }
+
+      setLoading(false);
+      setInitialLoad(false);
+      setIsRefreshing(false);
+
+    } catch (error) {
+      console.error('❌ Error fetching articles:', error.response ? error.response.data : error.message);
+
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+         console.error("Auth token invalid, logging out.");
+         handleLogout();
+      }
+
+      setLoading(false);
+      setInitialLoad(false);
+      setIsRefreshing(false);
+    }
+  }, [filters, displayedArticles, handleLogout]);
+
+  // --- FIX: Wrapped loadMoreArticles in useCallback ---
+  const loadMoreArticles = useCallback(() => {
+    if (loading || displayedArticles.length >= totalArticlesCount) return;
+    fetchArticles(true);
+  }, [loading, displayedArticles, totalArticlesCount, fetchArticles]);
+
+  // --- Activity Logging (wrapped handleAnalyzeClick in useCallback) ---
+  const handleAnalyzeClick = useCallback((article) => {
+    setAnalysisModal({ open: true, article });
+    axios.post(`${API_URL}/activity/log-view`, { articleId: article._id })
+      .then(res => console.log('Activity logged', res.data))
+      .catch(err => console.error('Failed to log activity', err));
+  }, []); // This function has no dependencies
+
+  // Effect to check for shared article on load
   useEffect(() => {
     const fetchAndShowArticle = async (id) => {
       if (!id || !/^[a-f\d]{24}$/i.test(id)) {
@@ -269,10 +360,9 @@ function AppWrapper() {
     if (articleId && authState.user && profile) {
        fetchAndShowArticle(articleId);
     }
-  }, [authState.user, profile]); // <-- Removed handleAnalyzeClick from deps
+  }, [authState.user, profile, handleAnalyzeClick]); // <-- FIX: handleAnalyzeClick is now stable
 
   // Effect to fetch articles when filters change or on initial load
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!authState.user || !profile) return;
 
@@ -285,107 +375,16 @@ function AppWrapper() {
     setIsRefreshing(true); 
     fetchArticles().finally(() => setIsRefreshing(false));
 
-  }, [filters, authState.user, profile, location.pathname]); // Re-fetch when filters, user, profile, or path changes
+  }, [filters, authState.user, profile, location.pathname, fetchArticles]); // <-- FIX: Added fetchArticles
 
   // Close sidebar on filter change (for mobile)
   useEffect(() => {
     if (isSidebarOpen) {
       setIsSidebarOpen(false);
     }
-  }, [filters, isSidebarOpen]); // <-- FIX: Added isSidebarOpen
+  }, [filters, isSidebarOpen]); 
 
   // --- DELETED: Pull-to-Refresh Effects ---
-
-
-  // --- Logout Function ---
-  const handleLogout = () => {
-    signOut(auth).catch((error) => {
-      console.error('Logout Error:', error);
-    });
-  };
-
-
-  const fetchArticles = async (loadMore = false) => {
-    try {
-      setLoading(true);
-      if (!loadMore) {
-        setInitialLoad(true);
-      }
-      const limit = 12; // Articles per page/load
-      const offset = loadMore ? displayedArticles.length : 0;
-
-      const queryParams = { ...filters, limit, offset };
-
-      const response = await axios.get(`${API_URL}/articles`, {
-        params: queryParams
-      });
-
-      const articlesData = response.data.articles || [];
-      const paginationData = response.data.pagination || { total: 0 };
-      setTotalArticlesCount(paginationData.total || 0);
-
-      // --- Data Cleaning and Defaulting ---
-      const uniqueNewArticles = articlesData
-        .filter(article => article && article.url)
-        .map(article => ({
-            _id: article._id || article.url,
-            headline: article.headline || article.title || 'No Headline Available',
-            summary: article.summary || article.description || 'No summary available.',
-            source: article.source || 'Unknown Source',
-            category: article.category || 'General',
-            politicalLean: article.politicalLean || 'Center',
-            url: article.url,
-            imageUrl: article.imageUrl || null,
-            publishedAt: article.publishedAt || new Date().toISOString(),
-            analysisType: ['Full', 'SentimentOnly'].includes(article.analysisType) ? article.analysisType : 'Full',
-            sentiment: ['Positive', 'Negative', 'Neutral'].includes(article.sentiment) ? article.sentiment : 'Neutral',
-            biasScore: Number(article.biasScore) || 0,
-            trustScore: Number(article.trustScore) || 0,
-            credibilityScore: Number(article.credibilityScore) || 0,
-            reliabilityScore: Number(article.reliabilityScore) || 0,
-            credibilityGrade: article.credibilityGrade || null,
-            biasComponents: article.biasComponents && typeof article.biasComponents === 'object' ? article.biasComponents : {},
-            credibilityComponents: article.credibilityComponents && typeof article.credibilityComponents === 'object' ? article.credibilityComponents : {},
-            reliabilityComponents: article.reliabilityComponents && typeof article.reliabilityComponents === 'object' ? article.reliabilityComponents : {},
-            keyFindings: Array.isArray(article.keyFindings) ? article.keyFindings : [],
-            recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
-            clusterId: article.clusterId || null,
-            clusterCount: Number(article.clusterCount) || 1 // Ensure clusterCount is added
-        }));
-      // --- End Data Cleaning ---
-
-
-      if (loadMore) {
-         const currentUrls = new Set(displayedArticles.map(a => a.url));
-         const trulyNewArticles = uniqueNewArticles.filter(a => !currentUrls.has(a.url));
-         setDisplayedArticles(prev => [...prev, ...trulyNewArticles]);
-      } else {
-         setDisplayedArticles(uniqueNewArticles);
-      }
-
-      setLoading(false);
-      setInitialLoad(false);
-      setIsRefreshing(false);
-
-    } catch (error) {
-      console.error('❌ Error fetching articles:', error.response ? error.response.data : error.message);
-
-      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-         console.error("Auth token invalid, logging out.");
-         handleLogout();
-      }
-
-      setLoading(false);
-      setInitialLoad(false);
-      setIsRefreshing(false);
-    }
-  };
-
-  const loadMoreArticles = () => {
-    if (loading || displayedArticles.length >= totalArticlesCount) return;
-    fetchArticles(true);
-  };
-
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -399,7 +398,6 @@ function AppWrapper() {
   };
 
   // Debounced scroll handler
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     let timeoutId;
     // --- (FIX) Always use `window` for scrolling ---
@@ -428,7 +426,7 @@ function AppWrapper() {
           scrollableElement.removeEventListener('scroll', handleScroll);
         }
     };
-  }, [loading, displayedArticles, totalArticlesCount]); // (FIX) Removed contentRef and isMobileView
+  }, [loading, displayedArticles, totalArticlesCount, loadMoreArticles]); // <-- FIX: Added loadMoreArticles
 
 
   const shareArticle = (article) => {
@@ -508,15 +506,7 @@ function AppWrapper() {
   };
   // --- *** END NEW *** ---
 
-
-  // --- Activity Logging ---
-  const handleAnalyzeClick = (article) => {
-    setAnalysisModal({ open: true, article });
-    axios.post(`${API_URL}/activity/log-view`, { articleId: article._id })
-      .then(res => console.log('Activity logged', res.data))
-      .catch(err => console.error('Failed to log activity', err));
-  };
-
+  // --- Other Activity Logging ---
   const handleCompareClick = (article) => {
     setCompareModal({ open: true, clusterId: article.clusterId, articleTitle: article.headline, articleId: article._id });
     axios.post(`${API_URL}/activity/log-compare`, { articleId: article._id })

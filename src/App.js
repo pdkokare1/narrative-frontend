@@ -2,13 +2,13 @@
 // --- UPDATED: Removed all custom pull-to-refresh logic (refs, state, effects) ---
 // --- UPDATED: Removed all "article-card-wrapper" divs from JSX ---
 // --- UPDATED: Fixed "load more" scroll handler to always use `window` ---
-import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
 import './DashboardPages.css'; // --- Import dashboard styles ---
 
 // --- React Router imports ---
-import { Routes, Route, useNavigate, useLocation, Link, NavLink } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 
 // --- Firebase Auth Imports ---
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -142,7 +142,7 @@ function AppWrapper() {
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [tooltip.visible]);
+  }, [tooltip.visible, hideTooltip]); // <-- FIX: Added hideTooltip
   // --- End Tooltip Handlers ---
 
 
@@ -269,9 +269,10 @@ function AppWrapper() {
     if (articleId && authState.user && profile) {
        fetchAndShowArticle(articleId);
     }
-  }, [authState.user, profile]);
+  }, [authState.user, profile]); // <-- Removed handleAnalyzeClick from deps
 
   // Effect to fetch articles when filters change or on initial load
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!authState.user || !profile) return;
 
@@ -291,7 +292,7 @@ function AppWrapper() {
     if (isSidebarOpen) {
       setIsSidebarOpen(false);
     }
-  }, [filters]);
+  }, [filters, isSidebarOpen]); // <-- FIX: Added isSidebarOpen
 
   // --- DELETED: Pull-to-Refresh Effects ---
 
@@ -398,6 +399,7 @@ function AppWrapper() {
   };
 
   // Debounced scroll handler
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     let timeoutId;
     // --- (FIX) Always use `window` for scrolling ---

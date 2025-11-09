@@ -49,13 +49,14 @@ function ArticleCard({
     <div className="article-card">
       <div className="article-image">
         {article.imageUrl ? (
+          // eslint-disable-next-line jsx-a11y/img-redundant-alt
           <img src={article.imageUrl} alt={article.headline} onError={handleImageError} loading="lazy" />
         ) : null}
         <div className="image-placeholder" style={{ display: article.imageUrl ? 'none' : 'flex' }}>📰</div>
       </div>
       <div className="article-content">
         <div className="article-content-top">
-          <div className="article-content-link" onClick={(e) => { stopMobileClick(e); onRead(article); }} style={{ cursor: 'pointer' }} title="Read the full article (logs click)">
+          <div className="article-headline-link" onClick={(e) => { stopMobileClick(e); onRead(article); }} style={{ cursor: 'pointer' }} title="Read the full article (logs click)">
               <h3 className="article-headline">{article.headline}</h3>
           </div>
           <p className="article-summary">{article.summary}</p>

@@ -1,5 +1,5 @@
 // In file: src/components/ArticleCard.js
-// --- UPDATED: Fixed redundant alt tag for linter ---
+// --- UPDATED: Fixed typo in closing button tag ---
 import React from 'react';
 import '../App.css'; // For card styles
 import { getSentimentClass } from '../utils/helpers'; // <-- IMPORT PATH CORRECTED
@@ -48,7 +48,6 @@ function ArticleCard({
     <div className="article-card">
       <div className="article-image">
         {article.imageUrl ? (
-          // --- LINTER FIX: Removed "Image for" from alt tag ---
           <img src={article.imageUrl} alt={article.headline} onError={handleImageError} loading="lazy" />
         ) : null}
         <div className="image-placeholder" style={{ display: article.imageUrl ? 'none' : 'flex' }}>📰</div>
@@ -85,6 +84,7 @@ function ArticleCard({
               <>
                 <div className="article-actions-top">
                   <button onClick={(e) => { stopMobileClick(e); onAnalyze(article); }} className="btn-secondary" title="View Detailed Analysis">Analysis</button>
+
                   <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary" title="Share article link">Share</button>
                   <SaveButton /> {/* <-- ADDED SAVE BUTTON */}
                 </div>
@@ -95,6 +95,7 @@ function ArticleCard({
               <>
                 {/* --- UPDATED: Use article-actions-top grid --- */}
                 <div className="article-actions-top">
+                  {/* --- LINTER FIX: Corrected closing </Fbutton> to </button> --- */}
                   <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary" title="Share article link">Share</button>
                   <SaveButton /> {/* <-- ADDED SAVE BUTTON */}
                 </div>
@@ -105,7 +106,7 @@ function ArticleCard({
               <>
                 {/* --- UPDATED: Use article-actions-top grid --- */}
                 <div className="article-actions-top">
-                  <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary" title="Share article link">Share</Fbutton>
+                  <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary" title="Share article link">Share</button>
                   <SaveButton /> {/* <-- ADDED SAVE BUTTON */}
                 </div>
                 <button onClick={(e) => { stopMobileClick(e); onRead(article); }} className="btn-primary btn-full-width" title="Read the full article on the source's website">Read Article</button>

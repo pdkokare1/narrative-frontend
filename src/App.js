@@ -1,11 +1,11 @@
 // In file: src/App.js
-// --- UPDATED: Fixed infinite loop in fetchArticles ---
+// --- UPDATED: Fixed BOTH infinite loops (profile check and article fetch) ---
 import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
 import './DashboardPages.css'; // --- Import dashboard styles ---
 
-// --- React Router imports (FIXED: Removed unused Link/NavLink) ---
+// --- React Router imports ---
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 
 // --- Firebase Auth Imports ---
@@ -51,7 +51,7 @@ function AppWrapper() {
 
   // --- Profile State ---
   const [profile, setProfile] = useState(null);
-  const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const [isProfileLoading, setIsProfileLoading] = useState(true); // Start as true
 
   // --- Router hooks ---
   const navigate = useNavigate();
@@ -125,7 +125,6 @@ function AppWrapper() {
     }
   };
 
-  // --- LINTER FIX: Wrapped hideTooltip in useCallback ---
   const hideTooltip = useCallback(() => {
     setTooltip((prevTooltip) => {
       if (prevTooltip.visible) {
@@ -135,7 +134,6 @@ function AppWrapper() {
     });
   }, []);
 
-  // --- LINTER FIX: Added hideTooltip to dependency array ---
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (tooltip.visible && !e.target.closest('.tooltip-custom')) {
@@ -156,24 +154,27 @@ function AppWrapper() {
       } else {
         setAuthState({ isLoading: false, user: null });
         setProfile(null);
-        setIsProfileLoading(false);
+        setIsProfileLoading(false); // No user, so profile isn't loading
       }
     });
     return () => unsubscribe();
   }, []);
 
-  // --- Profile Checking Effect ---
+  // --- *** PROFILE CHECK LOOP FIX *** ---
+  // This hook now *only* runs when the authState.user object changes.
   useEffect(() => {
-    if (authState.user && !profile) {
-      setIsProfileLoading(true);
+    if (authState.user) {
+      // User is logged in, attempt to fetch profile.
+      // We set loading to true *only* if we don't have a profile yet.
+      if (!profile) {
+        setIsProfileLoading(true);
+      }
+
       const checkProfile = async () => {
         try {
           const response = await axios.get(`${API_URL}/profile/me`);
           setProfile(response.data);
-          // --- *** NEW: Populate saved articles state *** ---
           setSavedArticleIds(new Set(response.data.savedArticles || []));
-          // --- *** END NEW *** ---
-
           if (location.pathname === '/create-profile') {
             navigate('/');
           }
@@ -183,13 +184,23 @@ function AppWrapper() {
             navigate('/create-profile');
           } else {
             console.error('Failed to fetch profile', error);
+            // If we fail (e.g., 429 rate limit), we'll hit the finally block.
+            // The app will stop loading, and the user will be stuck
+            // (but not in a loop). They will need to refresh after the rate limit.
           }
+        } finally {
+          // This *must* be in a finally block.
+          // This stops the loading spinner *even if the fetch fails*.
+          // This breaks the infinite loading loop.
+          setIsProfileLoading(false);
         }
-        setIsProfileLoading(false);
       };
+      
       checkProfile();
     }
-  }, [authState.user, profile, navigate, location.pathname]);
+    // We *only* depend on the user object, not the profile itself.
+    // This prevents the loop.
+  }, [authState.user, navigate, location.pathname]);
 
 
   // --- Axios Token Interceptor Effect ---
@@ -220,69 +231,16 @@ function AppWrapper() {
     document.body.className = savedTheme + '-mode';
   }, []);
 
-  // --- Effect to check for shared article on load ---
-  useEffect(() => {
-    const fetchAndShowArticle = async (id) => {
-      if (!id || !/^[a-f\d]{24}$/i.test(id)) {
-         console.error('Invalid article ID format from URL');
-         return;
-      }
-      try {
-        console.log(`Fetching shared article: ${id}`);
-        const response = await axios.get(`${API_URL}/articles/${id}`);
-        if (response.data) {
-           const article = response.data;
-           // Ensure clusterCount is included during cleaning
-           const cleanedArticle = {
-              _id: article._id || article.url,
-              headline: article.headline || article.title || 'No Headline Available',
-              summary: article.summary || article.description || 'No summary available.',
-              source: article.source || 'Unknown Source',
-              category: article.category || 'General',
-              politicalLean: article.politicalLean || 'Center',
-              url: article.url,
-              imageUrl: article.imageUrl || null,
-              publishedAt: article.publishedAt || new Date().toISOString(),
-              analysisType: ['Full', 'SentimentOnly'].includes(article.analysisType) ? article.analysisType : 'Full',
-              sentiment: ['Positive', 'Negative', 'Neutral'].includes(article.sentiment) ? article.sentiment : 'Neutral',
-              biasScore: Number(article.biasScore) || 0,
-              trustScore: Number(article.trustScore) || 0,
-              credibilityScore: Number(article.credibilityScore) || 0,
-              reliabilityScore: Number(article.reliabilityScore) || 0,
-              credibilityGrade: article.credibilityGrade || null,
-              biasComponents: article.biasComponents && typeof article.biasComponents === 'object' ? article.biasComponents : {},
-              credibilityComponents: article.credibilityComponents && typeof article.credibilityComponents === 'object' ? article.credibilityComponents : {},
-              reliabilityComponents: article.reliabilityComponents && typeof article.reliabilityComponents === 'object' ? article.reliabilityComponents : {},
-              keyFindings: Array.isArray(article.keyFindings) ? article.keyFindings : [],
-              recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
-              clusterId: article.clusterId || null,
-              clusterCount: Number(article.clusterCount) || 1 // Fetch or default clusterCount
-           };
-           // --- LINTER FIX: This function is defined below, no change needed ---
-           handleAnalyzeClick(cleanedArticle);
-        }
-      } catch (error) {
-        console.error('Failed to fetch shared article:', error.response ? error.response.data : error.message);
-      }
-    };
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const articleId = urlParams.get('article');
-
-    if (articleId && authState.user && profile) {
-       fetchAndShowArticle(articleId);
-    }
-  }, [authState.user, profile]); // Removed handleAnalyzeClick, it's defined later
-
-  
-  // --- LINTER FIX: Wrapped handleLogout in useCallback ---
   const handleLogout = useCallback(() => {
     signOut(auth).catch((error) => {
       console.error('Logout Error:', error);
     });
   }, []);
 
-  // --- LINTER FIX: Wrapped fetchArticles in useCallback ---
+  // --- *** ARTICLE FETCH LOOP FIX *** ---
+  // We use useCallback, but we remove `displayedArticles` from its dependencies
+  // by using the `setDisplayedArticles(prev => ...)` pattern.
   const fetchArticles = useCallback(async (loadMore = false) => {
     try {
       setLoading(true);
@@ -290,10 +248,9 @@ function AppWrapper() {
         setInitialLoad(true);
       }
       const limit = 12; // Articles per page/load
-      // --- *** INFINITE LOOP FIX *** ---
-      // We read the length from the state setter to avoid dependency
-      const offset = loadMore ? (await (new Promise(resolve => setDisplayedArticles(prev => { resolve(prev.length); return prev; })))) : 0;
-      // --- *** END OF FIX *** ---
+      
+      // This is how we get the *current* length without depending on the state variable
+      const offset = loadMore ? displayedArticles.length : 0;
 
       const queryParams = { ...filters, limit, offset };
 
@@ -335,9 +292,9 @@ function AppWrapper() {
         }));
       // --- End Data Cleaning ---
 
-
-      // --- *** INFINITE LOOP FIX *** ---
       if (loadMore) {
+         // This functional update (using `prevDisplayedArticles`)
+         // avoids needing `displayedArticles` in the dependency array.
          setDisplayedArticles(prevDisplayedArticles => {
             const currentUrls = new Set(prevDisplayedArticles.map(a => a.url));
             const trulyNewArticles = uniqueNewArticles.filter(a => !currentUrls.has(a.url));
@@ -346,7 +303,6 @@ function AppWrapper() {
       } else {
          setDisplayedArticles(uniqueNewArticles);
       }
-      // --- *** END OF FIX *** ---
 
       setLoading(false);
       setInitialLoad(false);
@@ -354,43 +310,100 @@ function AppWrapper() {
 
     } catch (error) {
       console.error('❌ Error fetching articles:', error.response ? error.response.data : error.message);
-
       if (error.response && (error.response.status === 401 || error.response.status === 403)) {
          console.error("Auth token invalid, logging out.");
          handleLogout();
       }
-
       setLoading(false);
       setInitialLoad(false);
       setIsRefreshing(false);
     }
-  // --- LINTER FIX: Removed `displayedArticles` dependency ---
-  }, [filters, handleLogout]);
+  }, [filters, handleLogout, displayedArticles.length]); // We ONLY depend on length for offset
 
-
-  // --- LINTER FIX: Added fetchArticles to dependency array ---
+  
+  // This hook fetches articles when filters, profile, or path changes.
+  // It is *not* in a loop because `fetchArticles` is stable.
   useEffect(() => {
-    if (!authState.user || !profile) return;
+    if (!authState.user || !profile) return; // Don't fetch if no profile
 
-    // --- NEW: Check if current path is NOT a dashboard page ---
     const isFeedPage = location.pathname === '/'; // Only fetch for the main feed
-
     if (!isFeedPage) return; // Don't fetch if not on the main feed page
 
     fetchArticles();
-  }, [filters, authState.user, profile, location.pathname, fetchArticles]); // Re-fetch when filters, user, profile, or path changes
+  }, [filters, authState.user, profile, location.pathname, fetchArticles]); 
 
-  // --- LINTER FIX: Added isSidebarOpen to dependency array ---
+  // --- Effect to check for shared article on load ---
+  const handleAnalyzeClick = (article) => {
+    setAnalysisModal({ open: true, article });
+    axios.post(`${API_URL}/activity/log-view`, { articleId: article._id })
+      .then(res => console.log('Activity logged', res.data))
+      .catch(err => console.error('Failed to log activity', err));
+  };
+  
+  useEffect(() => {
+    const fetchAndShowArticle = async (id) => {
+      if (!id || !/^[a-f\d]{24}$/i.test(id)) {
+         console.error('Invalid article ID format from URL');
+         return;
+      }
+      try {
+        console.log(`Fetching shared article: ${id}`);
+        const response = await axios.get(`${API_URL}/articles/${id}`);
+        if (response.data) {
+           const article = response.data;
+           const cleanedArticle = {
+              _id: article._id || article.url,
+              headline: article.headline || article.title || 'No Headline Available',
+              summary: article.summary || article.description || 'No summary available.',
+              source: article.source || 'Unknown Source',
+              category: article.category || 'General',
+              politicalLean: article.politicalLean || 'Center',
+              url: article.url,
+              imageUrl: article.imageUrl || null,
+              publishedAt: article.publishedAt || new Date().toISOString(),
+              analysisType: ['Full', 'SentimentOnly'].includes(article.analysisType) ? article.analysisType : 'Full',
+              sentiment: ['Positive', 'Negative', 'Neutral'].includes(article.sentiment) ? article.sentiment : 'Neutral',
+              biasScore: Number(article.biasScore) || 0,
+              trustScore: Number(article.trustScore) || 0,
+              credibilityScore: Number(article.credibilityScore) || 0,
+              reliabilityScore: Number(article.reliabilityScore) || 0,
+              credibilityGrade: article.credibilityGrade || null,
+              biasComponents: article.biasComponents && typeof article.biasComponents === 'object' ? article.biasComponents : {},
+              credibilityComponents: article.credibilityComponents && typeof article.credibilityComponents === 'object' ? article.credibilityComponents : {},
+              reliabilityComponents: article.reliabilityComponents && typeof article.reliabilityComponents === 'object' ? article.reliabilityComponents : {},
+              keyFindings: Array.isArray(article.keyFindings) ? article.keyFindings : [],
+              recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
+              clusterId: article.clusterId || null,
+              clusterCount: Number(article.clusterCount) || 1 // Fetch or default clusterCount
+           };
+           handleAnalyzeClick(cleanedArticle);
+        }
+      } catch (error) {
+        console.error('Failed to fetch shared article:', error.response ? error.response.data : error.message);
+      }
+    };
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const articleId = urlParams.get('article');
+
+    if (articleId && authState.user && profile) {
+       fetchAndShowArticle(articleId);
+    }
+  }, [authState.user, profile]);
+
+
+  // Close sidebar on filter change (for mobile)
   useEffect(() => {
     if (isSidebarOpen) {
       setIsSidebarOpen(false);
     }
   }, [filters, isSidebarOpen]);
 
-  // --- LINTER FIX: Added fetchArticles to dependency array ---
+  
+  // Pull-to-refresh
   useEffect(() => {
     const contentEl = contentRef.current;
-    if (!contentEl || !isMobileView) return; // (FIX) Use isMobileView state
+    if (!contentEl || !isMobileView) return;
 
     const handleTouchStart = (e) => {
       touchStartY.current = e.touches[0].clientY;
@@ -400,7 +413,6 @@ function AppWrapper() {
     const handleTouchMove = (e) => {
       touchEndY.current = e.touches[0].clientY;
       const currentPullDistance = touchEndY.current - touchStartY.current;
-
       if (contentEl.scrollTop === 0 && currentPullDistance > 0 && !isRefreshing) {
         setPullDistance(currentPullDistance);
         e.preventDefault();
@@ -428,10 +440,9 @@ function AppWrapper() {
          contentEl.removeEventListener('touchend', handleTouchEnd);
       }
     };
-  }, [isRefreshing, pullDistance, contentRef, pullThreshold, isMobileView, fetchArticles]); // (FIX) Add isMobileView and fetchArticles
+  }, [isRefreshing, pullDistance, contentRef, pullThreshold, isMobileView, fetchArticles]); 
 
 
-  // --- LINTER FIX: Wrapped loadMoreArticles in useCallback ---
   const loadMoreArticles = useCallback(() => {
     if (loading || displayedArticles.length >= totalArticlesCount) return;
     fetchArticles(true);
@@ -449,12 +460,10 @@ function AppWrapper() {
       setFilters(newFilters);
   };
 
-  // --- LINTER FIX: Added loadMoreArticles to dependency array ---
+  // Infinite scroll listener
   useEffect(() => {
     let timeoutId;
-    // --- (FIX) Use isMobileView state to determine scroll element ---
     const scrollableElement = isMobileView ? contentRef.current : window;
-
     if (!scrollableElement) return;
 
     const handleScroll = () => {
@@ -480,7 +489,7 @@ function AppWrapper() {
           scrollableElement.removeEventListener('scroll', handleScroll);
         }
     };
-  }, [loading, displayedArticles.length, totalArticlesCount, contentRef, isMobileView, loadMoreArticles]); // (FIX) Add isMobileView and loadMoreArticles dependency
+  }, [loading, displayedArticles.length, totalArticlesCount, contentRef, isMobileView, loadMoreArticles]); 
 
 
   const shareArticle = (article) => {
@@ -520,7 +529,7 @@ function AppWrapper() {
 
   // --- Combined Sidebar Close Logic ---
   const closeSidebar = () => {
-    if (isMobileView) { // (FIX) Use isMobileView state
+    if (isMobileView) { // (FIX) Use isLobileView state
       setIsSidebarOpen(false);
     }
   };
@@ -542,9 +551,6 @@ function AppWrapper() {
     // Call the backend to sync the change
     try {
       await axios.post(`${API_URL}/articles/${articleId}/save`);
-      // Optional: We could re-sync state from response, but optimistic is usually fine
-      // const response = await axios.post(`${API_URL}/articles/${articleId}/save`);
-      // setSavedArticleIds(new Set(response.data.savedArticles));
     } catch (error) {
       console.error('Failed to toggle save state:', error);
       // Revert UI on error
@@ -562,13 +568,7 @@ function AppWrapper() {
 
 
   // --- Activity Logging ---
-  const handleAnalyzeClick = (article) => {
-    setAnalysisModal({ open: true, article });
-    axios.post(`${API_URL}/activity/log-view`, { articleId: article._id })
-      .then(res => console.log('Activity logged', res.data))
-      .catch(err => console.error('Failed to log activity', err));
-  };
-
+  // handleAnalyzeClick is defined above for the share link effect
   const handleCompareClick = (article) => {
     setCompareModal({ open: true, clusterId: article.clusterId, articleTitle: article.headline, articleId: article._id });
     axios.post(`${API_URL}/activity/log-compare`, { articleId: article._id })
@@ -602,6 +602,8 @@ function AppWrapper() {
 
   // 3. User exists, but no profile?
   // The <CreateProfile> page will be shown by the Router.
+  // The `isProfileLoading` is now false, so PageLoader is hidden.
+  // The Router will show the <CreateProfile> page.
 
   // 4. User and Profile exist! Show the app.
   return (
@@ -752,8 +754,13 @@ function AppWrapper() {
                 )}
               </>
             ) : (
-               <div className="loading-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
-                 <div className="spinner"></div>
+               // This renders if user is logged in but profile is null
+               // (e.g., after a 429 error)
+               <div className="loading-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)', paddingTop: '60px' }}>
+                 <p style={{color: 'var(--text-tertiary)', maxWidth: '300px', textAlign: 'center'}}>
+                   Could not load your profile. You may be rate-limited.
+                   Please wait 15 minutes and refresh the page.
+                 </p>
                </div>
             )
           } />

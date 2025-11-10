@@ -1,5 +1,5 @@
 // In file: src/App.js
-// --- UPDATED: Wrapped handleAnalyzeClick in useCallback and added to useEffect ---
+// --- UPDATED: Final fix for infinite article fetch loop ---
 import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
@@ -161,15 +161,11 @@ function AppWrapper() {
   }, []);
 
   // --- *** PROFILE CHECK LOOP FIX *** ---
-  // This hook now *only* runs when the authState.user object changes.
   useEffect(() => {
     if (authState.user) {
-      // User is logged in, attempt to fetch profile.
-      // We set loading to true *only* if we don't have a profile yet.
       if (!profile) {
         setIsProfileLoading(true);
       }
-
       const checkProfile = async () => {
         try {
           const response = await axios.get(`${API_URL}/profile/me`);
@@ -184,23 +180,14 @@ function AppWrapper() {
             navigate('/create-profile');
           } else {
             console.error('Failed to fetch profile', error);
-            // If we fail (e.g., 429 rate limit), we'll hit the finally block.
-            // The app will stop loading, and the user will be stuck
-            // (but not in a loop). They will need to refresh after the rate limit.
           }
         } finally {
-          // This *must* be in a finally block.
-          // This stops the loading spinner *even if the fetch fails*.
-          // This breaks the infinite loading loop.
           setIsProfileLoading(false);
         }
       };
-      
       checkProfile();
     }
-    // We *only* depend on the user object, not the profile itself.
-    // This prevents the loop.
-  }, [authState.user, navigate, location.pathname, profile]); // <-- Linter fix, profile is read-only here
+  }, [authState.user, navigate, location.pathname, profile]);
 
 
   // --- Axios Token Interceptor Effect ---
@@ -239,33 +226,24 @@ function AppWrapper() {
   }, []);
 
   // --- *** ARTICLE FETCH LOOP FIX *** ---
-  // We use useCallback, but we remove `displayedArticles` from its dependencies
-  // by using the `setDisplayedArticles(prev => ...)` pattern.
-  const fetchArticles = useCallback(async (loadMore = false) => {
+  // This function is for *initial load* or *filter change* ONLY
+  const fetchArticles = useCallback(async () => {
+    setLoading(true);
+    setInitialLoad(true);
+    const limit = 12;
+    const offset = 0; // Always 0 for a new fetch
+    const queryParams = { ...filters, limit, offset };
+
     try {
-      setLoading(true);
-      if (!loadMore) {
-        setInitialLoad(true);
-      }
-      const limit = 12; // Articles per page/load
-      
-      // This is how we get the *current* length without depending on the state variable
-      const offset = loadMore ? displayedArticles.length : 0;
-
-      const queryParams = { ...filters, limit, offset };
-
-      const response = await axios.get(`${API_URL}/articles`, {
-        params: queryParams
-      });
-
+      const response = await axios.get(`${API_URL}/articles`, { params: queryParams });
       const articlesData = response.data.articles || [];
       const paginationData = response.data.pagination || { total: 0 };
       setTotalArticlesCount(paginationData.total || 0);
 
-      // --- Data Cleaning and Defaulting ---
       const uniqueNewArticles = articlesData
         .filter(article => article && article.url)
         .map(article => ({
+            // ... (data cleaning as before) ...
             _id: article._id || article.url,
             headline: article.headline || article.title || 'No Headline Available',
             summary: article.summary || article.description || 'No summary available.',
@@ -288,37 +266,81 @@ function AppWrapper() {
             keyFindings: Array.isArray(article.keyFindings) ? article.keyFindings : [],
             recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
             clusterId: article.clusterId || null,
-            clusterCount: Number(article.clusterCount) || 1 // Ensure clusterCount is added
+            clusterCount: Number(article.clusterCount) || 1
         }));
-      // --- End Data Cleaning ---
-
-      if (loadMore) {
-         // This functional update (using `prevDisplayedArticles`)
-         // avoids needing `displayedArticles` in the dependency array.
-         setDisplayedArticles(prevDisplayedArticles => {
-            const currentUrls = new Set(prevDisplayedArticles.map(a => a.url));
-            const trulyNewArticles = uniqueNewArticles.filter(a => !currentUrls.has(a.url));
-            return [...prevDisplayedArticles, ...trulyNewArticles];
-         });
-      } else {
-         setDisplayedArticles(uniqueNewArticles);
-      }
-
-      setLoading(false);
-      setInitialLoad(false);
-      setIsRefreshing(false);
-
+      
+      setDisplayedArticles(uniqueNewArticles); // Overwrite list
     } catch (error) {
       console.error('❌ Error fetching articles:', error.response ? error.response.data : error.message);
       if (error.response && (error.response.status === 401 || error.response.status === 403)) {
          console.error("Auth token invalid, logging out.");
          handleLogout();
       }
+    } finally {
       setLoading(false);
       setInitialLoad(false);
       setIsRefreshing(false);
     }
-  }, [filters, handleLogout, displayedArticles.length]); // We ONLY depend on length for offset
+  }, [filters, handleLogout]); // This function is STABLE and only depends on filters
+
+  // This function is for *loading more* ONLY
+  const loadMoreArticles = useCallback(async () => {
+    // Read length at the *moment of the call*
+    if (loading || displayedArticles.length >= totalArticlesCount) return; 
+    setLoading(true);
+    
+    const limit = 12;
+    const offset = displayedArticles.length; // Use current length
+    const queryParams = { ...filters, limit, offset };
+
+    try {
+      const response = await axios.get(`${API_URL}/articles`, { params: queryParams });
+      const articlesData = response.data.articles || [];
+      const paginationData = response.data.pagination || { total: 0 };
+      setTotalArticlesCount(paginationData.total || 0);
+
+      const uniqueNewArticles = articlesData
+        .filter(article => article && article.url)
+        .map(article => ({
+            // ... (data cleaning as before) ...
+            _id: article._id || article.url,
+            headline: article.headline || article.title || 'No Headline Available',
+            summary: article.summary || article.description || 'No summary available.',
+            source: article.source || 'Unknown Source',
+            category: article.category || 'General',
+            politicalLean: article.politicalLean || 'Center',
+            url: article.url,
+            imageUrl: article.imageUrl || null,
+            publishedAt: article.publishedAt || new Date().toISOString(),
+            analysisType: ['Full', 'SentimentOnly'].includes(article.analysisType) ? article.analysisType : 'Full',
+            sentiment: ['Positive', 'Negative', 'Neutral'].includes(article.sentiment) ? article.sentiment : 'Neutral',
+            biasScore: Number(article.biasScore) || 0,
+            trustScore: Number(article.trustScore) || 0,
+            credibilityScore: Number(article.credibilityScore) || 0,
+            reliabilityScore: Number(article.reliabilityScore) || 0,
+            credibilityGrade: article.credibilityGrade || null,
+            biasComponents: article.biasComponents && typeof article.biasComponents === 'object' ? article.biasComponents : {},
+            credibilityComponents: article.credibilityComponents && typeof article.credibilityComponents === 'object' ? article.credibilityComponents : {},
+            reliabilityComponents: article.reliabilityComponents && typeof article.reliabilityComponents === 'object' ? article.reliabilityComponents : {},
+            keyFindings: Array.isArray(article.keyFindings) ? article.keyFindings : [],
+            recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
+            clusterId: article.clusterId || null,
+            clusterCount: Number(article.clusterCount) || 1
+        }));
+      
+      // Use the functional update to append articles
+      setDisplayedArticles(prevDisplayedArticles => {
+        const currentUrls = new Set(prevDisplayedArticles.map(a => a.url));
+        const trulyNewArticles = uniqueNewArticles.filter(a => !currentUrls.has(a.url));
+        return [...prevDisplayedArticles, ...trulyNewArticles];
+      });
+    } catch (error) {
+      console.error('❌ Error loading more articles:', error.response ? error.response.data : error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, displayedArticles.length, totalArticlesCount, filters]); // This depends on length, but is NOT in the main fetch loop
+  // --- *** END OF ARTICLE FETCH FIX *** ---
 
   
   // This hook fetches articles when filters, profile, or path changes.
@@ -332,15 +354,14 @@ function AppWrapper() {
     fetchArticles();
   }, [filters, authState.user, profile, location.pathname, fetchArticles]); 
 
-  // --- *** LINTER FIX: WRAP handleAnalyzeClick in useCallback *** ---
   const handleAnalyzeClick = useCallback((article) => {
     setAnalysisModal({ open: true, article });
     axios.post(`${API_URL}/activity/log-view`, { articleId: article._id })
       .then(res => console.log('Activity logged', res.data))
       .catch(err => console.error('Failed to log activity', err));
-  }, []); // This function has no dependencies, so it is stable
+  }, []);
 
-  // --- Effect to check for shared article on load ---
+  // Effect to check for shared article on load
   useEffect(() => {
     const fetchAndShowArticle = async (id) => {
       if (!id || !/^[a-f\d]{24}$/i.test(id)) {
@@ -390,7 +411,6 @@ function AppWrapper() {
     if (articleId && authState.user && profile) {
        fetchAndShowArticle(articleId);
     }
-  // --- *** LINTER FIX: ADD handleAnalyzeClick to dependency array *** ---
   }, [authState.user, profile, handleAnalyzeClick]);
 
 
@@ -426,7 +446,7 @@ function AppWrapper() {
     const handleTouchEnd = () => {
       if (contentEl.scrollTop === 0 && pullDistance > pullThreshold && !isRefreshing) {
         setIsRefreshing(true);
-        fetchArticles().finally(() => setIsRefreshing(false));
+        fetchArticles().finally(() => setIsRefreshing(false)); // Call initial fetch
       }
       setPullDistance(0);
     };
@@ -443,12 +463,6 @@ function AppWrapper() {
       }
     };
   }, [isRefreshing, pullDistance, contentRef, pullThreshold, isMobileView, fetchArticles]); 
-
-
-  const loadMoreArticles = useCallback(() => {
-    if (loading || displayedArticles.length >= totalArticlesCount) return;
-    fetchArticles(true);
-  }, [loading, displayedArticles.length, totalArticlesCount, fetchArticles]);
 
 
   const toggleTheme = () => {
@@ -478,7 +492,7 @@ function AppWrapper() {
 
             if (clientHeight + scrollTop >= scrollHeight - 800) {
                 if (!loading && displayedArticles.length < totalArticlesCount) {
-                    loadMoreArticles();
+                    loadMoreArticles(); // Call the stable loadMore function
                 }
             }
         }, 150);

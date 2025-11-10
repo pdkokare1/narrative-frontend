@@ -1,5 +1,5 @@
 // In file: src/App.js
-// --- UPDATED: Fixed final missing dependency in fetchArticles useCallback ---
+// --- UPDATED: Fixed infinite loop in fetchArticles ---
 import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
@@ -290,7 +290,10 @@ function AppWrapper() {
         setInitialLoad(true);
       }
       const limit = 12; // Articles per page/load
-      const offset = loadMore ? displayedArticles.length : 0;
+      // --- *** INFINITE LOOP FIX *** ---
+      // We read the length from the state setter to avoid dependency
+      const offset = loadMore ? (await (new Promise(resolve => setDisplayedArticles(prev => { resolve(prev.length); return prev; })))) : 0;
+      // --- *** END OF FIX *** ---
 
       const queryParams = { ...filters, limit, offset };
 
@@ -333,14 +336,17 @@ function AppWrapper() {
       // --- End Data Cleaning ---
 
 
+      // --- *** INFINITE LOOP FIX *** ---
       if (loadMore) {
-         // --- LINTER FIX: This is the line that required `displayedArticles` ---
-         const currentUrls = new Set(displayedArticles.map(a => a.url));
-         const trulyNewArticles = uniqueNewArticles.filter(a => !currentUrls.has(a.url));
-         setDisplayedArticles(prev => [...prev, ...trulyNewArticles]);
+         setDisplayedArticles(prevDisplayedArticles => {
+            const currentUrls = new Set(prevDisplayedArticles.map(a => a.url));
+            const trulyNewArticles = uniqueNewArticles.filter(a => !currentUrls.has(a.url));
+            return [...prevDisplayedArticles, ...trulyNewArticles];
+         });
       } else {
          setDisplayedArticles(uniqueNewArticles);
       }
+      // --- *** END OF FIX *** ---
 
       setLoading(false);
       setInitialLoad(false);
@@ -358,8 +364,8 @@ function AppWrapper() {
       setInitialLoad(false);
       setIsRefreshing(false);
     }
-  // --- LINTER FIX: Replaced `displayedArticles.length` with `displayedArticles` ---
-  }, [displayedArticles, filters, handleLogout]);
+  // --- LINTER FIX: Removed `displayedArticles` dependency ---
+  }, [filters, handleLogout]);
 
 
   // --- LINTER FIX: Added fetchArticles to dependency array ---
@@ -474,7 +480,7 @@ function AppWrapper() {
           scrollableElement.removeEventListener('scroll', handleScroll);
         }
     };
-  }, [loading, displayedArticles, totalArticlesCount, contentRef, isMobileView, loadMoreArticles]); // (FIX) Add isMobileView and loadMoreArticles dependency
+  }, [loading, displayedArticles.length, totalArticlesCount, contentRef, isMobileView, loadMoreArticles]); // (FIX) Add isMobileView and loadMoreArticles dependency
 
 
   const shareArticle = (article) => {

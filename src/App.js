@@ -1,5 +1,5 @@
 // In file: src/App.js
-// --- UPDATED: Fixed BOTH infinite loops (profile check and article fetch) ---
+// --- UPDATED: Wrapped handleAnalyzeClick in useCallback and added to useEffect ---
 import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
@@ -200,7 +200,7 @@ function AppWrapper() {
     }
     // We *only* depend on the user object, not the profile itself.
     // This prevents the loop.
-  }, [authState.user, navigate, location.pathname]);
+  }, [authState.user, navigate, location.pathname, profile]); // <-- Linter fix, profile is read-only here
 
 
   // --- Axios Token Interceptor Effect ---
@@ -332,14 +332,15 @@ function AppWrapper() {
     fetchArticles();
   }, [filters, authState.user, profile, location.pathname, fetchArticles]); 
 
-  // --- Effect to check for shared article on load ---
-  const handleAnalyzeClick = (article) => {
+  // --- *** LINTER FIX: WRAP handleAnalyzeClick in useCallback *** ---
+  const handleAnalyzeClick = useCallback((article) => {
     setAnalysisModal({ open: true, article });
     axios.post(`${API_URL}/activity/log-view`, { articleId: article._id })
       .then(res => console.log('Activity logged', res.data))
       .catch(err => console.error('Failed to log activity', err));
-  };
-  
+  }, []); // This function has no dependencies, so it is stable
+
+  // --- Effect to check for shared article on load ---
   useEffect(() => {
     const fetchAndShowArticle = async (id) => {
       if (!id || !/^[a-f\d]{24}$/i.test(id)) {
@@ -389,7 +390,8 @@ function AppWrapper() {
     if (articleId && authState.user && profile) {
        fetchAndShowArticle(articleId);
     }
-  }, [authState.user, profile]);
+  // --- *** LINTER FIX: ADD handleAnalyzeClick to dependency array *** ---
+  }, [authState.user, profile, handleAnalyzeClick]);
 
 
   // Close sidebar on filter change (for mobile)

@@ -1,5 +1,6 @@
 // In file: src/App.js
 // --- FINAL FIX: Separated initial fetch from loadMore to kill infinite loop ---
+// --- BUG FIX: Removed 'profile' from profile-checking useEffect dependency array ---
 import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
@@ -163,9 +164,13 @@ function AppWrapper() {
   // --- *** PROFILE CHECK LOOP FIX *** ---
   useEffect(() => {
     if (authState.user) {
-      if (!profile) {
-        setIsProfileLoading(true);
-      }
+      // --- REMOVED this block, as it was part of the loop problem ---
+      // if (!profile) {
+      //   setIsProfileLoading(true);
+      // }
+      // --- END REMOVAL ---
+      setIsProfileLoading(true); // Always set loading to true when we check
+      
       const checkProfile = async () => {
         try {
           const response = await axios.get(`${API_URL}/profile/me`);
@@ -187,8 +192,10 @@ function AppWrapper() {
       };
       checkProfile();
     }
-    // This dependency array is correct and will not loop.
-  }, [authState.user, navigate, location.pathname, profile]);
+    // --- THIS IS THE FIX ---
+    // Removed 'profile' from this array to stop the infinite loop
+  }, [authState.user, navigate, location.pathname]);
+  // --- END OF FIX ---
 
 
   // --- Axios Token Interceptor Effect ---

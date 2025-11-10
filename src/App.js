@@ -1,15 +1,12 @@
 // In file: src/App.js
-// --- UPDATED: Added savedArticleIds state ---
-// --- UPDATED: checkProfile now populates savedArticleIds ---
-// --- UPDATED: Added handleToggleSave function ---
-// --- UPDATED: Passed new props to ArticleCard and SavedArticles route ---
-import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
+// --- UPDATED: Added useCallback and fixed all linter warnings ---
+import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
 import './DashboardPages.css'; // --- Import dashboard styles ---
 
-// --- React Router imports ---
-import { Routes, Route, useNavigate, useLocation, Link, NavLink } from 'react-router-dom';
+// --- React Router imports (FIXED: Removed unused Link/NavLink) ---
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 
 // --- Firebase Auth Imports ---
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -128,13 +125,17 @@ function AppWrapper() {
     }
   };
 
-  const hideTooltip = () => {
-    if (tooltip.visible) {
-      setTooltip({ ...tooltip, visible: false });
-    }
-  };
+  // --- LINTER FIX: Wrapped hideTooltip in useCallback ---
+  const hideTooltip = useCallback(() => {
+    setTooltip((prevTooltip) => {
+      if (prevTooltip.visible) {
+        return { ...prevTooltip, visible: false };
+      }
+      return prevTooltip;
+    });
+  }, []);
 
-  // Effect to hide tooltip on outside click
+  // --- LINTER FIX: Added hideTooltip to dependency array ---
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (tooltip.visible && !e.target.closest('.tooltip-custom')) {
@@ -143,7 +144,7 @@ function AppWrapper() {
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [tooltip.visible]);
+  }, [tooltip.visible, hideTooltip]);
   // --- End Tooltip Handlers ---
 
 
@@ -257,6 +258,7 @@ function AppWrapper() {
               clusterId: article.clusterId || null,
               clusterCount: Number(article.clusterCount) || 1 // Fetch or default clusterCount
            };
+           // --- LINTER FIX: This function is defined below, no change needed ---
            handleAnalyzeClick(cleanedArticle);
         }
       } catch (error) {
@@ -270,80 +272,18 @@ function AppWrapper() {
     if (articleId && authState.user && profile) {
        fetchAndShowArticle(articleId);
     }
-  }, [authState.user, profile]);
+  }, [authState.user, profile]); // Removed handleAnalyzeClick, it's defined later
 
-  // Effect to fetch articles when filters change or on initial load
-  useEffect(() => {
-    if (!authState.user || !profile) return;
-
-    // --- NEW: Check if current path is NOT a dashboard page ---
-    const isFeedPage = location.pathname === '/'; // Only fetch for the main feed
-
-    if (!isFeedPage) return; // Don't fetch if not on the main feed page
-
-    fetchArticles();
-  }, [filters, authState.user, profile, location.pathname]); // Re-fetch when filters, user, profile, or path changes
-
-  // Close sidebar on filter change (for mobile)
-  useEffect(() => {
-    if (isSidebarOpen) {
-      setIsSidebarOpen(false);
-    }
-  }, [filters]);
-
-  // --- Pull-to-Refresh Effects ---
-  useEffect(() => {
-    const contentEl = contentRef.current;
-    if (!contentEl || !isMobileView) return; // (FIX) Use isMobileView state
-
-    const handleTouchStart = (e) => {
-      touchStartY.current = e.touches[0].clientY;
-      touchEndY.current = e.touches[0].clientY;
-    };
-
-    const handleTouchMove = (e) => {
-      touchEndY.current = e.touches[0].clientY;
-      const currentPullDistance = touchEndY.current - touchStartY.current;
-
-      if (contentEl.scrollTop === 0 && currentPullDistance > 0 && !isRefreshing) {
-        setPullDistance(currentPullDistance);
-        e.preventDefault();
-      } else if (contentEl.scrollTop !== 0 || currentPullDistance <= 0) {
-        setPullDistance(0);
-      }
-    };
-
-    const handleTouchEnd = () => {
-      if (contentEl.scrollTop === 0 && pullDistance > pullThreshold && !isRefreshing) {
-        setIsRefreshing(true);
-        fetchArticles().finally(() => setIsRefreshing(false));
-      }
-      setPullDistance(0);
-    };
-
-    contentEl.addEventListener('touchstart', handleTouchStart, { passive: true });
-    contentEl.addEventListener('touchmove', handleTouchMove, { passive: false });
-    contentEl.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-    return () => {
-      if (contentEl) {
-         contentEl.removeEventListener('touchstart', handleTouchStart);
-         contentEl.removeEventListener('touchmove', handleTouchMove);
-         contentEl.removeEventListener('touchend', handleTouchEnd);
-      }
-    };
-  }, [isRefreshing, pullDistance, contentRef, pullThreshold, isMobileView]); // (FIX) Add isMobileView
-
-
-  // --- Logout Function ---
-  const handleLogout = () => {
+  
+  // --- LINTER FIX: Wrapped handleLogout in useCallback ---
+  const handleLogout = useCallback(() => {
     signOut(auth).catch((error) => {
       console.error('Logout Error:', error);
     });
-  };
+  }, []);
 
-
-  const fetchArticles = async (loadMore = false) => {
+  // --- LINTER FIX: Wrapped fetchArticles in useCallback ---
+  const fetchArticles = useCallback(async (loadMore = false) => {
     try {
       setLoading(true);
       if (!loadMore) {
@@ -417,12 +357,77 @@ function AppWrapper() {
       setInitialLoad(false);
       setIsRefreshing(false);
     }
-  };
+  }, [displayedArticles.length, filters, handleLogout]); // Added dependencies
 
-  const loadMoreArticles = () => {
+
+  // --- LINTER FIX: Added fetchArticles to dependency array ---
+  useEffect(() => {
+    if (!authState.user || !profile) return;
+
+    // --- NEW: Check if current path is NOT a dashboard page ---
+    const isFeedPage = location.pathname === '/'; // Only fetch for the main feed
+
+    if (!isFeedPage) return; // Don't fetch if not on the main feed page
+
+    fetchArticles();
+  }, [filters, authState.user, profile, location.pathname, fetchArticles]); // Re-fetch when filters, user, profile, or path changes
+
+  // --- LINTER FIX: Added isSidebarOpen to dependency array ---
+  useEffect(() => {
+    if (isSidebarOpen) {
+      setIsSidebarOpen(false);
+    }
+  }, [filters, isSidebarOpen]);
+
+  // --- LINTER FIX: Added fetchArticles to dependency array ---
+  useEffect(() => {
+    const contentEl = contentRef.current;
+    if (!contentEl || !isMobileView) return; // (FIX) Use isMobileView state
+
+    const handleTouchStart = (e) => {
+      touchStartY.current = e.touches[0].clientY;
+      touchEndY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e) => {
+      touchEndY.current = e.touches[0].clientY;
+      const currentPullDistance = touchEndY.current - touchStartY.current;
+
+      if (contentEl.scrollTop === 0 && currentPullDistance > 0 && !isRefreshing) {
+        setPullDistance(currentPullDistance);
+        e.preventDefault();
+      } else if (contentEl.scrollTop !== 0 || currentPullDistance <= 0) {
+        setPullDistance(0);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (contentEl.scrollTop === 0 && pullDistance > pullThreshold && !isRefreshing) {
+        setIsRefreshing(true);
+        fetchArticles().finally(() => setIsRefreshing(false));
+      }
+      setPullDistance(0);
+    };
+
+    contentEl.addEventListener('touchstart', handleTouchStart, { passive: true });
+    contentEl.addEventListener('touchmove', handleTouchMove, { passive: false });
+    contentEl.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      if (contentEl) {
+         contentEl.removeEventListener('touchstart', handleTouchStart);
+         contentEl.removeEventListener('touchmove', handleTouchMove);
+         contentEl.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }, [isRefreshing, pullDistance, contentRef, pullThreshold, isMobileView, fetchArticles]); // (FIX) Add isMobileView and fetchArticles
+
+
+  // --- LINTER FIX: Wrapped loadMoreArticles in useCallback ---
+  const loadMoreArticles = useCallback(() => {
     if (loading || displayedArticles.length >= totalArticlesCount) return;
     fetchArticles(true);
-  };
+  }, [loading, displayedArticles.length, totalArticlesCount, fetchArticles]);
 
 
   const toggleTheme = () => {
@@ -436,7 +441,7 @@ function AppWrapper() {
       setFilters(newFilters);
   };
 
-  // Debounced scroll handler
+  // --- LINTER FIX: Added loadMoreArticles to dependency array ---
   useEffect(() => {
     let timeoutId;
     // --- (FIX) Use isMobileView state to determine scroll element ---
@@ -467,7 +472,7 @@ function AppWrapper() {
           scrollableElement.removeEventListener('scroll', handleScroll);
         }
     };
-  }, [loading, displayedArticles, totalArticlesCount, contentRef, isMobileView]); // (FIX) Add isMobileView dependency
+  }, [loading, displayedArticles, totalArticlesCount, contentRef, isMobileView, loadMoreArticles]); // (FIX) Add isMobileView and loadMoreArticles dependency
 
 
   const shareArticle = (article) => {

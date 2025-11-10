@@ -1,5 +1,5 @@
 // In file: src/App.js
-// --- UPDATED: Final fix for infinite article fetch loop ---
+// --- FINAL FIX: Separated initial fetch from loadMore to kill infinite loop ---
 import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
@@ -187,6 +187,7 @@ function AppWrapper() {
       };
       checkProfile();
     }
+    // This dependency array is correct and will not loop.
   }, [authState.user, navigate, location.pathname, profile]);
 
 
@@ -227,9 +228,14 @@ function AppWrapper() {
 
   // --- *** ARTICLE FETCH LOOP FIX *** ---
   // This function is for *initial load* or *filter change* ONLY
-  const fetchArticles = useCallback(async () => {
-    setLoading(true);
-    setInitialLoad(true);
+  const fetchArticles = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+      setInitialLoad(true);
+    }
+    
     const limit = 12;
     const offset = 0; // Always 0 for a new fetch
     const queryParams = { ...filters, limit, offset };
@@ -243,7 +249,6 @@ function AppWrapper() {
       const uniqueNewArticles = articlesData
         .filter(article => article && article.url)
         .map(article => ({
-            // ... (data cleaning as before) ...
             _id: article._id || article.url,
             headline: article.headline || article.title || 'No Headline Available',
             summary: article.summary || article.description || 'No summary available.',
@@ -277,17 +282,20 @@ function AppWrapper() {
          handleLogout();
       }
     } finally {
-      setLoading(false);
-      setInitialLoad(false);
-      setIsRefreshing(false);
+      if (isRefresh) {
+        setIsRefreshing(false);
+      } else {
+        setLoading(false);
+        setInitialLoad(false);
+      }
     }
   }, [filters, handleLogout]); // This function is STABLE and only depends on filters
 
   // This function is for *loading more* ONLY
   const loadMoreArticles = useCallback(async () => {
     // Read length at the *moment of the call*
-    if (loading || displayedArticles.length >= totalArticlesCount) return; 
-    setLoading(true);
+    if (loading || isRefreshing || displayedArticles.length >= totalArticlesCount) return; 
+    setLoading(true); // Show bottom loader
     
     const limit = 12;
     const offset = displayedArticles.length; // Use current length
@@ -339,19 +347,18 @@ function AppWrapper() {
     } finally {
       setLoading(false);
     }
-  }, [loading, displayedArticles.length, totalArticlesCount, filters]); // This depends on length, but is NOT in the main fetch loop
+  }, [loading, isRefreshing, displayedArticles.length, totalArticlesCount, filters]); // This is stable
   // --- *** END OF ARTICLE FETCH FIX *** ---
 
   
   // This hook fetches articles when filters, profile, or path changes.
-  // It is *not* in a loop because `fetchArticles` is stable.
   useEffect(() => {
     if (!authState.user || !profile) return; // Don't fetch if no profile
 
     const isFeedPage = location.pathname === '/'; // Only fetch for the main feed
     if (!isFeedPage) return; // Don't fetch if not on the main feed page
 
-    fetchArticles();
+    fetchArticles(false); // Call the initial load function
   }, [filters, authState.user, profile, location.pathname, fetchArticles]); 
 
   const handleAnalyzeClick = useCallback((article) => {
@@ -445,8 +452,7 @@ function AppWrapper() {
 
     const handleTouchEnd = () => {
       if (contentEl.scrollTop === 0 && pullDistance > pullThreshold && !isRefreshing) {
-        setIsRefreshing(true);
-        fetchArticles().finally(() => setIsRefreshing(false)); // Call initial fetch
+        fetchArticles(true); // Call fetchArticles with "isRefresh = true"
       }
       setPullDistance(0);
     };
@@ -491,6 +497,7 @@ function AppWrapper() {
             const clientHeight = isWindow ? window.innerHeight : scrollableElement.clientHeight;
 
             if (clientHeight + scrollTop >= scrollHeight - 800) {
+                // This logic is now safe because loadMoreArticles is stable
                 if (!loading && displayedArticles.length < totalArticlesCount) {
                     loadMoreArticles(); // Call the stable loadMore function
                 }

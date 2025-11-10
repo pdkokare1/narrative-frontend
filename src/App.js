@@ -1,5 +1,5 @@
 // In file: src/App.js
-// --- UPDATED: Added useCallback and fixed all linter warnings ---
+// --- UPDATED: Fixed final missing dependency in fetchArticles useCallback ---
 import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
@@ -334,6 +334,7 @@ function AppWrapper() {
 
 
       if (loadMore) {
+         // --- LINTER FIX: This is the line that required `displayedArticles` ---
          const currentUrls = new Set(displayedArticles.map(a => a.url));
          const trulyNewArticles = uniqueNewArticles.filter(a => !currentUrls.has(a.url));
          setDisplayedArticles(prev => [...prev, ...trulyNewArticles]);
@@ -357,7 +358,8 @@ function AppWrapper() {
       setInitialLoad(false);
       setIsRefreshing(false);
     }
-  }, [displayedArticles.length, filters, handleLogout]); // Added dependencies
+  // --- LINTER FIX: Replaced `displayedArticles.length` with `displayedArticles` ---
+  }, [displayedArticles, filters, handleLogout]);
 
 
   // --- LINTER FIX: Added fetchArticles to dependency array ---

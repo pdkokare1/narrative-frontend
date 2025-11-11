@@ -1,3 +1,4 @@
+// In file: src/firebaseConfig.js
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 // --- ADD THIS LINE FOR ANALYTICS ---

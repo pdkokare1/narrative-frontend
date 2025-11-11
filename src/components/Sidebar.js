@@ -52,15 +52,16 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
           <button className="sidebar-close-btn" onClick={onClose} title="Close Menu">×</button>
         </div>
 
-        {/* --- *** NEW: Main Navigation Section (Always Visible) *** --- */}
-        <div className="sidebar-section">
+        {/* --- *** THIS IS THE FIX (Request 5) *** --- */}
+        {/* This div will be hidden on desktop by App.css */}
+        <div className="sidebar-section sidebar-section-mobile-only">
           <h3>Navigation</h3>
           <ul>
             <li><SidebarNavLink to="/saved-articles">Saved Articles</SidebarNavLink></li>
             <li><SidebarNavLink to="/account-settings">Account Settings</SidebarNavLink></li>
           </ul>
         </div>
-        {/* --- *** END NEW SECTION *** --- */}
+        {/* --- *** END OF FIX *** --- */}
 
 
         {/* --- Filters Section --- */}

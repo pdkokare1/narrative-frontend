@@ -72,7 +72,9 @@ function CreateProfile() {
               placeholder="Enter your username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="firebaseui-id-input firebaseui-input" // Re-use style
+              /* --- *** THIS IS THE FIX (Request 2) *** --- */
+              className="username-input firebaseui-id-input firebaseui-input" // Re-use style
+              /* --- *** END OF FIX *** --- */
               style={{ marginBottom: '15px' }}
             />
 

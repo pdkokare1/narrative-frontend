@@ -153,12 +153,12 @@ h2.section-title {
    width: 100%; flex-shrink: 0;
    margin-bottom: 15px; /* --- ADDED: Manual spacing --- */
 }
-/* --- UPDATED: Specific margin for reading bias title --- */
+/* --- *** THIS IS THE FIX (Request 4) *** --- */
 h2.section-title.reading-bias-title {
-  margin-top: 5px; /* --- CHANGED: Was 15px, now adds 5px EXTRA space --- */
+  margin-top: 20px; /* --- CHANGED: Was 5px, now 20px --- */
   margin-bottom: 15px;
 }
-/* --- END UPDATE --- */
+/* --- *** END OF FIX *** --- */
 h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bottom: 0; } /* Remove bottom margin if no border */
 
 

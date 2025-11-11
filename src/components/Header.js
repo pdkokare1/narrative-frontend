@@ -22,8 +22,9 @@ function Header({ theme, toggleTheme, onToggleSidebar, username }) {
       </div>
 
       <div className="header-right">
+        {/* --- *** THIS IS THE FIX (Request 5) *** --- */}
         {/* --- UPDATED: Show Username and Dashboard Link on Desktop --- */}
-        <div className="header-user-desktop">
+        <div className="header-user-desktop"> {/* <-- This is now the relative container */}
           <Link to="/my-dashboard" className="header-dashboard-link" title="View your dashboard">
             Dashboard
           </Link>
@@ -31,8 +32,22 @@ function Header({ theme, toggleTheme, onToggleSidebar, username }) {
           <span className="header-username-desktop" title="Username">
             {username}
           </span>
+          {/* --- NEW: Dropdown Arrow --- */}
+          <svg className="custom-select-arrow" style={{ width: '16px', height: '16px', fill: 'var(--text-tertiary)', marginLeft: '4px' }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M7 10l5 5 5-5z"></path>
+          </svg>
+
+          {/* --- NEW: Dropdown Menu --- */}
+          <div className="header-user-dropdown">
+            <ul>
+              <li><Link to="/saved-articles">Saved Articles</Link></li>
+              <li><Link to="/account-settings">Account Settings</Link></li>
+            </ul>
+          </div>
+          {/* --- END NEW --- */}
         </div>
         {/* --- END UPDATE --- */}
+        {/* --- *** END OF FIX *** --- */}
 
 
         <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>

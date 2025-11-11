@@ -10,6 +10,14 @@ import './Login.css'; // Your existing login styles
 const uiConfig = {
   // Popup signin flow rather than redirect flow.
   signInFlow: 'popup',
+  
+  // *** THIS IS THE FIX ***
+  // We are now *explicitly* telling FirebaseUI what our main auth domain is.
+  // This forces it to use "thegamut.in" and prevents the mismatch loop.
+  credentialHelper: firebaseui.auth.CredentialHelper.GOOGLE_YOLO,
+  credentialHelperUrl: `https://${process.env.REACT_APP_AUTH_DOMAIN}`,
+  // *** END OF FIX ***
+
   // We will display Google and Email as login options.
   signInOptions: [
     GoogleAuthProvider.PROVIDER_ID,

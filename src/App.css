@@ -817,6 +817,11 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.7px;
+  /* --- *** THIS IS THE FIX (Request 3) *** --- */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* --- *** END OF FIX *** --- */
 }
 
 .btn-primary {
@@ -1490,6 +1495,8 @@ button:disabled, button:disabled:hover {
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 6px 10px; /* Adjusted padding */
+    position: relative; /* --- NEW: For dropdown context --- */
+    cursor: pointer; /* --- NEW: Make whole block a pointer --- */
   }
   
   .header-dashboard-link {
@@ -1504,6 +1511,12 @@ button:disabled, button:disabled:hover {
     text-decoration: none;
   }
 
+  /* --- *** THIS IS THE FIX (Request 6) *** --- */
+  .header-dashboard-link[title] {
+    cursor: pointer;
+  }
+  /* --- *** END OF FIX *** --- */
+
   .header-user-divider {
     color: var(--border-color);
     margin: 0 8px;
@@ -1516,6 +1529,55 @@ button:disabled, button:disabled:hover {
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
+  /* --- *** THIS IS THE FIX (Request 5) *** --- */
+  /* --- NEW: Header User Dropdown --- */
+  .header-user-dropdown {
+    display: none; /* Hide by default */
+    position: absolute;
+    top: 100%; /* Position below the header */
+    right: 0;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    min-width: 100%; /* Match parent width */
+    width: max-content; /* Or grow to content */
+    min-width: 160px;
+    box-shadow: var(--shadow-md);
+    z-index: 1100;
+    padding: 5px; /* Padding around the list */
+    margin-top: 8px; /* Space from header */
+    animation: fadeIn 0.1s ease-out; /* Add animation */
+  }
+
+  /* Show on hover */
+  .header-user-desktop:hover .header-user-dropdown {
+    display: block;
+  }
+
+  .header-user-dropdown ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .header-user-dropdown li a {
+    display: block;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .header-user-dropdown li a:hover {
+    background: var(--accent-primary);
+    color: white;
+    text-decoration: none;
+  }
+  /* --- *** END OF FIX *** --- */
 }
 /* --- END UPDATE --- */
 
@@ -1540,6 +1602,13 @@ button:disabled, button:disabled:hover {
      display: none;
    }
    */
+   /* --- *** END OF FIX *** --- */
+
+   /* --- *** THIS IS THE FIX (Request 5) *** --- */
+   /* NEW: Hide mobile-only nav on desktop */
+   .sidebar-section-mobile-only {
+     display: none;
+   }
    /* --- *** END OF FIX *** --- */
 }
 

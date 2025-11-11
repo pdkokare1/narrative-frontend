@@ -174,3 +174,90 @@
 .firebaseui-title, .firebaseui-text, .firebaseui-text-input-label {
   color: var(--text-secondary) !important;
 }
+
+
+/* --- *** THIS IS THE FIX (Request 1) *** --- */
+/* Theme the Email Sign-in Popup */
+.firebaseui-card-content {
+  background-color: var(--bg-secondary) !important;
+  padding: 20px 30px !important;
+}
+
+.firebaseui-card-header {
+  background-color: var(--bg-elevated) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  padding: 20px 30px !important;
+}
+
+.firebaseui-title {
+  color: var(--text-primary) !important;
+  font-size: 18px !important;
+}
+
+.firebaseui-subtitle, .firebaseui-text {
+  color: var(--text-secondary) !important;
+  font-size: 13px !important;
+}
+
+.firebaseui-label {
+  color: var(--text-tertiary) !important;
+}
+
+/* Style the Email/Name/Password input fields */
+.firebaseui-textfield.firebaseui-id-email,
+.firebaseui-textfield.firebaseui-id-name,
+.firebaseui-textfield.firebaseui-id-new-password,
+.firebaseui-input-e-mail,
+.firebaseui-input-name,
+.firebaseui-input-new-password {
+  background: var(--bg-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important; /* Add padding */
+  height: 40px !important; /* Set height */
+}
+.firebaseui-textfield.firebaseui-id-email:focus,
+.firebaseui-textfield.firebaseui-id-name:focus,
+.firebaseui-textfield.firebaseui-id-new-password:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: none !important;
+}
+
+/* Center the NEXT/SAVE buttons */
+.firebaseui-form-actions {
+  text-align: center !important;
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  gap: 10px;
+}
+.firebaseui-form-actions .firebaseui-id-submit {
+  float: none !important;
+  order: 2; /* Put accent button on right */
+}
+.firebaseui-form-actions .firebaseui-id-secondary-link {
+  float: none !important;
+  order: 1;
+  /* Style secondary button */
+  padding: 10px 15px !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  color: var(--text-tertiary) !important;
+}
+.firebaseui-form-actions .firebaseui-id-secondary-link:hover {
+  background: var(--bg-elevated) !important;
+  color: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+}
+/* --- *** END OF FIX *** --- */
+
+
+/* --- *** THIS IS THE FIX (Request 2) *** --- */
+/* Style the Username Input on CreateProfile page */
+.username-input {
+  height: 42px !important; /* Increase height */
+  padding-left: 12px !important; /* Add padding to text */
+  padding-right: 12px !important;
+  font-size: 14px !important; /* Make font slightly larger */
+}
+/* --- *** END OF FIX *** --- */

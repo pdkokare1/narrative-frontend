@@ -215,54 +215,55 @@
   color: var(--text-tertiary) !important;
 }
 
-/* Style the Email/Name/Password input fields */
-.firebaseui-textfield.firebaseui-id-email input,
-.firebaseui-textfield.firebaseui-id-name input,
-.firebaseui-textfield.firebaseui-id-new-password input,
-.firebaseui-input { /* --- FIX: Target the input element directly --- */
-  background: var(--bg-primary) !important;
-  border: 1px solid var(--border-color) !important;
-  color: var(--text-primary) !important; /* --- FIX: Text color --- */
-  border-radius: 6px !important;
-  padding: 10px 12px !important;
-  height: 40px !important;
-  width: 100% !important; /* Ensure it fills container */
-  box-sizing: border-box !important; /* Include padding in height/width */
+/* --- FIX: Style ALL inputs for text color, padding, and borders --- */
+.firebaseui-dialog .firebaseui-input,
+.firebaseui-dialog .firebaseui-input-e-mail,
+.firebaseui-dialog .firebaseui-input-name,
+.firebaseui-dialog .firebaseui-input-new-password,
+.firebaseui-dialog .firebaseui-textfield input {
+    background: var(--bg-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important; /* Force text color */
+    border-radius: 6px !important;
+    padding: 0 12px !important; /* 0 top/bottom, 12 left/right */
+    height: 40px !important;
+    line-height: 40px !important; /* Vertically center text */
+    width: 100% !important; 
+    box-sizing: border-box !important; 
 }
 
-/* --- FIX: Input text color on focus --- */
-.firebaseui-textfield.firebaseui-id-email input:focus,
-.firebaseui-textfield.firebaseui-id-name input:focus,
-.firebaseui-textfield.firebaseui-id-new-password input:focus,
-.firebaseui-input:focus { /* --- FIX: Target the input element directly --- */
-  border-color: var(--accent-primary) !important;
-  box-shadow: none !important;
-  color: var(--text-primary) !important;
+/* --- FIX: Style focus state for all inputs --- */
+.firebaseui-dialog .firebaseui-input:focus,
+.firebaseui-dialog .firebaseui-textfield input:focus {
+    border-color: var(--accent-primary) !important;
+    box-shadow: none !important;
 }
 
-/* --- FIX: Browser Autofill Styles --- */
-/* Target the specific inputs for autofill */
-.firebaseui-input:-webkit-autofill,
-.firebaseui-input:-webkit-autofill:hover, 
-.firebaseui-input:-webkit-autofill:focus, 
-.firebaseui-input:-webkit-autofill:active  {
+/* --- FIX: Browser Autofill Styles (more specific) --- */
+.firebaseui-dialog .firebaseui-input:-webkit-autofill,
+.firebaseui-dialog .firebaseui-input:-webkit-autofill:hover, 
+.firebaseui-dialog .firebaseui-input:-webkit-autofill:focus, 
+.firebaseui-dialog .firebaseui-input:-webkit-autofill:active  {
     -webkit-box-shadow: 0 0 0 30px var(--bg-primary) inset !important;
     box-shadow: 0 0 0 30px var(--bg-primary) inset !important;
     -webkit-text-fill-color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important; /* Add border here too */
 }
 
 
-/* --- FIX: Theme the white footer --- */
-.firebaseui-card-actions {
+/* --- FIX: Theme the white footer container --- */
+.firebaseui-card-footer {
   background-color: var(--bg-elevated) !important;
   border-top: 1px solid var(--border-color) !important;
   padding: 20px 30px !important;
-  margin-top: 20px !important;
 }
 
-/* Center the NEXT/SAVE buttons */
+/* --- FIX: Make the inner actions div transparent --- */
 .firebaseui-form-actions {
-  /* Remove styling from here, it's on the parent now */
+  background-color: transparent !important;
+  border-top: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
   text-align: center !important;
   display: flex;
   justify-content: center; /* Center horizontally */
@@ -288,6 +289,14 @@
   background: var(--bg-elevated) !important;
   color: var(--accent-primary) !important;
   border-color: var(--accent-primary) !important;
+}
+
+/* --- FIX: Style the "Forgot Password" link area --- */
+.firebaseui-form-links {
+  /* This container appears between inputs and footer */
+  background-color: var(--bg-secondary) !important; /* Match content bg */
+  padding: 10px 30px 0 30px !important; /* Add padding */
+  margin: 0 !important;
 }
 /* --- *** END OF FIX *** --- */
 

@@ -1,19 +1,44 @@
 // In file: src/components/Header.js
-// --- FIX: Restructured for click-to-open dropdown menu ---
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // <-- Import hooks
 import { Link } from 'react-router-dom';
 import '../App.css'; // For header styles
 
-function Header({ 
-  theme, 
-  toggleTheme, 
-  onToggleSidebar, 
-  username,
-  // --- NEW PROPS ---
-  userMenuRef,
-  isUserMenuOpen,
-  setIsUserMenuOpen
-}) {
+function Header({ theme, toggleTheme, onToggleSidebar, username }) {
+  // --- *** THIS IS THE FIX (Request 3) *** ---
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null); // Ref to the dropdown container (trigger + menu)
+
+  // Effect to close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // If the dropdown is open and the click is outside the ref
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    // Add listener
+    document.addEventListener('mousedown', handleClickOutside);
+    // Cleanup listener
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []); // Only run once
+
+  // Stop propagation on the dashboard link to prevent closing the dropdown
+  const handleDashboardClick = (e) => {
+     // We don't want to close the dropdown if it's already open
+     if (isDropdownOpen) {
+         setIsDropdownOpen(false);
+     }
+     // Let the link navigation proceed
+  };
+  
+  const handleUsernameClick = (e) => {
+     e.stopPropagation(); // Stop click from bubbling to document
+     setIsDropdownOpen(prev => !prev); // Toggle
+  };
+  // --- *** END OF FIX *** ---
+
   return (
     <header className="header">
       <div className="header-left">
@@ -32,40 +57,44 @@ function Header({
       </div>
 
       <div className="header-right">
-        
-        {/* --- *** THIS IS THE FIX (Request 4) *** --- */}
-
-        {/* --- 1. Dashboard Link (Now separate) --- */}
-        <div className="header-user-desktop-link">
-          <Link to="/my-dashboard" className="header-dashboard-link" title="View your dashboard">
+        {/* --- *** THIS IS THE FIX (Request 3) *** --- */}
+        {/* 1. Main Container Block: Attach ref here */}
+        <div className="header-user-desktop" ref={dropdownRef}> 
+          
+          {/* 2. Dashboard Link (not clickable for dropdown) */}
+          <Link 
+            to="/my-dashboard" 
+            className="header-dashboard-link" 
+            title="View your dashboard" 
+            onClick={handleDashboardClick} /* Special handler */
+          >
             Dashboard
           </Link>
-        </div>
-
-        {/* --- 2. User Menu (Username + Dropdown) --- */}
-        {/* This container holds the clickable menu and the dropdown */}
-        <div className="header-user-menu-container" ref={userMenuRef}>
-          {/* This is the clickable part */}
+          <span className="header-user-divider">|</span>
+          
+          {/* 3. Clickable Username Area */}
           <div 
-            className="header-user-desktop"
-            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+            className="header-user-clickable-area"
+            onClick={handleUsernameClick} /* Toggle handler */
           >
             <span className="header-username-desktop" title="Username">
               {username}
             </span>
-            {/* --- Dropdown Arrow --- */}
             <svg className="custom-select-arrow" style={{ width: '16px', height: '16px', fill: 'var(--text-tertiary)', marginLeft: '4px' }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <path d="M7 10l5 5 5-5z"></path>
             </svg>
           </div>
 
-          {/* --- Dropdown Menu (conditionally styled) --- */}
-          <div className={`header-user-dropdown ${isUserMenuOpen ? 'open' : ''}`}>
-            <ul>
-              <li><Link to="/saved-articles" onClick={() => setIsUserMenuOpen(false)}>Saved Articles</Link></li>
-              <li><Link to="/account-settings" onClick={() => setIsUserMenuOpen(false)}>Account Settings</Link></li>
-            </ul>
-          </div>
+          {/* 4. Dropdown Menu (conditionally rendered sibling) */}
+          {isDropdownOpen && (
+            <div className="header-user-dropdown">
+              <ul>
+                {/* Clicks here are inside the ref, so need to close manually */}
+                <li><Link to="/saved-articles" onClick={() => setIsDropdownOpen(false)}>Saved Articles</Link></li>
+                <li><Link to="/account-settings" onClick={() => setIsDropdownOpen(false)}>Account Settings</Link></li>
+              </ul>
+            </div>
+          )}
         </div>
         {/* --- *** END OF FIX *** --- */}
 
@@ -74,9 +103,6 @@ function Header({
           {theme === 'dark' ? '🌙' : '☀️'}
         </button>
 
-        {/* --- REMOVED Mobile Only Logout Button --- */}
-         {/* <button onClick={null} className="logout-btn header-logout-mobile" title="Sign Out"> ... </button> */}
-        {/* --- End Removal --- */}
       </div>
     </header>
   );

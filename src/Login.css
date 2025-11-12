@@ -129,11 +129,9 @@
   letter-spacing: 0.7px !important;
   padding: 10px 15px !important; /* Make buttons a bit taller */
   transition: all 0.25s ease !important;
-  /* --- *** THIS IS THE FIX (Request 1) *** --- */
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  /* --- *** END OF FIX *** --- */
 }
 .firebaseui-id-submit.firebaseui-button:hover {
   transform: translateY(-2px);
@@ -181,7 +179,7 @@
 }
 
 
-/* --- *** THIS IS THE FIX (Request 1) *** --- */
+/* --- *** THIS IS THE FIX (Login Popups) *** --- */
 /* Theme the Email Sign-in Popup */
 
 /* Style the modal dialog itself */
@@ -218,28 +216,46 @@
 }
 
 /* Style the Email/Name/Password input fields */
-.firebaseui-textfield.firebaseui-id-email,
-.firebaseui-textfield.firebaseui-id-name,
-.firebaseui-textfield.firebaseui-id-new-password,
-.firebaseui-input-e-mail,
-.firebaseui-input-name,
-.firebaseui-input-new-password {
+.firebaseui-textfield.firebaseui-id-email input,
+.firebaseui-textfield.firebaseui-id-name input,
+.firebaseui-textfield.firebaseui-id-new-password input {
   background: var(--bg-primary) !important;
   border: 1px solid var(--border-color) !important;
-  color: var(--text-primary) !important;
+  color: var(--text-primary) !important; /* --- FIX: Text color --- */
   border-radius: 6px !important;
-  padding: 10px 12px !important; /* Add padding */
-  height: 40px !important; /* Set height */
+  padding: 10px 12px !important;
+  height: 40px !important;
+  width: 100% !important; /* Ensure it fills container */
+  box-sizing: border-box !important; /* Include padding in height/width */
 }
-.firebaseui-textfield.firebaseui-id-email:focus,
-.firebaseui-textfield.firebaseui-id-name:focus,
-.firebaseui-textfield.firebaseui-id-new-password:focus {
+
+/* --- FIX: Input text color on focus --- */
+.firebaseui-textfield.firebaseui-id-email input:focus,
+.firebaseui-textfield.firebaseui-id-name input:focus,
+.firebaseui-textfield.firebaseui-id-new-password input:focus {
   border-color: var(--accent-primary) !important;
   box-shadow: none !important;
+  color: var(--text-primary) !important;
+}
+
+/* --- FIX: Browser Autofill Styles --- */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active  {
+    -webkit-box-shadow: 0 0 0 30px var(--bg-primary) inset !important;
+    box-shadow: 0 0 0 30px var(--bg-primary) inset !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
 }
 
 /* Center the NEXT/SAVE buttons */
 .firebaseui-form-actions {
+  /* --- FIX: Theme the white footer --- */
+  background-color: var(--bg-elevated) !important;
+  border-top: 1px solid var(--border-color) !important;
+  padding: 20px 30px !important;
+  margin-top: 20px !important;
+  /* --- End Theme --- */
   text-align: center !important;
   display: flex;
   justify-content: center; /* Center horizontally */
@@ -257,11 +273,9 @@
   border: 1px solid var(--border-color) !important;
   border-radius: 6px !important;
   color: var(--text-tertiary) !important;
-  /* --- *** THIS IS THE FIX (Request 1) *** --- */
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  /* --- *** END OF FIX *** --- */
 }
 .firebaseui-form-actions .firebaseui-id-secondary-link:hover {
   background: var(--bg-elevated) !important;

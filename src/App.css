@@ -1495,8 +1495,8 @@ button:disabled, button:disabled:hover {
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 6px 10px; /* Adjusted padding */
-    position: relative; /* --- NEW: For dropdown context --- */
-    cursor: pointer; /* --- NEW: Make whole block a pointer --- */
+    position: relative; /* --- For dropdown context --- */
+    /* --- *** REMOVED: cursor: pointer *** --- */
   }
   
   .header-dashboard-link {
@@ -1511,17 +1511,31 @@ button:disabled, button:disabled:hover {
     text-decoration: none;
   }
 
-  /* --- *** THIS IS THE FIX (Request 6) *** --- */
   .header-dashboard-link[title] {
     cursor: pointer;
   }
-  /* --- *** END OF FIX *** --- */
 
   .header-user-divider {
     color: var(--border-color);
     margin: 0 8px;
   }
   
+  /* --- *** THIS IS THE FIX (Request 3) *** --- */
+  /* --- NEW: Clickable Area --- */
+  .header-user-clickable-area {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 4px; /* Add a slight radius for hover */
+    padding: 2px 4px; /* Add padding for hover */
+    margin: -2px -4px; /* Counteract padding */
+    transition: background-color 0.2s ease;
+  }
+  .header-user-clickable-area:hover {
+    background-color: var(--bg-primary); /* Add hover feedback */
+  }
+  /* --- END NEW --- */
+
   .header-username-desktop {
     color: var(--text-secondary);
     max-width: 150px;
@@ -1530,10 +1544,10 @@ button:disabled, button:disabled:hover {
     text-overflow: ellipsis;
   }
 
-  /* --- *** THIS IS THE FIX (Request 5) *** --- */
-  /* --- NEW: Header User Dropdown --- */
+  /* --- *** THIS IS THE FIX (Request 3) *** --- */
+  /* --- UPDATED: Header User Dropdown (No longer hover) --- */
   .header-user-dropdown {
-    display: none; /* Hide by default */
+    /* --- REMOVED: display: none; --- */
     position: absolute;
     top: 100%; /* Position below the header */
     right: 0;
@@ -1550,10 +1564,7 @@ button:disabled, button:disabled:hover {
     animation: fadeIn 0.1s ease-out; /* Add animation */
   }
 
-  /* Show on hover */
-  .header-user-desktop:hover .header-user-dropdown {
-    display: block;
-  }
+  /* --- REMOVED: .header-user-desktop:hover .header-user-dropdown --- */
 
   .header-user-dropdown ul {
     list-style: none;

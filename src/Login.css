@@ -115,31 +115,18 @@
 }
 
 
-/* --- FirebaseUI Theme Overrides --- */
+/* --- *** THIS IS THE FIX (Request 1, 2, 3, 4) *** --- */
 
-/* Style the buttons to match your .btn-primary */
-.firebaseui-id-submit.firebaseui-button {
-  background: var(--gradient-accent) !important;
-  color: white !important;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-  border-radius: 6px !important;
-  font-size: 11px !important;
-  font-weight: 600 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.7px !important;
-  padding: 10px 15px !important; /* Make buttons a bit taller */
-  transition: all 0.25s ease !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-.firebaseui-id-submit.firebaseui-button:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm) !important;
-  filter: brightness(1.1) !important;
+/* --- 1. Global FirebaseUI Container --- */
+/* Fixes the "weird gray block" on the main sign-in page */
+#firebaseui-auth-container,
+.firebaseui-container {
+  background: transparent !important;
 }
 
-/* Style the Google button to match .btn-secondary */
+/* --- 2. Main Login Page Buttons (Google, Email) --- */
+
+/* Style the Google button */
 .firebaseui-idp-button.firebaseui-idp-google {
   background: none !important;
   color: var(--text-tertiary) !important;
@@ -153,34 +140,21 @@
   background: var(--bg-elevated) !important;
 }
 
-/* Style input fields */
-.firebaseui-id-input.firebaseui-input {
-  background: var(--bg-primary) !important;
-  border: 1px solid var(--border-color) !important;
-  color: var(--text-primary) !important;
+/* Style the "Sign in with email" button */
+.firebaseui-button.firebaseui-id-idp-button {
+  background: var(--gradient-accent) !important;
+  color: white !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
   border-radius: 6px !important;
+  transition: all 0.25s ease !important;
 }
-.firebaseui-id-input.firebaseui-input:focus {
-  border-color: var(--accent-primary) !important;
-  box-shadow: none !important;
-}
-
-/* Style links */
-.firebaseui-link {
-  color: var(--accent-primary) !important;
-}
-.firebaseui-link:hover {
-  color: var(--accent-hover) !important;
+.firebaseui-button.firebaseui-id-idp-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm) !important;
+  filter: brightness(1.1) !important;
 }
 
-/* Style text */
-.firebaseui-title, .firebaseui-text, .firebaseui-text-input-label {
-  color: var(--text-secondary) !important;
-}
-
-
-/* --- *** THIS IS THE FIX (Login Popups) *** --- */
-/* Theme the Email Sign-in Popup */
+/* --- 3. Email/Password Popup Container --- */
 
 /* Style the modal dialog itself */
 .firebaseui-dialog {
@@ -189,33 +163,44 @@
   overflow: hidden !important;
   border: 1px solid var(--border-color) !important;
 }
-
-.firebaseui-card-content {
-  background-color: var(--bg-secondary) !important;
-  padding: 20px 30px !important;
-}
-
+/* Header */
 .firebaseui-card-header {
   background-color: var(--bg-elevated) !important;
   border-bottom: 1px solid var(--border-color) !important;
   padding: 20px 30px !important;
 }
+/* Content Area */
+.firebaseui-card-content {
+  background-color: var(--bg-secondary) !important;
+  padding: 20px 30px !important;
+}
+/* Footer (The white box) */
+.firebaseui-card-footer {
+  background-color: var(--bg-elevated) !important;
+  border-top: 1px solid var(--border-color) !important;
+  padding: 20px 30px !important;
+}
 
+/* --- 4. All Text & Links in Popup --- */
 .firebaseui-title {
   color: var(--text-primary) !important;
   font-size: 18px !important;
 }
-
 .firebaseui-subtitle, .firebaseui-text {
   color: var(--text-secondary) !important;
   font-size: 13px !important;
 }
-
 .firebaseui-label {
   color: var(--text-tertiary) !important;
 }
+.firebaseui-link {
+  color: var(--accent-primary) !important;
+}
+.firebaseui-link:hover {
+  color: var(--accent-hover) !important;
+}
 
-/* --- FIX: Style ALL inputs for text color, padding, and borders --- */
+/* --- 5. All Input Fields (Fixes text color, padding, border, height) --- */
 .firebaseui-dialog .firebaseui-input,
 .firebaseui-dialog .firebaseui-input-e-mail,
 .firebaseui-dialog .firebaseui-input-name,
@@ -225,42 +210,36 @@
     border: 1px solid var(--border-color) !important;
     color: var(--text-primary) !important; /* Force text color */
     border-radius: 6px !important;
-    padding: 0 12px !important; /* 0 top/bottom, 12 left/right */
+    padding: 0 12px !important; /* 0 top/bottom, 12 left/right for spacing */
     height: 40px !important;
     line-height: 40px !important; /* Vertically center text */
     width: 100% !important; 
     box-sizing: border-box !important; 
 }
-
-/* --- FIX: Style focus state for all inputs --- */
+/* Focus state */
 .firebaseui-dialog .firebaseui-input:focus,
 .firebaseui-dialog .firebaseui-textfield input:focus {
     border-color: var(--accent-primary) !important;
     box-shadow: none !important;
 }
 
-/* --- FIX: Browser Autofill Styles (more specific) --- */
+/* --- 6. Browser Autofill (Fixes dark/white background) --- */
 .firebaseui-dialog .firebaseui-input:-webkit-autofill,
 .firebaseui-dialog .firebaseui-input:-webkit-autofill:hover, 
 .firebaseui-dialog .firebaseui-input:-webkit-autofill:focus, 
 .firebaseui-dialog .firebaseui-input:-webkit-autofill:active  {
-    -webkit-box-shadow: 0 0 0 30px var(--bg-primary) inset !important;
+    -webkit-box-shadow: 0 0 0 30px var(--bg-primary) inset !important; /* Use input bg */
     box-shadow: 0 0 0 30px var(--bg-primary) inset !important;
-    -webkit-text-fill-color: var(--text-primary) !important;
-    border: 1px solid var(--border-color) !important; /* Add border here too */
+    -webkit-text-fill-color: var(--text-primary) !important; /* Use input text color */
+    border: 1px solid var(--border-color) !important; /* Match border */
 }
 
 
-/* --- FIX: Theme the white footer container --- */
-.firebaseui-card-footer {
-  background-color: var(--bg-elevated) !important;
-  border-top: 1px solid var(--border-color) !important;
-  padding: 20px 30px !important;
-}
+/* --- 7. Popup Footer Buttons (Cancel, Next, Save) --- */
 
-/* --- FIX: Make the inner actions div transparent --- */
+/* Container for buttons in footer */
 .firebaseui-form-actions {
-  background-color: transparent !important;
+  background-color: transparent !important; /* Make inner div transparent */
   border-top: none !important;
   padding: 0 !important;
   margin: 0 !important;
@@ -269,14 +248,35 @@
   justify-content: center; /* Center horizontally */
   gap: 10px;
 }
-.firebaseui-form-actions .firebaseui-id-submit {
+
+/* "SAVE" / "NEXT" button */
+.firebaseui-id-submit.firebaseui-button {
+  background: var(--gradient-accent) !important;
+  color: white !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.7px !important;
+  padding: 10px 15px !important;
+  transition: all 0.25s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   float: none !important;
   order: 2; /* Put accent button on right */
 }
-.firebaseui-form-actions .firebaseui-id-secondary-link {
+.firebaseui-id-submit.firebaseui-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm) !important;
+  filter: brightness(1.1) !important;
+}
+
+/* "CANCEL" button */
+.firebaseui-id-secondary-link {
   float: none !important;
   order: 1;
-  /* Style secondary button */
   padding: 10px 15px !important;
   border: 1px solid var(--border-color) !important;
   border-radius: 6px !important;
@@ -284,29 +284,27 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  text-decoration: none !important;
 }
-.firebaseui-form-actions .firebaseui-id-secondary-link:hover {
+.firebaseui-id-secondary-link:hover {
   background: var(--bg-elevated) !important;
   color: var(--accent-primary) !important;
   border-color: var(--accent-primary) !important;
 }
 
-/* --- FIX: Style the "Forgot Password" link area --- */
+/* --- 8. Other Popup Links (Forgot Password) --- */
 .firebaseui-form-links {
-  /* This container appears between inputs and footer */
   background-color: var(--bg-secondary) !important; /* Match content bg */
-  padding: 10px 30px 0 30px !important; /* Add padding */
+  padding: 10px 30px 0 30px !important; 
   margin: 0 !important;
 }
-/* --- *** END OF FIX *** --- */
 
-
-/* --- *** THIS IS THE FIX (Request 2) *** --- */
-/* Style the Username Input on CreateProfile page */
+/* --- 9. CreateProfile Page Username Input --- */
 .username-input {
-  height: 42px !important; /* Increase height */
-  padding-left: 12px !important; /* Add padding to text */
+  height: 42px !important; 
+  padding-left: 12px !important; 
   padding-right: 12px !important;
-  font-size: 14px !important; /* Make font slightly larger */
+  font-size: 14px !important; 
+  /* It already uses .firebaseui-input styles, so color/bg is inherited */
 }
-/* --- *** END OF FIX *** --- */
+/* --- *** END OF ALL FIXES *** --- */

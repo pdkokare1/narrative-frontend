@@ -1,9 +1,19 @@
 // In file: src/components/Header.js
+// --- FIX: Restructured for click-to-open dropdown menu ---
 import React from 'react';
 import { Link } from 'react-router-dom';
 import '../App.css'; // For header styles
 
-function Header({ theme, toggleTheme, onToggleSidebar, username }) {
+function Header({ 
+  theme, 
+  toggleTheme, 
+  onToggleSidebar, 
+  username,
+  // --- NEW PROPS ---
+  userMenuRef,
+  isUserMenuOpen,
+  setIsUserMenuOpen
+}) {
   return (
     <header className="header">
       <div className="header-left">
@@ -22,31 +32,41 @@ function Header({ theme, toggleTheme, onToggleSidebar, username }) {
       </div>
 
       <div className="header-right">
-        {/* --- *** THIS IS THE FIX (Request 5) *** --- */}
-        {/* --- UPDATED: Show Username and Dashboard Link on Desktop --- */}
-        <div className="header-user-desktop"> {/* <-- This is now the relative container */}
+        
+        {/* --- *** THIS IS THE FIX (Request 4) *** --- */}
+
+        {/* --- 1. Dashboard Link (Now separate) --- */}
+        <div className="header-user-desktop-link">
           <Link to="/my-dashboard" className="header-dashboard-link" title="View your dashboard">
             Dashboard
           </Link>
-          <span className="header-user-divider">|</span>
-          <span className="header-username-desktop" title="Username">
-            {username}
-          </span>
-          {/* --- NEW: Dropdown Arrow --- */}
-          <svg className="custom-select-arrow" style={{ width: '16px', height: '16px', fill: 'var(--text-tertiary)', marginLeft: '4px' }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M7 10l5 5 5-5z"></path>
-          </svg>
+        </div>
 
-          {/* --- NEW: Dropdown Menu --- */}
-          <div className="header-user-dropdown">
+        {/* --- 2. User Menu (Username + Dropdown) --- */}
+        {/* This container holds the clickable menu and the dropdown */}
+        <div className="header-user-menu-container" ref={userMenuRef}>
+          {/* This is the clickable part */}
+          <div 
+            className="header-user-desktop"
+            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+          >
+            <span className="header-username-desktop" title="Username">
+              {username}
+            </span>
+            {/* --- Dropdown Arrow --- */}
+            <svg className="custom-select-arrow" style={{ width: '16px', height: '16px', fill: 'var(--text-tertiary)', marginLeft: '4px' }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M7 10l5 5 5-5z"></path>
+            </svg>
+          </div>
+
+          {/* --- Dropdown Menu (conditionally styled) --- */}
+          <div className={`header-user-dropdown ${isUserMenuOpen ? 'open' : ''}`}>
             <ul>
-              <li><Link to="/saved-articles">Saved Articles</Link></li>
-              <li><Link to="/account-settings">Account Settings</Link></li>
+              <li><Link to="/saved-articles" onClick={() => setIsUserMenuOpen(false)}>Saved Articles</Link></li>
+              <li><Link to="/account-settings" onClick={() => setIsUserMenuOpen(false)}>Account Settings</Link></li>
             </ul>
           </div>
-          {/* --- END NEW --- */}
         </div>
-        {/* --- END UPDATE --- */}
         {/* --- *** END OF FIX *** --- */}
 
 

@@ -20,7 +20,7 @@
   position: relative;
   overflow: hidden;
 
-  background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/q_auto,f_auto,w_800/v1761582659/login-bg-mobile.png_wctrjs.png');
+  background-image: url('https://res-cloudinary-com.translate.goog/dkfsgzr52/image/upload/q_auto,f_auto,w_800/v1761582659/login-bg-mobile.png_wctrjs.png');
   background-size: cover;
   background-position: center center;
 }
@@ -83,7 +83,7 @@
 /* --- Desktop Styles --- */
 @media (min-width: 769px) {
   .login-page-wrapper {
-    background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/q_auto,f_auto,w_1920/v1761582649/login-bg-desktop.png_qvrwhm.png');
+    background-image: url('https://res-cloudinary-com.translate.goog/dkfsgzr52/image/upload/q_auto,f_auto,w_1920/v1761582649/login-bg-desktop.png_qvrwhm.png');
   }
   .login-page-wrapper::before {
     background: rgba(0, 0, 0, 0.65);
@@ -125,26 +125,22 @@
   filter: brightness(1.1) !important;
 }
 
-/* --- 2. Email/Password Popup Container --- */
-/* Style the modal dialog itself */
+/* --- 2. Email/Password Popup Container (Fixes bg colors) --- */
 .firebaseui-dialog {
   background-color: var(--bg-secondary) !important; /* Main dark color */
   border-radius: 8px !important;
   overflow: hidden !important;
   border: 1px solid var(--border-color) !important;
 }
-/* Header ("The Gamut") */
 .firebaseui-card-header {
   background-color: var(--bg-secondary) !important; /* Match main bg */
   border-bottom: 1px solid var(--border-color) !important;
   padding: 20px 30px !important;
 }
-/* Content Area ("Create account", inputs) */
 .firebaseui-card-content {
   background-color: var(--bg-secondary) !important; /* Match main bg */
   padding: 20px 30px !important;
 }
-/* Footer (Buttons area) */
 .firebaseui-card-footer {
   background-color: var(--bg-secondary) !important; /* Match main bg */
   border-top: 1px solid var(--border-color) !important;
@@ -170,15 +166,15 @@
   color: var(--accent-hover) !important;
 }
 
-/* --- 4. All Input Fields (Fixes text color, padding, border, height) --- */
-.firebaseui-dialog .firebaseui-input,
-.firebaseui-dialog .firebaseui-input-e-mail,
-.firebaseui-dialog .firebaseui-input-name,
-.firebaseui-dialog .firebaseui-input-new-password,
-.firebaseui-dialog .firebaseui-textfield input {
-    background: var(--bg-primary) !important;
+/* --- 5. All Input Fields (Fixes text color, padding, border, height) --- */
+/* This is a general rule for all inputs in the dialog */
+.firebaseui-dialog input[type="email"],
+.firebaseui-dialog input[type="text"],
+.firebaseui-dialog input[type="password"] {
+    background-color: var(--bg-primary) !important;
     border: 1px solid var(--border-color) !important;
-    color: var(--text-primary) !important; /* Force text color */
+    color: var(--text-primary) !important; /* Force typed text color */
+    caret-color: var(--text-primary) !important; /* Force cursor color */
     border-radius: 6px !important;
     padding: 0 12px !important; /* 0 top/bottom, 12 left/right for spacing */
     height: 40px !important;
@@ -186,26 +182,35 @@
     width: 100% !important; 
     box-sizing: border-box !important; 
 }
+
+/* This rule handles the placeholder text color */
+.firebaseui-dialog input::placeholder {
+    color: var(--text-tertiary) !important;
+    opacity: 1;
+}
+
 /* Focus state */
-.firebaseui-dialog .firebaseui-input:focus,
-.firebaseui-dialog .firebaseui-textfield input:focus {
+.firebaseui-dialog input[type="email"]:focus,
+.firebaseui-dialog input[type="text"]:focus,
+.firebaseui-dialog input[type="password"]:focus {
     border-color: var(--accent-primary) !important;
     box-shadow: none !important;
 }
 
-/* --- 5. Browser Autofill (Fixes dark/white background) --- */
-.firebaseui-dialog .firebaseui-input:-webkit-autofill,
-.firebaseui-dialog .firebaseui-input:-webkit-autofill:hover, 
-.firebaseui-dialog .firebaseui-input:-webkit-autofill:focus, 
-.firebaseui-dialog .firebaseui-input:-webkit-autofill:active  {
-    -webkit-box-shadow: 0 0 0 30px var(--bg-primary) inset !important; /* Use input bg */
-    box-shadow: 0 0 0 30px var(--bg-primary) inset !important;
+/* --- 6. Browser Autofill (Fixes dark/white background) --- */
+.firebaseui-dialog input:-webkit-autofill,
+.firebaseui-dialog input:-webkit-autofill:hover, 
+.firebaseui-dialog input:-webkit-autofill:focus, 
+.firebaseui-dialog input:-webkit-autofill:active  {
+    -webkit-box-shadow: 0 0 0 40px var(--bg-primary) inset !important; /* Use input bg */
+    box-shadow: 0 0 0 40px var(--bg-primary) inset !important;
     -webkit-text-fill-color: var(--text-primary) !important; /* Use input text color */
     border: 1px solid var(--border-color) !important; /* Match border */
+    caret-color: var(--text-primary) !important; /* Cursor color */
 }
 
 
-/* --- 6. Popup Footer Buttons (Cancel, Next, Save) --- */
+/* --- 7. Popup Footer Buttons (Cancel, Next, Save) --- */
 .firebaseui-form-actions {
   background-color: transparent !important; /* Make inner div transparent */
   border-top: none !important;
@@ -258,14 +263,14 @@
   border-color: var(--accent-primary) !important;
 }
 
-/* --- 7. Other Popup Links (Forgot Password) --- */
+/* --- 8. Other Popup Links (Forgot Password) --- */
 .firebaseui-form-links {
   background-color: var(--bg-secondary) !important; /* Match content bg */
   padding: 10px 30px 0 30px !important; 
   margin: 0 !important;
 }
 
-/* --- 8. CreateProfile Page Username Input --- */
+/* --- 9. CreateProfile Page Username Input --- */
 .username-input {
   height: 42px !important; 
   padding-left: 12px !important; 

@@ -37,6 +37,9 @@
   top: 75px; /* 60px header + 15px padding */
   height: calc(100vh - 90px); /* 75px top + 15px bottom */
   overflow-y: auto; /* <-- NOW it scrolls if it's too tall */
+  /* --- *** THIS IS THE FIX *** --- */
+  background-color: var(--bg-primary); /* Match page background */
+  /* --- *** END OF FIX *** --- */
   /* --- END NEW --- */
 
   /* Custom scrollbar for left column */
@@ -153,9 +156,9 @@ h2.section-title {
    width: 100%; flex-shrink: 0;
    margin-bottom: 15px; /* --- ADDED: Manual spacing --- */
 }
-/* --- *** THIS IS THE FIX (Request 2) *** --- */
+/* --- *** THIS IS THE FIX (Reverting) *** --- */
 h2.section-title.reading-bias-title {
-  margin-top: 40px; /* --- CHANGED: Was 20px, now 40px --- */
+  margin-top: 5px; /* --- CHANGED: Was 40px, now 5px (original value) --- */
   margin-bottom: 15px;
 }
 /* --- *** END OF FIX *** --- */
@@ -358,6 +361,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
     /* --- NEW: Un-stick on mobile --- */
     position: static;
     height: auto;
+    background-color: transparent !important; /* --- ADDED: Remove bg on mobile --- */
   }
   .dashboard-right-column {
     overflow-y: visible; /* Don't scroll */

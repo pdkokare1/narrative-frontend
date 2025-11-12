@@ -1,6 +1,7 @@
 // In file: src/App.js
 // --- FINAL FIX: Separated initial fetch from loadMore to kill infinite loop ---
 // --- BUG FIX: Removed 'profile' from profile-checking useEffect dependency array ---
+// --- FIX: Added state and ref for click-to-open user menu ---
 import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
@@ -85,6 +86,12 @@ function AppWrapper() {
   const [savedArticleIds, setSavedArticleIds] = useState(new Set());
   // --- *** END NEW *** ---
 
+  // --- *** NEW: State for User Dropdown Menu *** ---
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+  // --- *** END NEW *** ---
+
+
   // --- Custom Tooltip/Popup State ---
   const [tooltip, setTooltip] = useState({
     visible: false,
@@ -145,6 +152,20 @@ function AppWrapper() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [tooltip.visible, hideTooltip]);
   // --- End Tooltip Handlers ---
+
+
+  // --- *** NEW: Click outside handler for User Menu *** ---
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // If the menu is open and the click is outside the menu's ref
+      if (isUserMenuOpen && userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isUserMenuOpen]); // Only re-run if isUserMenuOpen changes
+  // --- *** END NEW *** ---
 
 
   // --- Firebase Auth Listener Effect ---
@@ -645,6 +666,11 @@ function AppWrapper() {
           toggleTheme={toggleTheme}
           onToggleSidebar={toggleSidebar}
           username={profile.username}
+          // --- *** NEW PROPS for User Menu *** ---
+          userMenuRef={userMenuRef}
+          isUserMenuOpen={isUserMenuOpen}
+          setIsUserMenuOpen={setIsUserMenuOpen}
+          // --- *** END NEW PROPS *** ---
         />
       )}
 

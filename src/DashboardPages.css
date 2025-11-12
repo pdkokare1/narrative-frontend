@@ -153,7 +153,7 @@ h2.section-title {
    width: 100%; flex-shrink: 0;
    margin-bottom: 15px; /* --- ADDED: Manual spacing --- */
 }
-/* --- *** THIS IS THE FIX (Request 3) *** --- */
+/* --- *** THIS IS THE FIX (Request 2) *** --- */
 h2.section-title.reading-bias-title {
   margin-top: 40px; /* --- CHANGED: Was 20px, now 40px --- */
   margin-bottom: 15px;

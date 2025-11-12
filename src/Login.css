@@ -1,6 +1,6 @@
 /* src/Login.css */
 
-/* --- NEW: Define transparent backgrounds based on theme --- */
+/* --- Define transparent backgrounds based on theme --- */
 .dark-mode .login-container {
   /* #1E1E1E from App.css with 90% opacity */
   background-color: rgba(30, 30, 30, 0.9); 
@@ -9,7 +9,6 @@
   /* #FFFFFF from App.css with 90% opacity */
   background-color: rgba(255, 255, 255, 0.9);
 }
-/* --- End New Rules --- */
 
 .login-page-wrapper {
   display: flex;
@@ -19,20 +18,18 @@
   padding: 20px;
   background-color: var(--bg-primary); /* Fallback */
   position: relative;
-  overflow: hidden; /* Ensure backgrounds are contained */
+  overflow: hidden;
 
-  /* --- Mobile First: Use mobile image as full background (OPTIMIZED URL) --- */
   background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/q_auto,f_auto,w_800/v1761582659/login-bg-mobile.png_wctrjs.png');
   background-size: cover;
   background-position: center center;
 }
 
-/* Mobile overlay (35% brightness) */
 .login-page-wrapper::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75); /* 25% brightness (100% - 65% opacity) */
+  background: rgba(0, 0, 0, 0.75);
   z-index: 1;
 }
 
@@ -40,15 +37,13 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 420px; /* Max width for mobile login card */
-  /* background-color is now handled by .dark-mode/.light-mode rules */
+  max-width: 420px; 
   border-radius: 12px;
   box-shadow: var(--shadow-lg);
   overflow: hidden;
-  z-index: 2; /* Ensure card is above the wrapper overlay */
+  z-index: 2;
 }
 
-/* --- The image panel is now only for desktop, so hide on mobile --- */
 .login-image-panel {
   display: none;
 }
@@ -58,15 +53,18 @@
   text-align: center;
   position: relative; 
   overflow: hidden;
-  /* background-color is inherited from .login-container */
+  background-color: var(--bg-secondary); /* Give the main panel a solid bg */
 }
 
-/* Base content of form panel */
+/* --- FIX: Make the base container transparent --- */
+#firebaseui-auth-container,
+.firebaseui-container {
+  background: transparent !important;
+}
+
 .login-form-panel > * {
   position: relative;
-  /* z-index is no longer needed */
 }
-
 
 .login-form-panel h1 {
   font-family: 'Inter', sans-serif;
@@ -85,48 +83,23 @@
 /* --- Desktop Styles --- */
 @media (min-width: 769px) {
   .login-page-wrapper {
-    /* --- Desktop image as THE main background (OPTIMIZED URL) --- */
     background-image: url('https://res.cloudinary.com/dkfsgzr52/image/upload/q_auto,f_auto,w_1920/v1761582649/login-bg-desktop.png_qvrwhm.png');
   }
-
-  /* Desktop wrapper overlay for 35% brightness */
   .login-page-wrapper::before {
-    background: rgba(0, 0, 0, 0.65); /* 35% brightness */
-    display: block; /* Ensure it's active on desktop */
+    background: rgba(0, 0, 0, 0.65);
   }
-
   .login-container {
-    flex-direction: column; /* Back to single column for the card itself */
-    max-width: 480px; /* Adjust card width */
-    min-height: auto; /* Let content define height */
-    /* background-color is already set by the new theme rules */
+    max-width: 480px; 
   }
-
-  .login-image-panel {
-    display: none; /* No separate image panel on desktop */
-  }
-
   .login-form-panel {
     padding: 40px; 
-    /* --- REMOVED: Background image properties --- */
   }
-
-  /* --- REMOVED: .login-form-panel::before rule --- */
 }
 
 
 /* --- *** THIS IS THE FIX (Request 1, 2, 3, 4) *** --- */
 
-/* --- 1. Global FirebaseUI Container --- */
-/* Fixes the "weird gray block" on the main sign-in page */
-#firebaseui-auth-container,
-.firebaseui-container {
-  background: transparent !important;
-}
-
-/* --- 2. Main Login Page Buttons (Google, Email) --- */
-
-/* Style the Google button */
+/* --- 1. Main Login Page Buttons (Google, Email) --- */
 .firebaseui-idp-button.firebaseui-idp-google {
   background: none !important;
   color: var(--text-tertiary) !important;
@@ -139,8 +112,6 @@
   color: var(--accent-primary) !important;
   background: var(--bg-elevated) !important;
 }
-
-/* Style the "Sign in with email" button */
 .firebaseui-button.firebaseui-id-idp-button {
   background: var(--gradient-accent) !important;
   color: white !important;
@@ -154,34 +125,33 @@
   filter: brightness(1.1) !important;
 }
 
-/* --- 3. Email/Password Popup Container --- */
-
+/* --- 2. Email/Password Popup Container --- */
 /* Style the modal dialog itself */
 .firebaseui-dialog {
-  background-color: var(--bg-secondary) !important;
+  background-color: var(--bg-secondary) !important; /* Main dark color */
   border-radius: 8px !important;
   overflow: hidden !important;
   border: 1px solid var(--border-color) !important;
 }
-/* Header */
+/* Header ("The Gamut") */
 .firebaseui-card-header {
-  background-color: var(--bg-elevated) !important;
+  background-color: var(--bg-secondary) !important; /* Match main bg */
   border-bottom: 1px solid var(--border-color) !important;
   padding: 20px 30px !important;
 }
-/* Content Area */
+/* Content Area ("Create account", inputs) */
 .firebaseui-card-content {
-  background-color: var(--bg-secondary) !important;
+  background-color: var(--bg-secondary) !important; /* Match main bg */
   padding: 20px 30px !important;
 }
-/* Footer (The white box) */
+/* Footer (Buttons area) */
 .firebaseui-card-footer {
-  background-color: var(--bg-elevated) !important;
+  background-color: var(--bg-secondary) !important; /* Match main bg */
   border-top: 1px solid var(--border-color) !important;
   padding: 20px 30px !important;
 }
 
-/* --- 4. All Text & Links in Popup --- */
+/* --- 3. All Text & Links in Popup --- */
 .firebaseui-title {
   color: var(--text-primary) !important;
   font-size: 18px !important;
@@ -200,7 +170,7 @@
   color: var(--accent-hover) !important;
 }
 
-/* --- 5. All Input Fields (Fixes text color, padding, border, height) --- */
+/* --- 4. All Input Fields (Fixes text color, padding, border, height) --- */
 .firebaseui-dialog .firebaseui-input,
 .firebaseui-dialog .firebaseui-input-e-mail,
 .firebaseui-dialog .firebaseui-input-name,
@@ -223,7 +193,7 @@
     box-shadow: none !important;
 }
 
-/* --- 6. Browser Autofill (Fixes dark/white background) --- */
+/* --- 5. Browser Autofill (Fixes dark/white background) --- */
 .firebaseui-dialog .firebaseui-input:-webkit-autofill,
 .firebaseui-dialog .firebaseui-input:-webkit-autofill:hover, 
 .firebaseui-dialog .firebaseui-input:-webkit-autofill:focus, 
@@ -235,9 +205,7 @@
 }
 
 
-/* --- 7. Popup Footer Buttons (Cancel, Next, Save) --- */
-
-/* Container for buttons in footer */
+/* --- 6. Popup Footer Buttons (Cancel, Next, Save) --- */
 .firebaseui-form-actions {
   background-color: transparent !important; /* Make inner div transparent */
   border-top: none !important;
@@ -245,10 +213,9 @@
   margin: 0 !important;
   text-align: center !important;
   display: flex;
-  justify-content: center; /* Center horizontally */
+  justify-content: center;
   gap: 10px;
 }
-
 /* "SAVE" / "NEXT" button */
 .firebaseui-id-submit.firebaseui-button {
   background: var(--gradient-accent) !important;
@@ -265,14 +232,13 @@
   align-items: center !important;
   justify-content: center !important;
   float: none !important;
-  order: 2; /* Put accent button on right */
+  order: 2; 
 }
 .firebaseui-id-submit.firebaseui-button:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-sm) !important;
   filter: brightness(1.1) !important;
 }
-
 /* "CANCEL" button */
 .firebaseui-id-secondary-link {
   float: none !important;
@@ -292,19 +258,18 @@
   border-color: var(--accent-primary) !important;
 }
 
-/* --- 8. Other Popup Links (Forgot Password) --- */
+/* --- 7. Other Popup Links (Forgot Password) --- */
 .firebaseui-form-links {
   background-color: var(--bg-secondary) !important; /* Match content bg */
   padding: 10px 30px 0 30px !important; 
   margin: 0 !important;
 }
 
-/* --- 9. CreateProfile Page Username Input --- */
+/* --- 8. CreateProfile Page Username Input --- */
 .username-input {
   height: 42px !important; 
   padding-left: 12px !important; 
   padding-right: 12px !important;
   font-size: 14px !important; 
-  /* It already uses .firebaseui-input styles, so color/bg is inherited */
 }
 /* --- *** END OF ALL FIXES *** --- */

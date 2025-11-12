@@ -129,6 +129,11 @@
   letter-spacing: 0.7px !important;
   padding: 10px 15px !important; /* Make buttons a bit taller */
   transition: all 0.25s ease !important;
+  /* --- *** THIS IS THE FIX (Request 2) *** --- */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  /* --- *** END OF FIX *** --- */
 }
 .firebaseui-id-submit.firebaseui-button:hover {
   transform: translateY(-2px);
@@ -230,6 +235,12 @@
   display: flex;
   justify-content: center; /* Center horizontally */
   gap: 10px;
+  /* --- *** THIS IS THE FIX (Request 1) *** --- */
+  background-color: var(--bg-secondary) !important;
+  border-top: 1px solid var(--border-color) !important;
+  padding: 20px !important;
+  margin: 0 -30px -20px -30px !important; /* Stretch to edges */
+  /* --- *** END OF FIX *** --- */
 }
 .firebaseui-form-actions .firebaseui-id-submit {
   float: none !important;
@@ -243,6 +254,12 @@
   border: 1px solid var(--border-color) !important;
   border-radius: 6px !important;
   color: var(--text-tertiary) !important;
+  /* --- *** THIS IS THE FIX (Request 2) *** --- */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-decoration: none !important;
+  /* --- *** END OF FIX *** --- */
 }
 .firebaseui-form-actions .firebaseui-id-secondary-link:hover {
   background: var(--bg-elevated) !important;

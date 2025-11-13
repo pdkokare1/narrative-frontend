@@ -1,8 +1,9 @@
 // In file: src/firebaseConfig.js
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-// --- ADD THIS LINE FOR ANALYTICS ---
 import { getAnalytics } from "firebase/analytics";
+// --- 1. IMPORT APP CHECK ---
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 // Your web app's Firebase configuration using Environment Variables
 const firebaseConfig = {
@@ -12,15 +13,33 @@ const firebaseConfig = {
   storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
   messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
   appId: process.env.REACT_APP_APP_ID,
-  // --- ADD THIS LINE FOR ANALYTICS ---
   measurementId: process.env.REACT_APP_MEASUREMENT_ID 
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// --- ADD THIS LINE FOR ANALYTICS ---
-// Initialize Analytics (optional, but you wanted it)
+// --- 2. INITIALIZE APP CHECK (THE NEW CODE) ---
+// This code only runs in the browser
+if (typeof window !== 'undefined') {
+  
+  // Get the Site Key from your Environment Variable
+  // IMPORTANT: You must create this variable in Vercel
+  const siteKey = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
+
+  if (siteKey) {
+    // Initialize App Check
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(siteKey),
+      isTokenAutoRefreshEnabled: true // Keep this true
+    });
+  } else {
+    console.error("App Check: REACT_APP_RECAPTCHA_SITE_KEY is not set.");
+  }
+}
+// --- END OF APP CHECK CODE ---
+
+// Initialize Analytics (your existing code)
 getAnalytics(app); 
 
 // Export the auth service for use in other files

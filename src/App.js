@@ -4,7 +4,7 @@
 // --- *** APP CHECK FIX (v2) - Solves race condition *** ---
 // --- FINAL FIX: Separated initial fetch from loadMore to kill infinite loop ---
 // --- BUG FIX: Removed 'profile' from profile-checking useEffect dependency array ---
-// --- FIX: Added state and ref for click-to-open user menu ---
+// --- BUG FIX: Removed duplicate state/ref for user menu (now handled in Header.js) ---
 import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
@@ -124,10 +124,11 @@ function AppWrapper() {
   const [savedArticleIds, setSavedArticleIds] = useState(new Set());
   // --- *** END NEW *** ---
 
-  // --- *** NEW: State for User Dropdown Menu *** ---
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const userMenuRef = useRef(null);
-  // --- *** END NEW *** ---
+  // --- *** THIS IS THE FIX (BUG 1) *** ---
+  // --- REMOVED State/Ref for User Dropdown Menu ---
+  // This state is no longer needed here.
+  // The <Header> component now manages its own dropdown state internally.
+  // --- *** END OF FIX *** ---
 
 
   // --- Custom Tooltip/Popup State ---
@@ -192,18 +193,10 @@ function AppWrapper() {
   // --- End Tooltip Handlers ---
 
 
-  // --- *** NEW: Click outside handler for User Menu *** ---
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      // If the menu is open and the click is outside the menu's ref
-      if (isUserMenuOpen && userMenuRef.current && !userMenuRef.current.contains(event.target)) {
-        setIsUserMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isUserMenuOpen]); // Only re-run if isUserMenuOpen changes
-  // --- *** END NEW *** ---
+  // --- *** THIS IS THE FIX (BUG 1) *** ---
+  // --- REMOVED Click outside handler for User Menu ---
+  // This is no longer needed as <Header> handles it internally.
+  // --- *** END OF FIX *** ---
 
 
   // --- Firebase Auth Listener Effect ---
@@ -695,11 +688,12 @@ function AppWrapper() {
           toggleTheme={toggleTheme}
           onToggleSidebar={toggleSidebar}
           username={profile.username}
-          // --- *** NEW PROPS for User Menu *** ---
-          userMenuRef={userMenuRef}
-          isUserMenuOpen={isUserMenuOpen}
-          setIsUserMenuOpen={setIsUserMenuOpen}
-          // --- *** END NEW PROPS *** ---
+          // --- *** THIS IS THE FIX (BUG 1) *** ---
+          // --- REMOVED PROPS for User Menu ---
+          // userMenuRef={userMenuRef}
+          // isUserMenuOpen={isUserMenuOpen}
+          // setIsUserMenuOpen={setIsUserMenuOpen}
+          // --- *** END OF FIX *** ---
         />
       )}
 

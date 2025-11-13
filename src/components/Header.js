@@ -1,10 +1,13 @@
 // In file: src/components/Header.js
+// --- BUG FIX (2): Removed special click handler for Dashboard link ---
+// --- BUG FIX (1): Component now manages its own state ---
 import React, { useState, useEffect, useRef } from 'react'; // <-- Import hooks
 import { Link } from 'react-router-dom';
 import '../App.css'; // For header styles
 
 function Header({ theme, toggleTheme, onToggleSidebar, username }) {
-  // --- *** THIS IS THE FIX (Request 3) *** ---
+  // --- *** THIS IS THE FIX (BUG 1) *** ---
+  // This state is now managed *inside* the header, not in App.js
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null); // Ref to the dropdown container (trigger + menu)
 
@@ -24,14 +27,10 @@ function Header({ theme, toggleTheme, onToggleSidebar, username }) {
     };
   }, []); // Only run once
 
-  // Stop propagation on the dashboard link to prevent closing the dropdown
-  const handleDashboardClick = (e) => {
-     // We don't want to close the dropdown if it's already open
-     if (isDropdownOpen) {
-         setIsDropdownOpen(false);
-     }
-     // Let the link navigation proceed
-  };
+  // --- *** THIS IS THE FIX (BUG 2) *** ---
+  // --- REMOVED handleDashboardClick function ---
+  // It is no longer needed. The <Link> component will handle navigation.
+  // --- *** END OF FIX *** ---
   
   const handleUsernameClick = (e) => {
      e.stopPropagation(); // Stop click from bubbling to document
@@ -57,16 +56,16 @@ function Header({ theme, toggleTheme, onToggleSidebar, username }) {
       </div>
 
       <div className="header-right">
-        {/* --- *** THIS IS THE FIX (Request 3) *** --- */}
+        {/* --- *** THIS IS THE FIX (BUG 1 & 2) *** --- */}
         {/* 1. Main Container Block: Attach ref here */}
         <div className="header-user-desktop" ref={dropdownRef}> 
           
-          {/* 2. Dashboard Link (not clickable for dropdown) */}
+          {/* 2. Dashboard Link (now a normal link) */}
           <Link 
             to="/my-dashboard" 
             className="header-dashboard-link" 
             title="View your dashboard" 
-            onClick={handleDashboardClick} /* Special handler */
+            // --- REMOVED onClick={handleDashboardClick} ---
           >
             Dashboard
           </Link>

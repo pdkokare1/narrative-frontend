@@ -453,11 +453,14 @@ function AppWrapper() {
   }, [authState.user, profile, handleAnalyzeClick]);
 
 
+  // --- *** THIS IS THE FIX *** ---
+  // This code now *only* runs when 'filters' changes.
   useEffect(() => {
     if (isSidebarOpen) {
       setIsSidebarOpen(false);
     }
-  }, [filters, isSidebarOpen]);
+  }, [filters]); // <-- FIX: Removed 'isSidebarOpen' from this array
+  // --- *** END OF FIX *** ---
 
   
   useEffect(() => {

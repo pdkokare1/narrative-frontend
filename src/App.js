@@ -453,13 +453,16 @@ function AppWrapper() {
   }, [authState.user, profile, handleAnalyzeClick]);
 
 
-  // --- *** THIS IS THE FIX *** ---
+  // --- *** THIS IS THE FIX (from last time) *** ---
   // This code now *only* runs when 'filters' changes.
   useEffect(() => {
     if (isSidebarOpen) {
       setIsSidebarOpen(false);
     }
-  }, [filters]); // <-- FIX: Removed 'isSidebarOpen' from this array
+    // --- *** THIS IS THE NEW FIX (for the build error) *** ---
+    // This line tells Vercel's build server to ignore the "missing dependency" warning.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]); // <-- We are *intentionally* not listing isSidebarOpen here
   // --- *** END OF FIX *** ---
 
   
@@ -659,7 +662,7 @@ function AppWrapper() {
         />
       )}
 
-      <Suspense fallback={<PageLoader />}>
+      <Suspapse fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={
             profile ? (

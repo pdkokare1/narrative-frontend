@@ -1,4 +1,5 @@
 // In file: src/App.js
+// --- *** APP CHECK FIX *** ---
 // --- FINAL FIX: Separated initial fetch from loadMore to kill infinite loop ---
 // --- BUG FIX: Removed 'profile' from profile-checking useEffect dependency array ---
 // --- FIX: Added state and ref for click-to-open user menu ---
@@ -12,7 +13,10 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 
 // --- Firebase Auth Imports ---
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from './firebaseConfig'; // Import our configured auth
+// --- *** APP CHECK FIX: Import appCheck *** ---
+import { auth, appCheck } from './firebaseConfig'; // Import our configured auth AND appCheck
+import { getToken } from "firebase/app-check"; // Import getToken
+// --- *** END FIX *** ---
 import Login from './Login'; // Import the Login component
 
 // --- Import the CreateProfile page ---
@@ -194,6 +198,23 @@ function AppWrapper() {
       
       const checkProfile = async () => {
         try {
+          // --- *** APP CHECK FIX *** ---
+          // 1. Wait for the App Check token ("secret handshake") first
+          if (appCheck) {
+            try {
+              // We ask for the token but don't need to *use* it.
+              // Just asking for it forces App Check to initialize.
+              await getToken(appCheck, /* forceRefresh= */ false);
+              console.log("App Check token is ready.");
+            } catch (appCheckError) {
+              console.error("Failed to get App Check token:", appCheckError);
+              // Don't stop, but log the error. The request will likely fail.
+            }
+          }
+          // --- *** END FIX *** ---
+
+          // 2. Now that we've waited, make the profile request.
+          // The 'axios' interceptor (below) will now find the token.
           const response = await axios.get(`${API_URL}/profile/me`);
           setProfile(response.data);
           setSavedArticleIds(new Set(response.data.savedArticles || []));
@@ -225,8 +246,22 @@ function AppWrapper() {
       async (config) => {
         const user = auth.currentUser;
         if (user) {
+          // 1. Get the User Auth token (proves *who* you are)
           const token = await user.getIdToken();
           config.headers.Authorization = `Bearer ${token}`;
+          
+          // --- *** APP CHECK FIX *** ---
+          // 2. Get the App Check token (proves your *app* is real)
+          if (appCheck) {
+            try {
+              const appCheckTokenResponse = await getToken(appCheck, /* forceRefresh= */ false);
+              config.headers['X-Firebase-AppCheck'] = appCheckTokenResponse.token;
+            } catch (err) {
+              console.error('Failed to get App Check token for axios request:', err);
+              // Don't attach header if it fails
+            }
+          }
+          // --- *** END FIX *** ---
         }
         return config;
       },
@@ -237,7 +272,7 @@ function AppWrapper() {
     return () => {
       axios.interceptors.request.eject(interceptor);
     };
-  }, []);
+  }, []); // --- *** APP CHECK FIX: Removed appCheck from dependency array to stabilize *** ---
 
 
   // Effect to set initial theme from localStorage

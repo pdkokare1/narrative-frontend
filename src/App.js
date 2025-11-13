@@ -662,7 +662,9 @@ function AppWrapper() {
         />
       )}
 
-      <Suspapse fallback={<PageLoader />}>
+      {/* --- *** THIS IS THE TYPO FIX *** --- */}
+      <Suspense fallback={<PageLoader />}>
+      {/* --- *** END OF FIX *** --- */}
         <Routes>
           <Route path="/" element={
             profile ? (

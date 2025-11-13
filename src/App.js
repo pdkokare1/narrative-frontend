@@ -1,5 +1,5 @@
 // In file: src/App.js
-// --- *** APP CHECK FIX *** ---
+// --- *** APP CHECK FIX (v2) - Solves race condition *** ---
 // --- FINAL FIX: Separated initial fetch from loadMore to kill infinite loop ---
 // --- BUG FIX: Removed 'profile' from profile-checking useEffect dependency array ---
 // --- FIX: Added state and ref for click-to-open user menu ---
@@ -46,6 +46,38 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 // (FIX) Moved isMobile helper function here so it can be re-used
 const isMobile = () => window.innerWidth <= 768;
+
+
+// --- *** APP CHECK FIX (v2) *** ---
+// We set up the Axios interceptor *outside* the component.
+// This guarantees it runs ONCE when the app loads, before any requests are made.
+axios.interceptors.request.use(
+  async (config) => {
+    const user = auth.currentUser;
+    if (user) {
+      // 1. Get the User Auth token (proves *who* you are)
+      const token = await user.getIdToken();
+      config.headers.Authorization = `Bearer ${token}`;
+      
+      // 2. Get the App Check token (proves your *app* is real)
+      if (appCheck) {
+        try {
+          const appCheckTokenResponse = await getToken(appCheck, /* forceRefresh= */ false);
+          config.headers['X-Firebase-AppCheck'] = appCheckTokenResponse.token;
+        } catch (err) {
+          console.error('Failed to get App Check token for axios request:', err);
+          // Don't attach header if it fails
+        }
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+// --- *** END OF FIX *** ---
+
 
 // --- AppWrapper ---
 function AppWrapper() {
@@ -189,32 +221,25 @@ function AppWrapper() {
   // --- *** PROFILE CHECK LOOP FIX *** ---
   useEffect(() => {
     if (authState.user) {
-      // --- REMOVED this block, as it was part of the loop problem ---
-      // if (!profile) {
-      //   setIsProfileLoading(true);
-      // }
-      // --- END REMOVAL ---
       setIsProfileLoading(true); // Always set loading to true when we check
       
       const checkProfile = async () => {
         try {
-          // --- *** APP CHECK FIX *** ---
+          // --- *** APP CHECK FIX (v2) *** ---
           // 1. Wait for the App Check token ("secret handshake") first
+          // This ensures App Check is initialized before we call axios
           if (appCheck) {
             try {
-              // We ask for the token but don't need to *use* it.
-              // Just asking for it forces App Check to initialize.
               await getToken(appCheck, /* forceRefresh= */ false);
               console.log("App Check token is ready.");
             } catch (appCheckError) {
               console.error("Failed to get App Check token:", appCheckError);
-              // Don't stop, but log the error. The request will likely fail.
             }
           }
           // --- *** END FIX *** ---
 
-          // 2. Now that we've waited, make the profile request.
-          // The 'axios' interceptor (below) will now find the token.
+          // 2. Now, make the profile request.
+          // The interceptor we moved outside is *guaranteed* to be running.
           const response = await axios.get(`${API_URL}/profile/me`);
           setProfile(response.data);
           setSavedArticleIds(new Set(response.data.savedArticles || []));
@@ -240,39 +265,9 @@ function AppWrapper() {
   // --- END OF FIX ---
 
 
-  // --- Axios Token Interceptor Effect ---
-  useEffect(() => {
-    const interceptor = axios.interceptors.request.use(
-      async (config) => {
-        const user = auth.currentUser;
-        if (user) {
-          // 1. Get the User Auth token (proves *who* you are)
-          const token = await user.getIdToken();
-          config.headers.Authorization = `Bearer ${token}`;
-          
-          // --- *** APP CHECK FIX *** ---
-          // 2. Get the App Check token (proves your *app* is real)
-          if (appCheck) {
-            try {
-              const appCheckTokenResponse = await getToken(appCheck, /* forceRefresh= */ false);
-              config.headers['X-Firebase-AppCheck'] = appCheckTokenResponse.token;
-            } catch (err) {
-              console.error('Failed to get App Check token for axios request:', err);
-              // Don't attach header if it fails
-            }
-          }
-          // --- *** END FIX *** ---
-        }
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
-      }
-    );
-    return () => {
-      axios.interceptors.request.eject(interceptor);
-    };
-  }, []); // --- *** APP CHECK FIX: Removed appCheck from dependency array to stabilize *** ---
+  // --- *** APP CHECK FIX (v2): REMOVED the interceptor setup from here *** ---
+  // The interceptor is now outside the component.
+  // --- *** END OF FIX *** ---
 
 
   // Effect to set initial theme from localStorage
@@ -403,7 +398,7 @@ function AppWrapper() {
       setDisplayedArticles(prevDisplayedArticles => {
         const currentUrls = new Set(prevDisplayedArticles.map(a => a.url));
         const trulyNewArticles = uniqueNewArticles.filter(a => !currentUrls.has(a.url));
-        return [...prevDisplayedArticles, ...trulyNewArticles];
+        return [...prevDisplayedArticles, ...trulyNew.articles];
       });
     } catch (error) {
       console.error('❌ Error loading more articles:', error.response ? error.response.data : error.message);

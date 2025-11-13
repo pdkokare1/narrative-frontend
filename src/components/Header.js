@@ -1,4 +1,5 @@
 // In file: src/components/Header.js
+// --- *** HAMBURGER GLITCH FIX: Pass the 'event' (e) to onToggleSidebar *** ---
 // --- *** TYPO FIX: Removed extra 24" from hamburger SVG viewBox *** ---
 // --- BUG FIX (2): Removed special click handler for Dashboard link ---
 // --- BUG FIX (1): Component now manages its own state ---
@@ -42,7 +43,9 @@ function Header({ theme, toggleTheme, onToggleSidebar, username }) {
   return (
     <header className="header">
       <div className="header-left">
-         <button className="hamburger-btn" onClick={onToggleSidebar} title="Open Menu">
+         {/* --- *** THIS IS THE HAMBURGER GLITCH FIX *** --- */}
+         <button className="hamburger-btn" onClick={(e) => onToggleSidebar(e)} title="Open Menu">
+         {/* --- *** END OF FIX *** --- */}
             {/* --- *** THIS IS THE TYPO FIX *** --- */}
             {/* The extra 24" after viewBox="0 0 24 24" has been removed. */}
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -1,4 +1,6 @@
 // In file: src/App.js
+// --- *** HAMBURGER GLITCH FIX: Stop click propagation in toggleSidebar *** ---
+// --- *** BUG FIX: Lock body scroll on mobile menu open *** ---
 // --- *** APP CHECK FIX (v3) - Using Promise signal *** ---
 // --- *** TYPO FIX in loadMoreArticles *** ---
 // --- *** APP CHECK FIX (v2) - Solves race condition *** ---
@@ -120,16 +122,26 @@ function AppWrapper() {
   // (FIX) State to track mobile view for resize bug
   const [isMobileView, setIsMobileView] = useState(isMobile());
 
+  // --- *** BUG FIX: Lock body scroll when mobile menu is open *** ---
+  useEffect(() => {
+    // This effect is for the *other* glitch (scrolling behind the menu)
+    // We can keep it as it's a good feature to have.
+    if (isMobileView && isSidebarOpen) {
+      document.body.classList.add('sidebar-open-mobile');
+    } else {
+      document.body.classList.remove('sidebar-open-mobile');
+    }
+    
+    // Cleanup function
+    return () => {
+      document.body.classList.remove('sidebar-open-mobile');
+    };
+  }, [isSidebarOpen, isMobileView]); // Run when open state or mobile view changes
+  // --- *** END OF BUG FIX *** ---
+
   // --- *** NEW: State for Saved Articles *** ---
   const [savedArticleIds, setSavedArticleIds] = useState(new Set());
   // --- *** END NEW *** ---
-
-  // --- *** THIS IS THE FIX (BUG 1) *** ---
-  // --- REMOVED State/Ref for User Dropdown Menu ---
-  // This state is no longer needed here.
-  // The <Header> component now manages its own dropdown state internally.
-  // --- *** END OF FIX *** ---
-
 
   // --- Custom Tooltip/Popup State ---
   const [tooltip, setTooltip] = useState({
@@ -192,13 +204,6 @@ function AppWrapper() {
   }, [tooltip.visible, hideTooltip]);
   // --- End Tooltip Handlers ---
 
-
-  // --- *** THIS IS THE FIX (BUG 1) *** ---
-  // --- REMOVED Click outside handler for User Menu ---
-  // This is no longer needed as <Header> handles it internally.
-  // --- *** END OF FIX *** ---
-
-
   // --- Firebase Auth Listener Effect ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -221,14 +226,10 @@ function AppWrapper() {
       const checkProfile = async () => {
         try {
           // --- *** APP CHECK FIX (v3) *** ---
-          // 1. Wait for the appCheckReady "signal" from firebaseConfig.js
-          // This promise resolves only *after* App Check gets its first token.
           await appCheckReady;
           console.log("App Check is ready, proceeding to fetch profile.");
           // --- *** END FIX *** ---
 
-          // 2. Now, make the profile request.
-          // The interceptor is guaranteed to be running and have a token.
           const response = await axios.get(`${API_URL}/profile/me`);
           setProfile(response.data);
           setSavedArticleIds(new Set(response.data.savedArticles || []));
@@ -248,16 +249,8 @@ function AppWrapper() {
       };
       checkProfile();
     }
-    // --- THIS IS THE FIX ---
-    // Removed 'profile' from this array to stop the infinite loop
   }, [authState.user, navigate, location.pathname]);
   // --- END OF FIX ---
-
-
-  // --- *** APP CHECK FIX (v2): REMOVED the interceptor setup from here *** ---
-  // The interceptor is now outside the component.
-  // --- *** END OF FIX *** ---
-
 
   // Effect to set initial theme from localStorage
   useEffect(() => {
@@ -274,7 +267,6 @@ function AppWrapper() {
   }, []);
 
   // --- *** ARTICLE FETCH LOOP FIX *** ---
-  // This function is for *initial load* or *filter change* ONLY
   const fetchArticles = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
       setIsRefreshing(true);
@@ -336,13 +328,11 @@ function AppWrapper() {
         setInitialLoad(false);
       }
     }
-  }, [filters, handleLogout]); // This function is STABLE and only depends on filters
+  }, [filters, handleLogout]); 
 
-  // This function is for *loading more* ONLY
   const loadMoreArticles = useCallback(async () => {
-    // Read length at the *moment of the call*
     if (loading || isRefreshing || displayedArticles.length >= totalArticlesCount) return; 
-    setLoading(true); // Show bottom loader
+    setLoading(true); 
     
     const limit = 12;
     const offset = displayedArticles.length; // Use current length
@@ -357,7 +347,6 @@ function AppWrapper() {
       const uniqueNewArticles = articlesData
         .filter(article => article && article.url)
         .map(article => ({
-            // ... (data cleaning as before) ...
             _id: article._id || article.url,
             headline: article.headline || article.title || 'No Headline Available',
             summary: article.summary || article.description || 'No summary available.',
@@ -383,32 +372,26 @@ function AppWrapper() {
             clusterCount: Number(article.clusterCount) || 1
         }));
       
-      // Use the functional update to append articles
       setDisplayedArticles(prevDisplayedArticles => {
         const currentUrls = new Set(prevDisplayedArticles.map(a => a.url));
         const trulyNewArticles = uniqueNewArticles.filter(a => !currentUrls.has(a.url));
-        // --- *** THIS IS THE FIX *** ---
-        // The typo `trulyNew.articles` has been corrected to `trulyNewArticles`
         return [...prevDisplayedArticles, ...trulyNewArticles];
-        // --- *** END OF FIX *** ---
       });
     } catch (error) {
       console.error('❌ Error loading more articles:', error.response ? error.response.data : error.message);
     } finally {
       setLoading(false);
     }
-  }, [loading, isRefreshing, displayedArticles.length, totalArticlesCount, filters]); // This is stable
+  }, [loading, isRefreshing, displayedArticles.length, totalArticlesCount, filters]); 
   // --- *** END OF ARTICLE FETCH FIX *** ---
 
   
-  // This hook fetches articles when filters, profile, or path changes.
   useEffect(() => {
-    if (!authState.user || !profile) return; // Don't fetch if no profile
+    if (!authState.user || !profile) return; 
+    const isFeedPage = location.pathname === '/'; 
+    if (!isFeedPage) return; 
 
-    const isFeedPage = location.pathname === '/'; // Only fetch for the main feed
-    if (!isFeedPage) return; // Don't fetch if not on the main feed page
-
-    fetchArticles(false); // Call the initial load function
+    fetchArticles(false); 
   }, [filters, authState.user, profile, location.pathname, fetchArticles]); 
 
   const handleAnalyzeClick = useCallback((article) => {
@@ -418,7 +401,6 @@ function AppWrapper() {
       .catch(err => console.error('Failed to log activity', err));
   }, []);
 
-  // Effect to check for shared article on load
   useEffect(() => {
     const fetchAndShowArticle = async (id) => {
       if (!id || !/^[a-f\d]{24}$/i.test(id)) {
@@ -453,7 +435,7 @@ function AppWrapper() {
               keyFindings: Array.isArray(article.keyFindings) ? article.keyFindings : [],
               recommendations: Array.isArray(article.recommendations) ? article.recommendations : [],
               clusterId: article.clusterId || null,
-              clusterCount: Number(article.clusterCount) || 1 // Fetch or default clusterCount
+              clusterCount: Number(article.clusterCount) || 1 
            };
            handleAnalyzeClick(cleanedArticle);
         }
@@ -471,7 +453,6 @@ function AppWrapper() {
   }, [authState.user, profile, handleAnalyzeClick]);
 
 
-  // Close sidebar on filter change (for mobile)
   useEffect(() => {
     if (isSidebarOpen) {
       setIsSidebarOpen(false);
@@ -479,7 +460,6 @@ function AppWrapper() {
   }, [filters, isSidebarOpen]);
 
   
-  // Pull-to-refresh
   useEffect(() => {
     const contentEl = contentRef.current;
     if (!contentEl || !isMobileView) return;
@@ -502,7 +482,7 @@ function AppWrapper() {
 
     const handleTouchEnd = () => {
       if (contentEl.scrollTop === 0 && pullDistance > pullThreshold && !isRefreshing) {
-        fetchArticles(true); // Call fetchArticles with "isRefresh = true"
+        fetchArticles(true); 
       }
       setPullDistance(0);
     };
@@ -532,7 +512,6 @@ function AppWrapper() {
       setFilters(newFilters);
   };
 
-  // Infinite scroll listener
   useEffect(() => {
     let timeoutId;
     const scrollableElement = isMobileView ? contentRef.current : window;
@@ -547,9 +526,8 @@ function AppWrapper() {
             const clientHeight = isWindow ? window.innerHeight : scrollableElement.clientHeight;
 
             if (clientHeight + scrollTop >= scrollHeight - 800) {
-                // This logic is now safe because loadMoreArticles is stable
                 if (!loading && displayedArticles.length < totalArticlesCount) {
-                    loadMoreArticles(); // Call the stable loadMore function
+                    loadMoreArticles(); 
                 }
             }
         }, 150);
@@ -591,14 +569,19 @@ function AppWrapper() {
     }
   };
 
+  // --- *** THIS IS THE HAMBURGER GLITCH FIX *** ---
   // --- Combined Sidebar Toggle Logic ---
-  const toggleSidebar = () => {
+  const toggleSidebar = (e) => {
+    // This stops the click from "bubbling" up to the overlay
+    if (e) e.stopPropagation(); 
+    
     if (isMobileView) { // (FIX) Use isMobileView state
       setIsSidebarOpen(!isSidebarOpen);
     } else {
       setIsDesktopSidebarVisible(!isDesktopSidebarVisible);
     }
   };
+  // --- *** END OF FIX *** ---
 
   // --- Combined Sidebar Close Logic ---
   const closeSidebar = () => {
@@ -607,12 +590,10 @@ function AppWrapper() {
     }
   };
 
-  // --- *** NEW: Save/Unsave Handler *** ---
   const handleToggleSave = async (article) => {
     const articleId = article._id;
     if (!articleId) return;
 
-    // Optimistic UI Update: Update the state immediately
     const newSavedArticleIds = new Set(savedArticleIds);
     if (newSavedArticleIds.has(articleId)) {
       newSavedArticleIds.delete(articleId);
@@ -621,12 +602,10 @@ function AppWrapper() {
     }
     setSavedArticleIds(newSavedArticleIds);
 
-    // Call the backend to sync the change
     try {
       await axios.post(`${API_URL}/articles/${articleId}/save`);
     } catch (error) {
       console.error('Failed to toggle save state:', error);
-      // Revert UI on error
       const revertedSavedArticleIds = new Set(savedArticleIds);
       if (revertedSavedArticleIds.has(articleId)) {
         revertedSavedArticleIds.delete(articleId);
@@ -637,11 +616,7 @@ function AppWrapper() {
       alert('Error saving article. Please try again.');
     }
   };
-  // --- *** END NEW *** ---
 
-
-  // --- Activity Logging ---
-  // handleAnalyzeClick is defined above for the share link effect
   const handleCompareClick = (article) => {
     setCompareModal({ open: true, clusterId: article.clusterId, articleTitle: article.headline, articleId: article._id });
     axios.post(`${API_URL}/activity/log-compare`, { articleId: article._id })
@@ -656,51 +631,33 @@ function AppWrapper() {
 
     window.open(article.url, '_blank', 'noopener,noreferrer');
   };
-  // --- *** END ACTIVITY LOGGING *** ---
 
 
   // --- Main App Render Logic ---
 
-  // 1. Show main loader while checking auth OR profile
   if (authState.isLoading || (authState.user && isProfileLoading)) {
      return (
        <PageLoader />
      );
   }
 
-  // 2. No user? Show Login page
   if (!authState.user) {
     return <Login />;
   }
 
-  // 3. User exists, but no profile?
-  // The <CreateProfile> page will be shown by the Router.
-  // The `isProfileLoading` is now false, so PageLoader is hidden.
-  // The Router will show the <CreateProfile> page.
-
-  // 4. User and Profile exist! Show the app.
   return (
     <div className="app">
-      {/* This Header is now shared by all routes */}
       {profile && (
         <Header
           theme={theme}
           toggleTheme={toggleTheme}
           onToggleSidebar={toggleSidebar}
           username={profile.username}
-          // --- *** THIS IS THE FIX (BUG 1) *** ---
-          // --- REMOVED PROPS for User Menu ---
-          // userMenuRef={userMenuRef}
-          // isUserMenuOpen={isUserMenuOpen}
-          // setIsUserMenuOpen={setIsUserMenuOpen}
-          // --- *** END OF FIX *** ---
         />
       )}
 
-      {/* --- WRAP ROUTES IN SUSPENSE --- */}
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* --- Main App Page (Homepage) --- */}
           <Route path="/" element={
             profile ? (
               <>
@@ -773,10 +730,8 @@ function AppWrapper() {
                                     onShare={shareArticle}
                                     onRead={handleReadClick}
                                     showTooltip={showTooltip}
-                                    // --- *** NEW PROPS *** ---
                                     isSaved={savedArticleIds.has(article._id)}
                                     onToggleSave={() => handleToggleSave(article)}
-                                    // --- *** END NEW *** ---
                                   />
                                 </div>
                               ))}
@@ -833,8 +788,6 @@ function AppWrapper() {
                 )}
               </>
             ) : (
-               // This renders if user is logged in but profile is null
-               // (e.g., after a 429 error or App Check failure)
                <div className="loading-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)', paddingTop: '60px' }}>
                  <p style={{color: 'var(--text-tertiary)', maxWidth: '300px', textAlign: 'center'}}>
                    Could not load your profile. You may be rate-limited.
@@ -868,12 +821,11 @@ function AppWrapper() {
           <Route path="/account-settings" element={ profile ? <AccountSettings /> : null } />
 
         </Routes>
-      </Suspense> {/* --- END SUSPENSE WRAPPER --- */}
+      </Suspense> 
     </div>
   );
 }
 
-// --- Main App component just renders the wrapper ---
 function App() {
   return <AppWrapper />;
 }

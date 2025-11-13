@@ -1,4 +1,5 @@
 // In file: src/App.js
+// --- *** APP CHECK FIX (v3) - Using Promise signal *** ---
 // --- *** TYPO FIX in loadMoreArticles *** ---
 // --- *** APP CHECK FIX (v2) - Solves race condition *** ---
 // --- FINAL FIX: Separated initial fetch from loadMore to kill infinite loop ---
@@ -14,8 +15,8 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 
 // --- Firebase Auth Imports ---
 import { onAuthStateChanged, signOut } from "firebase/auth";
-// --- *** APP CHECK FIX: Import appCheck *** ---
-import { auth, appCheck } from './firebaseConfig'; // Import our configured auth AND appCheck
+// --- *** APP CHECK FIX (v3): Import appCheck AND appCheckReady *** ---
+import { auth, appCheck, appCheckReady } from './firebaseConfig'; // Import our configured auth, appCheck, AND the new signal
 import { getToken } from "firebase/app-check"; // Import getToken
 // --- *** END FIX *** ---
 import Login from './Login'; // Import the Login component
@@ -226,21 +227,15 @@ function AppWrapper() {
       
       const checkProfile = async () => {
         try {
-          // --- *** APP CHECK FIX (v2) *** ---
-          // 1. Wait for the App Check token ("secret handshake") first
-          // This ensures App Check is initialized before we call axios
-          if (appCheck) {
-            try {
-              await getToken(appCheck, /* forceRefresh= */ false);
-              console.log("App Check token is ready.");
-            } catch (appCheckError) {
-              console.error("Failed to get App Check token:", appCheckError);
-            }
-          }
+          // --- *** APP CHECK FIX (v3) *** ---
+          // 1. Wait for the appCheckReady "signal" from firebaseConfig.js
+          // This promise resolves only *after* App Check gets its first token.
+          await appCheckReady;
+          console.log("App Check is ready, proceeding to fetch profile.");
           // --- *** END FIX *** ---
 
           // 2. Now, make the profile request.
-          // The interceptor we moved outside is *guaranteed* to be running.
+          // The interceptor is guaranteed to be running and have a token.
           const response = await axios.get(`${API_URL}/profile/me`);
           setProfile(response.data);
           setSavedArticleIds(new Set(response.data.savedArticles || []));
@@ -649,7 +644,7 @@ function AppWrapper() {
       alert('Error saving article. Please try again.');
     }
   };
-  // --- *** END NEW *** ---
+  // --- *** END NEW --- ---
 
 
   // --- Activity Logging ---

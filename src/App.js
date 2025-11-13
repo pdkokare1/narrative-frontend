@@ -1,4 +1,5 @@
 // In file: src/App.js
+// --- *** TYPO FIX in loadMoreArticles *** ---
 // --- *** APP CHECK FIX (v2) - Solves race condition *** ---
 // --- FINAL FIX: Separated initial fetch from loadMore to kill infinite loop ---
 // --- BUG FIX: Removed 'profile' from profile-checking useEffect dependency array ---
@@ -398,7 +399,10 @@ function AppWrapper() {
       setDisplayedArticles(prevDisplayedArticles => {
         const currentUrls = new Set(prevDisplayedArticles.map(a => a.url));
         const trulyNewArticles = uniqueNewArticles.filter(a => !currentUrls.has(a.url));
-        return [...prevDisplayedArticles, ...trulyNew.articles];
+        // --- *** THIS IS THE FIX *** ---
+        // The typo `trulyNew.articles` has been corrected to `trulyNewArticles`
+        return [...prevDisplayedArticles, ...trulyNewArticles];
+        // --- *** END OF FIX *** ---
       });
     } catch (error) {
       console.error('❌ Error loading more articles:', error.response ? error.response.data : error.message);

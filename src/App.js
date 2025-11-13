@@ -644,7 +644,7 @@ function AppWrapper() {
       alert('Error saving article. Please try again.');
     }
   };
-  // --- *** END NEW --- ---
+  // --- *** END NEW *** ---
 
 
   // --- Activity Logging ---
@@ -840,7 +840,7 @@ function AppWrapper() {
               </>
             ) : (
                // This renders if user is logged in but profile is null
-               // (e.g., after a 429 error)
+               // (e.g., after a 429 error or App Check failure)
                <div className="loading-container" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)', paddingTop: '60px' }}>
                  <p style={{color: 'var(--text-tertiary)', maxWidth: '300px', textAlign: 'center'}}>
                    Could not load your profile. You may be rate-limited.

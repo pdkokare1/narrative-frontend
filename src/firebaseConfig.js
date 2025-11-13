@@ -19,6 +19,11 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
+// --- *** THIS IS THE FIX *** ---
+// 1. Declare appCheck so it can be exported
+let appCheck;
+// --- *** END OF FIX *** ---
+
 // --- 2. INITIALIZE APP CHECK (THE NEW CODE) ---
 // This code only runs in the browser
 if (typeof window !== 'undefined') {
@@ -28,11 +33,13 @@ if (typeof window !== 'undefined') {
   const siteKey = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
 
   if (siteKey) {
-    // Initialize App Check
-    initializeAppCheck(app, {
+    // --- *** THIS IS THE FIX *** ---
+    // 2. Assign the initialized service to the appCheck variable
+    appCheck = initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider(siteKey),
       isTokenAutoRefreshEnabled: true // Keep this true
     });
+    // --- *** END OF FIX *** ---
   } else {
     console.error("App Check: REACT_APP_RECAPTCHA_SITE_KEY is not set.");
   }
@@ -44,3 +51,8 @@ getAnalytics(app);
 
 // Export the auth service for use in other files
 export const auth = getAuth(app);
+
+// --- *** THIS IS THE FIX *** ---
+// 3. Export the appCheck service
+export { appCheck };
+// --- *** END OF FIX *** ---

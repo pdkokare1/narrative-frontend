@@ -3,7 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 // --- 1. IMPORT APP CHECK ---
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { initializeAppCheck, ReCaptchaV3Provider, onTokenChanged } from "firebase/app-check"; // <-- ADD onTokenChanged
 
 // Your web app's Firebase configuration using Environment Variables
 const firebaseConfig = {
@@ -19,32 +19,39 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// --- *** THIS IS THE FIX *** ---
-// 1. Declare appCheck so it can be exported
+// Declare appCheck so it can be exported
 let appCheck;
+
+// --- *** THIS IS THE FIX (v3) *** ---
+// Create a promise that resolves when App Check has its first token.
+// This is the "signal" we will wait for in App.js.
+const appCheckReady = new Promise((resolve) => {
+  if (typeof window !== 'undefined') {
+    const siteKey = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
+    if (siteKey) {
+      appCheck = initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(siteKey),
+        isTokenAutoRefreshEnabled: true 
+      });
+      
+      // Listen for the first token
+      const unsubscribe = onTokenChanged(appCheck, (token) => {
+        if (token) {
+          console.log("App Check token received, signaling ready.");
+          resolve(); // The signal is "go"!
+          unsubscribe(); // Stop listening, we only needed the first one.
+        }
+      });
+    } else {
+      console.error("App Check: REACT_APP_RECAPTCHA_SITE_KEY is not set.");
+      resolve(); // Resolve anyway so the app doesn't hang
+    }
+  } else {
+    resolve(); // Resolve for non-browser environments
+  }
+});
 // --- *** END OF FIX *** ---
 
-// --- 2. INITIALIZE APP CHECK (THE NEW CODE) ---
-// This code only runs in the browser
-if (typeof window !== 'undefined') {
-  
-  // Get the Site Key from your Environment Variable
-  // IMPORTANT: You must create this variable in Vercel
-  const siteKey = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
-
-  if (siteKey) {
-    // --- *** THIS IS THE FIX *** ---
-    // 2. Assign the initialized service to the appCheck variable
-    appCheck = initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(siteKey),
-      isTokenAutoRefreshEnabled: true // Keep this true
-    });
-    // --- *** END OF FIX *** ---
-  } else {
-    console.error("App Check: REACT_APP_RECAPTCHA_SITE_KEY is not set.");
-  }
-}
-// --- END OF APP CHECK CODE ---
 
 // Initialize Analytics (your existing code)
 getAnalytics(app); 
@@ -52,7 +59,5 @@ getAnalytics(app);
 // Export the auth service for use in other files
 export const auth = getAuth(app);
 
-// --- *** THIS IS THE FIX *** ---
-// 3. Export the appCheck service
-export { appCheck };
-// --- *** END OF FIX *** ---
+// Export the appCheck service AND our new "ready" signal
+export { appCheck, appCheckReady };

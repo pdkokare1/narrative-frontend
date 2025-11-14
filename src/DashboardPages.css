@@ -1,6 +1,7 @@
 /* In file: src/DashboardPages.css */
-/* --- FIX: Use repeat(2, minmax(0, 1fr)) to fix stat card overflow --- */
-/* --- FIX: Increased dashboard-page padding-bottom to 90px --- */
+/* --- FIX: Moved .date-range-selector into .section-title-header (left col) --- */
+/* --- FIX: Moved .account-settings-link to a new .dashboard-left-footer --- */
+/* --- FIX: Increased .dashboard-page padding-bottom to 90px (mobile) --- */
 
 /* --- Page Wrapper --- */
 .dashboard-page {
@@ -38,20 +39,35 @@
   position: sticky;
   top: 75px; /* 60px header + 15px padding */
   height: calc(100vh - 90px); /* 75px top + 15px bottom */
-  overflow-y: auto; /* <-- NOW it scrolls if it's too tall */
-  /* --- *** THIS IS THE FIX *** --- */
-  background-color: var(--bg-primary); /* Match page background */
-  /* --- *** END OF FIX *** --- */
+  /* --- MODIFIED: Overflow is now handled by inner div --- */
+  overflow: hidden; 
+  background-color: var(--bg-primary); 
   /* --- END NEW --- */
+}
 
+/* --- *** THIS IS THE FIX *** --- */
+/* --- NEW: Inner scroll container for left column --- */
+.dashboard-left-scroll {
+  overflow-y: auto;
+  flex-grow: 1; /* Takes up all space except footer */
+  
   /* Custom scrollbar for left column */
   scrollbar-width: thin;
   scrollbar-color: var(--accent-primary) var(--bg-secondary);
 }
-.dashboard-left-column::-webkit-scrollbar { width: 6px; }
-.dashboard-left-column::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px;}
-.dashboard-left-column::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 3px; }
-.dashboard-left-column::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
+.dashboard-left-scroll::-webkit-scrollbar { width: 6px; }
+.dashboard-left-scroll::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px;}
+.dashboard-left-scroll::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 3px; }
+.dashboard-left-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
+
+/* --- NEW: Footer for Account Settings button --- */
+.dashboard-left-footer {
+  flex-shrink: 0; /* Prevent from shrinking */
+  padding-top: 15px; /* Space above button */
+  margin-top: auto; /* Pushes this to the bottom */
+}
+/* --- *** END OF FIX *** --- */
+
 
 /* --- Right Column Styles --- */
 .dashboard-right-column {
@@ -291,7 +307,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 
 /* --- UPDATED: Account Settings Button Margin --- */
 .account-settings-link {
-  margin-top: 5px; /* Reduced from 10px */
+  /* margin-top: 5px; */ /* REMOVED - now handled by footer */
 }
 /* --- END UPDATE --- */
 
@@ -307,7 +323,10 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   padding-right: 10px; /* Add padding back */
   padding-bottom: 10px; /* Space below sticky header */
 }
-.sticky-header-wrapper .section-title-header { margin-bottom: 0; }
+/* --- *** THIS IS THE FIX *** --- */
+/* REMOVED: .sticky-header-wrapper .section-title-header { margin-bottom: 0; } */
+/* We now use the standard header in the right column */
+/* --- *** END OF FIX *** --- */
 
 
 /* --- Dashboard Chart Grid --- */
@@ -397,10 +416,32 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   .dashboard-left-column { margin-bottom: 15px; gap: 15px; }
   .dashboard-right-column { padding-bottom: 15px; }
 
-  .section-title-header {
-    margin-bottom: 15px; align-items: flex-start; flex-direction: column; gap: 8px;
+  /* --- *** THIS IS THE FIX *** --- */
+  /* --- Modified layout for left column header --- */
+  .dashboard-left-column .section-title-header {
+    margin-bottom: 15px; 
+    align-items: center; /* Center items vertically */
+    flex-direction: row; /* Keep as row */
+    gap: 10px; /* Keep gap */
   }
-  .header-actions { width: 100%; justify-content: space-between; }
+  .dashboard-left-column .header-actions { 
+    width: auto; /* Don't take full width */
+    justify-content: flex-end; /* Align to the right */
+  }
+  /* --- *** END OF FIX *** --- */
+  
+  /* --- Header for right column --- */
+  .dashboard-right-column .section-title-header {
+     margin-bottom: 15px; 
+     align-items: flex-start; 
+     flex-direction: column; 
+     gap: 8px;
+  }
+  .dashboard-right-column .header-actions {
+     width: 100%;
+     justify-content: space-between;
+  }
+
   .date-range-selector span { margin-left: 0; }
 
   /* --- *** THIS IS THE FIX *** --- */

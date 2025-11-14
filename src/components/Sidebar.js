@@ -1,5 +1,5 @@
 // In file: src/components/Sidebar.js
-// --- UPDATED: Moved "Account Settings" to footer, removed "Navigation" title ---
+// --- UPDATED: Added Dashboard link for mobile ---
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import CustomSelect from './ui/CustomSelect'; // Import the CustomSelect component
@@ -57,8 +57,9 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
         <div className="sidebar-section sidebar-section-mobile-only">
           {/* --- REMOVED <h3>Navigation</h3> --- */}
           <ul>
+            {/* --- *** THIS IS THE FIX: Added Dashboard Link *** --- */}
+            <li><SidebarNavLink to="/my-dashboard">Dashboard</SidebarNavLink></li>
             <li><SidebarNavLink to="/saved-articles">Saved Articles</SidebarNavLink></li>
-            {/* --- REMOVED "Account Settings" from here --- */}
           </ul>
         </div>
         {/* --- *** END OF FIX *** --- */}

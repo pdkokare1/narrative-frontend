@@ -1,6 +1,6 @@
 /* In file: src/DashboardPages.css */
-/* --- FIX: Changed stat-box-grid to use 1fr 1fr to fix overflow --- */
-/* --- FIX: Increased dashboard-page padding-bottom to 60px --- */
+/* --- FIX: Use repeat(2, minmax(0, 1fr)) to fix stat card overflow --- */
+/* --- FIX: Increased dashboard-page padding-bottom to 90px --- */
 
 /* --- Page Wrapper --- */
 .dashboard-page {
@@ -356,7 +356,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
     -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
     overscroll-behavior-y: contain; /* Prevent bounce */
     /* --- *** THIS IS THE FIX *** --- */
-    padding-bottom: 60px; /* Add space at the bottom (was 30px) */
+    padding-bottom: 90px; /* Add space at the bottom (was 60px) */
     /* --- *** END OF FIX *** --- */
   }
   /* --- *** END OF FIX *** --- */
@@ -405,7 +405,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 
   /* --- *** THIS IS THE FIX *** --- */
   .stat-box-grid { 
-    grid-template-columns: 1fr 1fr; /* Changed from repeat(2, 1fr) */
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* FIX for overflow */
     gap: 10px; 
     padding: 0; 
   }

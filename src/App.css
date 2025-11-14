@@ -1,7 +1,6 @@
 /* In file: src/App.css */
-/* --- FIX: Removed margin-top: auto from sidebar-footer to fix scrolling --- */
-/* --- FIX: Updated sidebar-nav-link style to be distinct from filters --- */
-/* --- FIX: Reduced top padding on .sidebar-header-mobile --- */
+/* --- FIX: Re-styled .sidebar-nav-link to look like distinct buttons --- */
+/* --- FIX: Re-styled .sidebar-logout-btn to match new nav link style --- */
 
 /* ==================== PREMIUM THEME VARIABLES ==================== */
 .dark-mode {
@@ -335,14 +334,14 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   border-radius: 6px;
   transition: all 0.2s ease;
   text-decoration: none;
-  background-color: transparent; /* No background */
-  border: 1px solid transparent; /* No border */
+  background-color: var(--bg-primary); /* --- NEW: Add background --- */
+  border: 1px solid var(--border-color); /* --- NEW: Add border --- */
   margin-bottom: 8px;
 }
 .sidebar-nav-link:hover {
   background: var(--bg-elevated);
   color: var(--text-primary);
-  border-color: transparent; /* No border on hover */
+  border-color: var(--accent-primary); /* --- NEW: Add accent on hover --- */
 }
 .sidebar-nav-link.active-link { /* Style for active route */
   background: var(--accent-primary);
@@ -374,8 +373,8 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   font-size: 13px; /* Match nav links */
   font-weight: 600; /* Match nav links */
   color: var(--text-secondary); /* Match nav links */
-  background-color: transparent; /* Match nav links */
-  border: 1px solid transparent; /* Match nav links */
+  background-color: var(--bg-primary); /* --- NEW: Match nav links --- */
+  border: 1px solid var(--border-color); /* --- NEW: Match nav links --- */
   border-radius: 6px;
   cursor: pointer;
   text-align: left; /* --- CHANGED: Align left like nav links --- */
@@ -384,7 +383,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 .sidebar-logout-btn:hover {
   background-color: var(--bg-elevated);
   color: #E57373; /* --- CHANGED: Use a red color for logout hover --- */
-  border-color: transparent;
+  border-color: #E57373; /* --- NEW: Red border on hover --- */
 }
 /* --- END UPDATE --- */
 

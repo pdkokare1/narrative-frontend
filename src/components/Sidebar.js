@@ -1,5 +1,5 @@
 // In file: src/components/Sidebar.js
-// --- UPDATED: Simplified layout to make Nav links always visible ---
+// --- UPDATED: Moved "Account Settings" to footer, removed "Navigation" title ---
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import CustomSelect from './ui/CustomSelect'; // Import the CustomSelect component
@@ -55,10 +55,10 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
         {/* --- *** THIS IS THE FIX (Request 5) *** --- */}
         {/* This div will be hidden on desktop by App.css */}
         <div className="sidebar-section sidebar-section-mobile-only">
-          <h3>Navigation</h3>
+          {/* --- REMOVED <h3>Navigation</h3> --- */}
           <ul>
             <li><SidebarNavLink to="/saved-articles">Saved Articles</SidebarNavLink></li>
-            <li><SidebarNavLink to="/account-settings">Account Settings</SidebarNavLink></li>
+            {/* --- REMOVED "Account Settings" from here --- */}
           </ul>
         </div>
         {/* --- *** END OF FIX *** --- */}
@@ -127,6 +127,15 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
 
       {/* --- Footer Area (Logout) --- */}
       <div className="sidebar-footer">
+        
+        {/* --- *** NEW: Moved Account Settings here *** --- */}
+        <div className="sidebar-section sidebar-section-mobile-only" style={{ marginBottom: '15px' }}>
+          <ul>
+            <li><SidebarNavLink to="/account-settings">Account Settings</SidebarNavLink></li>
+          </ul>
+        </div>
+        {/* --- *** END NEW *** --- */}
+
         {/* --- Logout Button --- */}
         <button onClick={onLogout} className="sidebar-logout-btn">
           Sign Out

@@ -1,6 +1,6 @@
 /* In file: src/App.css */
 /* --- FIX: Reduced .sidebar-header-mobile padding-top to 10px --- */
-/* --- FIX: Removed flex-grow: 1 from .sidebar-main-content (mobile) to fix Sign Out button --- */
+/* --- FIX: Made .sidebar-main-content scrollable and .sidebar-footer sticky --- */
 
 /* ==================== PREMIUM THEME VARIABLES ==================== */
 .dark-mode {
@@ -285,15 +285,15 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 
 /* --- UPDATED: Sidebar Content Sections --- */
 /* Container for main sidebar content (nav, filters, sort) */
-/* --- *** THIS IS THE FIX (Sidebar Scroll) *** --- */
 .sidebar-main-content {
   flex-grow: 1; /* Allows footer to be pushed down */
-  /* REMOVED: overflow-y: auto; */
-  /* REMOVED: -ms-overflow-style: none; */
-  /* REMOVED: scrollbar-width: none; */
+  /* --- *** THIS IS THE FIX *** --- */
+  /* On mobile, this main content area will scroll */
+  overflow-y: auto;
+  min-height: 0; /* Fix for flexbox overflow */
+  /* --- *** END OF FIX *** --- */
 }
-/* REMOVED: .sidebar-main-content::-webkit-scrollbar { display: none; } */
-/* --- *** END OF FIX *** --- */
+
 
 .sidebar-section { margin-bottom: 25px; } /* Increased spacing */
 .sidebar-section:last-child { margin-bottom: 0; } /* No margin on last section */
@@ -358,7 +358,8 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 /* Sidebar Footer Area */
 .sidebar-footer {
   /* --- *** THIS IS THE FIX *** --- */
-  /* REMOVED: margin-top: auto; */
+  margin-top: auto; /* Pushes to bottom */
+  flex-shrink: 0; /* Prevents shrinking */
   /* --- *** END OF FIX *** --- */
   padding-top: 15px; /* Space above footer items */
   border-top: 1px solid var(--border-light);
@@ -1266,9 +1267,10 @@ button:disabled, button:disabled:hover {
     padding: 25px 20px; /* Reset padding */
     display: flex;
     flex-direction: column;
-    /* --- MODIFIED: Remove justify-content for scroll --- */
-    /* justify-content: space-between; */
-    overflow-y: auto;
+    /* --- *** THIS IS THE FIX *** --- */
+    justify-content: space-between; /* Pushes footer to bottom */
+    /* --- *** END OF FIX *** --- */
+    overflow-y: hidden; /* --- CHANGED: No scroll on sidebar itself --- */
     /* Remove old mobile styles */
     border-bottom: none;
     margin-left: 0; /* (FIX) Override desktop margin */
@@ -1650,22 +1652,21 @@ button:disabled, button:disabled:hover {
 
 /* --- Mobile Sidebar adjustments --- */
 @media (max-width: 768px) {
-    /* --- REMOVE justify-content for mobile scroll --- */
+    /* --- *** THIS IS THE FIX *** --- */
     .sidebar {
-        justify-content: flex-start;
+        justify-content: flex-start; /* Let flexbox handle it */
     }
-    /* --- *** THIS IS THE FIX (Sidebar Scroll) *** --- */
     .sidebar-main-content {
-        /* REMOVED: flex-grow: 1; */
+        flex-grow: 1; /* Take up space */
+        overflow-y: auto; /* THIS PART SCROLLS */
+        min-height: 0; /* Fix flexbox */
     }
-    /* --- *** END OF FIX *** --- */
     .sidebar-footer {
         flex-shrink: 0; /* Prevent footer shrinking */
-        /* --- *** THIS IS THE FIX *** --- */
-        /* REMOVED: margin-top: auto; */
-        /* --- *** END OF FIX *** --- */
+        margin-top: auto; /* PUSH TO BOTTOM */
         padding-top: 15px; /* (NEW) Adds space above footer */
     }
+    /* --- *** END OF FIX *** --- */
     
     /* --- *** ADDED: Ensure nav links are visible on mobile *** --- */
     .sidebar-top-nav,
@@ -1690,4 +1691,25 @@ button:disabled, button:disabled:hover {
   width: 100%;
   padding-top: 60px; /* Account for fixed header */
   background-color: var(--bg-primary);
+}
+
+/* --- *** NEW: Global styles for router-outlet --- */
+/* This will contain the dashboard, saved articles, etc. */
+.content-router-outlet {
+  flex: 1; /* Take up remaining space */
+  min-width: 0; /* Fix flexbox overflow */
+  position: relative;
+  
+  /* --- NEW: Make this the scroller on desktop --- */
+  overflow-y: auto;
+  height: calc(100vh - 60px);
+}
+
+/* --- On mobile, the .content-router-outlet should NOT scroll --- */
+/* The child (.dashboard-page or .content) will scroll instead */
+@media (max-width: 768px) {
+  .content-router-outlet {
+    overflow-y: visible;
+    height: auto;
+  }
 }

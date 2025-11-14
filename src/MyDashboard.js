@@ -1,6 +1,8 @@
 // In file: src/MyDashboard.js
 // --- FIX: Component now accepts `theme` as a prop ---
 // --- FIX: Removed the line `const theme = document.body.className...` ---
+// --- FIX: Moved 'Viewing All-Time Stats' to the left column header ---
+// --- FIX: Moved 'Account Settings' link to a new 'dashboard-left-footer' div ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom'; // Use Link for Back to Articles
@@ -314,83 +316,91 @@ function MyDashboard({ theme }) {
 
         {/* --- Left Column --- */}
         <div className="dashboard-left-column">
-           <div className="section-title-header no-border-bottom">
-             <h2 className="section-title no-border">Your Activity</h2>
-             <div className="header-actions">
-                 <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
-                   Back to Articles
-                 </Link>
-             </div>
-           </div>
-
-          {/* Activity Stat Boxes (now wrapped) */}
-          <div className="dashboard-card no-padding"> {/* Add no-padding if needed */}
-            <div className="stat-box-grid">
-              {statBoxes.map(box => (
-                <div key={box.key} className="stat-box"> {/* Removed dashboard-card from here */}
-                   <h3>{box.title}</h3>
-                   <p className="stat-number">{loadingStats ? '...' : box.value}</p>
-                   <p className="stat-description">{box.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-
-          {/* Reading Bias Card */}
-          <h2 className="section-title reading-bias-title">Reading Bias</h2> {/* ADDED CLASS */}
-           <div className="dashboard-card lean-summary-card"> {/* Already a card */}
-              {loadingStats ? <div className="loading-container simple"><div className="spinner small"></div></div> : totalApplicableLeanArticles > 0 ? ( // USE APPLICABLE TOTAL
-                <>
-                  {/* --- NEW: Visual Key / Legend --- */}
-                  <div className="lean-legend">
-                    <div className="legend-item">
-                      <span className="legend-dot" style={{ backgroundColor: leanColors['Left'] }}></span> Left
-                    </div>
-                    <div className="legend-item">
-                      <span className="legend-dot" style={{ backgroundColor: leanColors['Center'] }}></span> Center
-                    </div>
-                    <div className="legend-item">
-                      <span className="legend-dot" style={{ backgroundColor: leanColors['Right'] }}></span> Right
-                    </div>
-                  </div>
-                  {/* --- END NEW --- */}
-
-                  <div className="lean-bar">
-                     {/* --- UPDATED: Use calculated percentages --- */}
-                     { leftCombinedPerc > 0 && <div className="lean-segment left" style={{ width: `${leftCombinedPerc}%` }}>{leftCombinedPerc >= 10 ? `L ${leftCombinedPerc}%` : ''}</div> }
-                     { centerPerc > 0 && <div className="lean-segment center" style={{ width: `${centerPerc}%` }}>{centerPerc >= 10 ? `C ${centerPerc}%` : ''}</div> }
-                     { rightCombinedPerc > 0 && <div className="lean-segment right" style={{ width: `${rightCombinedPerc}%` }}>{rightCombinedPerc >= 10 ? `R ${rightCombinedPerc}%` : ''}</div> }
-                  </div>
-                  <ul className="lean-details">
-                     {/* --- UPDATED: Use calculated percentages --- */}
-                     {leftCombinedPerc > 0 && (<li><span>{leftCombinedPerc}%</span> analyzed lean left.</li>)}
-                     {centerPerc > 0 && (<li><span>{centerPerc}%</span> analyzed were balanced.</li>)}
-                     {rightCombinedPerc > 0 && (<li><span>{rightCombinedPerc}%</span> analyzed lean right.</li>)}
-                  </ul>
-                </>
-              ) : ( <p className="no-data-msg small">No applicable analysis data available yet.</p> )}
+          {/* --- *** THIS IS THE FIX *** --- */}
+          {/* --- This new div handles scrolling --- */}
+          <div className="dashboard-left-scroll">
+            <div className="section-title-header no-border-bottom">
+              <h2 className="section-title no-border">Your Activity</h2>
+              <div className="header-actions">
+                  <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
+                    Back to Articles
+                  </Link>
+                  {/* --- MOVED "Viewing All-Time Stats" HERE --- */}
+                  <div className="date-range-selector"> <span>Viewing All-Time Stats</span> </div>
+              </div>
             </div>
 
-            {/* --- NEW: Account Settings Button --- */}
-            <Link to="/account-settings" className="btn-secondary btn-full-width account-settings-link" style={{ textDecoration: 'none' }}> {/* ADDED CLASS */}
+            {/* Activity Stat Boxes (now wrapped) */}
+            <div className="dashboard-card no-padding"> {/* Add no-padding if needed */}
+              <div className="stat-box-grid">
+                {statBoxes.map(box => (
+                  <div key={box.key} className="stat-box"> {/* Removed dashboard-card from here */}
+                    <h3>{box.title}</h3>
+                    <p className="stat-number">{loadingStats ? '...' : box.value}</p>
+                    <p className="stat-description">{box.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+
+            {/* Reading Bias Card */}
+            <h2 className="section-title reading-bias-title">Reading Bias</h2> {/* ADDED CLASS */}
+            <div className="dashboard-card lean-summary-card"> {/* Already a card */}
+                {loadingStats ? <div className="loading-container simple"><div className="spinner small"></div></div> : totalApplicableLeanArticles > 0 ? ( // USE APPLICABLE TOTAL
+                  <>
+                    {/* --- NEW: Visual Key / Legend --- */}
+                    <div className="lean-legend">
+                      <div className="legend-item">
+                        <span className="legend-dot" style={{ backgroundColor: leanColors['Left'] }}></span> Left
+                      </div>
+                      <div className="legend-item">
+                        <span className="legend-dot" style={{ backgroundColor: leanColors['Center'] }}></span> Center
+                      </div>
+                      <div className="legend-item">
+                        <span className="legend-dot" style={{ backgroundColor: leanColors['Right'] }}></span> Right
+                      </div>
+                    </div>
+                    {/* --- END NEW --- */}
+
+                    <div className="lean-bar">
+                      {/* --- UPDATED: Use calculated percentages --- */}
+                      { leftCombinedPerc > 0 && <div className="lean-segment left" style={{ width: `${leftCombinedPerc}%` }}>{leftCombinedPerc >= 10 ? `L ${leftCombinedPerc}%` : ''}</div> }
+                      { centerPerc > 0 && <div className="lean-segment center" style={{ width: `${centerPerc}%` }}>{centerPerc >= 10 ? `C ${centerPerc}%` : ''}</div> }
+                      { rightCombinedPerc > 0 && <div className="lean-segment right" style={{ width: `${rightCombinedPerc}%` }}>{rightCombinedPerc >= 10 ? `R ${rightCombinedPerc}%` : ''}</div> }
+                    </div>
+                    <ul className="lean-details">
+                      {/* --- UPDATED: Use calculated percentages --- */}
+                      {leftCombinedPerc > 0 && (<li><span>{leftCombinedPerc}%</span> analyzed lean left.</li>)}
+                      {centerPerc > 0 && (<li><span>{centerPerc}%</span> analyzed were balanced.</li>)}
+                      {rightCombinedPerc > 0 && (<li><span>{rightCombinedPerc}%</span> analyzed lean right.</li>)}
+                    </ul>
+                  </>
+                ) : ( <p className="no-data-msg small">No applicable analysis data available yet.</p> )}
+              </div>
+          </div> 
+          {/* --- End of dashboard-left-scroll --- */}
+
+          {/* --- NEW: Footer for Account Settings --- */}
+          <div className="dashboard-left-footer">
+            <Link to="/account-settings" className="btn-secondary btn-full-width account-settings-link" style={{ textDecoration: 'none' }}>
               Account Settings
             </Link>
-            {/* --- END NEW --- */}
+          </div>
+          {/* --- *** END OF FIX *** --- */}
 
         </div> {/* --- End Left Column --- */}
 
         {/* --- Right Column --- */}
         <div className="dashboard-right-column">
-          {/* Sticky Header */}
-          <div className="sticky-header-wrapper">
-             <div className="section-title-header">
-                <h2 className="section-title no-border">Your Reading Habits Dashboard</h2>
-                <div className="header-actions">
-                    <div className="date-range-selector"> <span>Viewing All-Time Stats</span> </div>
-                </div>
-             </div>
+          {/* --- *** THIS IS THE FIX *** --- */}
+          {/* --- The 'sticky-header-wrapper' is now a standard header --- */}
+          <div className="section-title-header">
+              <h2 className="section-title no-border">Your Reading Habits Dashboard</h2>
+              {/* --- "Viewing All-Time Stats" was REMOVED from here --- */}
           </div>
+          {/* --- *** END OF FIX *** --- */}
+
 
           {/* Stories Analyzed Over Time (Full Width) */}
           <div className="dashboard-card full-width-chart-card stories-read-card"> {/* Already a card */}

@@ -3,14 +3,14 @@
 // --- FIX: This ensures Header/Sidebar/Modals are on *all* pages ---
 // --- FIX: This makes snap-scrolling work on /saved-articles ---
 // --- FIX: Removed 'content-router-outlet' logic ---
-// --- BUILD FIX: Added 'Link' to react-router-dom import ---
+// --- BUILD FIX (v2): Corrected 'newTheme' typo in theme useEffect ---
 import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
 import './DashboardPages.css'; // --- Import dashboard styles ---
 
 // --- React Router imports ---
-import { Routes, Route, useNavigate, useLocation, Outlet, Link } from 'react-router-dom'; // <-- *** THIS IS THE FIX ***
+import { Routes, Route, useNavigate, useLocation, Outlet, Link } from 'react-router-dom'; // <-- 'Link' is imported
 
 // --- Firebase Auth Imports ---
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -374,9 +374,10 @@ function MainLayout({ profile }) {
   // --- Effects (moved from AppWrapper) ---
   useEffect(() => { // Set theme
     const savedTheme = localStorage.getItem('theme') || 'dark';
-    setTheme(newTheme);
-    document.body.className = newTheme + '-mode';
-    localStorage.setItem('theme', newTheme);
+    // --- *** THIS IS THE FIX *** ---
+    setTheme(savedTheme);
+    document.body.className = savedTheme + '-mode';
+    // --- *** END OF FIX *** ---
   }, []);
 
   useEffect(() => { // Handle window resize

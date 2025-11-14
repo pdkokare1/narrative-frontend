@@ -1,5 +1,5 @@
 /* In file: src/App.css */
-/* --- FIX: Fixed sidebar mobile scrolling and button styles --- */
+/* --- FIX: Removed nested scrollbar from sidebar-main-content --- */
 
 /* ==================== PREMIUM THEME VARIABLES ==================== */
 .dark-mode {
@@ -324,27 +324,27 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 }
 .sidebar-nav-link {
   display: block;
-  padding: 10px 12px;
+  padding: 10px 12px; /* (NEW) Taller padding */
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 600; /* (NEW) Bolder */
   color: var(--text-secondary);
   border-radius: 6px;
   transition: all 0.2s ease;
   text-decoration: none;
-  background-color: transparent; /* (NEW) Transparent background */
-  border: 1px solid var(--border-color);
-  margin-bottom: 8px;
+  background-color: var(--bg-primary); /* (NEW) Add background */
+  border: 1px solid var(--border-color); /* (NEW) Add border */
+  margin-bottom: 8px; /* (NEW) Add space between buttons */
 }
 .sidebar-nav-link:hover {
   background: var(--bg-elevated);
   color: var(--text-primary);
-  border-color: var(--accent-primary);
+  border-color: var(--accent-primary); /* (NEW) */
 }
 .sidebar-nav-link.active-link { /* Style for active route */
   background: var(--accent-primary);
   color: white;
   font-weight: 600;
-  border-color: var(--accent-primary);
+  border-color: var(--accent-primary); /* (NEW) */
 }
 /* (NEW) Remove margin from the last link in a list */
 .sidebar-section-mobile-only ul li:last-child .sidebar-nav-link {
@@ -364,6 +364,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   display: block;
   width: 100%;
   padding: 10px 12px; /* Consistent padding */
+  /* margin-bottom: 15px; */ /* REMOVED margin */
   font-size: 12px; /* Consistent font size */
   font-weight: 600; /* Bold */
   color: var(--text-secondary); /* Match nav links */
@@ -1259,9 +1260,10 @@ button:disabled, button:disabled:hover {
     padding: 25px 20px; /* Reset padding */
     display: flex;
     flex-direction: column;
-    /* --- *** THIS IS THE FIX (Sidebar Scroll) *** --- */
-    overflow-y: hidden; /* (NEW) The container itself does not scroll */
-    /* --- *** END OF FIX *** --- */
+    /* --- MODIFIED: Remove justify-content for scroll --- */
+    /* justify-content: space-between; */
+    overflow-y: auto;
+    /* Remove old mobile styles */
     border-bottom: none;
     margin-left: 0; /* (FIX) Override desktop margin */
     padding-bottom: 25px; /* (FIX) Reset padding */
@@ -1280,16 +1282,14 @@ button:disabled, button:disabled:hover {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    /* --- NEW: Stick filter header only inside filter section --- */
     position: sticky;
-    top: -25px;
-    margin-left: -20px;
-    margin-right: -20px;
-    /* --- *** THIS IS THE FIX (Menu Spacing) *** --- */
-    padding: 10px 20px 10px 20px; /* (NEW) Reduced top padding from 20px */
-    /* --- *** END OF FIX *** --- */
+    top: -25px; /* Pull up to padding */
+    margin-left: -20px; /* Expand to edges */
+    margin-right: -20px; /* Expand to edges */
+    padding: 20px 20px 10px 20px; /* Add padding back */
     background: var(--bg-secondary);
-    z-index: 1;
-    flex-shrink: 0; /* (NEW) Prevent header from shrinking */
+    z-index: 1; /* Keep above filters */
   }
   .sidebar-header-mobile h3 {
     font-size: 16px;
@@ -1648,8 +1648,7 @@ button:disabled, button:disabled:hover {
     /* --- *** THIS IS THE FIX (Sidebar Scroll) *** --- */
     .sidebar-main-content {
         flex-grow: 1; /* Take up space */
-        overflow-y: auto; /* (NEW) The main content area scrolls */
-        min-height: 0; /* (NEW) Allows shrinking */
+        /* REMOVED: overflow-y: auto; */
     }
     /* --- *** END OF FIX *** --- */
     .sidebar-footer {

@@ -1,6 +1,7 @@
 // In file: src/MyDashboard.js
 // --- FIX: Component now accepts `theme` as a prop ---
 // --- FIX: Removed the line `const theme = document.body.className...` ---
+// --- FIX: Removed 'Your Activity' h2 ---
 // --- FIX: Moved 'Viewing All-Time Stats' to the left column header ---
 // --- FIX: Moved 'Account Settings' link to a new 'dashboard-left-footer' div ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -319,8 +320,10 @@ function MyDashboard({ theme }) {
           {/* --- *** THIS IS THE FIX *** --- */}
           {/* --- This new div handles scrolling --- */}
           <div className="dashboard-left-scroll">
+            
+            {/* --- "Your Activity" text has been REMOVED --- */}
             <div className="section-title-header no-border-bottom">
-              <h2 className="section-title no-border">Your Activity</h2>
+              {/* --- h2.section-title has been REMOVED --- */}
               <div className="header-actions">
                   <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
                     Back to Articles

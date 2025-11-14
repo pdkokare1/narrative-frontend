@@ -1,5 +1,5 @@
 /* In file: src/DashboardPages.css */
-/* --- FIX: Added mobile scrolling properties to .dashboard-page --- */
+/* --- FIX: Added mobile scrolling properties and bottom padding --- */
 
 /* --- Page Wrapper --- */
 .dashboard-page {
@@ -354,7 +354,9 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
     overscroll-behavior-y: contain; /* Prevent bounce */
-    padding-bottom: 30px; /* Add space at the bottom */
+    /* --- *** THIS IS THE FIX (Bottom Padding) *** --- */
+    padding-bottom: 60px; /* (NEW) Add space at the bottom */
+    /* --- *** END OF FIX *** --- */
   }
   /* --- *** END OF FIX *** --- */
   .dashboard-content-wrapper {
@@ -367,7 +369,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
     flex: 0 0 auto; /* Don't fix width */
     width: 100%;
     margin-bottom: 20px;
-    overflow: visible; /* Don't scroll */
+    overflow: hidden; /* (NEW) Prevent horizontal overflow */
     padding-bottom: 0; /* Remove bottom padding */
     /* --- NEW: Un-stick on mobile --- */
     position: static;
@@ -375,7 +377,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
     background-color: transparent !important; /* --- ADDED: Remove bg on mobile --- */
   }
   .dashboard-right-column {
-    overflow-y: visible; /* Don't scroll */
+    overflow: hidden; /* (NEW) Prevent horizontal overflow */
     max-height: none;
     padding: 0; /* Remove padding */
   }

@@ -308,9 +308,11 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 .filter-group { margin-bottom: 15px; } /* Increased spacing between filter dropdowns */
 .filter-group:last-child { margin-bottom: 0; } /* No margin on last filter */
 
+/* --- *** THIS IS THE FIX (Sidebar Style) *** --- */
 /* --- UPDATED: Styles for ALL Nav Links in Sidebar --- */
 .sidebar-top-nav ul,
-.sidebar-account-nav ul {
+.sidebar-account-nav ul,
+.sidebar-section-mobile-only ul {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -321,24 +323,33 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 }
 .sidebar-nav-link {
   display: block;
-  padding: 8px 10px; /* Smaller padding */
-  font-size: 12px; /* Smaller font */
-  font-weight: 500;
+  padding: 10px 12px; /* (NEW) Taller padding */
+  font-size: 12px;
+  font-weight: 600; /* (NEW) Bolder */
   color: var(--text-secondary);
   border-radius: 6px;
   transition: all 0.2s ease;
   text-decoration: none;
+  background-color: var(--bg-primary); /* (NEW) Add background */
+  border: 1px solid var(--border-color); /* (NEW) Add border */
+  margin-bottom: 8px; /* (NEW) Add space between buttons */
 }
 .sidebar-nav-link:hover {
   background: var(--bg-elevated);
   color: var(--text-primary);
+  border-color: var(--accent-primary); /* (NEW) */
 }
 .sidebar-nav-link.active-link { /* Style for active route */
   background: var(--accent-primary);
   color: white;
   font-weight: 600;
+  border-color: var(--accent-primary); /* (NEW) */
 }
-/* --- END UPDATE --- */
+/* (NEW) Remove margin from the last link in a list */
+.sidebar-nav-link:last-child {
+  margin-bottom: 0;
+}
+/* --- *** END OF FIX *** --- */
 
 /* Sidebar Footer Area */
 .sidebar-footer {
@@ -677,7 +688,9 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   font-size: 11px; /* (FIX) Scaled down from 11.5px */
   line-height: 1.6;
   color: var(--text-secondary);
-  margin-bottom: 15px;
+  /* --- *** THIS IS THE FIX (Spacing) *** --- */
+  margin-bottom: 20px; /* Was 15px */
+  /* --- *** END OF FIX *** --- */
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
@@ -1633,10 +1646,13 @@ button:disabled, button:disabled:hover {
         flex-grow: 1; /* Take up space */
         overflow-y: auto; /* Allow scrolling */
     }
+    /* --- *** THIS IS THE FIX (Sidebar Footer) *** --- */
     .sidebar-footer {
         flex-shrink: 0; /* Prevent footer shrinking */
-        margin-top: 15px; /* Ensure some space if content is short */
+        margin-top: auto; /* (NEW) Pushes footer to bottom */
+        padding-top: 15px; /* (NEW) Adds space above footer */
     }
+    /* --- *** END OF FIX *** --- */
     
     /* --- *** ADDED: Ensure nav links are visible on mobile *** --- */
     .sidebar-top-nav,

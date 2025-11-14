@@ -1,5 +1,5 @@
 /* In file: src/App.css */
-/* --- FIX: Removed the rule that hid sidebar nav on desktop --- */
+/* --- FIX: Removed nested scrollbar from sidebar-main-content --- */
 
 /* ==================== PREMIUM THEME VARIABLES ==================== */
 .dark-mode {
@@ -284,14 +284,15 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 
 /* --- UPDATED: Sidebar Content Sections --- */
 /* Container for main sidebar content (nav, filters, sort) */
+/* --- *** THIS IS THE FIX (Sidebar Scroll) *** --- */
 .sidebar-main-content {
   flex-grow: 1; /* Allows footer to be pushed down */
-  overflow-y: auto; /* Scroll main content if needed */
-  /* Hide scrollbar */
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  /* REMOVED: overflow-y: auto; */
+  /* REMOVED: -ms-overflow-style: none; */
+  /* REMOVED: scrollbar-width: none; */
 }
-.sidebar-main-content::-webkit-scrollbar { display: none; }
+/* REMOVED: .sidebar-main-content::-webkit-scrollbar { display: none; } */
+/* --- *** END OF FIX *** --- */
 
 .sidebar-section { margin-bottom: 25px; } /* Increased spacing */
 .sidebar-section:last-child { margin-bottom: 0; } /* No margin on last section */
@@ -346,7 +347,7 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   border-color: var(--accent-primary); /* (NEW) */
 }
 /* (NEW) Remove margin from the last link in a list */
-.sidebar-nav-link:last-child {
+.sidebar-section-mobile-only ul li:last-child .sidebar-nav-link {
   margin-bottom: 0;
 }
 /* --- *** END OF FIX *** --- */
@@ -1617,7 +1618,9 @@ button:disabled, button:disabled:hover {
    .sidebar {
        justify-content: flex-start; /* CHANGED: No longer space-between */
    }
+   /* --- *** THIS IS THE FIX (Sidebar Scroll) *** --- */
    .sidebar-main-content { overflow-y: visible; } /* No scroll needed on desktop */
+   /* --- *** END OF FIX *** --- */
    
    /* --- *** THIS IS THE FIX: I AM REMOVING THE HIDE RULE *** --- */
    /*
@@ -1642,17 +1645,17 @@ button:disabled, button:disabled:hover {
     .sidebar {
         justify-content: flex-start;
     }
+    /* --- *** THIS IS THE FIX (Sidebar Scroll) *** --- */
     .sidebar-main-content {
         flex-grow: 1; /* Take up space */
-        overflow-y: auto; /* Allow scrolling */
+        /* REMOVED: overflow-y: auto; */
     }
-    /* --- *** THIS IS THE FIX (Sidebar Footer) *** --- */
+    /* --- *** END OF FIX *** --- */
     .sidebar-footer {
         flex-shrink: 0; /* Prevent footer shrinking */
         margin-top: auto; /* (NEW) Pushes footer to bottom */
         padding-top: 15px; /* (NEW) Adds space above footer */
     }
-    /* --- *** END OF FIX *** --- */
     
     /* --- *** ADDED: Ensure nav links are visible on mobile *** --- */
     .sidebar-top-nav,

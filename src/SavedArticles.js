@@ -1,8 +1,7 @@
 // In file: src/SavedArticles.js
-// --- COMPLETE REWRITE (v3) ---
-// --- FIX: Removed 'savedArticleIds' prop and all client-side filtering.
-// --- FIX: This component now fetches its own list and manages its own state.
-// --- FIX: Added local 'handleToggleSave' to update local state instantly.
+// --- COMPLETE REWRITE (v4) ---
+// --- FIX: Removed the 'content-scroll-wrapper' div.
+// --- FIX: Article wrappers are now DIRECT children of the '.content' scroller.
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -14,7 +13,6 @@ import ArticleCard from './components/ArticleCard'; // Import the card
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 function SavedArticles({
-  // Note: 'savedArticleIds' prop is NO LONGER USED here.
   onToggleSave, // We still call the original function to update App.js
   onCompare,
   onAnalyze,
@@ -46,7 +44,6 @@ function SavedArticles({
     fetchSavedArticles();
   }, []); // Run once on mount
 
-  // --- *** THIS IS THE FIX *** ---
   // This local function updates BOTH the global state (in App.js)
   // AND the local state (in this component) to provide an
   // instant "unsave" animation.
@@ -58,92 +55,91 @@ function SavedArticles({
     // 2. Call the original function from App.js to update global state
     onToggleSave(article);
   };
-  // --- *** END OF FIX *** ---
 
   return (
     // Use the 'content' class from App.css to get the mobile snap-scroll container
+    // --- *** THIS IS THE FIX *** ---
+    // The 'content-scroll-wrapper' div has been REMOVED.
+    // The .article-card-wrapper elements are now DIRECT children of '.content'.
     <main className="content" ref={contentRef}>
-      <div className="content-scroll-wrapper">
-
-        {loading && (
-          // --- Use article-card-wrapper to center the loading spinner ---
-          <div className="article-card-wrapper">
-            <div className="loading-container" style={{ minHeight: '300px' }}>
-              <div className="spinner"></div>
-              <p style={{ color: 'var(--text-tertiary)' }}>Loading saved articles...</p>
-            </div>
+      {loading && (
+        // --- Use article-card-wrapper to center the loading spinner ---
+        <div className="article-card-wrapper">
+          <div className="loading-container" style={{ minHeight: '300px' }}>
+            <div className="spinner"></div>
+            <p style={{ color: 'var(--text-tertiary)' }}>Loading saved articles...</p>
           </div>
-        )}
+        </div>
+      )}
 
-        {error && (
-          // --- Use article-card-wrapper to center the error ---
-          <div className="article-card-wrapper">
-            <div className="placeholder-page" style={{ padding: '20px' }}>
-              <h2 style={{ color: '#E57373' }}>Error</h2>
-              <p style={{ color: 'var(--text-tertiary)' }}>{error}</p>
-              <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>
-                Back to Articles
-              </Link>
-            </div>
+      {error && (
+        // --- Use article-card-wrapper to center the error ---
+        <div className="article-card-wrapper">
+          <div className="placeholder-page" style={{ padding: '20px' }}>
+            <h2 style={{ color: '#E57373' }}>Error</h2>
+            <p style={{ color: 'var(--text-tertiary)' }}>{error}</p>
+            <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>
+              Back to Articles
+            </Link>
           </div>
-        )}
+        </div>
+      )}
 
-        {!loading && !error && (
-          <>
-            {savedArticles.length > 0 ? (
-              <>
-                {/* --- Add a Title as the first item, it will scroll away --- */}
-                <div className="article-card-wrapper" style={{ 
-                  height: 'auto', // Don't make title full-height
-                  minHeight: 'auto',
-                  paddingTop: '20px', 
-                  paddingBottom: '0', 
-                  justifyContent: 'flex-start' 
+      {!loading && !error && (
+        <>
+          {savedArticles.length > 0 ? (
+            <>
+              {/* --- Add a Title as the first item, it will scroll away --- */}
+              <div className="article-card-wrapper" style={{ 
+                height: 'auto', // Don't make title full-height
+                minHeight: 'auto',
+                paddingTop: '20px', 
+                paddingBottom: '0', 
+                justifyContent: 'flex-start' 
+              }}>
+                <h1 style={{ 
+                  width: '100%', 
+                  maxWidth: '500px', // Match card width
+                  textAlign: 'left', 
+                  fontSize: '24px',
+                  color: 'var(--text-primary)',
                 }}>
-                  <h1 style={{ 
-                    width: '100%', 
-                    maxWidth: '500px', // Match card width
-                    textAlign: 'left', 
-                    fontSize: '24px',
-                    color: 'var(--text-primary)',
-                  }}>
-                    Saved Articles ({savedArticles.length})
-                  </h1>
-                </div>
-
-                {/* --- Map over the articles, wrapping each in a card wrapper --- */}
-                {/* --- THIS NOW USES 'savedArticles' (local state) DIRECTLY --- */}
-                {savedArticles.map((article) => (
-                  <div className="article-card-wrapper" key={article._id}>
-                    <ArticleCard
-                      article={article}
-                      onCompare={() => onCompare(article)}
-                      onAnalyze={onAnalyze}
-                      onShare={onShare}
-                      onRead={onRead}
-                      showTooltip={showTooltip}
-                      isSaved={true} // All articles on this page are saved
-                      onToggleSave={() => handleToggleSave(article)} // Use local handler
-                    />
-                  </div>
-                ))}
-              </>
-            ) : (
-              // --- Show "No Saved Articles" message in a wrapper ---
-              <div className="article-card-wrapper">
-                <div className="placeholder-page" style={{ padding: '20px' }}>
-                  <h2>No Saved Articles</h2>
-                  <p>You haven't saved any articles yet.</p>
-                  <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>
-                    Back to Articles
-                  </Link>
-                </div>
+                  Saved Articles ({savedArticles.length})
+                </h1>
               </div>
-            )}
-          </>
-        )}
-      </div>
+
+              {/* --- Map over the articles, wrapping each in a card wrapper --- */}
+              {savedArticles.map((article) => (
+                <div className="article-card-wrapper" key={article._id}>
+                  <ArticleCard
+                    article={article}
+                    onCompare={() => onCompare(article)}
+                    onAnalyze={onAnalyze}
+                    onShare={onShare}
+                    onRead={onRead}
+                    showTooltip={showTooltip}
+                    isSaved={true} // All articles on this page are saved
+                    onToggleSave={() => handleToggleSave(article)} // Use local handler
+                  />
+                </div>
+              ))}
+            </>
+          ) : (
+            // --- Show "No Saved Articles" message in a wrapper ---
+            <div className="article-card-wrapper">
+              <div className="placeholder-page" style={{ padding: '20px' }}>
+                <h2>No Saved Articles</h2>
+                <p>You haven't saved any articles yet.</p>
+                <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>
+                  Back to Articles
+                </Link>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </main>
+    // --- *** END OF FIX *** ---
   );
 }
 

@@ -1,7 +1,8 @@
 // In file: src/SavedArticles.js
-// --- COMPLETE REWRITE ---
-// --- FIX: Use main 'content' wrapper to enable snap-scrolling ---
-// --- FIX: Use 'article-card-wrapper' to fix card height bug ---
+// --- COMPLETE REWRITE (v3) ---
+// --- FIX: Removed 'savedArticleIds' prop and all client-side filtering.
+// --- FIX: This component now fetches its own list and manages its own state.
+// --- FIX: Added local 'handleToggleSave' to update local state instantly.
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -13,15 +14,15 @@ import ArticleCard from './components/ArticleCard'; // Import the card
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 function SavedArticles({
-  savedArticleIds,
-  onToggleSave,
+  // Note: 'savedArticleIds' prop is NO LONGER USED here.
+  onToggleSave, // We still call the original function to update App.js
   onCompare,
   onAnalyze,
   onShare,
   onRead,
   showTooltip
 }) {
-  const [savedArticles, setSavedArticles] = useState([]);
+  const [savedArticles, setSavedArticles] = useState([]); // Local state for articles
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const contentRef = useRef(null); // Ref for the main scrolling container
@@ -45,15 +46,21 @@ function SavedArticles({
     fetchSavedArticles();
   }, []); // Run once on mount
 
-  // --- NEW: Filter articles on the client-side ---
-  // When a user unsaves an article, the `savedArticleIds` prop updates.
-  // We use this to filter the list instantly without a re-fetch.
-  const visibleArticles = savedArticles.filter(article => 
-    savedArticleIds.has(article._id)
-  );
+  // --- *** THIS IS THE FIX *** ---
+  // This local function updates BOTH the global state (in App.js)
+  // AND the local state (in this component) to provide an
+  // instant "unsave" animation.
+  const handleToggleSave = (article) => {
+    // 1. Instantly remove the article from the local state
+    setSavedArticles(prevArticles =>
+      prevArticles.filter(a => a._id !== article._id)
+    );
+    // 2. Call the original function from App.js to update global state
+    onToggleSave(article);
+  };
+  // --- *** END OF FIX *** ---
 
   return (
-    // --- *** THIS IS THE FIX *** ---
     // Use the 'content' class from App.css to get the mobile snap-scroll container
     <main className="content" ref={contentRef}>
       <div className="content-scroll-wrapper">
@@ -83,7 +90,7 @@ function SavedArticles({
 
         {!loading && !error && (
           <>
-            {visibleArticles.length > 0 ? (
+            {savedArticles.length > 0 ? (
               <>
                 {/* --- Add a Title as the first item, it will scroll away --- */}
                 <div className="article-card-wrapper" style={{ 
@@ -100,12 +107,13 @@ function SavedArticles({
                     fontSize: '24px',
                     color: 'var(--text-primary)',
                   }}>
-                    Saved Articles ({visibleArticles.length})
+                    Saved Articles ({savedArticles.length})
                   </h1>
                 </div>
 
                 {/* --- Map over the articles, wrapping each in a card wrapper --- */}
-                {visibleArticles.map((article) => (
+                {/* --- THIS NOW USES 'savedArticles' (local state) DIRECTLY --- */}
+                {savedArticles.map((article) => (
                   <div className="article-card-wrapper" key={article._id}>
                     <ArticleCard
                       article={article}
@@ -114,8 +122,8 @@ function SavedArticles({
                       onShare={onShare}
                       onRead={onRead}
                       showTooltip={showTooltip}
-                      isSaved={savedArticleIds.has(article._id)}
-                      onToggleSave={() => onToggleSave(article)}
+                      isSaved={true} // All articles on this page are saved
+                      onToggleSave={() => handleToggleSave(article)} // Use local handler
                     />
                   </div>
                 ))}
@@ -136,7 +144,6 @@ function SavedArticles({
         )}
       </div>
     </main>
-    // --- *** END OF FIX *** ---
   );
 }
 

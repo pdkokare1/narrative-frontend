@@ -1,5 +1,7 @@
 /* In file: src/App.css */
-/* --- FIX: Removed nested scrollbar from sidebar-main-content --- */
+/* --- FIX: Removed margin-top: auto from sidebar-footer to fix scrolling --- */
+/* --- FIX: Updated sidebar-nav-link style to be distinct from filters --- */
+/* --- FIX: Reduced top padding on .sidebar-header-mobile --- */
 
 /* ==================== PREMIUM THEME VARIABLES ==================== */
 .dark-mode {
@@ -322,29 +324,31 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 .sidebar-account-nav li {
   margin-bottom: 5px; /* Increased spacing */
 }
+
+/* This is the new style for Nav Links */
 .sidebar-nav-link {
   display: block;
-  padding: 10px 12px; /* (NEW) Taller padding */
-  font-size: 12px;
-  font-weight: 600; /* (NEW) Bolder */
+  padding: 10px 12px;
+  font-size: 13px; /* Slightly larger */
+  font-weight: 600;
   color: var(--text-secondary);
   border-radius: 6px;
   transition: all 0.2s ease;
   text-decoration: none;
-  background-color: var(--bg-primary); /* (NEW) Add background */
-  border: 1px solid var(--border-color); /* (NEW) Add border */
-  margin-bottom: 8px; /* (NEW) Add space between buttons */
+  background-color: transparent; /* No background */
+  border: 1px solid transparent; /* No border */
+  margin-bottom: 8px;
 }
 .sidebar-nav-link:hover {
   background: var(--bg-elevated);
   color: var(--text-primary);
-  border-color: var(--accent-primary); /* (NEW) */
+  border-color: transparent; /* No border on hover */
 }
 .sidebar-nav-link.active-link { /* Style for active route */
   background: var(--accent-primary);
   color: white;
   font-weight: 600;
-  border-color: var(--accent-primary); /* (NEW) */
+  border-color: var(--accent-primary);
 }
 /* (NEW) Remove margin from the last link in a list */
 .sidebar-section-mobile-only ul li:last-child .sidebar-nav-link {
@@ -354,36 +358,39 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
 
 /* Sidebar Footer Area */
 .sidebar-footer {
-  margin-top: auto; /* Push to bottom */
+  /* --- *** THIS IS THE FIX *** --- */
+  /* REMOVED: margin-top: auto; */
+  /* --- *** END OF FIX *** --- */
   padding-top: 15px; /* Space above footer items */
   border-top: 1px solid var(--border-light);
 }
 
 /* --- UPDATED: Sidebar Logout Button Styling --- */
+/* This matches the new .sidebar-nav-link style */
 .sidebar-logout-btn {
   display: block;
   width: 100%;
-  padding: 10px 12px; /* Consistent padding */
-  /* margin-bottom: 15px; */ /* REMOVED margin */
-  font-size: 12px; /* Consistent font size */
-  font-weight: 600; /* Bold */
+  padding: 10px 12px;
+  font-size: 13px; /* Match nav links */
+  font-weight: 600; /* Match nav links */
   color: var(--text-secondary); /* Match nav links */
-  background-color: transparent; /* Transparent background */
-  border: 1px solid var(--border-color); /* Subtle border */
+  background-color: transparent; /* Match nav links */
+  border: 1px solid transparent; /* Match nav links */
   border-radius: 6px;
   cursor: pointer;
-  text-align: center;
+  text-align: left; /* --- CHANGED: Align left like nav links --- */
   transition: all 0.2s ease;
 }
 .sidebar-logout-btn:hover {
-  background-color: var(--bg-elevated); /* Match nav link hover */
-  color: var(--accent-primary); /* Accent color on hover */
-  border-color: var(--accent-primary); /* Accent border on hover */
+  background-color: var(--bg-elevated);
+  color: #E57373; /* --- CHANGED: Use a red color for logout hover --- */
+  border-color: transparent;
 }
 /* --- END UPDATE --- */
 
 
 /* --- (FIX) Custom Select Styling (Moved outside media query) --- */
+/* This is the filter dropdown style. It now looks different! */
 .custom-select-container {
   position: relative;
   width: 100%;
@@ -1287,7 +1294,9 @@ button:disabled, button:disabled:hover {
     top: -25px; /* Pull up to padding */
     margin-left: -20px; /* Expand to edges */
     margin-right: -20px; /* Expand to edges */
-    padding: 20px 20px 10px 20px; /* Add padding back */
+    /* --- *** THIS IS THE FIX *** --- */
+    padding: 15px 20px 10px 20px; /* Reduced top padding */
+    /* --- *** END OF FIX *** --- */
     background: var(--bg-secondary);
     z-index: 1; /* Keep above filters */
   }
@@ -1392,6 +1401,7 @@ button:disabled, button:disabled:hover {
     width: 100%;
     /* Center the card inside */
     display: flex;
+    flex-direction: column; /* --- CHANGED: Allow stacking title + content --- */
     align-items: center;
     justify-content: center;
     padding: 35px 16px 90px 16px; /* (FIX) More B margin */
@@ -1653,7 +1663,9 @@ button:disabled, button:disabled:hover {
     /* --- *** END OF FIX *** --- */
     .sidebar-footer {
         flex-shrink: 0; /* Prevent footer shrinking */
-        margin-top: auto; /* (NEW) Pushes footer to bottom */
+        /* --- *** THIS IS THE FIX *** --- */
+        /* REMOVED: margin-top: auto; */
+        /* --- *** END OF FIX *** --- */
         padding-top: 15px; /* (NEW) Adds space above footer */
     }
     

@@ -1,6 +1,6 @@
 /* In file: src/App.css */
-/* --- FIX: Re-styled .sidebar-nav-link to look like distinct buttons --- */
-/* --- FIX: Re-styled .sidebar-logout-btn to match new nav link style --- */
+/* --- FIX: Reduced .sidebar-header-mobile padding-top to 10px --- */
+/* --- FIX: Removed flex-grow: 1 from .sidebar-main-content (mobile) to fix Sign Out button --- */
 
 /* ==================== PREMIUM THEME VARIABLES ==================== */
 .dark-mode {
@@ -1294,7 +1294,7 @@ button:disabled, button:disabled:hover {
     margin-left: -20px; /* Expand to edges */
     margin-right: -20px; /* Expand to edges */
     /* --- *** THIS IS THE FIX *** --- */
-    padding: 15px 20px 10px 20px; /* Reduced top padding */
+    padding: 10px 20px 10px 20px; /* Reduced top padding */
     /* --- *** END OF FIX *** --- */
     background: var(--bg-secondary);
     z-index: 1; /* Keep above filters */
@@ -1656,8 +1656,7 @@ button:disabled, button:disabled:hover {
     }
     /* --- *** THIS IS THE FIX (Sidebar Scroll) *** --- */
     .sidebar-main-content {
-        flex-grow: 1; /* Take up space */
-        /* REMOVED: overflow-y: auto; */
+        /* REMOVED: flex-grow: 1; */
     }
     /* --- *** END OF FIX *** --- */
     .sidebar-footer {

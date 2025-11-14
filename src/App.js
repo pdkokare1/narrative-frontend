@@ -3,13 +3,14 @@
 // --- FIX: This ensures Header/Sidebar/Modals are on *all* pages ---
 // --- FIX: This makes snap-scrolling work on /saved-articles ---
 // --- FIX: Removed 'content-router-outlet' logic ---
+// --- BUILD FIX: Added 'Link' to react-router-dom import ---
 import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react';
 import axios from 'axios';
 import './App.css'; // Main CSS
 import './DashboardPages.css'; // --- Import dashboard styles ---
 
 // --- React Router imports ---
-import { Routes, Route, useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Outlet, Link } from 'react-router-dom'; // <-- *** THIS IS THE FIX ***
 
 // --- Firebase Auth Imports ---
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -373,8 +374,9 @@ function MainLayout({ profile }) {
   // --- Effects (moved from AppWrapper) ---
   useEffect(() => { // Set theme
     const savedTheme = localStorage.getItem('theme') || 'dark';
-    setTheme(savedTheme);
-    document.body.className = savedTheme + '-mode';
+    setTheme(newTheme);
+    document.body.className = newTheme + '-mode';
+    localStorage.setItem('theme', newTheme);
   }, []);
 
   useEffect(() => { // Handle window resize
@@ -626,58 +628,61 @@ function NewsFeed({
         <p>Refreshing...</p>
       </div>
 
-      <div className="content-scroll-wrapper">
-        {(loading && initialLoad) ? (
-          <div className="loading-container">
-            <div className="spinner"></div>
-            <p>Loading articles...</p>
-          </div>
-        ) : (
-          <>
-            {displayedArticles.length > 0 ? (
-              <div className="articles-grid">
-                {displayedArticles.map((article) => (
-                  <div className="article-card-wrapper" key={article._id || article.url}>
-                    <ArticleCard
-                      article={article}
-                      onCompare={() => handleCompareClick(article)}
-                      onAnalyze={handleAnalyzeClick}
-                      onShare={shareArticle}
-                      onRead={handleReadClick}
-                      showTooltip={showTooltip}
-                      isSaved={savedArticleIds.has(article._id)}
-                      onToggleSave={() => handleToggleSave(article)}
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
-                  <p>No articles found matching your current filters.</p>
-              </div>
-            )}
-
-            {(loading && !initialLoad) && (
-              <div className="article-card-wrapper load-more-wrapper">
-                <div className="loading-container" style={{ minHeight: '200px' }}>
-                  <div className="spinner"></div>
-                  <p>Loading more articles...</p>
+      {/* --- *** THIS IS THE FIX *** --- */}
+      {/* Removed the 'content-scroll-wrapper' div. */}
+      {/* The article grid is now a direct child of 'main.content' */}
+      
+      {(loading && initialLoad) ? (
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Loading articles...</p>
+        </div>
+      ) : (
+        <>
+          {displayedArticles.length > 0 ? (
+            <div className="articles-grid">
+              {displayedArticles.map((article) => (
+                <div className="article-card-wrapper" key={article._id || article.url}>
+                  <ArticleCard
+                    article={article}
+                    onCompare={() => handleCompareClick(article)}
+                    onAnalyze={handleAnalyzeClick}
+                    onShare={shareArticle}
+                    onRead={handleReadClick}
+                    showTooltip={showTooltip}
+                    isSaved={savedArticleIds.has(article._id)}
+                    onToggleSave={() => handleToggleSave(article)}
+                  />
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
+                <p>No articles found matching your current filters.</p>
+            </div>
+          )}
 
-            {!loading && displayedArticles.length < totalArticlesCount && (
-              <div className="article-card-wrapper load-more-wrapper">
-                <div className="load-more">
-                  <button onClick={loadMoreArticles} className="load-more-btn">
-                    Load More ({totalArticlesCount - displayedArticles.length} remaining)
-                  </button>
-                </div>
+          {(loading && !initialLoad) && (
+            <div className="article-card-wrapper load-more-wrapper">
+              <div className="loading-container" style={{ minHeight: '200px' }}>
+                <div className="spinner"></div>
+                <p>Loading more articles...</p>
               </div>
-            )}
-          </>
-        )}
-      </div>
+            </div>
+          )}
+
+          {!loading && displayedArticles.length < totalArticlesCount && (
+            <div className="article-card-wrapper load-more-wrapper">
+              <div className="load-more">
+                <button onClick={loadMoreArticles} className="load-more-btn">
+                  Load More ({totalArticlesCount - displayedArticles.length} remaining)
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+      {/* --- *** END OF FIX *** --- */}
     </main>
   );
 }

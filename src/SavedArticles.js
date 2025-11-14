@@ -1,10 +1,12 @@
 // In file: src/SavedArticles.js
 // --- COMPLETE REWRITE ---
-import React, { useState, useEffect } from 'react';
+// --- FIX: Use main 'content' wrapper to enable snap-scrolling ---
+// --- FIX: Use 'article-card-wrapper' to fix card height bug ---
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import './App.css'; // For theme variables
-import './DashboardPages.css'; // Shared CSS file
+import './App.css'; // For theme variables AND .content/.article-card-wrapper styles
+import './DashboardPages.css'; // Shared CSS file (for .placeholder-page styles)
 import ArticleCard from './components/ArticleCard'; // Import the card
 
 // Get API URL from environment
@@ -22,6 +24,7 @@ function SavedArticles({
   const [savedArticles, setSavedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const contentRef = useRef(null); // Ref for the main scrolling container
 
   // Fetch saved articles when the component loads
   useEffect(() => {
@@ -50,56 +53,90 @@ function SavedArticles({
   );
 
   return (
-    // Use dashboard-page for consistent padding/scrolling
-    <div className="dashboard-page">
-      
-      {/* We re-use the placeholder-page class for centering, but add our grid */}
-      <div className="placeholder-page" style={{ justifyContent: 'flex-start', maxWidth: '1400px', margin: '0 auto' }}>
-        <h1 style={{ width: '100%', textAlign: 'left', paddingLeft: '10px' }}>Saved Articles</h1>
+    // --- *** THIS IS THE FIX *** ---
+    // Use the 'content' class from App.css to get the mobile snap-scroll container
+    <main className="content" ref={contentRef}>
+      <div className="content-scroll-wrapper">
 
         {loading && (
-          <div className="loading-container" style={{ minHeight: '300px' }}>
-            <div className="spinner"></div>
-            <p style={{ color: 'var(--text-tertiary)' }}>Loading saved articles...</p>
+          // --- Use article-card-wrapper to center the loading spinner ---
+          <div className="article-card-wrapper">
+            <div className="loading-container" style={{ minHeight: '300px' }}>
+              <div className="spinner"></div>
+              <p style={{ color: 'var(--text-tertiary)' }}>Loading saved articles...</p>
+            </div>
           </div>
         )}
 
         {error && (
-          <p style={{ color: 'red', marginBottom: '20px' }}>{error}</p>
+          // --- Use article-card-wrapper to center the error ---
+          <div className="article-card-wrapper">
+            <div className="placeholder-page" style={{ padding: '20px' }}>
+              <h2 style={{ color: '#E57373' }}>Error</h2>
+              <p style={{ color: 'var(--text-tertiary)' }}>{error}</p>
+              <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>
+                Back to Articles
+              </Link>
+            </div>
+          </div>
         )}
 
         {!loading && !error && (
           <>
             {visibleArticles.length > 0 ? (
-              <div className="articles-grid">
+              <>
+                {/* --- Add a Title as the first item, it will scroll away --- */}
+                <div className="article-card-wrapper" style={{ 
+                  height: 'auto', // Don't make title full-height
+                  minHeight: 'auto',
+                  paddingTop: '20px', 
+                  paddingBottom: '0', 
+                  justifyContent: 'flex-start' 
+                }}>
+                  <h1 style={{ 
+                    width: '100%', 
+                    maxWidth: '500px', // Match card width
+                    textAlign: 'left', 
+                    fontSize: '24px',
+                    color: 'var(--text-primary)',
+                  }}>
+                    Saved Articles ({visibleArticles.length})
+                  </h1>
+                </div>
+
+                {/* --- Map over the articles, wrapping each in a card wrapper --- */}
                 {visibleArticles.map((article) => (
-                  // We don't need the mobile "wrapper" here, just the card
-                  <ArticleCard
-                    key={article._id}
-                    article={article}
-                    onCompare={() => onCompare(article)}
-                    onAnalyze={onAnalyze}
-                    onShare={onShare}
-                    onRead={onRead}
-                    showTooltip={showTooltip}
-                    isSaved={savedArticleIds.has(article._id)}
-                    onToggleSave={() => onToggleSave(article)}
-                  />
+                  <div className="article-card-wrapper" key={article._id}>
+                    <ArticleCard
+                      article={article}
+                      onCompare={() => onCompare(article)}
+                      onAnalyze={onAnalyze}
+                      onShare={onShare}
+                      onRead={onRead}
+                      showTooltip={showTooltip}
+                      isSaved={savedArticleIds.has(article._id)}
+                      onToggleSave={() => onToggleSave(article)}
+                    />
+                  </div>
                 ))}
-              </div>
+              </>
             ) : (
-              <div style={{ textAlign: 'center', padding: '50px', color: 'var(--text-tertiary)' }}>
-                <h2>No Saved Articles</h2>
-                <p>You haven't saved any articles yet.</p>
-                <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>
-                  Back to Articles
-                </Link>
+              // --- Show "No Saved Articles" message in a wrapper ---
+              <div className="article-card-wrapper">
+                <div className="placeholder-page" style={{ padding: '20px' }}>
+                  <h2>No Saved Articles</h2>
+                  <p>You haven't saved any articles yet.</p>
+                  <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>
+                    Back to Articles
+                  </Link>
+                </div>
               </div>
             )}
           </>
         )}
       </div>
-    </div>
+    </main>
+    // --- *** END OF FIX *** ---
   );
 }
 

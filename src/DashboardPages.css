@@ -6,6 +6,7 @@
 /* --- FIX (2025-11-15): Set explicit height/overflow on .dashboard-page to stop double scrollbar --- */
 /* --- FIX (2025-11-15): Added new desktop header layout styles --- */
 /* --- FIX (2025-11-15): Updated mobile header layout styles --- */
+/* --- FIX (2025-11-16): Removed left column scrollbar and added right column sticky header --- */
 
 /* --- Page Wrapper --- */
 .dashboard-page {
@@ -34,35 +35,29 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  /* gap: 20px; */ /* <-- REMOVED: We will handle spacing manually */
   padding-bottom: 15px; /* Space at bottom */
   
-  /* --- NEW: Make left column sticky --- */
+  /* --- Make left column sticky --- */
   position: sticky;
   top: 75px; /* 60px header + 15px padding */
-  height: calc(100vh - 90px); /* 75px top + 15px bottom */
-  /* --- MODIFIED: Overflow is now handled by inner div --- */
-  overflow: hidden; 
+  height: fit-content; /* <-- *** THIS IS THE FIX *** --- */
   background-color: var(--bg-primary); 
-  /* --- END NEW --- */
 }
 
 /* --- *** THIS IS THE FIX *** --- */
-/* --- NEW: Inner scroll container for left column --- */
+/* --- Inner scroll container for left column --- */
 .dashboard-left-scroll {
-  overflow-y: auto;
-  flex-grow: 1; /* Takes up all space except footer */
+  /* --- REMOVED: overflow-y: auto; --- */
+  /* --- REMOVED: flex-grow: 1; --- */
   
-  /* Custom scrollbar for left column */
-  scrollbar-width: thin;
-  scrollbar-color: var(--accent-primary) var(--bg-secondary);
+  /* Custom scrollbar for left column (HIDDEN) */
+  scrollbar-width: none; /* Firefox */
 }
-.dashboard-left-scroll::-webkit-scrollbar { width: 6px; }
-.dashboard-left-scroll::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px;}
-.dashboard-left-scroll::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 3px; }
-.dashboard-left-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
+.dashboard-left-scroll::-webkit-scrollbar { 
+  display: none; /* Chrome, Safari */
+}
 
-/* --- NEW: Footer for Account Settings button --- */
+/* --- Footer for Account Settings button --- */
 .dashboard-left-footer {
   flex-shrink: 0; /* Prevent from shrinking */
   padding-top: 15px; /* Space above button */
@@ -77,23 +72,19 @@
   min-width: 0;
   padding-right: 10px; /* Space for scrollbar */
   padding-left: 5px; /* Slight padding */
-  /* --- *** THIS IS THE FIX *** --- */
   /* --- Make this column scrollable and fix its height --- */
   overflow-y: auto; /* Allow this column to scroll */
   height: calc(100vh - 90px); /* Match left column height */
-  /* --- *** END OF FIX *** --- */
   
   /* Custom scrollbar for right column */
   scrollbar-width: thin;
   scrollbar-color: var(--accent-primary) var(--bg-secondary);
 }
-/* --- *** THIS IS THE FIX *** --- */
 /* --- Apply scrollbar styles --- */
 .dashboard-right-column::-webkit-scrollbar { display: block; width: 6px; }
 .dashboard-right-column::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
 .dashboard-right-column::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 3px; }
 .dashboard-right-column::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
-/* --- *** END OF FIX *** --- */
 
 
 /* --- Responsive Placeholder Page (Saved, Account) --- */
@@ -138,7 +129,7 @@
 .section-title-header.no-border-bottom {
   border-bottom: none;
   padding-bottom: 0;
-  margin-bottom: 15px; /* --- ADDED: Manual spacing --- */
+  margin-bottom: 10px; /* <-- *** THIS IS THE FIX (Reduced Margin) *** --- */
 }
 /* Specific title styling *within* the header */
 .section-title-header .section-title {
@@ -182,12 +173,10 @@ h2.section-title {
    width: 100%; flex-shrink: 0;
    margin-bottom: 15px; /* --- ADDED: Manual spacing --- */
 }
-/* --- *** THIS IS THE FIX (Reverting) *** --- */
 h2.section-title.reading-bias-title {
-  margin-top: 5px; /* --- CHANGED: Was 40px, now 5px (original value) --- */
-  margin-bottom: 15px;
+  margin-top: 10px; /* <-- *** THIS IS THE FIX (Reduced Margin) *** --- */
+  margin-bottom: 10px; /* <-- *** THIS IS THE FIX (Reduced Margin) *** --- */
 }
-/* --- *** END OF FIX *** --- */
 h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bottom: 0; } /* Remove bottom margin if no border */
 
 
@@ -220,7 +209,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   box-shadow: none;
   border: none;
   background: transparent;
-  margin-bottom: 20px; /* --- ADDED: Manual spacing --- */
+  margin-bottom: 10px; /* <-- *** THIS IS THE FIX (Reduced Margin) *** --- */
 }
 
 /* Card Header (Chart Titles) */
@@ -276,7 +265,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   min-height: auto; /* Let content define height */
   justify-content: center;
   /* padding: 20px; Already handled by .dashboard-card */
-  margin-bottom: 10px; /* --- CHANGED: Was 20px, now 10px --- */
+  margin-bottom: 0; /* <-- *** THIS IS THE FIX (Reduced Margin) *** --- */
 }
 
 /* --- NEW: Lean Legend Styles --- */
@@ -320,21 +309,24 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 /* --- END UPDATE --- */
 
 
+/* --- *** THIS IS THE FIX (Sticky Header) *** --- */
 /* --- Sticky Header Wrapper for Right Column --- */
 .sticky-header-wrapper {
-  /* --- *** THIS IS THE FIX *** --- */
-  /* This whole rule is no longer needed */
-  /*
   position: sticky;
   top: 0;
   background-color: var(--bg-primary); 
   z-index: 10;
+  /* Fix padding bleed from parent */
   margin-right: -10px; 
-  padding-right: 10px; 
-  padding-bottom: 10px; 
-  */
-  /* --- *** END OF FIX *** --- */
+  padding-right: 10px;
+  /* --- FIX: Space below sticky header --- */
+  padding-bottom: 15px; 
 }
+.sticky-header-wrapper .section-title-header {
+  margin-bottom: 0; /* Remove margin from header inside sticky */
+}
+/* --- *** END OF FIX *** --- */
+
 
 /* --- Dashboard Chart Grid --- */
 .dashboard-grid {
@@ -356,6 +348,13 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 
 /* Stories Read Card (Full width) */
 .full-width-chart-card { grid-column: 1 / -1; }
+
+/* --- *** THIS IS THE FIX (Align Cards) *** --- */
+/* This only applies on desktop where columns are side-by-side */
+.dashboard-right-column > .stories-read-card {
+  margin-top: 35px; /* Manually adjust to align with stat boxes */
+}
+/* --- *** END OF FIX *** --- */
 
 
 /* --- Loading and No Data States --- */
@@ -416,6 +415,14 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
     position: static; /* Unstick header */
     background: none; z-index: auto; padding: 0; margin: 0;
   }
+  
+  /* --- *** THIS IS THE FIX (Align Cards) *** --- */
+  /* Remove the margin-top fix on tablet/mobile */
+  .dashboard-right-column > .stories-read-card {
+    margin-top: 0; 
+  }
+  /* --- *** END OF FIX *** --- */
+
   .sticky-header-wrapper .section-title-header { margin-top: 0; margin-bottom: 15px; } /* Adjust margin */
 
   .stat-box-grid { grid-template-columns: repeat(2, 1fr); } /* Keep 2 columns */

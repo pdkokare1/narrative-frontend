@@ -1,5 +1,6 @@
 // In file: src/components/Sidebar.js
 // --- UPDATED: Added Dashboard link for mobile ---
+// --- FIX (2025-11-16): Made Account Settings link visible on desktop ---
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import CustomSelect from './ui/CustomSelect'; // Import the CustomSelect component
@@ -129,13 +130,14 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
       {/* --- Footer Area (Logout) --- */}
       <div className="sidebar-footer">
         
-        {/* --- *** NEW: Moved Account Settings here *** --- */}
-        <div className="sidebar-section sidebar-section-mobile-only" style={{ marginBottom: '15px' }}>
+        {/* --- *** THIS IS THE FIX *** --- */}
+        {/* Removed 'sidebar-section-mobile-only' class so it shows on desktop */}
+        <div className="sidebar-section" style={{ marginBottom: '15px' }}>
           <ul>
             <li><SidebarNavLink to="/account-settings">Account Settings</SidebarNavLink></li>
           </ul>
         </div>
-        {/* --- *** END NEW *** --- */}
+        {/* --- *** END OF FIX *** --- */}
 
         {/* --- Logout Button --- */}
         <button onClick={onLogout} className="sidebar-logout-btn">

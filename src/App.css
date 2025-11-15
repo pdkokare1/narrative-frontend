@@ -1,6 +1,7 @@
 /* In file: src/App.css */
 /* --- FIX: Reduced .sidebar-header-mobile padding-top to 10px --- */
 /* --- FIX: Made .sidebar-main-content scrollable and .sidebar-footer sticky --- */
+/* --- FIX (2025-11-16): Centered .sidebar-nav-link and removed hover underline --- */
 
 /* ==================== PREMIUM THEME VARIABLES ==================== */
 .dark-mode {
@@ -337,11 +338,13 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   background-color: var(--bg-primary); /* --- NEW: Add background --- */
   border: 1px solid var(--border-color); /* --- NEW: Add border --- */
   margin-bottom: 8px;
+  text-align: center; /* --- *** THIS IS THE FIX *** --- */
 }
 .sidebar-nav-link:hover {
   background: var(--bg-elevated);
   color: var(--text-primary);
   border-color: var(--accent-primary); /* --- NEW: Add accent on hover --- */
+  text-decoration: none; /* --- *** THIS IS THE FIX *** --- */
 }
 .sidebar-nav-link.active-link { /* Style for active route */
   background: var(--accent-primary);
@@ -1633,7 +1636,7 @@ button:disabled, button:disabled:hover {
    }
    /* --- *** THIS IS THE FIX (Sidebar Scroll) *** --- */
    .sidebar-main-content { overflow-y: visible; } /* No scroll needed on desktop */
-   /* --- *** END OF FIX *** --- */
+   /* --- *** END OF FIX --- */
    
    /* --- *** THIS IS THE FIX: I AM REMOVING THE HIDE RULE *** --- */
    /*

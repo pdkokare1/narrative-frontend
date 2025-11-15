@@ -70,19 +70,22 @@
   position: relative;
 }
 
+/* --- *** THIS IS THE FIX *** --- */
 .login-form-panel h1 {
   font-family: 'Inter', sans-serif;
   font-size: 28px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-primary, #EAEAEA); /* Added fallback */
   margin-bottom: 8px;
 }
 
 .login-form-panel p {
-  color: var(--text-secondary);
+  color: var(--text-secondary, #B0B0B0); /* Added fallback */
   font-size: 14px;
   margin-bottom: 30px;
 }
+/* --- *** END OF FIX *** --- */
+
 
 /* --- Desktop Styles --- */
 @media (min-width: 769px) {

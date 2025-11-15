@@ -1,6 +1,7 @@
 // In file: src/components/Sidebar.js
 // --- UPDATED: Added Dashboard link for mobile ---
 // --- FIX (2025-11-16): Made Account Settings link visible on desktop ---
+// --- FIX (2025-11-16b): Removed ul/li from Account Settings link ---
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import CustomSelect from './ui/CustomSelect'; // Import the CustomSelect component
@@ -132,10 +133,9 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
         
         {/* --- *** THIS IS THE FIX *** --- */}
         {/* Removed 'sidebar-section-mobile-only' class so it shows on desktop */}
+        {/* Removed ul/li wrapper to fix bullet point */}
         <div className="sidebar-section" style={{ marginBottom: '15px' }}>
-          <ul>
-            <li><SidebarNavLink to="/account-settings">Account Settings</SidebarNavLink></li>
-          </ul>
+          <SidebarNavLink to="/account-settings">Account Settings</SidebarNavLink>
         </div>
         {/* --- *** END OF FIX *** --- */}
 

@@ -4,6 +4,7 @@
 // --- FIX: Re-added 'Your Activity' h2 (desktop-only) ---
 // --- FIX: Re-structured header to align 'Stats' to the right ---
 // --- FIX: Moved 'Account Settings' link to a new 'dashboard-left-footer' div ---
+// --- FIX (2025-11-15): New header layout per user request ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom'; // Use Link for Back to Articles
@@ -320,23 +321,20 @@ function MyDashboard({ theme }) {
           {/* --- This new div handles scrolling --- */}
           <div className="dashboard-left-scroll">
             
-            {/* --- *** THIS IS THE FIX (Desktop Only) *** --- */}
-            <div className="section-title-header no-border-bottom">
+            {/* --- *** THIS IS THE FIX (New Desktop Header Layout) *** --- */}
+            <div className="section-title-header no-border-bottom dashboard-header-desktop-layout">
               
-              {/* --- FIX 1: Group Title and Button on the left --- */}
-              <div className="header-actions">
-                  {/* --- "Your Activity" title added back --- */}
-                  {/* This element is hidden on mobile by DashboardPages.css */ }
-                  <span className="section-title">Your Activity</span> 
-                  <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
-                    Back to Articles
-                  </Link>
-              </div>
+              {/* Row 1: Title */}
+              <span className="section-title">Your Activity</span>
               
-              {/* --- FIX 2: "Stats" is now its own flex item --- */}
-              {/* The parent's 'justify-content: space-between' pushes this to the far right */}
-              <div className="date-range-selector"> 
-                <span>Viewing All-Time Stats</span> 
+              {/* Row 2: Actions */}
+              <div className="header-actions-row">
+                <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
+                  Back to Articles
+                </Link>
+                <div className="date-range-selector"> 
+                  <span>Viewing All-Time Stats</span> 
+                </div>
               </div>
 
             </div>

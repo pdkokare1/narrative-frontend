@@ -1,8 +1,8 @@
 // In file: src/MyDashboard.js
 // --- FIX: Component now accepts `theme` as a prop ---
 // --- FIX: Removed the line `const theme = document.body.className...` ---
-// --- FIX: Removed 'Your Activity' h2 ---
-// --- FIX: Moved 'Viewing All-Time Stats' to the left column header ---
+// --- FIX: Re-added 'Your Activity' h2 (desktop-only) ---
+// --- FIX: Re-structured header to align 'Stats' to the right ---
 // --- FIX: Moved 'Account Settings' link to a new 'dashboard-left-footer' div ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
@@ -317,21 +317,31 @@ function MyDashboard({ theme }) {
 
         {/* --- Left Column --- */}
         <div className="dashboard-left-column">
-          {/* --- *** THIS IS THE FIX *** --- */}
           {/* --- This new div handles scrolling --- */}
           <div className="dashboard-left-scroll">
             
-            {/* --- "Your Activity" text has been REMOVED --- */}
+            {/* --- *** THIS IS THE FIX (Desktop Only) *** --- */}
             <div className="section-title-header no-border-bottom">
-              {/* --- h2.section-title has been REMOVED --- */}
+              
+              {/* --- FIX 1: Group Title and Button on the left --- */}
               <div className="header-actions">
+                  {/* --- "Your Activity" title added back --- */}
+                  {/* This element is hidden on mobile by DashboardPages.css */ }
+                  <span className="section-title">Your Activity</span> 
                   <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
                     Back to Articles
                   </Link>
-                  {/* --- MOVED "Viewing All-Time Stats" HERE --- */}
-                  <div className="date-range-selector"> <span>Viewing All-Time Stats</span> </div>
               </div>
+              
+              {/* --- FIX 2: "Stats" is now its own flex item --- */}
+              {/* The parent's 'justify-content: space-between' pushes this to the far right */}
+              <div className="date-range-selector"> 
+                <span>Viewing All-Time Stats</span> 
+              </div>
+
             </div>
+            {/* --- *** END OF FIX *** --- */}
+
 
             {/* Activity Stat Boxes (now wrapped) */}
             <div className="dashboard-card no-padding"> {/* Add no-padding if needed */}
@@ -396,11 +406,9 @@ function MyDashboard({ theme }) {
 
         {/* --- Right Column --- */}
         <div className="dashboard-right-column">
-          {/* --- *** THIS IS THE FIX *** --- */}
-          {/* --- The 'sticky-header-wrapper' is now a standard header --- */}
+          {/* --- This is now a standard header --- */}
           <div className="section-title-header">
               <h2 className="section-title no-border">Your Reading Habits Dashboard</h2>
-              {/* --- "Viewing All-Time Stats" was REMOVED from here --- */}
           </div>
           {/* --- *** END OF FIX *** --- */}
 

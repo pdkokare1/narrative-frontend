@@ -378,7 +378,9 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   border: 1px solid var(--border-color); /* --- NEW: Match nav links --- */
   border-radius: 6px;
   cursor: pointer;
-  text-align: left; /* --- CHANGED: Align left like nav links --- */
+  /* --- *** THIS IS THE FIX: Center text --- */
+  text-align: center; 
+  /* --- *** END OF FIX *** --- */
   transition: all 0.2s ease;
 }
 .sidebar-logout-btn:hover {
@@ -1701,9 +1703,45 @@ button:disabled, button:disabled:hover {
   position: relative;
   
   /* --- NEW: Make this the scroller on desktop --- */
-  overflow-y: auto;
-  height: calc(100vh - 60px);
+  /* --- *** THIS IS THE FIX (Req 2) *** --- */
+  /* This is now handled by the desktop-only rule below */
+  /* overflow-y: auto; */
+  /* height: calc(100vh - 60px); */
+  /* --- *** END OF FIX *** --- */
 }
+
+/* --- *** NEW: Desktop Scroll Handling (Req 2) *** --- */
+@media (min-width: 769px) {
+  /* These pages scroll on desktop */
+  .content, /* NewsFeed */
+  .content-router-outlet.saved-articles-desktop-page { /* SavedArticles */
+    overflow-y: auto;
+    height: calc(100vh - 60px);
+  }
+  
+  /* The Dashboard page itself should NOT scroll */
+  .dashboard-page {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    height: calc(100vh - 60px);
+    overflow: hidden; /* This is critical */
+  }
+
+  /* --- NEW: Desktop Saved Articles Page Styles (Req 1) --- */
+  .saved-articles-desktop-page {
+    /* Apply the same padding as the NewsFeed */
+    padding: 30px 40px; 
+  }
+  h1.saved-articles-desktop-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 25px;
+  }
+  /* --- *** END OF FIX *** --- */
+}
+
 
 /* --- On mobile, the .content-router-outlet should NOT scroll --- */
 /* The child (.dashboard-page or .content) will scroll instead */

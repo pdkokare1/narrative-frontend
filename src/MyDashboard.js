@@ -5,6 +5,8 @@
 // --- FIX: Re-structured header to align 'Stats' to the right ---
 // --- FIX: Moved 'Account Settings' link to a new 'dashboard-left-footer' div ---
 // --- FIX (2025-11-15): New header layout per user request ---
+// --- FIX (2025-11-16): Removed Account Settings button (moved to Sidebar) ---
+// --- FIX (2025-11-16): Added sticky-header-wrapper to right column ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom'; // Use Link for Back to Articles
@@ -392,21 +394,20 @@ function MyDashboard({ theme }) {
           </div> 
           {/* --- End of dashboard-left-scroll --- */}
 
-          {/* --- NEW: Footer for Account Settings --- */}
-          <div className="dashboard-left-footer">
-            <Link to="/account-settings" className="btn-secondary btn-full-width account-settings-link" style={{ textDecoration: 'none' }}>
-              Account Settings
-            </Link>
-          </div>
+          {/* --- *** THIS IS THE FIX: Button REMOVED from here --- */}
+          {/* <div className="dashboard-left-footer"> ... </div> */}
           {/* --- *** END OF FIX *** --- */}
 
         </div> {/* --- End Left Column --- */}
 
         {/* --- Right Column --- */}
         <div className="dashboard-right-column">
-          {/* --- This is now a standard header --- */}
-          <div className="section-title-header">
-              <h2 className="section-title no-border">Your Reading Habits Dashboard</h2>
+          
+          {/* --- *** THIS IS THE FIX (Sticky Header) *** --- */}
+          <div className="sticky-header-wrapper">
+            <div className="section-title-header">
+                <h2 className="section-title no-border">Your Reading Habits Dashboard</h2>
+            </div>
           </div>
           {/* --- *** END OF FIX *** --- */}
 

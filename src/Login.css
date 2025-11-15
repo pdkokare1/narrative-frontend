@@ -42,6 +42,10 @@
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   z-index: 2;
+  /* --- *** THIS IS THE FIX *** --- */
+  /* Add a non-variable fallback color for initial load */
+  background-color: #1E1E1E; 
+  /* --- *** END OF FIX *** --- */
 }
 
 .login-image-panel {
@@ -112,6 +116,8 @@
   color: var(--accent-primary) !important;
   background: var(--bg-elevated) !important;
 }
+/* --- FIX: This rule for the Email button is no longer needed --- */
+/*
 .firebaseui-button.firebaseui-id-idp-button {
   background: var(--gradient-accent) !important;
   color: white !important;
@@ -124,6 +130,7 @@
   box-shadow: var(--shadow-sm) !important;
   filter: brightness(1.1) !important;
 }
+*/
 
 /* --- 2. Email/Password Popup Container (Fixes bg colors) --- */
 .firebaseui-dialog {

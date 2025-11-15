@@ -7,6 +7,7 @@
 /* --- FIX (2025-11-15): Added new desktop header layout styles --- */
 /* --- FIX (2025-11-15): Updated mobile header layout styles --- */
 /* --- FIX (2025-11-16): Removed left column scrollbar and added right column sticky header --- */
+/* --- FIX (2025-11-16b): Aligned header content --- */
 
 /* --- Page Wrapper --- */
 .dashboard-page {
@@ -129,7 +130,7 @@
 .section-title-header.no-border-bottom {
   border-bottom: none;
   padding-bottom: 0;
-  margin-bottom: 10px; /* <-- *** THIS IS THE FIX (Reduced Margin) *** --- */
+  margin-bottom: 15px; /* --- *** THIS IS THE FIX *** --- */
 }
 /* Specific title styling *within* the header */
 .section-title-header .section-title {
@@ -352,7 +353,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 /* --- *** THIS IS THE FIX (Align Cards) *** --- */
 /* This only applies on desktop where columns are side-by-side */
 .dashboard-right-column > .stories-read-card {
-  margin-top: 35px; /* Manually adjust to align with stat boxes */
+  /* --- REMOVED: margin-top: 35px; --- */
 }
 /* --- *** END OF FIX *** --- */
 
@@ -436,6 +437,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   flex-direction: column; /* Stack rows */
   align-items: flex-start; /* Align title to left */
   gap: 10px; /* Space between title and actions row */
+  margin-bottom: 15px !important; /* --- *** ALIGNMENT FIX *** --- */
 }
 .header-actions-row {
   display: flex;

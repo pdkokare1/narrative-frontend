@@ -8,7 +8,7 @@
 .dashboard-page {
   margin: 0 auto;
   padding: 0; /* Remove padding for full control */
-  margin-top: 60px; /* Header height */
+  /* --- *** THIS IS THE FIX: Removed margin-top: 60px; *** --- */
   color: var(--text-primary);
   /* height: calc(100vh - 60px); */ /* <-- REMOVED */
   min-height: calc(100vh - 60px); /* <-- ADDED */

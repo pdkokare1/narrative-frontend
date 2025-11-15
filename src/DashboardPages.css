@@ -73,20 +73,26 @@
 /* --- Right Column Styles --- */
 .dashboard-right-column {
   flex: 1 1 auto; /* Grow to fill remaining space */
-  /* overflow-y: auto; */ /* <-- REMOVED */
   min-width: 0;
   padding-right: 10px; /* Space for scrollbar */
   padding-left: 5px; /* Slight padding */
-  padding-bottom: 20px;
+  /* --- *** THIS IS THE FIX *** --- */
+  /* --- Make this column scrollable and fix its height --- */
+  overflow-y: auto; /* Allow this column to scroll */
+  height: calc(100vh - 90px); /* Match left column height */
+  /* --- *** END OF FIX *** --- */
+  
   /* Custom scrollbar for right column */
   scrollbar-width: thin;
   scrollbar-color: var(--accent-primary) var(--bg-secondary);
 }
-/* --- REMOVED right column scrollbar styles --- */
-.dashboard-right-column::-webkit-scrollbar { display: none; }
-.dashboard-right-column::-webkit-scrollbar-track { display: none; }
-.dashboard-right-column::-webkit-scrollbar-thumb { display: none; }
-.dashboard-right-column::-webkit-scrollbar-thumb:hover { display: none; }
+/* --- *** THIS IS THE FIX *** --- */
+/* --- Apply scrollbar styles --- */
+.dashboard-right-column::-webkit-scrollbar { display: block; width: 6px; }
+.dashboard-right-column::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
+.dashboard-right-column::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 3px; }
+.dashboard-right-column::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
+/* --- *** END OF FIX *** --- */
 
 
 /* --- Responsive Placeholder Page (Saved, Account) --- */
@@ -397,7 +403,11 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
     background-color: transparent !important; /* --- ADDED: Remove bg on mobile --- */
   }
   .dashboard-right-column {
-    overflow-y: visible; /* Don't scroll */
+    /* --- *** THIS IS THE FIX *** --- */
+    /* --- Undo the desktop scroll fix for mobile --- */
+    overflow-y: visible; 
+    height: auto; 
+    /* --- *** END OF FIX *** --- */
     max-height: none;
     padding: 0; /* Remove padding */
   }

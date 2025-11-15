@@ -1,6 +1,7 @@
 // In file: src/Login.js
 import React, { useEffect, useRef } from 'react';
-import { EmailAuthProvider, GoogleAuthProvider } from "firebase/auth";
+// --- FIX: Removed EmailAuthProvider ---
+import { GoogleAuthProvider } from "firebase/auth";
 import { auth } from './firebaseConfig';
 import * as firebaseui from 'firebaseui'; // Import the official firebaseui library
 import 'firebaseui/dist/firebaseui.css';  // Import the required CSS
@@ -18,10 +19,10 @@ const uiConfig = {
   credentialHelperUrl: `https://${process.env.REACT_APP_AUTH_DOMAIN}`,
   // *** END OF FIX ***
 
-  // We will display Google and Email as login options.
+  // --- FIX: We will display Google as the *only* login option. ---
   signInOptions: [
-    GoogleAuthProvider.PROVIDER_ID,
-    EmailAuthProvider.PROVIDER_ID
+    GoogleAuthProvider.PROVIDER_ID
+    // --- EmailAuthProvider.PROVIDER_ID has been REMOVED ---
   ],
   // Redirect to / after sign in is successful. Alternatively you can provide a callbacks.signInSuccess function.
   signInSuccessUrl: "/", 

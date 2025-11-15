@@ -3,17 +3,18 @@
 /* --- FIX: Used repeat(2, minmax(0, 1fr)) to fix stat card overflow --- */
 /* --- FIX: Increased .dashboard-page padding-bottom to 90px (mobile) --- */
 /* --- FIX: Removed sticky-header-wrapper styles from right column --- */
+/* --- FIX (2025-11-15): Set explicit height/overflow on .dashboard-page to stop double scrollbar --- */
+/* --- FIX (2025-11-15): Added new desktop header layout styles --- */
+/* --- FIX (2025-11-15): Updated mobile header layout styles --- */
 
 /* --- Page Wrapper --- */
 .dashboard-page {
   margin: 0 auto;
   padding: 0; /* Remove padding for full control */
-  /* --- *** THIS IS THE FIX: Removed margin-top: 60px; *** --- */
   color: var(--text-primary);
-  /* height: calc(100vh - 60px); */ /* <-- REMOVED */
-  min-height: calc(100vh - 60px); /* <-- ADDED */
+  height: calc(100vh - 60px); /* <-- FIX: Set explicit height */
   display: flex; /* Changed to flex */
-  /* overflow: hidden; */ /* <-- REMOVED */
+  overflow: hidden; /* <-- FIX: Hide overflow for the page itself */
   width: 100%;
 }
 
@@ -421,30 +422,50 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
 }
 
+
+/* --- *** THIS IS THE FIX (Desktop Header Layout) *** --- */
+/* Add new rules for desktop layout *before* the mobile media query */
+.dashboard-header-desktop-layout {
+  flex-direction: column; /* Stack rows */
+  align-items: flex-start; /* Align title to left */
+  gap: 10px; /* Space between title and actions row */
+}
+.header-actions-row {
+  display: flex;
+  justify-content: space-between; /* Space out button and stats */
+  align-items: center; /* Vertically align them */
+  width: 100%; /* Make row fill width */
+}
+/* --- *** END OF FIX *** --- */
+
+
 @media (max-width: 768px) { /* Mobile */
   .dashboard-content-wrapper { padding: 10px; } /* Reduce padding */
   .dashboard-left-column { margin-bottom: 15px; gap: 0; } /* --- REMOVED GAP --- */
   .dashboard-right-column { padding-bottom: 15px; }
 
-  /* --- *** THIS IS THE FIX *** --- */
+  /* --- *** THIS IS THE FIX (v2) *** --- */
   /* --- Modified layout for left column header --- */
   .dashboard-left-column .section-title-header {
     margin-bottom: 15px; 
-    align-items: center; /* Center items vertically */
-    flex-direction: row; /* Keep as row */
-    gap: 10px; /* Keep gap */
     padding-top: 0; /* Remove top padding */
     border-bottom: none; /* Remove border */
+    
+    /* --- NEW: Override desktop column layout --- */
+    flex-direction: row; /* Keep as row */
+    align-items: center; /* Center items vertically */
+    justify-content: space-between; /* Space out items */
   }
-  .dashboard-left-column .header-actions { 
-    width: auto; /* Don't take full width */
+  /* --- NEW: Style the actions row for mobile --- */
+  .dashboard-left-column .header-actions-row {
+    flex-grow: 1; /* Take remaining space */
     justify-content: flex-end; /* Align to the right */
-    flex-grow: 1; /* Take up remaining space */
+    gap: 10px; /* Add gap between button and stats */
   }
   .dashboard-left-column .section-title-header .section-title {
     display: none; /* --- HIDE "Your Activity" text --- */
   }
-  /* --- *** END OF FIX *** --- */
+  /* --- *** END OF FIX (v2) *** --- */
   
   /* --- Header for right column --- */
   .dashboard-right-column .section-title-header {

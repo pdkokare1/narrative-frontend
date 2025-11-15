@@ -7,6 +7,7 @@
 // --- FIX (2025-11-15): New header layout per user request ---
 // --- FIX (2025-11-16): Removed Account Settings button (moved to Sidebar) ---
 // --- FIX (2025-11-16): Added sticky-header-wrapper to right column ---
+// --- FIX (2025-11-16b): Removed 'no-border-bottom' from left header ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom'; // Use Link for Back to Articles
@@ -323,8 +324,8 @@ function MyDashboard({ theme }) {
           {/* --- This new div handles scrolling --- */}
           <div className="dashboard-left-scroll">
             
-            {/* --- *** THIS IS THE FIX (New Desktop Header Layout) *** --- */}
-            <div className="section-title-header no-border-bottom dashboard-header-desktop-layout">
+            {/* --- *** THIS IS THE FIX (Removed 'no-border-bottom') *** --- */}
+            <div className="section-title-header dashboard-header-desktop-layout">
               
               {/* Row 1: Title */}
               <span className="section-title">Your Activity</span>
@@ -393,10 +394,6 @@ function MyDashboard({ theme }) {
               </div>
           </div> 
           {/* --- End of dashboard-left-scroll --- */}
-
-          {/* --- *** THIS IS THE FIX: Button REMOVED from here --- */}
-          {/* <div className="dashboard-left-footer"> ... </div> */}
-          {/* --- *** END OF FIX *** --- */}
 
         </div> {/* --- End Left Column --- */}
 

@@ -7,11 +7,7 @@
 /* --- FIX (2025-11-15): Added new desktop header layout styles --- */
 /* --- FIX (2025-11-15): Updated mobile header layout styles --- */
 /* --- FIX (2025-11-16): Removed left column scrollbar and added right column sticky header --- */
-/* --- FIX (2025-11-16c): Final alignment fixes for headers and content --- */
-/* --- FIX (2025-11-16d): Removed desktop-header-desktop-layout rules to fix alignment --- */
-/* --- FIX (2025-11-16e): Changed align-items: baseline to align-items: center --- */
-/* --- FIX (2025-11-16f): Changed .header-actions align-items: baseline to center --- */
-/* --- FIX (2025-11-16 FINAL): Moved wrapper padding into columns for alignment --- */
+/* --- FIX (2025-11-16 FINAL-FINAL): Corrected all sticky and padding values for alignment --- */
 
 /* --- Page Wrapper --- */
 .dashboard-page {
@@ -29,11 +25,10 @@
   display: flex;
   flex-grow: 1;
   gap: 20px; /* Space between columns */
-  /* overflow: hidden; */ /* <-- REMOVED */
   width: 100%;
   /* --- *** THIS IS THE FIX (1/3) *** --- */
-  /* Remove top padding, apply others */
-  padding: 0 15px 15px 15px;
+  /* This padding creates the 15px border around *both* columns */
+  padding: 15px;
   /* --- *** END OF FIX *** --- */
 }
 
@@ -43,25 +38,23 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  padding-bottom: 15px; /* Space at bottom */
+  /* --- *** THIS IS THE FIX (2/3) *** --- */
+  /* Remove internal padding, it's handled by the wrapper now */
+  padding-bottom: 0;
+  /* --- *** END OF FIX *** --- */
   
   /* --- Make left column sticky --- */
   position: sticky;
-  /* --- *** THIS IS THE FIX (2/3) *** --- */
-  /* Stick to header (60px) + add internal padding (15px) */
-  top: 60px; 
-  padding-top: 15px;
+  /* --- *** THIS IS THE FIX (3/3) *** --- */
+  /* Stick 15px below the 60px header (60 + 15 = 75) */
+  top: 75px; 
   /* --- *** END OF FIX *** --- */
   height: fit-content; 
   background-color: var(--bg-primary); 
 }
 
-/* --- *** THIS IS THE FIX *** --- */
 /* --- Inner scroll container for left column --- */
 .dashboard-left-scroll {
-  /* --- REMOVED: overflow-y: auto; --- */
-  /* --- REMOVED: flex-grow: 1; --- */
-  
   /* Custom scrollbar for left column (HIDDEN) */
   scrollbar-width: none; /* Firefox */
 }
@@ -75,7 +68,6 @@
   padding-top: 15px; /* Space above button */
   margin-top: auto; /* Pushes this to the bottom */
 }
-/* --- *** END OF FIX *** --- */
 
 
 /* --- Right Column Styles --- */
@@ -86,11 +78,11 @@
   padding-left: 5px; /* Slight padding */
   /* --- Make this column scrollable and fix its height --- */
   overflow-y: auto; /* Allow this column to scroll */
-  /* --- *** THIS IS THE FIX (3/3) *** --- */
-  /* Add internal padding */
-  padding-top: 15px;
-  /* Adjust height to account for removed wrapper padding */
-  height: calc(100vh - 75px); 
+  /* --- *** THIS IS THE FIX *** --- */
+  /* Remove internal padding-top */
+  padding-top: 0;
+  /* Height is 100vh - 60px (header) - 30px (top/bottom wrapper padding) */
+  height: calc(100vh - 90px); 
   /* --- *** END OF FIX *** --- */
   
   /* Custom scrollbar for right column */
@@ -135,13 +127,13 @@
 .section-title-header {
   display: flex;
   justify-content: space-between;
-  align-items: center; /* Was 'baseline' */
+  align-items: center; 
   flex-shrink: 0;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 10px;
   padding-top: 10px;
   width: 100%;
-  margin-bottom: 20px; /* <-- *** THIS IS THE FIX *** --- */
+  margin-bottom: 20px; 
 }
 .section-title-header.no-border-bottom {
   border-bottom: none;
@@ -161,7 +153,7 @@
 }
 .header-actions {
   display: flex;
-  align-items: center; /* Was 'baseline' */
+  align-items: center; 
   gap: 10px;
   flex-shrink: 0;
 }
@@ -191,8 +183,8 @@ h2.section-title {
    margin-bottom: 15px; /* --- ADDED: Manual spacing --- */
 }
 h2.section-title.reading-bias-title {
-  margin-top: 10px; /* <-- *** THIS IS THE FIX (Reduced Margin) *** --- */
-  margin-bottom: 10px; /* <-- *** THIS IS THE FIX (Reduced Margin) *** --- */
+  margin-top: 10px; 
+  margin-bottom: 10px; 
 }
 h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bottom: 0; } /* Remove bottom margin if no border */
 
@@ -203,7 +195,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   grid-template-columns: repeat(2, 1fr); /* 2 columns in left pane */
   gap: 15px;
   flex-shrink: 0;
-  padding: 0; /* CHANGED: Was 15px */
+  padding: 0; 
 }
 
 /* --- Dashboard Card Styling (Applied to wrappers) --- */
@@ -226,7 +218,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   box-shadow: none;
   border: none;
   background: transparent;
-  margin-bottom: 10px; /* <-- *** THIS IS THE FIX (Reduced Margin) *** --- */
+  margin-bottom: 10px; 
 }
 
 /* Card Header (Chart Titles) */
@@ -282,7 +274,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   min-height: auto; /* Let content define height */
   justify-content: center;
   /* padding: 20px; Already handled by .dashboard-card */
-  margin-bottom: 0; /* <-- *** THIS IS THE FIX (Reduced Margin) *** --- */
+  margin-bottom: 0; 
 }
 
 /* --- NEW: Lean Legend Styles --- */

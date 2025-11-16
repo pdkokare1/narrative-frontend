@@ -2,7 +2,7 @@
 // --- UPDATED: Added Dashboard link for mobile ---
 // --- FIX (2025-11-16): Made Account Settings link visible on desktop ---
 // --- FIX (2025-11-16b): Removed ul/li from Account Settings link ---
-// --- *** THIS IS THE FIX: Removed Account Settings button (moving to Dashboard) *** ---
+// --- *** THIS IS THE FIX: Re-added Account Settings button for mobile/desktop *** ---
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import CustomSelect from './ui/CustomSelect'; // Import the CustomSelect component
@@ -132,9 +132,12 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
       {/* --- Footer Area (Logout) --- */}
       <div className="sidebar-footer">
         
-        {/* --- *** THIS IS THE FIX *** --- */}
-        {/* The Account Settings link has been REMOVED from this file. */}
-        {/* It will be added to MyDashboard.js */}
+        {/* --- *** THIS IS THE FIX: Added Account Settings link back *** --- */}
+        {/* Removed 'sidebar-section-mobile-only' class so it shows on desktop */}
+        {/* Removed ul/li wrapper to fix bullet point */}
+        <div className="sidebar-section" style={{ marginBottom: '15px' }}>
+          <SidebarNavLink to="/account-settings">Account Settings</SidebarNavLink>
+        </div>
         {/* --- *** END OF FIX *** --- */}
 
         {/* --- Logout Button --- */}

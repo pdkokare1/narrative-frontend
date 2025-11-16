@@ -10,6 +10,7 @@
 // --- FIX (2025-11-16b): Removed 'no-border-bottom' from left header ---
 // --- FIX (2025-11-16c): Moved 'Viewing All-Time Stats' to right header ---
 // --- FIX (2025-11-16d): ALIGNMENT FIX per user screenshot ---
+// --- FIX (2025-11-16g): Changed left column <span> to <h2> to match right column ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom'; // Use Link for Back to Articles
@@ -331,8 +332,10 @@ function MyDashboard({ theme }) {
             {/* Restructured to match the right column's header */}
             <div className="section-title-header">
               
-              {/* "Your Activity" is now the title */}
-              <span className="section-title">Your Activity</span>
+              {/* --- *** THIS IS THE FIX *** --- */}
+              {/* Changed <span> to <h2> to match the right column */}
+              <h2 className="section-title">Your Activity</h2>
+              {/* --- *** END OF FIX *** --- */}
               
               {/* The button is now in 'header-actions' */}
               <div className="header-actions">

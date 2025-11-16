@@ -15,6 +15,7 @@
 // --- *** THIS IS THE FIX: Added Account Settings button to left footer *** ---
 // --- *** BUILD FIX: Corrected </Doughnut> closing tag to </p> *** ---
 // --- *** MOBILE FIX: Added 'mobile-only-footer' div for Account Settings *** ---
+// --- *** MOBILE FIX: Re-structured mobile header for Title and Buttons *** ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom'; // Use Link for Back to Articles
@@ -344,6 +345,21 @@ function MyDashboard({ theme }) {
             {/* --- *** END OF FIX *** --- */}
 
 
+            {/* --- *** MOBILE FIX: This is the new mobile-only header *** --- */}
+            <div className="dashboard-header-mobile">
+              <h2 className="section-title-mobile">Your Activity</h2>
+              <div className="header-actions-mobile">
+                <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
+                  Back to Articles
+                </Link>
+                <div className="date-range-selector"> 
+                  <span>Viewing All-Time Stats</span> 
+                </div>
+              </div>
+            </div>
+            {/* --- *** END OF MOBILE FIX *** --- */}
+
+
             {/* Activity Stat Boxes (now wrapped) */}
             <div className="dashboard-card no-padding"> {/* Add no-padding if needed */}
               <div className="stat-box-grid">
@@ -419,6 +435,12 @@ function MyDashboard({ theme }) {
             </div>
           </div>
           {/* --- *** END OF FIX *** --- */}
+          
+          {/* --- *** MOBILE FIX: This is the new mobile-only header *** --- */}
+          <div className="dashboard-header-mobile">
+            <h2 className="section-title-mobile">Your Reading Habits</h2>
+          </div>
+          {/* --- *** END OF MOBILE FIX *** --- */}
 
 
           {/* Stories Analyzed Over Time (Full Width) */}

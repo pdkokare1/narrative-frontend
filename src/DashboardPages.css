@@ -9,6 +9,7 @@
 /* --- FIX (2025-11-16): Removed left column scrollbar and added right column sticky header --- */
 /* --- FIX (2025-11-16c): Final alignment fixes for headers and content --- */
 /* --- FIX (2025-11-16d): Removed desktop-header-desktop-layout rules to fix alignment --- */
+/* --- FIX (2025-11-16e): Changed align-items: baseline to align-items: center --- */
 
 /* --- Page Wrapper --- */
 .dashboard-page {
@@ -120,7 +121,9 @@
 .section-title-header {
   display: flex;
   justify-content: space-between;
-  align-items: baseline; /* <-- *** THIS IS THE FIX *** --- */
+  /* --- *** THIS IS THE FIX *** --- */
+  align-items: center; /* Was 'baseline' */
+  /* --- *** END OF FIX *** --- */
   flex-shrink: 0;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 10px;
@@ -325,7 +328,9 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 }
 .sticky-header-wrapper .section-title-header {
   margin-bottom: 20px; /* <-- *** THIS IS THE FIX *** --- */
-  align-items: baseline; /* <-- *** THIS IS THE FIX *** --- */
+  /* --- *** THIS IS THE FIX *** --- */
+  align-items: center; /* Was 'baseline' */
+  /* --- *** END OF FIX *** --- */
 }
 /* --- *** END OF FIX *** --- */
 

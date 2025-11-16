@@ -8,6 +8,7 @@
 /* --- FIX (2025-11-15): Updated mobile header layout styles --- */
 /* --- FIX (2025-11-16): Removed left column scrollbar and added right column sticky header --- */
 /* --- FIX (2025-11-16 FINAL-FINAL): Corrected all sticky and padding values for alignment --- */
+/* --- *** THIS IS THE ALIGNMENT FIX *** --- */
 
 /* --- Page Wrapper --- */
 .dashboard-page {
@@ -318,7 +319,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 /* --- END UPDATE --- */
 
 
-/* --- *** THIS IS THE FIX (Sticky Header) *** --- */
+/* --- *** THIS IS THE ALIGNMENT FIX (1/2) *** --- */
 /* --- This class now ONLY applies to the RIGHT column wrapper --- */
 .sticky-header-wrapper {
   position: sticky;
@@ -328,13 +329,17 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   /* Fix padding bleed from parent */
   margin-right: -10px; 
   padding-right: 10px;
+  /* --- NEW: Match left header's padding-top for alignment --- */
+  padding-top: 10px;
 }
 /* This rule now applies to the header *inside* the sticky wrapper */
 .sticky-header-wrapper .section-title-header {
   margin-bottom: 20px; 
   align-items: center; 
+  /* --- NEW: Remove inner padding, wrapper handles it now --- */
+  padding-top: 0;
 }
-/* --- *** END OF FIX *** --- */
+/* --- *** END OF ALIGNMENT FIX *** --- */
 
 
 /* --- Dashboard Chart Grid --- */
@@ -539,3 +544,28 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   /* --- REMOVED this rule that forced 1-column layout --- */
   /* .dashboard-left-column > .dashboard-card.no-padding .stat-box-grid { ... } */
 }
+
+/* --- *** THIS IS THE FIX: ADDED STYLE FOR NEW BUTTON *** --- */
+/* --- NEW: Account Settings Link on Dashboard --- */
+/* This styles the <Link> component to look like the sidebar buttons */
+.account-settings-link-dashboard {
+  display: block;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  /* margin-bottom: 8px; */ /* Not needed in footer */
+  text-align: center;
+}
+.account-settings-link-dashboard:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+  text-decoration: none;
+}
+/* --- *** END OF FIX *** --- */

@@ -11,7 +11,7 @@
 /* --- FIX (2025-11-16d): Removed desktop-header-desktop-layout rules to fix alignment --- */
 /* --- FIX (2025-11-16e): Changed align-items: baseline to align-items: center --- */
 /* --- FIX (2025-11-16f): Changed .header-actions align-items: baseline to center --- */
-/* --- FIX (2025-11-16h): Created generic .dashboard-sticky-header for alignment --- */
+/* --- FIX (2025-11-16i): Reverted sticky header structure to original design --- */
 
 /* --- Page Wrapper --- */
 .dashboard-page {
@@ -68,7 +68,7 @@
   padding-top: 15px; /* Space above button */
   margin-top: auto; /* Pushes this to the bottom */
 }
-/* --- *** END OF FIX *** --- */
+/* --- *** END OF FIX --- */
 
 
 /* --- Right Column Styles --- */
@@ -315,18 +315,18 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 
 
 /* --- *** THIS IS THE FIX (Sticky Header) *** --- */
-/* --- Renamed to generic class .dashboard-sticky-header --- */
-.dashboard-sticky-header {
+/* --- This class now ONLY applies to the RIGHT column wrapper --- */
+.sticky-header-wrapper {
   position: sticky;
   top: 0;
   background-color: var(--bg-primary); 
   z-index: 10;
-  /* --- REMOVED right-column-specific rules --- */
-  /* margin-right: -10px;  */
-  /* padding-right: 10px; */
+  /* Fix padding bleed from parent */
+  margin-right: -10px; 
+  padding-right: 10px;
 }
 /* This rule now applies to the header *inside* the sticky wrapper */
-.dashboard-sticky-header .section-title-header {
+.sticky-header-wrapper .section-title-header {
   margin-bottom: 20px; 
   align-items: center; 
 }
@@ -416,7 +416,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
     max-height: none;
     padding: 0; /* Remove padding */
   }
-  .dashboard-sticky-header {
+  .sticky-header-wrapper {
     position: static; /* Unstick header */
     background: none; z-index: auto; padding: 0; margin: 0;
   }
@@ -428,7 +428,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   }
   /* --- *** END OF FIX *** --- */
 
-  .dashboard-sticky-header .section-title-header { margin-top: 0; margin-bottom: 15px; } /* Adjust margin */
+  .sticky-header-wrapper .section-title-header { margin-top: 0; margin-bottom: 15px; } /* Adjust margin */
 
   .stat-box-grid { grid-template-columns: repeat(2, 1fr); } /* Keep 2 columns */
   .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }

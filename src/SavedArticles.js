@@ -2,6 +2,7 @@
 // --- COMPLETE REWRITE (v5) ---
 // --- FIX: Renders a desktop-style grid (.articles-grid) on desktop screens ---
 // --- FIX: Keeps the mobile snap-scroll layout (.article-card-wrapper) on mobile ---
+// --- *** MOBILE FIX: Reduced font size for mobile title *** ---
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -172,7 +173,9 @@ function SavedArticles({
               }}>
                 <h1 style={{ 
                   width: '100%', maxWidth: '500px',
-                  textAlign: 'left', fontSize: '24px',
+                  textAlign: 'left',
+                  // --- *** THIS IS THE FIX: Font size reduced *** ---
+                  fontSize: '20px', // WAS: 24px
                   color: 'var(--text-primary)',
                 }}>
                   Saved Articles ({savedArticles.length})

@@ -11,7 +11,7 @@
 // --- FIX (2025-11-16c): Moved 'Viewing All-Time Stats' to right header ---
 // --- FIX (2025-11-16d): ALIGNMENT FIX per user screenshot ---
 // --- FIX (2025-11-16g): Changed left column <span> to <h2> to match right column ---
-// --- FIX (2025-11-16h): Added matching sticky header wrapper to left column ---
+// --- FIX (2025-11-16i): REMOVED sticky wrapper from left column (it was the problem) ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom'; // Use Link for Back to Articles
@@ -329,19 +329,13 @@ function MyDashboard({ theme }) {
           <div className="dashboard-left-scroll">
             
             {/* --- *** THIS IS THE FIX *** --- */}
-            {/* Added a wrapper div to match the right column's structure */}
-            <div className="dashboard-sticky-header">
-              <div className="section-title-header">
-                
-                {/* Changed <span> to <h2> to match the right column */}
-                <h2 className="section-title">Your Activity</h2>
-                
-                {/* The button is now in 'header-actions' */}
-                <div className="header-actions">
-                  <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
-                    Back to Articles
-                  </Link>
-                </div>
+            {/* The sticky wrapper has been REMOVED from the left column. */}
+            <div className="section-title-header">
+              <h2 className="section-title">Your Activity</h2>
+              <div className="header-actions">
+                <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
+                  Back to Articles
+                </Link>
               </div>
             </div>
             {/* --- *** END OF FIX *** --- */}
@@ -404,13 +398,10 @@ function MyDashboard({ theme }) {
         <div className="dashboard-right-column">
           
           {/* --- *** THIS IS THE FIX *** --- */}
-          {/* Renamed class from 'sticky-header-wrapper' to 'dashboard-sticky-header' */}
-          <div className="dashboard-sticky-header">
+          {/* Renamed class back to 'sticky-header-wrapper' */}
+          <div className="sticky-header-wrapper">
             <div className="section-title-header">
-                {/* --- Text changed --- */}
-                {/* --- *** THIS IS THE FIX (Request 3): Removed 'no-border' class *** --- */}
                 <h2 className="section-title">Your Reading Habits</h2>
-                {/* --- 'Viewing All-Time Stats' ADDED here --- */}
                 <div className="date-range-selector"> 
                   <span>Viewing All-Time Stats</span> 
                 </div>

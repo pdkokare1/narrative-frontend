@@ -11,6 +11,7 @@
 // --- FIX (2025-11-16c): Moved 'Viewing All-Time Stats' to right header ---
 // --- FIX (2025-11-16d): ALIGNMENT FIX per user screenshot ---
 // --- FIX (2025-11-16g): Changed left column <span> to <h2> to match right column ---
+// --- FIX (2025-11-16h): Added matching sticky header wrapper to left column ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom'; // Use Link for Back to Articles
@@ -327,23 +328,21 @@ function MyDashboard({ theme }) {
           {/* --- This new div handles scrolling --- */}
           <div className="dashboard-left-scroll">
             
-            {/* --- *** THIS IS THE FIX (Request 1 & 2) *** --- */}
-            {/* Removed 'dashboard-header-desktop-layout' class */}
-            {/* Restructured to match the right column's header */}
-            <div className="section-title-header">
-              
-              {/* --- *** THIS IS THE FIX *** --- */}
-              {/* Changed <span> to <h2> to match the right column */}
-              <h2 className="section-title">Your Activity</h2>
-              {/* --- *** END OF FIX *** --- */}
-              
-              {/* The button is now in 'header-actions' */}
-              <div className="header-actions">
-                <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
-                  Back to Articles
-                </Link>
+            {/* --- *** THIS IS THE FIX *** --- */}
+            {/* Added a wrapper div to match the right column's structure */}
+            <div className="dashboard-sticky-header">
+              <div className="section-title-header">
+                
+                {/* Changed <span> to <h2> to match the right column */}
+                <h2 className="section-title">Your Activity</h2>
+                
+                {/* The button is now in 'header-actions' */}
+                <div className="header-actions">
+                  <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
+                    Back to Articles
+                  </Link>
+                </div>
               </div>
-
             </div>
             {/* --- *** END OF FIX *** --- */}
 
@@ -404,8 +403,9 @@ function MyDashboard({ theme }) {
         {/* --- Right Column --- */}
         <div className="dashboard-right-column">
           
-          {/* --- *** THIS IS THE FIX (Sticky Header) *** --- */}
-          <div className="sticky-header-wrapper">
+          {/* --- *** THIS IS THE FIX *** --- */}
+          {/* Renamed class from 'sticky-header-wrapper' to 'dashboard-sticky-header' */}
+          <div className="dashboard-sticky-header">
             <div className="section-title-header">
                 {/* --- Text changed --- */}
                 {/* --- *** THIS IS THE FIX (Request 3): Removed 'no-border' class *** --- */}

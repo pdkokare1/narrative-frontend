@@ -320,8 +320,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 /* --- END UPDATE --- */
 
 
-/* --- *** THIS IS THE ALIGNMENT FIX (1/2) *** --- */
-/* --- This class now ONLY applies to the RIGHT column wrapper --- */
+/* --- *** THIS IS THE FINAL ALIGNMENT FIX *** --- */
 .sticky-header-wrapper {
   position: sticky;
   top: 0;
@@ -330,18 +329,16 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   /* Fix padding bleed from parent */
   margin-right: -10px; 
   padding-right: 10px;
-  /* --- NEW: Match left header's padding-top for alignment --- */
-  padding-top: 0; /* WAS: 10px */
+  padding-top: 0; 
+  /* --- *** THIS IS THE FIX: Add padding below dividing line *** --- */
+  padding-bottom: 10px;
 }
-/* This rule now applies to the header *inside* the sticky wrapper */
 .sticky-header-wrapper .section-title-header {
   margin-bottom: 20px; 
   align-items: center; 
-  /* --- NEW: Remove inner padding, wrapper handles it now --- */
-  /* padding-top: 0; */ /* REMOVED THIS LINE */
   /* The base .section-title-header rule (padding-top: 10px) will now apply */
 }
-/* --- *** END OF ALIGNMENT FIX *** --- */
+/* --- *** END OF FINAL FIX *** --- */
 
 
 /* --- Dashboard Chart Grid --- */

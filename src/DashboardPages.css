@@ -9,6 +9,7 @@
 /* --- FIX (2025-11-16): Removed left column scrollbar and added right column sticky header --- */
 /* --- FIX (2025-11-16 FINAL-FINAL): Corrected all sticky and padding values for alignment --- */
 /* --- *** THIS IS THE ALIGNMENT FIX *** --- */
+/* --- *** MOBILE FIX: Added styles for .dashboard-header-mobile and .mobile-only-footer *** --- */
 
 /* --- Page Wrapper --- */
 .dashboard-page {
@@ -387,6 +388,12 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   display: none; /* Hide on desktop by default */
 }
 
+/* --- NEW: Hide desktop headers on mobile --- */
+.dashboard-header-mobile {
+  display: none; /* Hide on desktop */
+}
+
+
 /* --- Responsive Adjustments --- */
 /* --- *** THIS IS THE FIX (Dashboard Scroll) *** --- */
 @media (max-width: 1024px) { /* Tablet and below */
@@ -464,31 +471,41 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   .dashboard-left-column { margin-bottom: 15px; gap: 0; } /* --- REMOVED GAP --- */
   .dashboard-right-column { padding-bottom: 15px; }
 
-  /* --- *** THIS IS THE FIX (v2) *** --- */
-  /* --- Modified layout for left column header --- */
-  .dashboard-left-column .section-title-header {
-    margin-bottom: 15px; 
-    padding-top: 0; /* Remove top padding */
-    border-bottom: none; /* Remove border */
-    
-    /* --- NEW: Override desktop column layout --- */
-    flex-direction: row; /* Keep as row */
-    align-items: center; /* Center items vertically */
-    justify-content: space-between; /* Space out items */
+  /* --- *** THIS IS THE FIX: Hide desktop headers on mobile *** --- */
+  .dashboard-left-column .section-title-header,
+  .dashboard-right-column .sticky-header-wrapper {
+    display: none;
   }
-  /* --- NEW: Style the actions row for mobile --- */
-  /* --- *** THIS IS THE FIX: Renamed .header-actions-row to .header-actions *** --- */
-  .dashboard-left-column .header-actions {
-    flex-grow: 1; /* Take remaining space */
-    /* --- *** THIS IS THE FIX: Align button to the left *** --- */
-    justify-content: flex-start; /* WAS: flex-end */
-    gap: 10px; /* Add gap between button and stats */
-    margin-top: 0; /* <-- *** THIS IS THE FIX *** --- */
+
+  /* --- *** THIS IS THE FIX: Style the new mobile headers *** --- */
+  .dashboard-header-mobile {
+    display: block; /* Show this header on mobile */
+    margin-bottom: 15px;
   }
-  .dashboard-left-column .section-title-header .section-title {
-    display: none; /* --- HIDE "Your Activity" text --- */
+  .section-title-mobile {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 10px; /* Space between title and buttons */
   }
-  /* --- *** END OF FIX (v2) *** --- */
+  .header-actions-mobile {
+    display: flex;
+    justify-content: space-between; /* Space out buttons */
+    align-items: center;
+    gap: 10px; /* Space between buttons */
+  }
+  /* Make buttons in mobile header share space */
+  .header-actions-mobile .btn-small,
+  .header-actions-mobile .date-range-selector {
+    flex: 1;
+  }
+  .header-actions-mobile .date-range-selector span {
+    width: 100%;
+    text-align: center;
+    display: block;
+    box-sizing: border-box; /* Ensure padding is included */
+  }
+  /* --- *** END OF MOBILE HEADER FIX *** --- */
   
   /* --- Header for right column --- */
   .dashboard-right-column .section-title-header {
@@ -550,6 +567,8 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   .mobile-only-footer {
     display: block; /* Show on mobile */
     margin-top: 15px; /* Add space */
+    /* --- *** THIS IS THE FIX: Add margin at the very bottom *** --- */
+    margin-bottom: 30px;
   }
   .dashboard-left-column .dashboard-left-footer {
     display: none; /* Hide desktop button on mobile */

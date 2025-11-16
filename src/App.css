@@ -2,6 +2,11 @@
 /* --- FIX: Reduced .sidebar-header-mobile padding-top to 10px --- */
 /* --- FIX: Made .sidebar-main-content scrollable and .sidebar-footer sticky --- */
 /* --- FIX (2025-11-16): Centered .sidebar-nav-link and removed hover underline --- */
+/* --- *** MOBILE FIXES *** --- */
+/* --- FIX: Added overflow-x: hidden to .sidebar --- */
+/* --- FIX: Reduced .sidebar padding-top to 20px --- */
+/* --- FIX: Reduced .sidebar-header-mobile top to -20px --- */
+/* --- FIX: Added padding-bottom to .sidebar-footer --- */
 
 /* ==================== PREMIUM THEME VARIABLES ==================== */
 .dark-mode {
@@ -1257,7 +1262,7 @@ button:disabled, button:disabled:hover {
     height: 100vh;
   }
 
-  /* --- NEW: Sidebar Mobile --- */
+  /* --- *** THIS IS THE MOBILE FIX *** --- */
   .sidebar {
     position: fixed;
     top: 0;
@@ -1269,17 +1274,18 @@ button:disabled, button:disabled:hover {
     transition: transform 0.3s ease-in-out;
     background: var(--bg-secondary);
     border-right: 1px solid var(--border-color);
-    padding: 25px 20px; /* Reset padding */
+    /* --- FIX: Reduced top padding --- */
+    padding: 20px 20px; /* WAS: 25px 20px */
     display: flex;
     flex-direction: column;
-    /* --- *** THIS IS THE FIX *** --- */
     justify-content: space-between; /* Pushes footer to bottom */
-    /* --- *** END OF FIX *** --- */
-    overflow-y: hidden; /* --- CHANGED: No scroll on sidebar itself --- */
-    /* Remove old mobile styles */
+    /* --- FIX: Hide horizontal scrollbar --- */
+    overflow-y: hidden; 
+    overflow-x: hidden;
     border-bottom: none;
     margin-left: 0; /* (FIX) Override desktop margin */
-    padding-bottom: 25px; /* (FIX) Reset padding */
+    /* --- FIX: Footer will have its own padding --- */
+    padding-bottom: 0; /* WAS: 25px */
   }
   .sidebar.open {
     transform: translateX(0);
@@ -1294,18 +1300,18 @@ button:disabled, button:disabled:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    /* --- NEW: Stick filter header only inside filter section --- */
+    margin-bottom: 15px; /* WAS: 20px */
     position: sticky;
-    top: -25px; /* Pull up to padding */
+    /* --- FIX: Adjust for new parent padding --- */
+    top: -20px; /* WAS: -25px */
     margin-left: -20px; /* Expand to edges */
     margin-right: -20px; /* Expand to edges */
-    /* --- *** THIS IS THE FIX: Reduced padding-top to move "Menu" up *** --- */
-    padding: 10px 20px 10px 20px; /* Reduced top padding */
-    /* --- *** END OF FIX *** --- */
+    /* --- FIX: Reduced top padding --- */
+    padding: 5px 20px 10px 20px; /* WAS: 10px 20px 10px 20px */
     background: var(--bg-secondary);
     z-index: 1; /* Keep above filters */
   }
+  /* --- *** END OF MOBILE FIX *** --- */
   .sidebar-header-mobile h3 {
     font-size: 16px;
     color: var(--text-primary);
@@ -1670,6 +1676,8 @@ button:disabled, button:disabled:hover {
         flex-shrink: 0; /* Prevent footer shrinking */
         margin-top: auto; /* PUSH TO BOTTOM */
         padding-top: 15px; /* (NEW) Adds space above footer */
+        /* --- *** THIS IS THE FIX: Add bottom padding for viewport *** --- */
+        padding-bottom: 20px;
     }
     /* --- *** END OF FIX *** --- */
     

@@ -7,7 +7,7 @@
 /* --- FIX (2025-11-15): Added new desktop header layout styles --- */
 /* --- FIX (2025-11-15): Updated mobile header layout styles --- */
 /* --- FIX (2025-11-16): Removed left column scrollbar and added right column sticky header --- */
-/* --- FIX (2025-11-16b): Aligned header content --- */
+/* --- FIX (2025-11-16c): Final alignment fixes for headers and content --- */
 
 /* --- Page Wrapper --- */
 .dashboard-page {
@@ -119,18 +119,18 @@
 .section-title-header {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: baseline; /* <-- *** THIS IS THE FIX *** --- */
   flex-shrink: 0;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 10px;
   padding-top: 10px;
   width: 100%;
-  margin-bottom: 20px; /* --- ADDED: Manual spacing --- */
+  margin-bottom: 20px; /* <-- *** THIS IS THE FIX *** --- */
 }
 .section-title-header.no-border-bottom {
   border-bottom: none;
   padding-bottom: 0;
-  margin-bottom: 15px; /* --- *** THIS IS THE FIX *** --- */
+  margin-bottom: 15px; 
 }
 /* Specific title styling *within* the header */
 .section-title-header .section-title {
@@ -320,11 +320,11 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   /* Fix padding bleed from parent */
   margin-right: -10px; 
   padding-right: 10px;
-  /* --- FIX: Space below sticky header --- */
-  padding-bottom: 15px; 
+  /* --- FIX: Removed all padding from wrapper --- */
 }
 .sticky-header-wrapper .section-title-header {
-  margin-bottom: 0; /* Remove margin from header inside sticky */
+  margin-bottom: 20px; /* <-- *** THIS IS THE FIX *** --- */
+  align-items: baseline; /* <-- *** THIS IS THE FIX *** --- */
 }
 /* --- *** END OF FIX *** --- */
 
@@ -334,7 +334,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 2x2 grid */
   gap: 20px;
-  margin-top: 20px; /* Space below sticky header/first chart */
+  /* --- *** THIS IS THE FIX: REMOVED margin-top *** --- */
 }
 
 /* --- Chart Container Styles --- */
@@ -436,14 +436,15 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 .dashboard-header-desktop-layout {
   flex-direction: column; /* Stack rows */
   align-items: flex-start; /* Align title to left */
-  gap: 10px; /* Space between title and actions row */
-  margin-bottom: 15px !important; /* --- *** ALIGNMENT FIX *** --- */
+  padding-bottom: 10px; /* <-- *** THIS IS THE FIX *** --- */
+  margin-bottom: 20px; /* <-- *** THIS IS THE FIX *** --- */
 }
 .header-actions-row {
   display: flex;
   justify-content: space-between; /* Space out button and stats */
   align-items: center; /* Vertically align them */
   width: 100%; /* Make row fill width */
+  margin-top: 10px; /* <-- *** THIS IS THE FIX *** --- */
 }
 /* --- *** END OF FIX *** --- */
 
@@ -470,6 +471,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
     flex-grow: 1; /* Take remaining space */
     justify-content: flex-end; /* Align to the right */
     gap: 10px; /* Add gap between button and stats */
+    margin-top: 0; /* <-- *** THIS IS THE FIX *** --- */
   }
   .dashboard-left-column .section-title-header .section-title {
     display: none; /* --- HIDE "Your Activity" text --- */

@@ -11,7 +11,7 @@
 /* --- FIX (2025-11-16d): Removed desktop-header-desktop-layout rules to fix alignment --- */
 /* --- FIX (2025-11-16e): Changed align-items: baseline to align-items: center --- */
 /* --- FIX (2025-11-16f): Changed .header-actions align-items: baseline to center --- */
-/* --- FIX (2025-11-16i): Reverted sticky header structure to original design --- */
+/* --- FIX (2025-11-16 FINAL): Moved wrapper padding into columns for alignment --- */
 
 /* --- Page Wrapper --- */
 .dashboard-page {
@@ -31,7 +31,10 @@
   gap: 20px; /* Space between columns */
   /* overflow: hidden; */ /* <-- REMOVED */
   width: 100%;
-  padding: 15px; /* Add padding here */
+  /* --- *** THIS IS THE FIX (1/3) *** --- */
+  /* Remove top padding, apply others */
+  padding: 0 15px 15px 15px;
+  /* --- *** END OF FIX *** --- */
 }
 
 /* --- Left Column Styles --- */
@@ -44,8 +47,12 @@
   
   /* --- Make left column sticky --- */
   position: sticky;
-  top: 75px; /* 60px header + 15px padding */
-  height: fit-content; /* <-- *** THIS IS THE FIX *** --- */
+  /* --- *** THIS IS THE FIX (2/3) *** --- */
+  /* Stick to header (60px) + add internal padding (15px) */
+  top: 60px; 
+  padding-top: 15px;
+  /* --- *** END OF FIX *** --- */
+  height: fit-content; 
   background-color: var(--bg-primary); 
 }
 
@@ -68,7 +75,7 @@
   padding-top: 15px; /* Space above button */
   margin-top: auto; /* Pushes this to the bottom */
 }
-/* --- *** END OF FIX --- */
+/* --- *** END OF FIX *** --- */
 
 
 /* --- Right Column Styles --- */
@@ -79,7 +86,12 @@
   padding-left: 5px; /* Slight padding */
   /* --- Make this column scrollable and fix its height --- */
   overflow-y: auto; /* Allow this column to scroll */
-  height: calc(100vh - 90px); /* Match left column height */
+  /* --- *** THIS IS THE FIX (3/3) *** --- */
+  /* Add internal padding */
+  padding-top: 15px;
+  /* Adjust height to account for removed wrapper padding */
+  height: calc(100vh - 75px); 
+  /* --- *** END OF FIX *** --- */
   
   /* Custom scrollbar for right column */
   scrollbar-width: thin;

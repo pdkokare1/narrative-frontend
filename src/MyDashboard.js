@@ -8,6 +8,7 @@
 // --- FIX (2025-11-16): Removed Account Settings button (moved to Sidebar) ---
 // --- FIX (2025-11-16): Added sticky-header-wrapper to right column ---
 // --- FIX (2025-11-16b): Removed 'no-border-bottom' from left header ---
+// --- FIX (2025-11-16c): Moved 'Viewing All-Time Stats' to right header ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom'; // Use Link for Back to Articles
@@ -324,7 +325,7 @@ function MyDashboard({ theme }) {
           {/* --- This new div handles scrolling --- */}
           <div className="dashboard-left-scroll">
             
-            {/* --- *** THIS IS THE FIX (Removed 'no-border-bottom') *** --- */}
+            {/* --- *** THIS IS THE FIX *** --- */}
             <div className="section-title-header dashboard-header-desktop-layout">
               
               {/* Row 1: Title */}
@@ -335,9 +336,7 @@ function MyDashboard({ theme }) {
                 <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
                   Back to Articles
                 </Link>
-                <div className="date-range-selector"> 
-                  <span>Viewing All-Time Stats</span> 
-                </div>
+                {/* --- 'Viewing All-Time Stats' REMOVED from here --- */}
               </div>
 
             </div>
@@ -403,7 +402,12 @@ function MyDashboard({ theme }) {
           {/* --- *** THIS IS THE FIX (Sticky Header) *** --- */}
           <div className="sticky-header-wrapper">
             <div className="section-title-header">
-                <h2 className="section-title no-border">Your Reading Habits Dashboard</h2>
+                {/* --- Text changed --- */}
+                <h2 className="section-title no-border">Your Reading Habits</h2>
+                {/* --- 'Viewing All-Time Stats' ADDED here --- */}
+                <div className="date-range-selector"> 
+                  <span>Viewing All-Time Stats</span> 
+                </div>
             </div>
           </div>
           {/* --- *** END OF FIX *** --- */}

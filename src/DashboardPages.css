@@ -49,7 +49,7 @@
   /* --- *** THIS IS THE FIX (3/3) *** --- */
   /* Stick 15px below the 60px header (60 + 15 = 75) */
   top: 75px; 
-  /* --- *** END OF FIX *** --- */
+  /* --- *** END OF FIX --- */
   height: fit-content; 
   background-color: var(--bg-primary); 
 }
@@ -334,7 +334,8 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   padding-bottom: 10px;
 }
 .sticky-header-wrapper .section-title-header {
-  margin-bottom: 20px; 
+  /* --- *** THIS IS THE FIX: Set margin-bottom to 10px *** --- */
+  margin-bottom: 10px; /* WAS: 20px */
   align-items: center; 
   /* The base .section-title-header rule (padding-top: 10px) will now apply */
 }

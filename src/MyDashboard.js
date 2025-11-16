@@ -13,6 +13,7 @@
 // --- FIX (2025-11-16g): Changed left column <span> to <h2> to match right column ---
 // --- FIX (2025-11-16i): REMOVED sticky wrapper from left column (it was the problem) ---
 // --- *** THIS IS THE FIX: Added Account Settings button to left footer *** ---
+// --- *** BUILD FIX: Corrected </Doughnut> closing tag to </p> *** ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom'; // Use Link for Back to Articles
@@ -473,7 +474,7 @@ function MyDashboard({ theme }) {
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
                    : (totalAnalyzed > 0 && qualityReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={qualityReadData} /> ) // Remove title from options
-                   : ( <p className="no-data-msg">No quality data for this period.</Doughnut> )}
+                   : ( <p className="no-data-msg">No quality data for this period.</p> )}
                </div>
              </div>
 

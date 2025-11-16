@@ -1300,7 +1300,7 @@ button:disabled, button:disabled:hover {
     top: -25px; /* Pull up to padding */
     margin-left: -20px; /* Expand to edges */
     margin-right: -20px; /* Expand to edges */
-    /* --- *** THIS IS THE FIX *** --- */
+    /* --- *** THIS IS THE FIX: Reduced padding-top to move "Menu" up *** --- */
     padding: 10px 20px 10px 20px; /* Reduced top padding */
     /* --- *** END OF FIX *** --- */
     background: var(--bg-secondary);
@@ -1657,7 +1657,7 @@ button:disabled, button:disabled:hover {
 
 /* --- Mobile Sidebar adjustments --- */
 @media (max-width: 768px) {
-    /* --- *** THIS IS THE FIX *** --- */
+    /* --- *** THIS IS THE FIX: Ensure correct flex properties for scroll *** --- */
     .sidebar {
         justify-content: flex-start; /* Let flexbox handle it */
     }

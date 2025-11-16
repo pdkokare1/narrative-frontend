@@ -8,6 +8,7 @@
 /* --- FIX (2025-11-15): Updated mobile header layout styles --- */
 /* --- FIX (2025-11-16): Removed left column scrollbar and added right column sticky header --- */
 /* --- FIX (2025-11-16c): Final alignment fixes for headers and content --- */
+/* --- FIX (2025-11-16d): Removed desktop-header-desktop-layout rules to fix alignment --- */
 
 /* --- Page Wrapper --- */
 .dashboard-page {
@@ -431,21 +432,11 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 }
 
 
-/* --- *** THIS IS THE FIX (Desktop Header Layout) *** --- */
-/* Add new rules for desktop layout *before* the mobile media query */
-.dashboard-header-desktop-layout {
-  flex-direction: column; /* Stack rows */
-  align-items: flex-start; /* Align title to left */
-  padding-bottom: 10px; /* <-- *** THIS IS THE FIX *** --- */
-  margin-bottom: 20px; /* <-- *** THIS IS THE FIX *** --- */
-}
-.header-actions-row {
-  display: flex;
-  justify-content: space-between; /* Space out button and stats */
-  align-items: center; /* Vertically align them */
-  width: 100%; /* Make row fill width */
-  margin-top: 10px; /* <-- *** THIS IS THE FIX *** --- */
-}
+/* --- *** THIS IS THE FIX (Request 1 & 2): DELETED DESKTOP HEADER RULES *** --- */
+/*
+.dashboard-header-desktop-layout { ... }
+.header-actions-row { ... }
+*/
 /* --- *** END OF FIX *** --- */
 
 
@@ -467,7 +458,8 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
     justify-content: space-between; /* Space out items */
   }
   /* --- NEW: Style the actions row for mobile --- */
-  .dashboard-left-column .header-actions-row {
+  /* --- *** THIS IS THE FIX: Renamed .header-actions-row to .header-actions *** --- */
+  .dashboard-left-column .header-actions {
     flex-grow: 1; /* Take remaining space */
     justify-content: flex-end; /* Align to the right */
     gap: 10px; /* Add gap between button and stats */

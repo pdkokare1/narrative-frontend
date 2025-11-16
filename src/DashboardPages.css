@@ -235,16 +235,17 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   text-overflow: ellipsis;
 }
 
-/* Stat Box (Individual box) */
+/* --- *** THIS IS THE FIX (Stat Box Height) *** --- */
 .stat-box {
   background: var(--bg-card-flat); /* CHANGED: Match chart cards */
   text-align: left;
-  padding: 15px;
+  padding: 18px 15px; /* UPDATED: Increased top/bottom padding */
   border-radius: 8px; /* CHANGED: Match chart cards */
   border: 1px solid var(--border-color); /* CHANGED: Match chart cards */
   box-shadow: var(--shadow-sm); /* ADDED: Match chart cards */
   margin-bottom: 0; /* --- ADDED: Reset margin --- */
 }
+/* --- *** END OF FIX *** --- */
 .stat-box h3 {
   font-size: 11px; /* Smaller */
   margin-bottom: 4px; /* Reduced margin */
@@ -330,14 +331,15 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   margin-right: -10px; 
   padding-right: 10px;
   /* --- NEW: Match left header's padding-top for alignment --- */
-  padding-top: 10px;
+  padding-top: 0; /* WAS: 10px */
 }
 /* This rule now applies to the header *inside* the sticky wrapper */
 .sticky-header-wrapper .section-title-header {
   margin-bottom: 20px; 
   align-items: center; 
   /* --- NEW: Remove inner padding, wrapper handles it now --- */
-  padding-top: 0;
+  /* padding-top: 0; */ /* REMOVED THIS LINE */
+  /* The base .section-title-header rule (padding-top: 10px) will now apply */
 }
 /* --- *** END OF ALIGNMENT FIX *** --- */
 

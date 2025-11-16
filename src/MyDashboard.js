@@ -9,6 +9,7 @@
 // --- FIX (2025-11-16): Added sticky-header-wrapper to right column ---
 // --- FIX (2025-11-16b): Removed 'no-border-bottom' from left header ---
 // --- FIX (2025-11-16c): Moved 'Viewing All-Time Stats' to right header ---
+// --- FIX (2025-11-16d): ALIGNMENT FIX per user screenshot ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom'; // Use Link for Back to Articles
@@ -325,18 +326,19 @@ function MyDashboard({ theme }) {
           {/* --- This new div handles scrolling --- */}
           <div className="dashboard-left-scroll">
             
-            {/* --- *** THIS IS THE FIX *** --- */}
-            <div className="section-title-header dashboard-header-desktop-layout">
+            {/* --- *** THIS IS THE FIX (Request 1 & 2) *** --- */}
+            {/* Removed 'dashboard-header-desktop-layout' class */}
+            {/* Restructured to match the right column's header */}
+            <div className="section-title-header">
               
-              {/* Row 1: Title */}
+              {/* "Your Activity" is now the title */}
               <span className="section-title">Your Activity</span>
               
-              {/* Row 2: Actions */}
-              <div className="header-actions-row">
+              {/* The button is now in 'header-actions' */}
+              <div className="header-actions">
                 <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
                   Back to Articles
                 </Link>
-                {/* --- 'Viewing All-Time Stats' REMOVED from here --- */}
               </div>
 
             </div>
@@ -403,7 +405,8 @@ function MyDashboard({ theme }) {
           <div className="sticky-header-wrapper">
             <div className="section-title-header">
                 {/* --- Text changed --- */}
-                <h2 className="section-title no-border">Your Reading Habits</h2>
+                {/* --- *** THIS IS THE FIX (Request 3): Removed 'no-border' class *** --- */}
+                <h2 className="section-title">Your Reading Habits</h2>
                 {/* --- 'Viewing All-Time Stats' ADDED here --- */}
                 <div className="date-range-selector"> 
                   <span>Viewing All-Time Stats</span> 

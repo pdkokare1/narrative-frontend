@@ -14,6 +14,7 @@
 // --- FIX (2025-11-16i): REMOVED sticky wrapper from left column (it was the problem) ---
 // --- *** THIS IS THE FIX: Added Account Settings button to left footer *** ---
 // --- *** BUILD FIX: Corrected </Doughnut> closing tag to </p> *** ---
+// --- *** MOBILE FIX: Added 'mobile-only-footer' div for Account Settings *** ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom'; // Use Link for Back to Articles
@@ -490,6 +491,14 @@ function MyDashboard({ theme }) {
           </div> {/* End dashboard-grid (right column) */}
 
           {error && <p style={{ color: 'red', textAlign: 'center', marginTop: '20px' }}>{error}</p>}
+          
+          {/* --- *** THIS IS THE FIX: ADDED MOBILE-ONLY FOOTER *** --- */}
+          <div className="mobile-only-footer">
+            <Link to="/account-settings" className="account-settings-link-dashboard">
+              Account Settings
+            </Link>
+          </div>
+          {/* --- *** END OF FIX *** --- */}
 
         </div> {/* --- End Right Column --- */}
       </div> {/* --- End Content Wrapper --- */}

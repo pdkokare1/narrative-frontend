@@ -10,6 +10,7 @@
 /* --- FIX (2025-11-16c): Final alignment fixes for headers and content --- */
 /* --- FIX (2025-11-16d): Removed desktop-header-desktop-layout rules to fix alignment --- */
 /* --- FIX (2025-11-16e): Changed align-items: baseline to align-items: center --- */
+/* --- FIX (2025-11-16f): Changed .header-actions align-items: baseline to center --- */
 
 /* --- Page Wrapper --- */
 .dashboard-page {
@@ -121,9 +122,7 @@
 .section-title-header {
   display: flex;
   justify-content: space-between;
-  /* --- *** THIS IS THE FIX *** --- */
   align-items: center; /* Was 'baseline' */
-  /* --- *** END OF FIX *** --- */
   flex-shrink: 0;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 10px;
@@ -149,7 +148,9 @@
 }
 .header-actions {
   display: flex;
-  align-items: baseline;
+  /* --- *** THIS IS THE FIX *** --- */
+  align-items: center; /* Was 'baseline' */
+  /* --- *** END OF FIX *** --- */
   gap: 10px;
   flex-shrink: 0;
 }
@@ -314,7 +315,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 /* --- END UPDATE --- */
 
 
-/* --- *** THIS IS THE FIX (Sticky Header) *** --- */
+/* --- *** THIS IS THE FIX (Sticky Header) --- */
 /* --- Sticky Header Wrapper for Right Column --- */
 .sticky-header-wrapper {
   position: sticky;
@@ -328,9 +329,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 }
 .sticky-header-wrapper .section-title-header {
   margin-bottom: 20px; /* <-- *** THIS IS THE FIX *** --- */
-  /* --- *** THIS IS THE FIX *** --- */
   align-items: center; /* Was 'baseline' */
-  /* --- *** END OF FIX *** --- */
 }
 /* --- *** END OF FIX *** --- */
 

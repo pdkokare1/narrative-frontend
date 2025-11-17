@@ -170,7 +170,7 @@ function SavedArticles({
               <div className="article-card-wrapper" style={{ 
                 height: 'auto', minHeight: 'auto',
                 paddingTop: '20px',
-                paddingBottom: '10px', // Reduced bottom padding
+                paddingBottom: '4px', // <-- CHANGED from 10px to 4px
                 justifyContent: 'flex-start' 
               }}>
                 <h1 style={{ 

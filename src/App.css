@@ -1670,10 +1670,10 @@ button:disabled, button:disabled:hover {
     .sidebar-main-content {
         flex-grow: 1; /* Take up space */
         overflow-y: auto; /* THIS PART SCROLLS */
-        /* --- *** THIS IS THE FIX (HAMBURGER SCROLL) *** --- */
         overflow-x: hidden; /* Prevent horizontal scroll */
+        /* --- *** THIS IS THE FIX (SIDEBAR FOOTER) *** --- */
+        height: 0; /* Was min-height: 0; */
         /* --- *** END OF FIX *** --- */
-        min-height: 0; /* Fix flexbox */
     }
     .sidebar-footer {
         flex-shrink: 0; /* Prevent footer shrinking */

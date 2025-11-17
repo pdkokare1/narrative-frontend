@@ -169,8 +169,8 @@ function SavedArticles({
               {/* --- *** THIS IS THE MOBILE FIX *** --- */}
               <div className="article-card-wrapper" style={{ 
                 height: 'auto', minHeight: 'auto',
-                paddingTop: '20px',
-                paddingBottom: '4px', // <-- CHANGED from 10px to 4px
+                paddingTop: '10px', // <-- CHANGED from '20px'
+                paddingBottom: '0px', // <-- CHANGED from '4px'
                 justifyContent: 'flex-start' 
               }}>
                 <h1 style={{ 

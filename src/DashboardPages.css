@@ -494,12 +494,14 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
     align-items: center;
     gap: 10px; /* Space between buttons */
   }
-  /* --- *** THIS IS THE FIX: Make buttons same size *** --- */
+  /* --- *** THIS IS THE FIX (50/50 BUTTONS) *** --- */
   .header-actions-mobile .btn-secondary,
   .header-actions-mobile .date-range-selector {
-    flex: 1;
+    flex-grow: 1;
+    flex-basis: 0; /* This forces them to be calculated as equal */
     min-width: 0; /* Allow shrinking */
   }
+  /* --- *** END OF FIX *** --- */
   .header-actions-mobile .date-range-selector span {
     width: 100%;
     text-align: center;
@@ -568,17 +570,16 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   .dashboard-card.no-padding { margin-bottom: 15px; }
   .dashboard-card h3 { font-size: 13px; margin-bottom: 10px; padding-bottom: 8px; }
 
-  /* --- *** THIS IS THE FIX: Show mobile button, hide desktop button *** --- */
+  /* --- *** THIS IS THE FIX (BUTTON MARGIN) *** --- */
   .mobile-only-footer {
     display: block; /* Show on mobile */
     margin-top: 15px; /* Add space */
-    /* --- *** THIS IS THE FIX: Add margin at the very bottom *** --- */
-    margin-bottom: 30px;
+    margin-bottom: 60px; /* <-- CHANGED from 30px to 60px */
   }
+  /* --- *** END OF FIX *** --- */
   .dashboard-left-column .dashboard-left-footer {
     display: none; /* Hide desktop button on mobile */
   }
-  /* --- *** END OF FIX *** --- */
 }
 
 /* Specific fix for stat box wrapper padding on mobile */

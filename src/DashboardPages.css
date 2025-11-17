@@ -494,16 +494,21 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
     align-items: center;
     gap: 10px; /* Space between buttons */
   }
-  /* Make buttons in mobile header share space */
-  .header-actions-mobile .btn-small,
+  /* --- *** THIS IS THE FIX: Make buttons same size *** --- */
+  .header-actions-mobile .btn-secondary,
   .header-actions-mobile .date-range-selector {
     flex: 1;
+    min-width: 0; /* Allow shrinking */
   }
   .header-actions-mobile .date-range-selector span {
     width: 100%;
     text-align: center;
     display: block;
     box-sizing: border-box; /* Ensure padding is included */
+    /* --- *** THIS IS THE FIX: Match button padding *** --- */
+    padding: 4px 10px !important;
+    font-size: 10px !important;
+    line-height: 1.4 !important;
   }
   /* --- *** END OF MOBILE HEADER FIX *** --- */
   

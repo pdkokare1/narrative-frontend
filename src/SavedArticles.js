@@ -3,6 +3,7 @@
 // --- FIX: Renders a desktop-style grid (.articles-grid) on desktop screens ---
 // --- FIX: Keeps the mobile snap-scroll layout (.article-card-wrapper) on mobile ---
 // --- *** MOBILE FIX: Reduced font size for mobile title *** ---
+// --- *** MOBILE FIX: Changed title format, centered, and reduced spacing *** ---
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -165,22 +166,24 @@ function SavedArticles({
         <>
           {savedArticles.length > 0 ? (
             <>
-              {/* --- Mobile Title --- */}
+              {/* --- *** THIS IS THE MOBILE FIX *** --- */}
               <div className="article-card-wrapper" style={{ 
                 height: 'auto', minHeight: 'auto',
-                paddingTop: '20px', paddingBottom: '0', 
+                paddingTop: '20px',
+                paddingBottom: '10px', // Reduced bottom padding
                 justifyContent: 'flex-start' 
               }}>
                 <h1 style={{ 
                   width: '100%', maxWidth: '500px',
-                  textAlign: 'left',
-                  // --- *** THIS IS THE FIX: Font size reduced *** ---
-                  fontSize: '20px', // WAS: 24px
-                  color: 'var(--text-primary)',
+                  textAlign: 'center', // Centered text
+                  fontSize: '14px', // "Very small" font size
+                  color: 'var(--text-tertiary)', // Muted color
+                  fontWeight: '500', // Lighter font weight
                 }}>
-                  Saved Articles ({savedArticles.length})
+                  {savedArticles.length} saved articles
                 </h1>
               </div>
+              {/* --- *** END OF FIX *** --- */}
 
               {/* --- Mobile List --- */}
               {savedArticles.map((article) => (

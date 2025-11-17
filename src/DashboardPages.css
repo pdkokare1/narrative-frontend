@@ -340,7 +340,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   align-items: center; 
   /* The base .section-title-header rule (padding-top: 10px) will now apply */
 }
-/* --- *** END OF FINAL FIX *** --- */
+/* --- *** END OF FINAL FIX --- */
 
 
 /* --- Dashboard Chart Grid --- */
@@ -369,7 +369,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
 .dashboard-right-column > .stories-read-card {
   /* --- REMOVED: margin-top: 35px; --- */
 }
-/* --- *** END OF FIX *** --- */
+/* --- *** END OF FIX --- */
 
 
 /* --- Loading and No Data States --- */
@@ -449,7 +449,7 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   .dashboard-right-column > .stories-read-card {
     margin-top: 0; 
   }
-  /* --- *** END OF FIX *** --- */
+  /* --- *** END OF FIX --- */
 
   .sticky-header-wrapper .section-title-header { margin-top: 0; margin-bottom: 15px; } /* Adjust margin */
 
@@ -505,12 +505,15 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
   .header-actions-mobile .date-range-selector span {
     width: 100%;
     text-align: center;
-    display: block;
     box-sizing: border-box; /* Ensure padding is included */
-    /* --- *** THIS IS THE FIX: Match button padding *** --- */
     padding: 4px 10px !important;
     font-size: 10px !important;
     line-height: 1.4 !important;
+    /* --- *** THIS IS THE FIX (BUTTON ALIGNMENT) *** --- */
+    display: flex; /* Was 'block' */
+    align-items: center;
+    justify-content: center;
+    /* --- *** END OF FIX *** --- */
   }
   /* --- *** END OF MOBILE HEADER FIX *** --- */
   

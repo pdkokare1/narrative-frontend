@@ -1672,7 +1672,7 @@ button:disabled, button:disabled:hover {
         overflow-y: auto; /* THIS PART SCROLLS */
         overflow-x: hidden; /* Prevent horizontal scroll */
         /* --- *** THIS IS THE FIX (SIDEBAR FOOTER) *** --- */
-        height: 0; /* Was min-height: 0; */
+        min-height: 0; /* <-- REPLACED 'height: 0' with 'min-height: 0' */
         /* --- *** END OF FIX *** --- */
     }
     .sidebar-footer {

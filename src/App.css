@@ -1195,7 +1195,8 @@ button:disabled, button:disabled:hover {
 
 
 .recommendations { background: var(--bg-secondary); border-radius: 8px; padding: 20px; border: 1px solid var(--border-color); margin-top: 25px; }
-.recommendations h4 { font-size: 13px; /* SCALED: Was 14px */ font-weight: 700; color: var(--accent-primary); margin-bottom: 15px; }
+.recommendations h4 { font-size: 13px; /* SCALED: Was 14px */
+  font-weight: 700; color: var(--accent-primary); margin-bottom: 15px; }
 .recommendations ul { list-style: none; padding: 0; }
 .recommendations li { padding: 10px 0; border-bottom: 1px solid var(--border-light); color: var(--text-secondary); font-size: 12px; /* SCALED: Was 13px */ line-height: 1.6; display: flex; align-items: flex-start; }
 .recommendations li:last-child { border-bottom: none; }
@@ -1667,23 +1668,21 @@ button:disabled, button:disabled:hover {
 @media (max-width: 768px) {
     /* --- *** THIS IS THE FIX: Ensure correct flex properties for scroll *** --- */
     .sidebar {
-        /* --- *** THIS IS THE FIX (SIDEBAR FOOTER) *** --- */
-        justify-content: flex-start; /* <-- REMOVED space-between */
-        /* --- *** END OF FIX *** --- */
+        justify-content: flex-start; /* Let flexbox handle it */
     }
     .sidebar-main-content {
         flex-grow: 1; /* Take up space */
         overflow-y: auto; /* THIS PART SCROLLS */
         overflow-x: hidden; /* Prevent horizontal scroll */
-        min-height: 0; /* <-- This is the correct rule */
+        min-height: 0; /* This is the correct rule */
     }
     .sidebar-footer {
         flex-shrink: 0; /* Prevent footer shrinking */
-        /* --- *** THIS IS THE FIX (SIDEBAR FOOTER) *** --- */
-        margin-top: auto; /* <-- This is the correct rule */
-        /* --- *** END OF FIX *** --- */
+        margin-top: auto; /* PUSH TO BOTTOM */
         padding-top: 15px; /* (NEW) Adds space above footer */
-        padding-bottom: 20px;
+        /* --- *** THIS IS THE FIX (SIGN OUT BUTTON) *** --- */
+        padding-bottom: 50px; /* <-- CHANGED from 20px to 50px */
+        /* --- *** END OF FIX *** --- */
     }
     
     /* --- *** ADDED: Ensure nav links are visible on mobile *** --- */

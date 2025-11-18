@@ -169,16 +169,16 @@ function SavedArticles({
               {/* --- *** THIS IS THE MOBILE FIX *** --- */}
               <div className="article-card-wrapper" style={{ 
                 height: 'auto', minHeight: 'auto',
-                paddingTop: '12px', // <-- CHANGED from '16px'
-                paddingBottom: '12px', // <-- CHANGED from '10px'
+                paddingTop: '10px', // <-- CHANGED from '16px'
+                paddingBottom: '10px', // <-- CHANGED from '10px'
                 justifyContent: 'flex-start' 
               }}>
                 <h1 style={{ 
                   width: '100%', maxWidth: '500px',
                   textAlign: 'center', // Centered text
-                  fontSize: '12px', // "Very small" font size
+                  fontSize: '14px', // "Very small" font size
                   color: 'var(--text-tertiary)', // Muted color
-                  fontWeight: '500', // Lighter font weight
+                  fontWeight: '600', // Lighter font weight
                 }}>
                   {savedArticles.length} Saved Articles 
                   {/* <-- CHANGED: Capitalized text */}

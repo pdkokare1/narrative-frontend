@@ -1,9 +1,8 @@
 // In file: src/SavedArticles.js
-// --- COMPLETE REWRITE (v5) ---
+// --- COMPLETE REWRITE (v6) ---
+// --- FIX: Applied Mobile styling logic to Desktop view (Absolute text, z-index layering) ---
 // --- FIX: Renders a desktop-style grid (.articles-grid) on desktop screens ---
 // --- FIX: Keeps the mobile snap-scroll layout (.article-card-wrapper) on mobile ---
-// --- *** MOBILE FIX: Reduced font size for mobile title *** ---
-// --- *** MOBILE FIX: Changed title format, centered, and reduced spacing *** ---
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -99,15 +98,32 @@ function SavedArticles({
         <>
           {savedArticles.length > 0 ? (
             <>
-              {/* --- Desktop Title --- */}
-              <h1 className="saved-articles-desktop-title">
-                Saved Articles ({savedArticles.length})
-              </h1>
-              
-              {/* --- Desktop Grid (like NewsFeed) --- */}
-              <div className="articles-grid">
+              {/* --- *** DESKTOP FIX: ABSOLUTE TEXT POSITIONING *** --- */}
+              <div style={{ 
+                position: 'absolute', 
+                top: '0', left: '0', right: '0',
+                paddingTop: '30px', // Align with container padding
+                zIndex: 0, // Behind the cards
+                pointerEvents: 'none',
+                textAlign: 'center'
+              }}>
+                <h1 style={{ 
+                  fontSize: '14px', 
+                  color: 'var(--text-tertiary)', 
+                  fontWeight: '500',
+                  margin: 0 
+                }}>
+                  {savedArticles.length} Saved Articles
+                </h1>
+              </div>
+
+              {/* --- DESKTOP GRID (Pushed down to reveal text) --- */}
+              <div className="articles-grid" style={{
+                marginTop: '45px', // Push grid down
+                position: 'relative', // Create stacking context
+                zIndex: 1 // Sit ON TOP of the text
+              }}>
                 {savedArticles.map((article) => (
-                  // --- NO wrapper needed on desktop ---
                   <ArticleCard
                     key={article._id}
                     article={article}
@@ -121,6 +137,7 @@ function SavedArticles({
                   />
                 ))}
               </div>
+              {/* --- *** END OF DESKTOP FIX *** --- */}
             </>
           ) : (
             // --- Show "No Saved Articles" message ---
@@ -166,7 +183,7 @@ function SavedArticles({
         <>
           {savedArticles.length > 0 ? (
             <>
-              {/* --- *** THIS IS THE MOBILE FIX (POSITION) *** --- */}
+              {/* --- *** MOBILE FIX: ABSOLUTE TEXT POSITIONING *** --- */}
               <div style={{ 
                 position: 'absolute', // Lifts text out of layout
                 top: '0',
@@ -192,7 +209,7 @@ function SavedArticles({
 
               {/* --- Mobile List --- */}
               {savedArticles.map((article, index) => (
-                // --- *** THIS IS THE MOBILE FIX (PADDING) *** ---
+                // --- *** MOBILE FIX (PADDING) *** ---
                 <div 
                   className="article-card-wrapper" 
                   key={article._id} 

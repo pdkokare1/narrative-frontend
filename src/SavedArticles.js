@@ -1,6 +1,6 @@
 // In file: src/SavedArticles.js
-// --- COMPLETE REWRITE (v6) ---
-// --- FIX: Applied Mobile styling logic to Desktop view (Absolute text, z-index layering) ---
+// --- COMPLETE REWRITE (v7) ---
+// --- FIX: Tighter spacing for Desktop view (Reduced top padding/margin) ---
 // --- FIX: Renders a desktop-style grid (.articles-grid) on desktop screens ---
 // --- FIX: Keeps the mobile snap-scroll layout (.article-card-wrapper) on mobile ---
 import React, { useState, useEffect, useRef } from 'react';
@@ -102,7 +102,7 @@ function SavedArticles({
               <div style={{ 
                 position: 'absolute', 
                 top: '0', left: '0', right: '0',
-                paddingTop: '30px', // Align with container padding
+                paddingTop: '10px', // <-- CHANGED: Reduced from 30px to 10px
                 zIndex: 0, // Behind the cards
                 pointerEvents: 'none',
                 textAlign: 'center'
@@ -119,7 +119,7 @@ function SavedArticles({
 
               {/* --- DESKTOP GRID (Pushed down to reveal text) --- */}
               <div className="articles-grid" style={{
-                marginTop: '45px', // Push grid down
+                marginTop: '35px', // <-- CHANGED: Reduced from 45px to 35px
                 position: 'relative', // Create stacking context
                 zIndex: 1 // Sit ON TOP of the text
               }}>
@@ -183,7 +183,7 @@ function SavedArticles({
         <>
           {savedArticles.length > 0 ? (
             <>
-              {/* --- *** MOBILE FIX: ABSOLUTE TEXT POSITIONING *** --- */}
+              {/* --- *** THIS IS THE MOBILE FIX (POSITION) *** --- */}
               <div style={{ 
                 position: 'absolute', // Lifts text out of layout
                 top: '0',
@@ -209,7 +209,7 @@ function SavedArticles({
 
               {/* --- Mobile List --- */}
               {savedArticles.map((article, index) => (
-                // --- *** MOBILE FIX (PADDING) *** ---
+                // --- *** THIS IS THE MOBILE FIX (PADDING) *** ---
                 <div 
                   className="article-card-wrapper" 
                   key={article._id} 

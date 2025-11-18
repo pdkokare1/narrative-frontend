@@ -169,14 +169,14 @@ function SavedArticles({
               {/* --- *** THIS IS THE MOBILE FIX *** --- */}
               <div className="article-card-wrapper" style={{ 
                 height: 'auto', minHeight: 'auto',
-                paddingTop: '20px', // <-- CHANGED from '16px'
+                paddingTop: '12px', // <-- CHANGED from '16px'
                 paddingBottom: '12px', // <-- CHANGED from '10px'
                 justifyContent: 'flex-start' 
               }}>
                 <h1 style={{ 
                   width: '100%', maxWidth: '500px',
                   textAlign: 'center', // Centered text
-                  fontSize: '14px', // "Very small" font size
+                  fontSize: '12px', // "Very small" font size
                   color: 'var(--text-tertiary)', // Muted color
                   fontWeight: '500', // Lighter font weight
                 }}>

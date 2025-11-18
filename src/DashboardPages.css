@@ -488,18 +488,16 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
     color: var(--text-primary);
     margin-bottom: 10px; /* Space between title and buttons */
   }
+  /* --- *** THIS IS THE FIX (BUTTON ALIGNMENT) *** --- */
   .header-actions-mobile {
-    display: flex;
-    justify-content: space-between; /* Space out buttons */
-    align-items: center;
+    display: grid; /* <-- CHANGED from 'flex' */
+    grid-template-columns: 1fr 1fr; /* <-- ADDED */
     gap: 10px; /* Space between buttons */
   }
-  /* --- *** THIS IS THE FIX (50/50 BUTTONS) *** --- */
   .header-actions-mobile .btn-secondary,
   .header-actions-mobile .date-range-selector {
-    flex-grow: 1;
-    flex-basis: 0; /* This forces them to be calculated as equal */
-    min-width: 0; /* Allow shrinking */
+    /* REMOVED flex-grow, flex-basis, min-width */
+    width: 100%; /* <-- ADDED: Make them fill their grid cell */
   }
   /* --- *** END OF FIX *** --- */
   .header-actions-mobile .date-range-selector span {
@@ -509,10 +507,11 @@ h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bott
     padding: 4px 10px !important;
     font-size: 10px !important;
     line-height: 1.4 !important;
-    /* --- *** THIS IS THE FIX (BUTTON ALIGNMENT) *** --- */
-    display: flex; /* Was 'block' */
+    display: flex; 
     align-items: center;
     justify-content: center;
+    /* --- *** THIS IS THE FIX (BUTTON ALIGNMENT) *** --- */
+    height: 100%; /* <-- ADDED: Make span fill the height of the div */
     /* --- *** END OF FIX *** --- */
   }
   /* --- *** END OF MOBILE HEADER FIX *** --- */

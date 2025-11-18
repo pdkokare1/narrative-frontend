@@ -1681,7 +1681,7 @@ button:disabled, button:disabled:hover {
         margin-top: auto; /* PUSH TO BOTTOM */
         padding-top: 15px; /* (NEW) Adds space above footer */
         /* --- *** THIS IS THE FIX (SIGN OUT BUTTON) *** --- */
-        padding-bottom: 50px; /* <-- CHANGED from 20px to 50px */
+        padding-bottom: 70px; /* <-- CHANGED from 20px to 50px */
         /* --- *** END OF FIX *** --- */
     }
     

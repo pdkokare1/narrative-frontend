@@ -166,31 +166,38 @@ function SavedArticles({
         <>
           {savedArticles.length > 0 ? (
             <>
-              {/* --- *** THIS IS THE MOBILE FIX *** --- */}
-              <div className="article-card-wrapper" style={{ 
-                height: 'auto', minHeight: 'auto',
-                paddingTop: '10px', // <-- CHANGED from '16px'
-                paddingBottom: '10px', // <-- CHANGED from '10px'
-                justifyContent: 'flex-start' 
+              {/* --- *** THIS IS THE MOBILE FIX (POSITION) *** --- */}
+              <div style={{ 
+                position: 'absolute', // <-- Lifts text out of layout
+                top: '0',
+                left: '0',
+                right: '0',
+                paddingTop: '20px',    // <-- Gives space from top of screen
+                paddingBottom: '12px',
+                zIndex: 10, // <-- Ensures it's on top of the card
+                pointerEvents: 'none' // <-- Lets you click "through" it
               }}>
                 <h1 style={{ 
                   width: '100%', maxWidth: '500px',
-                  textAlign: 'center', // Centered text
-                  fontSize: '14px', // "Very small" font size
-                  color: 'var(--text-tertiary)', // Muted color
-                  fontWeight: '600', // Lighter font weight
+                  margin: '0 auto', // <-- Center the h1
+                  textAlign: 'center', 
+                  fontSize: '14px', 
+                  color: 'var(--text-tertiary)', 
+                  fontWeight: '500', 
                 }}>
                   {savedArticles.length} Saved Articles 
-                  {/* <-- CHANGED: Capitalized text */}
                 </h1>
               </div>
               {/* --- *** END OF FIX *** --- */}
 
               {/* --- Mobile List --- */}
               {savedArticles.map((article) => (
-                <div className="article-card-wrapper" key={article._id} style={{
-                  paddingTop: '0px' // <-- Keep this to remove space above card
-                }}>
+                // --- *** THIS IS THE MOBILE FIX (PADDING) *** ---
+                // The inline style is REMOVED. This wrapper will
+                // now use the default padding from App.css,
+                // matching the main newsfeed perfectly.
+                <div className="article-card-wrapper" key={article._id}>
+                {/* --- *** END OF FIX *** --- */}
                   <ArticleCard
                     article={article}
                     onCompare={() => onCompare(article)}

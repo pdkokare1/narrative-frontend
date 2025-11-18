@@ -1278,7 +1278,9 @@ button:disabled, button:disabled:hover {
     padding: 20px 20px; /* WAS: 25px 20px */
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Pushes footer to bottom */
+    /* --- *** THIS IS THE FIX (SIDEBAR FOOTER) *** --- */
+    justify-content: flex-start; /* <-- REMOVED space-between */
+    /* --- *** END OF FIX *** --- */
     /* --- FIX: Hide horizontal scrollbar --- */
     overflow-y: hidden; 
     overflow-x: hidden;
@@ -1665,24 +1667,24 @@ button:disabled, button:disabled:hover {
 @media (max-width: 768px) {
     /* --- *** THIS IS THE FIX: Ensure correct flex properties for scroll *** --- */
     .sidebar {
-        justify-content: flex-start; /* Let flexbox handle it */
+        /* --- *** THIS IS THE FIX (SIDEBAR FOOTER) *** --- */
+        justify-content: flex-start; /* <-- REMOVED space-between */
+        /* --- *** END OF FIX *** --- */
     }
     .sidebar-main-content {
         flex-grow: 1; /* Take up space */
         overflow-y: auto; /* THIS PART SCROLLS */
         overflow-x: hidden; /* Prevent horizontal scroll */
-        /* --- *** THIS IS THE FIX (SIDEBAR FOOTER) *** --- */
-        min-height: 0; /* <-- REPLACED 'height: 0' with 'min-height: 0' */
-        /* --- *** END OF FIX *** --- */
+        min-height: 0; /* <-- This is the correct rule */
     }
     .sidebar-footer {
         flex-shrink: 0; /* Prevent footer shrinking */
-        margin-top: auto; /* PUSH TO BOTTOM */
+        /* --- *** THIS IS THE FIX (SIDEBAR FOOTER) *** --- */
+        margin-top: auto; /* <-- This is the correct rule */
+        /* --- *** END OF FIX *** --- */
         padding-top: 15px; /* (NEW) Adds space above footer */
-        /* --- *** THIS IS THE FIX: Add bottom padding for viewport *** --- */
         padding-bottom: 20px;
     }
-    /* --- *** END OF FIX *** --- */
     
     /* --- *** ADDED: Ensure nav links are visible on mobile *** --- */
     .sidebar-top-nav,

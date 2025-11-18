@@ -172,9 +172,9 @@ function SavedArticles({
                 top: '0',
                 left: '0',
                 right: '0',
-                paddingTop: '10px', // <-- CHANGED: Reduced top padding (moved higher)
+                paddingTop: '10px', // Reduced top padding
                 paddingBottom: '10px',
-                zIndex: 0, // <-- CHANGED: Set to 0 so cards (z=1) scroll OVER it
+                zIndex: 0, // Set to 0 so cards (z=1) scroll OVER it
                 pointerEvents: 'none' // Lets you click "through" it
               }}>
                 <h1 style={{ 
@@ -197,9 +197,9 @@ function SavedArticles({
                   className="article-card-wrapper" 
                   key={article._id} 
                   style={{
-                    // If it's the FIRST card (index 0), give it top margin so it starts BELOW the text.
-                    // All other cards get 0 margin.
-                    paddingTop: index === 0 ? '45px' : '0px' 
+                    // Index 0 (First Card): 45px top padding to clear the "Saved Articles" text
+                    // Index > 0 (Other Cards): 20px top padding so they don't touch the header
+                    paddingTop: index === 0 ? '45px' : '20px' 
                   }}
                 >
                 {/* --- *** END OF FIX *** --- */}

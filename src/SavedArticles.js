@@ -169,10 +169,11 @@ function SavedArticles({
               {/* --- *** THIS IS THE MOBILE FIX *** --- */}
               <div className="article-card-wrapper" style={{ 
                 height: 'auto', minHeight: 'auto',
-                paddingTop: '10px', // <-- CHANGED from '20px'
-                paddingBottom: '0px', // <-- CHANGED from '4px'
+                paddingTop: '16px', // <-- CHANGED from '10px' to '16px' (a little space)
+                paddingBottom: '10px', // <-- CHANGED from '0px' to '10px' (a little space)
                 justifyContent: 'flex-start' 
               }}>
+              {/* --- *** END OF FIX *** --- */}
                 <h1 style={{ 
                   width: '100%', maxWidth: '500px',
                   textAlign: 'center', // Centered text
@@ -183,11 +184,15 @@ function SavedArticles({
                   {savedArticles.length} saved articles
                 </h1>
               </div>
-              {/* --- *** END OF FIX *** --- */}
 
               {/* --- Mobile List --- */}
               {savedArticles.map((article) => (
-                <div className="article-card-wrapper" key={article._id}>
+                // --- *** THIS IS THE MOBILE FIX *** ---
+                // I am removing the extra top padding from the article wrapper
+                <div className="article-card-wrapper" key={article._id} style={{
+                  paddingTop: '0px' // <-- ADDED THIS to remove top space
+                }}>
+                {/* --- *** END OF FIX *** --- */}
                   <ArticleCard
                     article={article}
                     onCompare={() => onCompare(article)}

@@ -168,18 +168,18 @@ function SavedArticles({
             <>
               {/* --- *** THIS IS THE MOBILE FIX (POSITION) *** --- */}
               <div style={{ 
-                position: 'absolute', // <-- Lifts text out of layout
+                position: 'absolute', // Lifts text out of layout
                 top: '0',
                 left: '0',
                 right: '0',
-                paddingTop: '20px',    // <-- Gives space from top of screen
-                paddingBottom: '12px',
-                zIndex: 10, // <-- Ensures it's on top of the card
-                pointerEvents: 'none' // <-- Lets you click "through" it
+                paddingTop: '10px', // <-- CHANGED: Reduced top padding (moved higher)
+                paddingBottom: '10px',
+                zIndex: 0, // <-- CHANGED: Set to 0 so cards (z=1) scroll OVER it
+                pointerEvents: 'none' // Lets you click "through" it
               }}>
                 <h1 style={{ 
                   width: '100%', maxWidth: '500px',
-                  margin: '0 auto', // <-- Center the h1
+                  margin: '0 auto', // Center the h1
                   textAlign: 'center', 
                   fontSize: '14px', 
                   color: 'var(--text-tertiary)', 
@@ -191,12 +191,17 @@ function SavedArticles({
               {/* --- *** END OF FIX *** --- */}
 
               {/* --- Mobile List --- */}
-              {savedArticles.map((article) => (
+              {savedArticles.map((article, index) => (
                 // --- *** THIS IS THE MOBILE FIX (PADDING) *** ---
-                // The inline style is REMOVED. This wrapper will
-                // now use the default padding from App.css,
-                // matching the main newsfeed perfectly.
-                <div className="article-card-wrapper" key={article._id}>
+                <div 
+                  className="article-card-wrapper" 
+                  key={article._id} 
+                  style={{
+                    // If it's the FIRST card (index 0), give it top margin so it starts BELOW the text.
+                    // All other cards get 0 margin.
+                    paddingTop: index === 0 ? '45px' : '0px' 
+                  }}
+                >
                 {/* --- *** END OF FIX *** --- */}
                   <ArticleCard
                     article={article}

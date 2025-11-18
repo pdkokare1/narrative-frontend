@@ -1,6 +1,6 @@
 // In file: src/SavedArticles.js
-// --- COMPLETE REWRITE (v7) ---
-// --- FIX: Tighter spacing for Desktop view (Reduced top padding/margin) ---
+// --- COMPLETE REWRITE (v8) ---
+// --- FIX: Even tighter spacing for Desktop view (Reduced grid margin) ---
 // --- FIX: Renders a desktop-style grid (.articles-grid) on desktop screens ---
 // --- FIX: Keeps the mobile snap-scroll layout (.article-card-wrapper) on mobile ---
 import React, { useState, useEffect, useRef } from 'react';
@@ -102,7 +102,7 @@ function SavedArticles({
               <div style={{ 
                 position: 'absolute', 
                 top: '0', left: '0', right: '0',
-                paddingTop: '10px', // <-- CHANGED: Reduced from 30px to 10px
+                paddingTop: '10px', // Keep top padding tight
                 zIndex: 0, // Behind the cards
                 pointerEvents: 'none',
                 textAlign: 'center'
@@ -119,7 +119,7 @@ function SavedArticles({
 
               {/* --- DESKTOP GRID (Pushed down to reveal text) --- */}
               <div className="articles-grid" style={{
-                marginTop: '35px', // <-- CHANGED: Reduced from 45px to 35px
+                marginTop: '25px', // <-- CHANGED: Reduced from 35px to 25px
                 position: 'relative', // Create stacking context
                 zIndex: 1 // Sit ON TOP of the text
               }}>

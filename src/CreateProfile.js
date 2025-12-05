@@ -1,11 +1,7 @@
 // In file: src/CreateProfile.js
 import React, { useState } from 'react';
-import { auth } from './firebaseConfig'; // Import auth
-import axios from 'axios';
-import './Login.css'; // We can re-use the login page styles
-
-// Get API URL from environment
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+import * as api from './services/api'; // <--- Centralized API
+import './Login.css'; 
 
 function CreateProfile() {
   const [username, setUsername] = useState('');
@@ -24,34 +20,15 @@ function CreateProfile() {
     setLoading(true);
 
     try {
-      // Get the current user's token
-      const user = auth.currentUser;
-      if (!user) {
-        setError('You are not logged in.');
-        setLoading(false);
-        return;
-      }
-      const token = await user.getIdToken();
-
       // Send the new username to our backend
-      await axios.post(
-        `${API_URL}/profile`, 
-        { username: username.trim() }, // The data we are sending
-        {
-          headers: {
-            Authorization: `Bearer ${token}` // The proof of who we are
-          }
-        }
-      );
+      await api.createProfile({ username: username.trim() }); // <--- API Call
 
-      // Success! Reload the app.
-      // This will re-trigger the check in App.js, which will
-      // now find the profile and load the main app.
-      window.location.href = '/'; // Go to homepage
+      // Success! Reload to trigger AuthContext update
+      window.location.href = '/'; 
 
     } catch (err) {
       if (err.response && err.response.data && err.response.data.error) {
-        setError(err.response.data.error); // Show error from backend
+        setError(err.response.data.error); 
       } else {
         setError('Failed to create profile. Please try again.');
       }
@@ -72,22 +49,18 @@ function CreateProfile() {
               placeholder="Enter your username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              /* --- *** THIS IS THE FIX (Request 2) *** --- */
-              className="username-input firebaseui-id-input firebaseui-input" // Re-use style
-              /* --- *** END OF FIX *** --- */
+              className="username-input firebaseui-id-input firebaseui-input" 
               style={{ marginBottom: '15px' }}
             />
 
             {error && (
-              <p style={{ color: 'red', fontSize: '12px', marginBottom: '15px' }}>
-                {error}
-              </p>
+              <p style={{ color: 'red', fontSize: '12px', marginBottom: '15px' }}>{error}</p>
             )}
 
             <button 
               type="submit" 
               disabled={loading}
-              className="firebaseui-id-submit firebaseui-button" // Re-use style
+              className="firebaseui-id-submit firebaseui-button" 
             >
               {loading ? 'Saving...' : 'Save Profile'}
             </button>

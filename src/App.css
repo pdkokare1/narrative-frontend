@@ -131,6 +131,32 @@ h1, h2, h3, .header-left h1, .content-header h2, .modal-header h2 {
   to { transform: rotate(360deg); }
 }
 
+/* --- NEW: Skeleton Pulse Animation --- */
+@keyframes skeleton-pulse-anim {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.skeleton-pulse {
+  animation: skeleton-pulse-anim 1.5s ease-in-out infinite;
+}
+
+/* --- NEW: Toast Notification Container --- */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none; /* Allow clicks through empty space */
+}
+.toast-container > * {
+  pointer-events: auto; /* Re-enable clicks on toasts */
+}
+
 /* ==================== HEADER ==================== */
 .header {
   position: fixed;

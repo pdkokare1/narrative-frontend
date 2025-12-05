@@ -1,78 +1,41 @@
 // In file: src/MyDashboard.js
-// --- FIX: Component now accepts `theme` as a prop ---
-// --- FIX: Removed the line `const theme = document.body.className...` ---
-// --- FIX: Re-added 'Your Activity' h2 (desktop-only) ---
-// --- FIX: Re-structured header to align 'Stats' to the right ---
-// --- FIX: Moved 'Account Settings' link to a new 'dashboard-left-footer' div ---
-// --- FIX (2025-11-15): New header layout per user request ---
-// --- FIX (2025-11-16): Removed Account Settings button (moved to Sidebar) ---
-// --- FIX (2025-11-16): Added sticky-header-wrapper to right column ---
-// --- FIX (2025-11-16b): Removed 'no-border-bottom' from left header ---
-// --- FIX (2025-11-16c): Moved 'Viewing All-Time Stats' to right header ---
-// --- FIX (2025-11-16d): ALIGNMENT FIX per user screenshot ---
-// --- FIX (2025-11-16g): Changed left column <span> to <h2> to match right column ---
-// --- FIX (2025-11-16i): REMOVED sticky wrapper from left column (it was the problem) ---
-// --- *** THIS IS THE FIX: Added Account Settings button to left footer *** ---
-// --- *** BUILD FIX: Corrected </Doughnut> closing tag to </p> *** ---
-// --- *** MOBILE FIX: Added 'mobile-only-footer' div for Account Settings *** ---
-// --- *** MOBILE FIX: Re-structured mobile header for Title and Buttons *** ---
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import axios from 'axios';
-import { Link } from 'react-router-dom'; // Use Link for Back to Articles
+import { Link } from 'react-router-dom'; 
+import * as api from './services/api'; // <--- Centralized API
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement,
   BarElement, ArcElement, Title, Tooltip, Legend, TimeScale
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
-import './App.css'; // For theme variables
-import './DashboardPages.css'; // Shared CSS file
+import './App.css';
+import './DashboardPages.css';
 
-// Register Chart.js components
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement,
   Title, Tooltip, Legend, TimeScale
 );
 
-// Get API URL from environment
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-
-// --- Data & Color Helpers ---
+// --- Helpers ---
 const getActionCount = (totals, action) => {
   const item = totals.find(t => t.action === action);
   return item ? item.count : 0;
 };
 const leanOrder = ['Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
-
-// --- UPDATED: Center color is now green ---
 const leanColors = {
-    'Left': '#dc2626', 'Left-Leaning': '#f87171', 'Center': '#4CAF50', // Was '#6b7280'
+    'Left': '#dc2626', 'Left-Leaning': '#f87171', 'Center': '#4CAF50',
     'Right-Leaning': '#60a5fa', 'Right': '#2563eb', 'Not Applicable': '#a1a1aa'
 };
-// --- END UPDATE ---
-
-const sentimentColors = {
-  'Positive': '#2563eb',
-  'Negative': '#dc2626',
-  'Neutral': '#6b7280'
-};
+const sentimentColors = { 'Positive': '#2563eb', 'Negative': '#dc2626', 'Neutral': '#6b7280' };
 const categoryColorsDark = ['#B38F5F', '#CCA573', '#D9B98A', '#E6CB9F', '#9C7C50', '#8F6B4D', '#C19A6B', '#AE8A53', '#D0B48F', '#B8860B'];
 const categoryColorsLight = ['#2E4E6B', '#3E6A8E', '#5085B2', '#63A0D6', '#243E56', '#1A2D3E', '#4B77A3', '#395D7D', '#5D92C1', '#004E8A'];
-// --- End Helpers ---
 
-
-// --- Main Component ---
-// --- (FIX) Accept `theme` as a prop ---
 function MyDashboard({ theme }) {
   const [statsData, setStatsData] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState('');
 
-  // --- (FIX) Removed this line:
-  // const theme = document.body.className.includes('dark') ? 'dark' : 'light';
-
    const chartColors = useMemo(() => {
-      // --- (FIX) Use the `theme` prop directly ---
       const isDark = theme === 'dark';
       return {
          textPrimary: isDark ? '#EAEAEA' : '#2C2C2C',
@@ -82,20 +45,18 @@ function MyDashboard({ theme }) {
          tooltipBg: isDark ? '#2C2C2C' : '#FDFDFD',
          categoryPalette: isDark ? categoryColorsDark : categoryColorsLight,
          accentPrimary: isDark ? '#B38F5F' : '#2E4E6B',
-         // --- ADDED: Hardcoded trend colors ---
          trendUp: isDark ? '#4CAF50' : '#2E7D32',
          trendDown: isDark ? '#E57373' : '#C62828',
       };
-   }, [theme]); // (FIX) Now depends on the `theme` prop
+   }, [theme]);
 
-  // Fetch aggregated stats
   useEffect(() => {
     const fetchStats = async () => {
       setError('');
       setLoadingStats(true);
       try {
-        const response = await axios.get(`${API_URL}/profile/stats`);
-        setStatsData(response.data);
+        const { data } = await api.getStats(); // <--- API Call
+        setStatsData(data);
       }
       catch (err) {
         console.error('Error fetching stats:', err);
@@ -108,8 +69,7 @@ function MyDashboard({ theme }) {
     fetchStats();
   }, []);
 
-
-  // --- Chart Options ---
+  // --- Chart Options (Doughnut, Bar, StoriesRead) ---
   const getDoughnutChartOptions = useCallback((title) => ({
       responsive: true, maintainAspectRatio: false,
       plugins: {
@@ -171,7 +131,7 @@ function MyDashboard({ theme }) {
       },
    }), [chartColors]);
 
-  // --- Chart Data Preparation ---
+  // --- Data Prep ---
   const prepareLeanData = (rawData) => {
     const counts = (rawData || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
     const data = leanOrder.map(lean => counts[lean] || 0);
@@ -199,7 +159,6 @@ function MyDashboard({ theme }) {
 
   const prepareTopSourcesData = (rawData) => {
     const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10).reverse();
-    // --- UPDATED: Use same logic as prepareCategoryData ---
     const themeCategoryColors = chartColors.categoryPalette;
     return {
       labels: sortedData.map(d => d.source),
@@ -237,17 +196,16 @@ function MyDashboard({ theme }) {
     const labels = statsData?.dailyCounts?.map(item => item.date) || [];
     const data = statsData?.dailyCounts?.map(item => item.count) || [];
     
-    // --- UPDATED: Conditional coloring logic ---
     const getSegmentBorderColor = (ctx) => {
       const y1 = ctx.p0.parsed.y;
       const y2 = ctx.p1.parsed.y;
       if (y2 > y1) return chartColors.trendUp;
       if (y2 < y1) return chartColors.trendDown;
-      return chartColors.textTertiary; // Neutral color for no change
+      return chartColors.textTertiary; 
     };
 
     const getPointBackgroundColor = (ctx) => {
-      if (ctx.dataIndex === 0) return chartColors.accentPrimary; // First point
+      if (ctx.dataIndex === 0) return chartColors.accentPrimary; 
       const y1 = ctx.chart.data.datasets[0].data[ctx.dataIndex - 1];
       const y2 = ctx.chart.data.datasets[0].data[ctx.dataIndex];
       if (y2 > y1) return chartColors.trendUp;
@@ -262,17 +220,12 @@ function MyDashboard({ theme }) {
         data: data,
         fill: false,
         tension: 0.1,
-        // --- UPDATED: Use conditional segment/point colors ---
-        segment: {
-          borderColor: getSegmentBorderColor,
-        },
+        segment: { borderColor: getSegmentBorderColor },
         pointBackgroundColor: getPointBackgroundColor,
-        pointBorderColor: (ctx) => getPointBackgroundColor(ctx), // Match border
-        // --- END OF UPDATE ---
+        pointBorderColor: (ctx) => getPointBackgroundColor(ctx), 
       }],
     };
   }, [statsData?.dailyCounts, chartColors]);
-  // --- END OF UPDATE ---
 
   const leanReadData = prepareLeanData(statsData?.leanDistribution_read);
   const categoryReadData = prepareCategoryData(statsData?.categoryDistribution_read);
@@ -293,14 +246,12 @@ function MyDashboard({ theme }) {
   }, [statsData?.qualityDistribution_read, chartColors.borderColor]);
   const leanSharedData = prepareLeanData(statsData?.leanDistribution_shared);
 
-  // Calculate totals
   const totals = statsData?.totalCounts || [];
   const totalAnalyzed = getActionCount(totals, 'view_analysis');
   const totalShared = getActionCount(totals, 'share_article');
   const totalCompared = getActionCount(totals, 'view_comparison');
   const totalRead = getActionCount(totals, 'read_external');
 
-  // Calculate lean percentages for BAR
   const leanReadCounts = (statsData?.leanDistribution_read || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
   const totalApplicableLeanArticles = (leanReadCounts['Left'] || 0) + (leanReadCounts['Left-Leaning'] || 0) + (leanReadCounts['Center'] || 0) + (leanReadCounts['Right-Leaning'] || 0) + (leanReadCounts['Right'] || 0);
 
@@ -313,7 +264,6 @@ function MyDashboard({ theme }) {
   const leftCombinedPerc = calculateBarPercentage(['Left', 'Left-Leaning']);
   const centerPerc = calculateBarPercentage(['Center']);
   const rightCombinedPerc = calculateBarPercentage(['Right-Leaning', 'Right']);
-  // --- END BAR CALC ---
 
   const statBoxes = [
     { key: 'analyzed', title: 'Articles Analyzed', value: totalAnalyzed, desc: 'No. of articles you have analyzed.' },
@@ -322,18 +272,11 @@ function MyDashboard({ theme }) {
     { key: 'compared', title: 'Comparisons Viewed', value: totalCompared, desc: "No. of articles you've compared." }
   ];
 
-  // --- RENDER LOGIC ---
   return (
     <div className="dashboard-page">
       <div className="dashboard-content-wrapper">
-
-        {/* --- Left Column --- */}
         <div className="dashboard-left-column">
-          {/* --- This new div handles scrolling --- */}
           <div className="dashboard-left-scroll">
-            
-            {/* --- *** THIS IS THE FIX *** --- */}
-            {/* The sticky wrapper has been REMOVED from the left column. */}
             <div className="section-title-header">
               <h2 className="section-title">Your Activity</h2>
               <div className="header-actions">
@@ -342,10 +285,7 @@ function MyDashboard({ theme }) {
                 </Link>
               </div>
             </div>
-            {/* --- *** END OF FIX *** --- */}
 
-
-            {/* --- *** MOBILE FIX: This is the new mobile-only header *** --- */}
             <div className="dashboard-header-mobile">
               <h2 className="section-title-mobile">Your Activity</h2>
               <div className="header-actions-mobile">
@@ -357,14 +297,11 @@ function MyDashboard({ theme }) {
                 </div>
               </div>
             </div>
-            {/* --- *** END OF MOBILE FIX *** --- */}
 
-
-            {/* Activity Stat Boxes (now wrapped) */}
-            <div className="dashboard-card no-padding"> {/* Add no-padding if needed */}
+            <div className="dashboard-card no-padding"> 
               <div className="stat-box-grid">
                 {statBoxes.map(box => (
-                  <div key={box.key} className="stat-box"> {/* Removed dashboard-card from here */}
+                  <div key={box.key} className="stat-box"> 
                     <h3>{box.title}</h3>
                     <p className="stat-number">{loadingStats ? '...' : box.value}</p>
                     <p className="stat-description">{box.desc}</p>
@@ -373,34 +310,22 @@ function MyDashboard({ theme }) {
               </div>
             </div>
 
-
-            {/* Reading Bias Card */}
-            <h2 className="section-title reading-bias-title">Reading Bias</h2> {/* ADDED CLASS */}
-            <div className="dashboard-card lean-summary-card"> {/* Already a card */}
-                {loadingStats ? <div className="loading-container simple"><div className="spinner small"></div></div> : totalApplicableLeanArticles > 0 ? ( // USE APPLICABLE TOTAL
+            <h2 className="section-title reading-bias-title">Reading Bias</h2>
+            <div className="dashboard-card lean-summary-card"> 
+                {loadingStats ? <div className="loading-container simple"><div className="spinner small"></div></div> : totalApplicableLeanArticles > 0 ? ( 
                   <>
-                    {/* --- NEW: Visual Key / Legend --- */}
                     <div className="lean-legend">
-                      <div className="legend-item">
-                        <span className="legend-dot" style={{ backgroundColor: leanColors['Left'] }}></span> Left
-                      </div>
-                      <div className="legend-item">
-                        <span className="legend-dot" style={{ backgroundColor: leanColors['Center'] }}></span> Center
-                      </div>
-                      <div className="legend-item">
-                        <span className="legend-dot" style={{ backgroundColor: leanColors['Right'] }}></span> Right
-                      </div>
+                      <div className="legend-item"><span className="legend-dot" style={{ backgroundColor: leanColors['Left'] }}></span> Left</div>
+                      <div className="legend-item"><span className="legend-dot" style={{ backgroundColor: leanColors['Center'] }}></span> Center</div>
+                      <div className="legend-item"><span className="legend-dot" style={{ backgroundColor: leanColors['Right'] }}></span> Right</div>
                     </div>
-                    {/* --- END NEW --- */}
 
                     <div className="lean-bar">
-                      {/* --- UPDATED: Use calculated percentages --- */}
                       { leftCombinedPerc > 0 && <div className="lean-segment left" style={{ width: `${leftCombinedPerc}%` }}>{leftCombinedPerc >= 10 ? `L ${leftCombinedPerc}%` : ''}</div> }
                       { centerPerc > 0 && <div className="lean-segment center" style={{ width: `${centerPerc}%` }}>{centerPerc >= 10 ? `C ${centerPerc}%` : ''}</div> }
                       { rightCombinedPerc > 0 && <div className="lean-segment right" style={{ width: `${rightCombinedPerc}%` }}>{rightCombinedPerc >= 10 ? `R ${rightCombinedPerc}%` : ''}</div> }
                     </div>
                     <ul className="lean-details">
-                      {/* --- UPDATED: Use calculated percentages --- */}
                       {leftCombinedPerc > 0 && (<li><span>{leftCombinedPerc}%</span> analyzed lean left.</li>)}
                       {centerPerc > 0 && (<li><span>{centerPerc}%</span> analyzed were balanced.</li>)}
                       {rightCombinedPerc > 0 && (<li><span>{rightCombinedPerc}%</span> analyzed lean right.</li>)}
@@ -409,23 +334,15 @@ function MyDashboard({ theme }) {
                 ) : ( <p className="no-data-msg small">No applicable analysis data available yet.</p> )}
               </div>
           </div> 
-          {/* --- End of dashboard-left-scroll --- */}
 
-          {/* --- *** THIS IS THE FIX: ADDED FOOTER FOR BUTTON *** --- */}
           <div className="dashboard-left-footer">
             <Link to="/account-settings" className="account-settings-link-dashboard">
               Account Settings
             </Link>
           </div>
-          {/* --- *** END OF FIX *** --- */}
+        </div>
 
-        </div> {/* --- End Left Column --- */}
-
-        {/* --- Right Column --- */}
         <div className="dashboard-right-column">
-          
-          {/* --- *** THIS IS THE FIX *** --- */}
-          {/* Renamed class back to 'sticky-header-wrapper' */}
           <div className="sticky-header-wrapper">
             <div className="section-title-header">
                 <h2 className="section-title">Your Reading Habits</h2>
@@ -434,17 +351,12 @@ function MyDashboard({ theme }) {
                 </div>
             </div>
           </div>
-          {/* --- *** END OF FIX *** --- */}
           
-          {/* --- *** MOBILE FIX: This is the new mobile-only header *** --- */}
           <div className="dashboard-header-mobile">
             <h2 className="section-title-mobile">Your Reading Habits</h2>
           </div>
-          {/* --- *** END OF MOBILE FIX *** --- */}
 
-
-          {/* Stories Analyzed Over Time (Full Width) */}
-          <div className="dashboard-card full-width-chart-card stories-read-card"> {/* Already a card */}
+          <div className="dashboard-card full-width-chart-card stories-read-card"> 
               <div className="chart-container stories-read-chart">
                  {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
                   : (statsData?.dailyCounts?.length > 0) ? ( <Line options={storiesReadOptions} data={storiesReadData} /> )
@@ -452,15 +364,12 @@ function MyDashboard({ theme }) {
               </div>
           </div>
 
-          {/* Grid for Remaining Charts */}
           <div className="dashboard-grid">
-
-            {/* Each chart is now wrapped in dashboard-card */}
              <div className="dashboard-card">
                <h3>Top Categories (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && categoryReadData.labels.length > 0) ? ( <Bar options={getBarChartOptions('', 'Articles Analyzed')} data={categoryReadData} /> ) // Remove title from options
+                   : (totalAnalyzed > 0 && categoryReadData.labels.length > 0) ? ( <Bar options={getBarChartOptions('', 'Articles Analyzed')} data={categoryReadData} /> ) 
                    : ( <p className="no-data-msg">No category data for this period.</p> )}
                </div>
              </div>
@@ -469,7 +378,7 @@ function MyDashboard({ theme }) {
                <h3>Top Sources (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && topSourcesData.labels.length > 0) ? ( <Bar options={getBarChartOptions('', 'Articles Analyzed')} data={topSourcesData} /> ) // Remove title from options
+                   : (totalAnalyzed > 0 && topSourcesData.labels.length > 0) ? ( <Bar options={getBarChartOptions('', 'Articles Analyzed')} data={topSourcesData} /> ) 
                    : ( <p className="no-data-msg">No source data for this period.</p> )}
                </div>
              </div>
@@ -478,7 +387,7 @@ function MyDashboard({ theme }) {
                <h3>Political Lean (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalApplicableLeanArticles > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={leanReadData} /> ) // USE APPLICABLE TOTAL
+                   : (totalApplicableLeanArticles > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={leanReadData} /> ) 
                    : ( <p className="no-data-msg">No lean data for this period.</p> )}
                </div>
              </div>
@@ -487,7 +396,7 @@ function MyDashboard({ theme }) {
                <h3>Sentiment Breakdown (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && sentimentReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={sentimentReadData} /> ) // Remove title from options
+                   : (totalAnalyzed > 0 && sentimentReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={sentimentReadData} /> ) 
                    : ( <p className="no-data-msg">No sentiment data for this period.</p> )}
                </div>
              </div>
@@ -496,7 +405,7 @@ function MyDashboard({ theme }) {
                <h3>Article Quality (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && qualityReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={qualityReadData} /> ) // Remove title from options
+                   : (totalAnalyzed > 0 && qualityReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={qualityReadData} /> ) 
                    : ( <p className="no-data-msg">No quality data for this period.</p> )}
                </div>
              </div>
@@ -505,26 +414,24 @@ function MyDashboard({ theme }) {
                <h3>Political Lean (Shared)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalShared > 0 && leanSharedData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={leanSharedData} /> ) // Remove title from options
+                   : (totalShared > 0 && leanSharedData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={leanSharedData} /> ) 
                    : ( <p className="no-data-msg">You haven't shared articles yet.</p> )}
                </div>
              </div>
 
-          </div> {/* End dashboard-grid (right column) */}
+          </div> 
 
           {error && <p style={{ color: 'red', textAlign: 'center', marginTop: '20px' }}>{error}</p>}
           
-          {/* --- *** THIS IS THE FIX: ADDED MOBILE-ONLY FOOTER *** --- */}
           <div className="mobile-only-footer">
             <Link to="/account-settings" className="account-settings-link-dashboard">
               Account Settings
             </Link>
           </div>
-          {/* --- *** END OF FIX *** --- */}
 
-        </div> {/* --- End Right Column --- */}
-      </div> {/* --- End Content Wrapper --- */}
-    </div> // End dashboard-page
+        </div> 
+      </div> 
+    </div> 
   );
 }
 

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 
 import './App.css'; 
 import './DashboardPages.css'; 
 
-// --- React Router (FIX: Added 'Link' to imports) ---
+// --- React Router ---
 import { Routes, Route, useNavigate, useLocation, Navigate, Link } from 'react-router-dom';
 
 // --- Context Providers ---
@@ -18,9 +18,10 @@ import PageLoader from './components/PageLoader';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ArticleCard from './components/ArticleCard';
-import SkeletonCard from './components/ui/SkeletonCard'; 
 
 // --- UI Components ---
+// CRITICAL FIX: Ensure this path is correct and the file exports 'default'
+import SkeletonCard from './components/ui/SkeletonCard'; 
 import CustomTooltip from './components/ui/CustomTooltip';
 
 // --- Modals ---
@@ -48,28 +49,19 @@ function App() {
   );
 }
 
-// --- APP ROUTES ---
 function AppRoutes() {
   const { user, profile, loading } = useAuth();
   
-  // 1. Still loading Auth/Profile? Show Spinner
   if (loading) return <PageLoader />;
-
-  // 2. Not logged in? Show Login Page
   if (!user) return <Login />;
-
-  // 3. Logged in, but NO Profile? 
-  // This means they are a new user OR the backend fetch failed.
-  // Instead of spinning forever, show the Create Profile screen.
+  
   if (!profile) {
      return <CreateProfile />;
   }
 
-  // 4. Logged in AND has Profile? Show Main App
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        {/* If they go to /create-profile but have one, redirect home */}
         <Route path="/create-profile" element={<Navigate to="/" replace />} />
         <Route path="/*" element={<MainLayout profile={profile} />} />
       </Routes>
@@ -105,7 +97,6 @@ function MainLayout({ profile }) {
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
   const contentRef = useRef(null);
-  
   const location = useLocation();
 
   const toggleTheme = () => {
@@ -211,7 +202,7 @@ function MainLayout({ profile }) {
       setDisplayedArticles(data.articles || []);
     } catch (error) {
       console.error('Fetch error:', error);
-      addToast('Failed to load articles. Check connection.', 'error');
+      addToast('Failed to load articles.', 'error');
     } finally {
       if (isRefresh) setIsRefreshing(false);
       else { setLoadingArticles(false); setInitialLoad(false); }
@@ -301,6 +292,7 @@ function NewsFeed({
 
       {(loading && initialLoad) ? (
         <div className="articles-grid">
+           {/* If SkeletonCard is undefined, this crashes. Ensuring it is imported correctly fixes it. */}
            {[...Array(6)].map((_, i) => (
              <div className="article-card-wrapper" key={i}>
                 <SkeletonCard />
@@ -360,7 +352,6 @@ function PageNotFound() {
     <main className="content" style={{ justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 60px)' }}>
       <div style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}>
         <h2>404 - Page Not Found</h2>
-        {/* Link is used here, so it must be imported at the top */}
         <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>Back to Articles</Link>
       </div>
     </main>

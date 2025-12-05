@@ -18,10 +18,9 @@ import PageLoader from './components/PageLoader';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ArticleCard from './components/ArticleCard';
+import SkeletonCard from './components/ui/SkeletonCard'; 
 
 // --- UI Components ---
-// CRITICAL FIX: Ensure this path is correct and the file exports 'default'
-import SkeletonCard from './components/ui/SkeletonCard'; 
 import CustomTooltip from './components/ui/CustomTooltip';
 
 // --- Modals ---
@@ -279,11 +278,41 @@ function MainLayout({ profile }) {
   );
 }
 
+// --- NewsFeed Component (Infinite Scroll Enhanced) ---
 function NewsFeed({
   contentRef, isRefreshing, loading, initialLoad, displayedArticles, 
   totalArticlesCount, loadMoreArticles, handleCompareClick, handleAnalyzeClick,
   shareArticle, handleReadClick, showTooltip, savedArticleIds, handleToggleSave
 }) {
+  
+  // --- INFINITE SCROLL LOGIC ---
+  const bottomSentinelRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // If the bottom sentinel comes into view, and we aren't already loading...
+        if (entries[0].isIntersecting && !loading && displayedArticles.length < totalArticlesCount) {
+          loadMoreArticles();
+        }
+      },
+      { 
+        threshold: 0.1, // Trigger when 10% of sentinel is visible
+        rootMargin: '200px' // Pre-load when user is 200px away from bottom
+      } 
+    );
+
+    const currentSentinel = bottomSentinelRef.current;
+    if (currentSentinel) {
+      observer.observe(currentSentinel);
+    }
+
+    return () => {
+      if (currentSentinel) observer.unobserve(currentSentinel);
+    };
+  }, [loading, displayedArticles.length, totalArticlesCount, loadMoreArticles]);
+  // -----------------------------
+
   return (
     <main className="content" ref={contentRef}>
       <div className="pull-to-refresh-container" style={{ display: isRefreshing ? 'flex' : 'none' }}>
@@ -292,7 +321,6 @@ function NewsFeed({
 
       {(loading && initialLoad) ? (
         <div className="articles-grid">
-           {/* If SkeletonCard is undefined, this crashes. Ensuring it is imported correctly fixes it. */}
            {[...Array(6)].map((_, i) => (
              <div className="article-card-wrapper" key={i}>
                 <SkeletonCard />
@@ -324,21 +352,21 @@ function NewsFeed({
             </div>
           )}
 
-          {(loading && !initialLoad) && (
-            <div className="article-card-wrapper load-more-wrapper">
-              <div className="loading-container" style={{ minHeight: '100px' }}>
-                <div className="spinner-small"></div>
-              </div>
-            </div>
-          )}
-
-          {!loading && displayedArticles.length < totalArticlesCount && (
-            <div className="article-card-wrapper load-more-wrapper">
-              <div className="load-more">
-                <button onClick={loadMoreArticles} className="load-more-btn">
-                  Load More ({totalArticlesCount - displayedArticles.length} remaining)
-                </button>
-              </div>
+          {/* INFINITE SCROLL SENTINEL & LOADER */}
+          {!initialLoad && displayedArticles.length < totalArticlesCount && (
+            <div 
+              ref={bottomSentinelRef} 
+              className="article-card-wrapper load-more-wrapper"
+              style={{ minHeight: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+            >
+              {loading ? (
+                 <div className="loading-container" style={{ minHeight: 'auto' }}>
+                    <div className="spinner-small"></div>
+                 </div>
+              ) : (
+                 // Invisible text just to give the div some height/content
+                 <span style={{ opacity: 0 }}>Loading more...</span>
+              )}
             </div>
           )}
         </>

@@ -3,8 +3,8 @@ import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 
 import './App.css'; 
 import './DashboardPages.css'; 
 
-// --- React Router ---
-import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
+// --- React Router (FIX: Added 'Link' to imports) ---
+import { Routes, Route, useNavigate, useLocation, Navigate, Link } from 'react-router-dom';
 
 // --- Context Providers ---
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -48,7 +48,7 @@ function App() {
   );
 }
 
-// --- UPDATED APP ROUTES ---
+// --- APP ROUTES ---
 function AppRoutes() {
   const { user, profile, loading } = useAuth();
   
@@ -360,6 +360,7 @@ function PageNotFound() {
     <main className="content" style={{ justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 60px)' }}>
       <div style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}>
         <h2>404 - Page Not Found</h2>
+        {/* Link is used here, so it must be imported at the top */}
         <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>Back to Articles</Link>
       </div>
     </main>

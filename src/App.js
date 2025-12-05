@@ -1,5 +1,5 @@
 // In file: src/App.js
-import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
 import './App.css'; 
 import './DashboardPages.css'; 
 
@@ -17,8 +17,7 @@ import * as api from './services/api';
 import PageLoader from './components/PageLoader';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import ArticleCard from './components/ArticleCard';
-import SkeletonCard from './components/ui/SkeletonCard'; 
+import NewsFeed from './components/NewsFeed'; // <--- NEW IMPORT
 
 // --- UI Components ---
 import CustomTooltip from './components/ui/CustomTooltip';
@@ -72,10 +71,7 @@ function MainLayout({ profile }) {
   const { logout } = useAuth();
   const { addToast } = useToast();
   
-  const [displayedArticles, setDisplayedArticles] = useState([]);
-  const [loadingArticles, setLoadingArticles] = useState(true);
-  const [initialLoad, setInitialLoad] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  // --- Global State ---
   const [theme, setTheme] = useState('dark');
   const [filters, setFilters] = useState({
     category: 'All Categories',
@@ -86,18 +82,18 @@ function MainLayout({ profile }) {
     articleType: 'All Types'
   });
   
+  // --- Modals & UI State ---
   const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '', articleId: null });
   const [analysisModal, setAnalysisModal] = useState({ open: false, article: null });
-  const [totalArticlesCount, setTotalArticlesCount] = useState(0); 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
   const [isMobileView, setIsMobileView] = useState(isMobile());
   const [savedArticleIds, setSavedArticleIds] = useState(new Set(profile.savedArticles || []));
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
-  const contentRef = useRef(null);
   const location = useLocation();
 
+  // --- Theme Logic ---
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
@@ -111,12 +107,14 @@ function MainLayout({ profile }) {
     document.body.className = savedTheme + '-mode';
   }, []);
 
+  // --- Resize Listener ---
   useEffect(() => {
     const handleResize = () => setIsMobileView(isMobile());
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // --- Handlers ---
   const handleLogout = useCallback(() => { logout(); }, [logout]);
 
   const showTooltip = (text, e) => {
@@ -151,22 +149,7 @@ function MainLayout({ profile }) {
     api.logCompare(article._id).catch(err => console.error("Log Compare Error:", err));
   };
   
-  const handleReadClick = (article) => {
-    api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
-    window.open(article.url, '_blank', 'noopener,noreferrer');
-  };
-  
-  const shareArticle = (article) => {
-    api.logShare(article._id).catch(err => console.error("Log Share Error:", err));
-    const shareUrl = `${window.location.origin}?article=${article._id}`;
-    if (navigator.share) {
-      navigator.share({ title: article.headline, text: `Check this out: ${article.headline}`, url: shareUrl })
-        .catch(() => navigator.clipboard.writeText(shareUrl).then(() => addToast('Link copied!', 'success')));
-    } else {
-      navigator.clipboard.writeText(shareUrl).then(() => addToast('Link copied!', 'success'));
-    }
-  };
-  
+  // --- Global Save Handler ---
   const handleToggleSave = useCallback(async (article) => {
     const articleId = article._id;
     const newSavedArticleIds = new Set(savedArticleIds);
@@ -191,42 +174,8 @@ function MainLayout({ profile }) {
     }
   }, [savedArticleIds, addToast]);
 
-  const fetchArticles = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setIsRefreshing(true);
-    else { setLoadingArticles(true); setInitialLoad(true); }
-    
-    try {
-      const { data } = await api.fetchArticles({ ...filters, limit: 12, offset: 0 });
-      setTotalArticlesCount(data.pagination?.total || 0);
-      setDisplayedArticles(data.articles || []);
-    } catch (error) {
-      console.error('Fetch error:', error);
-      addToast('Failed to load articles.', 'error');
-    } finally {
-      if (isRefresh) setIsRefreshing(false);
-      else { setLoadingArticles(false); setInitialLoad(false); }
-    }
-  }, [filters, addToast]); 
 
-  const loadMoreArticles = useCallback(async () => {
-    if (loadingArticles || isRefreshing || displayedArticles.length >= totalArticlesCount) return; 
-    setLoadingArticles(true); 
-    
-    try {
-      const { data } = await api.fetchArticles({ ...filters, limit: 12, offset: displayedArticles.length });
-      setTotalArticlesCount(data.pagination?.total || 0);
-      setDisplayedArticles(prev => [...prev, ...data.articles]);
-    } catch (error) {
-      console.error('Load more error:', error);
-    } finally {
-      setLoadingArticles(false);
-    }
-  }, [loadingArticles, isRefreshing, displayedArticles.length, totalArticlesCount, filters]); 
-
-  useEffect(() => {
-    if (location.pathname === '/') fetchArticles(false); 
-  }, [filters, location.pathname, fetchArticles]); 
-
+  // --- Render ---
   return (
     <div className="app">
       <Header theme={theme} toggleTheme={toggleTheme} onToggleSidebar={toggleSidebar} username={profile.username} />
@@ -240,33 +189,28 @@ function MainLayout({ profile }) {
         <Routes>
           <Route path="/" element={
             <NewsFeed
-              contentRef={contentRef}
-              isRefreshing={isRefreshing}
-              loading={loadingArticles}
-              initialLoad={initialLoad}
-              displayedArticles={displayedArticles}
-              totalArticlesCount={totalArticlesCount}
-              loadMoreArticles={loadMoreArticles}
-              handleCompareClick={handleCompareClick}
-              handleAnalyzeClick={handleAnalyzeClick}
-              shareArticle={shareArticle}
-              handleReadClick={handleReadClick}
-              showTooltip={showTooltip}
+              filters={filters}
+              onAnalyze={handleAnalyzeClick}
+              onCompare={handleCompareClick}
               savedArticleIds={savedArticleIds}
-              handleToggleSave={handleToggleSave}
+              onToggleSave={handleToggleSave}
+              showTooltip={showTooltip}
             />
           } />
+          
           <Route path="/my-dashboard" element={<MyDashboard theme={theme} />} />
+          
           <Route path="/saved-articles" element={ 
               <SavedArticles 
                 onToggleSave={handleToggleSave}
                 onCompare={handleCompareClick}
                 onAnalyze={handleAnalyzeClick}
-                onShare={shareArticle}
-                onRead={handleReadClick}
+                onShare={() => {}} // SavedArticles handles share internally now or pass a dummy
+                onRead={() => {}} // SavedArticles handles read internally
                 showTooltip={showTooltip}
               /> 
           } />
+          
           <Route path="/account-settings" element={<AccountSettings />} />
           <Route path="*" element={<PageNotFound />} /> 
         </Routes>
@@ -278,76 +222,9 @@ function MainLayout({ profile }) {
   );
 }
 
-function NewsFeed({
-  contentRef, isRefreshing, loading, initialLoad, displayedArticles, 
-  totalArticlesCount, loadMoreArticles, handleCompareClick, handleAnalyzeClick,
-  shareArticle, handleReadClick, showTooltip, savedArticleIds, handleToggleSave
-}) {
-  const bottomSentinelRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !loading && displayedArticles.length < totalArticlesCount) {
-          loadMoreArticles();
-        }
-      },
-      { threshold: 0.1, rootMargin: '200px' } 
-    );
-    const currentSentinel = bottomSentinelRef.current;
-    if (currentSentinel) observer.observe(currentSentinel);
-    return () => { if (currentSentinel) observer.unobserve(currentSentinel); };
-  }, [loading, displayedArticles.length, totalArticlesCount, loadMoreArticles]);
-
-  return (
-    <main className="content" ref={contentRef}>
-      <div className="pull-to-refresh-container" style={{ display: isRefreshing ? 'flex' : 'none' }}>
-        <div className="spinner-small"></div><p>Refreshing...</p>
-      </div>
-
-      {(loading && initialLoad) ? (
-        <div className="articles-grid">
-           {[...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> ))}
-        </div>
-      ) : (
-        <>
-          {displayedArticles.length > 0 ? (
-            <div className="articles-grid">
-              {displayedArticles.map((article) => (
-                <div className="article-card-wrapper" key={article._id || article.url}>
-                  <ArticleCard
-                    article={article}
-                    onCompare={() => handleCompareClick(article)}
-                    onAnalyze={handleAnalyzeClick}
-                    onShare={shareArticle}
-                    onRead={handleReadClick}
-                    showTooltip={showTooltip}
-                    isSaved={savedArticleIds.has(article._id)}
-                    onToggleSave={() => handleToggleSave(article)}
-                  />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
-                <p>No articles found matching your current filters.</p>
-            </div>
-          )}
-
-          {!initialLoad && displayedArticles.length < totalArticlesCount && (
-            <div ref={bottomSentinelRef} className="article-card-wrapper load-more-wrapper" style={{ minHeight: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              {loading ? <div className="loading-container" style={{ minHeight: 'auto' }}><div className="spinner-small"></div></div> : <span style={{ opacity: 0 }}>Loading more...</span>}
-            </div>
-          )}
-        </>
-      )}
-    </main>
-  );
-}
-
 function PageNotFound() {
   return (
-    <main className="content" style={{ justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 60px)' }}>
+    <main className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 60px)' }}>
       <div style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}>
         <h2>404 - Page Not Found</h2>
         <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>Back to Articles</Link>

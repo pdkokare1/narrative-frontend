@@ -41,9 +41,12 @@ api.interceptors.request.use(
 // Articles
 export const fetchArticles = (params) => api.get('/articles', { params });
 export const fetchForYouArticles = () => api.get('/articles/for-you');
-export const searchArticles = (query, params) => api.get('/search', { params: { q: query, ...params } }); // <--- NEW
+export const searchArticles = (query, params) => api.get('/search', { params: { q: query, ...params } });
 export const fetchSavedArticles = () => api.get('/articles/saved');
 export const saveArticle = (id) => api.post(`/articles/${id}/save`);
+
+// NEW: Trending Topics
+export const getTrendingTopics = () => api.get('/trending');
 
 // Profile & Stats
 export const getProfile = () => api.get('/profile/me');

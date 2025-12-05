@@ -1,11 +1,10 @@
 // In file: src/App.js
-// --- REWRITE: Centralized API, Context-based Auth, UI Polish ---
 import React, { useState, useEffect, useRef, Suspense, lazy, useCallback } from 'react';
 import './App.css'; 
 import './DashboardPages.css'; 
 
 // --- React Router ---
-import { Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 
 // --- Context Providers ---
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -19,7 +18,7 @@ import PageLoader from './components/PageLoader';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import ArticleCard from './components/ArticleCard';
-import SkeletonCard from './components/ui/SkeletonCard'; // NEW
+import SkeletonCard from './components/ui/SkeletonCard'; 
 
 // --- UI Components ---
 import CustomTooltip from './components/ui/CustomTooltip';
@@ -39,7 +38,6 @@ const AccountSettings = lazy(() => import('./AccountSettings'));
 
 const isMobile = () => window.innerWidth <= 768;
 
-// --- Main App Component (Wraps Providers) ---
 function App() {
   return (
     <AuthProvider>
@@ -50,42 +48,39 @@ function App() {
   );
 }
 
-// --- App Routes & Logic ---
+// --- UPDATED APP ROUTES ---
 function AppRoutes() {
   const { user, profile, loading } = useAuth();
-  const location = useLocation();
-
-  // --- Loading State ---
+  
+  // 1. Still loading Auth/Profile? Show Spinner
   if (loading) return <PageLoader />;
 
-  // --- Unauthenticated State ---
+  // 2. Not logged in? Show Login Page
   if (!user) return <Login />;
 
-  // --- Profile Creation State ---
-  if (!profile && location.pathname === '/create-profile') {
-    return <CreateProfile />;
+  // 3. Logged in, but NO Profile? 
+  // This means they are a new user OR the backend fetch failed.
+  // Instead of spinning forever, show the Create Profile screen.
+  if (!profile) {
+     return <CreateProfile />;
   }
-  
-  // --- Missing Profile State (Redirect) ---
-  if (!profile) return <PageLoader />; // AuthContext handles fetching/redirects
 
-  // --- Authenticated & Ready ---
+  // 4. Logged in AND has Profile? Show Main App
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route path="/create-profile" element={<CreateProfile />} />
+        {/* If they go to /create-profile but have one, redirect home */}
+        <Route path="/create-profile" element={<Navigate to="/" replace />} />
         <Route path="/*" element={<MainLayout profile={profile} />} />
       </Routes>
     </Suspense>
   );
 }
 
-// --- Main Layout (Sidebar, Header, Feed) ---
 function MainLayout({ profile }) {
   const { logout } = useAuth();
   const { addToast } = useToast();
   
-  // State
   const [displayedArticles, setDisplayedArticles] = useState([]);
   const [loadingArticles, setLoadingArticles] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
@@ -100,7 +95,6 @@ function MainLayout({ profile }) {
     articleType: 'All Types'
   });
   
-  // Modals & UI
   const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '', articleId: null });
   const [analysisModal, setAnalysisModal] = useState({ open: false, article: null });
   const [totalArticlesCount, setTotalArticlesCount] = useState(0); 
@@ -110,16 +104,10 @@ function MainLayout({ profile }) {
   const [savedArticleIds, setSavedArticleIds] = useState(new Set(profile.savedArticles || []));
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
-  // Refs for Pull-to-Refresh
   const contentRef = useRef(null);
-  const touchStartY = useRef(0);
-  const touchEndY = useRef(0);
-  const [pullDistance, setPullDistance] = useState(0);
-  const pullThreshold = 120;
   
   const location = useLocation();
 
-  // --- Theme Logic ---
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
@@ -133,17 +121,13 @@ function MainLayout({ profile }) {
     document.body.className = savedTheme + '-mode';
   }, []);
 
-  // --- Window Resize Logic ---
   useEffect(() => {
     const handleResize = () => setIsMobileView(isMobile());
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // --- Handlers ---
-  const handleLogout = useCallback(() => {
-    logout();
-  }, [logout]);
+  const handleLogout = useCallback(() => { logout(); }, [logout]);
 
   const showTooltip = (text, e) => {
     if (!isMobileView || !text) return; 
@@ -167,7 +151,6 @@ function MainLayout({ profile }) {
       if (isSidebarOpen) setIsSidebarOpen(false);
   };
 
-  // --- API Action Handlers ---
   const handleAnalyzeClick = useCallback((article) => {
     setAnalysisModal({ open: true, article });
     api.logView(article._id).catch(err => console.error("Log View Error:", err));
@@ -199,7 +182,6 @@ function MainLayout({ profile }) {
     const newSavedArticleIds = new Set(savedArticleIds);
     const isSaving = !newSavedArticleIds.has(articleId);
     
-    // Optimistic Update
     if (isSaving) newSavedArticleIds.add(articleId);
     else newSavedArticleIds.delete(articleId);
     setSavedArticleIds(newSavedArticleIds);
@@ -210,7 +192,6 @@ function MainLayout({ profile }) {
     } catch (error) {
       console.error('Save failed:', error);
       addToast('Failed to save article', 'error');
-      // Revert on failure
       setSavedArticleIds(prev => {
         const reverted = new Set(prev);
         if (isSaving) reverted.delete(articleId);
@@ -220,8 +201,6 @@ function MainLayout({ profile }) {
     }
   }, [savedArticleIds, addToast]);
 
-
-  // --- Fetch Articles Logic ---
   const fetchArticles = useCallback(async (isRefresh = false) => {
     if (isRefresh) setIsRefreshing(true);
     else { setLoadingArticles(true); setInitialLoad(true); }
@@ -232,7 +211,7 @@ function MainLayout({ profile }) {
       setDisplayedArticles(data.articles || []);
     } catch (error) {
       console.error('Fetch error:', error);
-      addToast('Failed to load articles', 'error');
+      addToast('Failed to load articles. Check connection.', 'error');
     } finally {
       if (isRefresh) setIsRefreshing(false);
       else { setLoadingArticles(false); setInitialLoad(false); }
@@ -254,13 +233,10 @@ function MainLayout({ profile }) {
     }
   }, [loadingArticles, isRefreshing, displayedArticles.length, totalArticlesCount, filters]); 
 
-  
-  // --- Effects ---
   useEffect(() => {
     if (location.pathname === '/') fetchArticles(false); 
   }, [filters, location.pathname, fetchArticles]); 
 
-  // --- Render ---
   return (
     <div className="app">
       <Header theme={theme} toggleTheme={toggleTheme} onToggleSidebar={toggleSidebar} username={profile.username} />
@@ -312,7 +288,6 @@ function MainLayout({ profile }) {
   );
 }
 
-// --- NewsFeed Component (With Skeletons) ---
 function NewsFeed({
   contentRef, isRefreshing, loading, initialLoad, displayedArticles, 
   totalArticlesCount, loadMoreArticles, handleCompareClick, handleAnalyzeClick,
@@ -320,14 +295,12 @@ function NewsFeed({
 }) {
   return (
     <main className="content" ref={contentRef}>
-      {/* Pull To Refresh Logic can remain or be refined */}
       <div className="pull-to-refresh-container" style={{ display: isRefreshing ? 'flex' : 'none' }}>
         <div className="spinner-small"></div><p>Refreshing...</p>
       </div>
 
       {(loading && initialLoad) ? (
         <div className="articles-grid">
-           {/* Show 6 Skeleton Cards while loading */}
            {[...Array(6)].map((_, i) => (
              <div className="article-card-wrapper" key={i}>
                 <SkeletonCard />
@@ -359,7 +332,6 @@ function NewsFeed({
             </div>
           )}
 
-          {/* Load More Loader */}
           {(loading && !initialLoad) && (
             <div className="article-card-wrapper load-more-wrapper">
               <div className="loading-container" style={{ minHeight: '100px' }}>

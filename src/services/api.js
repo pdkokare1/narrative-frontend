@@ -1,3 +1,4 @@
+// In file: src/services/api.js
 import axios from 'axios';
 import { auth, appCheck } from '../firebaseConfig';
 import { getToken } from "firebase/app-check";
@@ -36,20 +37,26 @@ api.interceptors.request.use(
 );
 
 // --- API Methods ---
+
+// Articles
 export const fetchArticles = (params) => api.get('/articles', { params });
+export const fetchForYouArticles = () => api.get('/articles/for-you'); // <--- NEW
 export const fetchSavedArticles = () => api.get('/articles/saved');
 export const saveArticle = (id) => api.post(`/articles/${id}/save`);
+
+// Profile & Stats
 export const getProfile = () => api.get('/profile/me');
 export const getStats = () => api.get('/profile/stats');
+export const getWeeklyDigest = () => api.get('/profile/weekly-digest'); // <--- NEW
 export const createProfile = (data) => api.post('/profile', data);
 
-// --- Activity Logs ---
+// Activity Logs
 export const logView = (id) => api.post('/activity/log-view', { articleId: id });
 export const logCompare = (id) => api.post('/activity/log-compare', { articleId: id });
 export const logShare = (id) => api.post('/activity/log-share', { articleId: id });
 export const logRead = (id) => api.post('/activity/log-read', { articleId: id });
 
-// --- Cluster ---
+// Cluster
 export const fetchCluster = (id) => api.get(`/cluster/${id}`);
 
 export default api;

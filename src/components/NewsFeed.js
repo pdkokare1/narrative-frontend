@@ -1,27 +1,28 @@
 // In file: src/components/NewsFeed.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Helmet } from 'react-helmet-async'; // <--- NEW: SEO
 import * as api from '../services/api'; 
 import ArticleCard from './ArticleCard';
 import SkeletonCard from './ui/SkeletonCard';
+import CategoryPills from './ui/CategoryPills'; // <--- NEW: Quick Filters
 import { useToast } from '../context/ToastContext';
-import '../App.css'; // Ensure styles are loaded
+import '../App.css'; 
 
 function NewsFeed({ 
   filters, 
+  onFilterChange, // <--- NEW: To update category
   onAnalyze, 
   onCompare, 
   savedArticleIds, 
   onToggleSave, 
   showTooltip 
 }) {
-  const [mode, setMode] = useState('latest'); // 'latest' or 'foryou'
+  const [mode, setMode] = useState('latest'); 
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
-  // For 'For You' metadata
   const [forYouMeta, setForYouMeta] = useState(null);
 
   const contentRef = useRef(null);
@@ -29,7 +30,6 @@ function NewsFeed({
   const { addToast } = useToast();
 
   // --- Handlers ---
-  
   const handleReadClick = (article) => {
     api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
     window.open(article.url, '_blank', 'noopener,noreferrer');
@@ -46,8 +46,15 @@ function NewsFeed({
     }
   };
 
-  // --- Fetch Logic ---
+  // --- NEW: Category Select Handler ---
+  const handleCategorySelect = (category) => {
+    // If clicking the active one, or "All Categories", reset/set
+    onFilterChange({ ...filters, category });
+    // Reset to top
+    if (contentRef.current) contentRef.current.scrollTop = 0;
+  };
 
+  // --- Fetch Logic ---
   const fetchFeed = useCallback(async (isRefresh = false, isLoadMore = false) => {
     if (isRefresh) setIsRefreshing(true);
     else if (isLoadMore) setLoadingMore(true);
@@ -55,13 +62,11 @@ function NewsFeed({
 
     try {
       if (mode === 'foryou') {
-        // "For You" Logic (Always 1 page of curated content)
         const { data } = await api.fetchForYouArticles();
         setArticles(data.articles || []);
         setForYouMeta(data.meta);
         setTotalCount(data.articles?.length || 0);
       } else {
-        // "Latest" Logic (Standard Paginated Feed)
         const offset = isLoadMore ? articles.length : 0;
         const { data } = await api.fetchArticles({ ...filters, limit: 12, offset });
         
@@ -82,16 +87,13 @@ function NewsFeed({
     }
   }, [filters, mode, addToast, articles.length]);
 
-  // Initial Fetch & Mode Switch
   useEffect(() => {
     fetchFeed(false, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, mode]); // Re-fetch when filters or mode changes
+  }, [filters, mode]); 
 
-  // Infinite Scroll Observer
   useEffect(() => {
-    if (mode === 'foryou') return; // No infinite scroll for curated feed yet
-
+    if (mode === 'foryou') return; 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !loading && !loadingMore && articles.length < totalCount) {
@@ -100,18 +102,13 @@ function NewsFeed({
       },
       { threshold: 0.1, rootMargin: '200px' } 
     );
-    
     const currentSentinel = bottomSentinelRef.current;
     if (currentSentinel) observer.observe(currentSentinel);
-    
     return () => { if (currentSentinel) observer.unobserve(currentSentinel); };
   }, [loading, loadingMore, articles.length, totalCount, mode, fetchFeed]);
 
-
-  // --- Render Helpers ---
-
   const renderToggle = () => (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px', marginTop: '10px' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px', marginTop: '10px' }}>
       <div style={{ 
         display: 'flex', background: 'var(--bg-elevated)', borderRadius: '25px', 
         padding: '4px', border: '1px solid var(--border-color)', position: 'relative' 
@@ -146,17 +143,34 @@ function NewsFeed({
     </div>
   );
 
+  const getPageTitle = () => {
+    if (mode === 'foryou') return 'Balanced For You | The Gamut';
+    if (filters.category && filters.category !== 'All Categories') return `${filters.category} News | The Gamut`;
+    return 'The Gamut - Analyse The Full Spectrum';
+  };
+
   return (
     <main className="content" ref={contentRef}>
-      
-      {/* Pull to Refresh Indicator */}
+      <Helmet>
+        <title>{getPageTitle()}</title>
+      </Helmet>
+
       <div className="pull-to-refresh-container" style={{ display: isRefreshing ? 'flex' : 'none' }}>
         <div className="spinner-small"></div><p>Refreshing...</p>
       </div>
 
       {renderToggle()}
 
-      {/* For You Meta Info */}
+      {/* --- NEW: Category Pills --- */}
+      {mode === 'latest' && (
+        <div style={{ marginBottom: '20px' }}>
+          <CategoryPills 
+            selectedCategory={filters.category} 
+            onSelect={handleCategorySelect} 
+          />
+        </div>
+      )}
+
       {mode === 'foryou' && forYouMeta && !loading && (
         <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
           <p>
@@ -166,7 +180,6 @@ function NewsFeed({
         </div>
       )}
 
-      {/* Feed Content */}
       {(loading && !loadingMore) ? (
         <div className="articles-grid">
            {[...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> ))}
@@ -198,7 +211,6 @@ function NewsFeed({
             </div>
           )}
 
-          {/* Load More Sentinel */}
           {mode === 'latest' && articles.length < totalCount && (
             <div ref={bottomSentinelRef} className="article-card-wrapper load-more-wrapper" style={{ minHeight: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               {loadingMore ? <div className="loading-container" style={{ minHeight: 'auto' }}><div className="spinner-small"></div></div> : <span style={{ opacity: 0 }}>Loading more...</span>}

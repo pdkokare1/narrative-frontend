@@ -278,40 +278,26 @@ function MainLayout({ profile }) {
   );
 }
 
-// --- NewsFeed Component (Infinite Scroll Enhanced) ---
 function NewsFeed({
   contentRef, isRefreshing, loading, initialLoad, displayedArticles, 
   totalArticlesCount, loadMoreArticles, handleCompareClick, handleAnalyzeClick,
   shareArticle, handleReadClick, showTooltip, savedArticleIds, handleToggleSave
 }) {
-  
-  // --- INFINITE SCROLL LOGIC ---
   const bottomSentinelRef = useRef(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        // If the bottom sentinel comes into view, and we aren't already loading...
         if (entries[0].isIntersecting && !loading && displayedArticles.length < totalArticlesCount) {
           loadMoreArticles();
         }
       },
-      { 
-        threshold: 0.1, // Trigger when 10% of sentinel is visible
-        rootMargin: '200px' // Pre-load when user is 200px away from bottom
-      } 
+      { threshold: 0.1, rootMargin: '200px' } 
     );
-
     const currentSentinel = bottomSentinelRef.current;
-    if (currentSentinel) {
-      observer.observe(currentSentinel);
-    }
-
-    return () => {
-      if (currentSentinel) observer.unobserve(currentSentinel);
-    };
+    if (currentSentinel) observer.observe(currentSentinel);
+    return () => { if (currentSentinel) observer.unobserve(currentSentinel); };
   }, [loading, displayedArticles.length, totalArticlesCount, loadMoreArticles]);
-  // -----------------------------
 
   return (
     <main className="content" ref={contentRef}>
@@ -321,11 +307,7 @@ function NewsFeed({
 
       {(loading && initialLoad) ? (
         <div className="articles-grid">
-           {[...Array(6)].map((_, i) => (
-             <div className="article-card-wrapper" key={i}>
-                <SkeletonCard />
-             </div>
-           ))}
+           {[...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> ))}
         </div>
       ) : (
         <>
@@ -352,21 +334,9 @@ function NewsFeed({
             </div>
           )}
 
-          {/* INFINITE SCROLL SENTINEL & LOADER */}
           {!initialLoad && displayedArticles.length < totalArticlesCount && (
-            <div 
-              ref={bottomSentinelRef} 
-              className="article-card-wrapper load-more-wrapper"
-              style={{ minHeight: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-            >
-              {loading ? (
-                 <div className="loading-container" style={{ minHeight: 'auto' }}>
-                    <div className="spinner-small"></div>
-                 </div>
-              ) : (
-                 // Invisible text just to give the div some height/content
-                 <span style={{ opacity: 0 }}>Loading more...</span>
-              )}
+            <div ref={bottomSentinelRef} className="article-card-wrapper load-more-wrapper" style={{ minHeight: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              {loading ? <div className="loading-container" style={{ minHeight: 'auto' }}><div className="spinner-small"></div></div> : <span style={{ opacity: 0 }}>Loading more...</span>}
             </div>
           )}
         </>

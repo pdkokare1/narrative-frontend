@@ -1,81 +1,58 @@
 // In file: src/SavedArticles.js
-// --- COMPLETE REWRITE (v8) ---
-// --- FIX: Even tighter spacing for Desktop view (Reduced grid margin) ---
-// --- FIX: Renders a desktop-style grid (.articles-grid) on desktop screens ---
-// --- FIX: Keeps the mobile snap-scroll layout (.article-card-wrapper) on mobile ---
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import { Link } from 'react-router-dom';
-import './App.css'; // For theme variables AND .content/.article-card-wrapper styles
-import './DashboardPages.css'; // Shared CSS file (for .placeholder-page styles)
-import ArticleCard from './components/ArticleCard'; // Import the card
+import * as api from './services/api'; // <--- Centralized API
+import { useToast } from './context/ToastContext'; // <--- Notifications
+import ArticleCard from './components/ArticleCard'; 
+import './App.css'; 
+import './DashboardPages.css'; 
 
-// Get API URL from environment
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-
-// --- NEW: Helper function to check if we are on mobile ---
 const isMobile = () => window.innerWidth <= 768;
 
-function SavedArticles({
-  onToggleSave, // We still call the original function to update App.js
-  onCompare,
-  onAnalyze,
-  onShare,
-  onRead,
-  showTooltip
-}) {
-  const [savedArticles, setSavedArticles] = useState([]); // Local state for articles
+function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, showTooltip }) {
+  const [savedArticles, setSavedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
-  // --- NEW: State to track view mode ---
   const [isMobileView, setIsMobileView] = useState(isMobile()); 
+  const { addToast } = useToast(); // Hook for popups
   
-  const contentRef = useRef(null); // Ref for the main scrolling container
+  const contentRef = useRef(null); 
 
-  // Fetch saved articles when the component loads
   useEffect(() => {
-    const fetchSavedArticles = async () => {
+    const loadSavedArticles = async () => {
       setLoading(true);
       setError('');
       try {
-        const response = await axios.get(`${API_URL}/articles/saved`);
-        setSavedArticles(response.data.articles || []);
+        const { data } = await api.fetchSavedArticles();
+        setSavedArticles(data.articles || []);
       } catch (err) {
-        console.error('Error fetching saved articles:', err);
-        setError('Could not load your saved articles. Please try again.');
+        console.error('Fetch error:', err);
+        setError('Could not load your saved articles.');
+        addToast('Failed to load saved articles', 'error');
       } finally {
         setLoading(false);
       }
     };
-    fetchSavedArticles();
-  }, []); // Run once on mount
+    loadSavedArticles();
+  }, [addToast]);
   
-  // --- NEW: Effect to listen for resize ---
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobileView(isMobile());
-    };
+    const handleResize = () => setIsMobileView(isMobile());
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []); // Run once
+  }, []);
 
-  // This local function updates BOTH the global state (in App.js)
-  // AND the local state (in this component) to provide an
-  // instant "unsave" animation.
-  const handleToggleSave = (article) => {
-    // 1. Instantly remove the article from the local state
-    setSavedArticles(prevArticles =>
-      prevArticles.filter(a => a._id !== article._id)
-    );
-    // 2. Call the original function from App.js to update global state
+  // Handle Unsave
+  const handleLocalToggleSave = async (article) => {
+    // 1. Optimistic Update (Remove from UI immediately)
+    setSavedArticles(prev => prev.filter(a => a._id !== article._id));
+    
+    // 2. Call Global Handler (Updates App.js state)
     onToggleSave(article);
   };
   
-  // --- NEW: Render function for the Desktop Grid ---
+  // --- Render Views ---
   const renderDesktopView = () => (
-    // Use 'content-router-outlet' as the desktop scroller
-    // Add a 'saved-articles-desktop-page' class for styling
     <div className="content-router-outlet saved-articles-desktop-page" ref={contentRef}>
       {loading && (
         <div className="loading-container" style={{ minHeight: '300px' }}>
@@ -98,31 +75,16 @@ function SavedArticles({
         <>
           {savedArticles.length > 0 ? (
             <>
-              {/* --- *** DESKTOP FIX: ABSOLUTE TEXT POSITIONING *** --- */}
               <div style={{ 
-                position: 'absolute', 
-                top: '0', left: '0', right: '0',
-                paddingTop: '10px', // Keep top padding tight
-                zIndex: 0, // Behind the cards
-                pointerEvents: 'none',
-                textAlign: 'center'
+                position: 'absolute', top: '0', left: '0', right: '0',
+                paddingTop: '10px', zIndex: 0, pointerEvents: 'none', textAlign: 'center'
               }}>
-                <h1 style={{ 
-                  fontSize: '14px', 
-                  color: 'var(--text-tertiary)', 
-                  fontWeight: '500',
-                  margin: 0 
-                }}>
+                <h1 style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '500', margin: 0 }}>
                   {savedArticles.length} Saved Articles
                 </h1>
               </div>
 
-              {/* --- DESKTOP GRID (Pushed down to reveal text) --- */}
-              <div className="articles-grid" style={{
-                marginTop: '25px', // <-- CHANGED: Reduced from 35px to 25px
-                position: 'relative', // Create stacking context
-                zIndex: 1 // Sit ON TOP of the text
-              }}>
+              <div className="articles-grid" style={{ marginTop: '25px', position: 'relative', zIndex: 1 }}>
                 {savedArticles.map((article) => (
                   <ArticleCard
                     key={article._id}
@@ -133,14 +95,12 @@ function SavedArticles({
                     onRead={onRead}
                     showTooltip={showTooltip}
                     isSaved={true}
-                    onToggleSave={() => handleToggleSave(article)}
+                    onToggleSave={() => handleLocalToggleSave(article)}
                   />
                 ))}
               </div>
-              {/* --- *** END OF DESKTOP FIX *** --- */}
             </>
           ) : (
-            // --- Show "No Saved Articles" message ---
             <div className="placeholder-page" style={{ padding: '20px', minHeight: 'calc(100vh - 200px)' }}>
               <h2>No Saved Articles</h2>
               <p>You haven't saved any articles yet.</p>
@@ -154,9 +114,7 @@ function SavedArticles({
     </div>
   );
   
-  // --- NEW: Render function for the Mobile Snap-Scroll View ---
   const renderMobileView = () => (
-    // Use the 'content' class from App.css to get the mobile snap-scroll container
     <main className="content" ref={contentRef}>
       {loading && (
         <div className="article-card-wrapper">
@@ -183,43 +141,17 @@ function SavedArticles({
         <>
           {savedArticles.length > 0 ? (
             <>
-              {/* --- *** THIS IS THE MOBILE FIX (POSITION) *** --- */}
               <div style={{ 
-                position: 'absolute', // Lifts text out of layout
-                top: '0',
-                left: '0',
-                right: '0',
-                paddingTop: '10px', // Reduced top padding
-                paddingBottom: '10px',
-                zIndex: 0, // Set to 0 so cards (z=1) scroll OVER it
-                pointerEvents: 'none' // Lets you click "through" it
+                position: 'absolute', top: '0', left: '0', right: '0',
+                paddingTop: '10px', paddingBottom: '10px', zIndex: 0, pointerEvents: 'none' 
               }}>
-                <h1 style={{ 
-                  width: '100%', maxWidth: '500px',
-                  margin: '0 auto', // Center the h1
-                  textAlign: 'center', 
-                  fontSize: '14px', 
-                  color: 'var(--text-tertiary)', 
-                  fontWeight: '500', 
-                }}>
+                <h1 style={{ width: '100%', maxWidth: '500px', margin: '0 auto', textAlign: 'center', fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '500' }}>
                   {savedArticles.length} Saved Articles 
                 </h1>
               </div>
-              {/* --- *** END OF FIX *** --- */}
 
-              {/* --- Mobile List --- */}
               {savedArticles.map((article, index) => (
-                // --- *** THIS IS THE MOBILE FIX (PADDING) *** ---
-                <div 
-                  className="article-card-wrapper" 
-                  key={article._id} 
-                  style={{
-                    // Index 0 (First Card): 45px top padding to clear the "Saved Articles" text
-                    // Index > 0 (Other Cards): 20px top padding so they don't touch the header
-                    paddingTop: index === 0 ? '45px' : '20px' 
-                  }}
-                >
-                {/* --- *** END OF FIX *** --- */}
+                <div className="article-card-wrapper" key={article._id} style={{ paddingTop: index === 0 ? '45px' : '20px' }}>
                   <ArticleCard
                     article={article}
                     onCompare={() => onCompare(article)}
@@ -228,13 +160,12 @@ function SavedArticles({
                     onRead={onRead}
                     showTooltip={showTooltip}
                     isSaved={true}
-                    onToggleSave={() => handleToggleSave(article)}
+                    onToggleSave={() => handleLocalToggleSave(article)}
                   />
                 </div>
               ))}
             </>
           ) : (
-            // --- Mobile "No Saved Articles" message ---
             <div className="article-card-wrapper">
               <div className="placeholder-page" style={{ padding: '20px' }}>
                 <h2>No Saved Articles</h2>
@@ -250,7 +181,6 @@ function SavedArticles({
     </main>
   );
 
-  // --- NEW: Return desktop or mobile view based on state ---
   return isMobileView ? renderMobileView() : renderDesktopView();
 }
 

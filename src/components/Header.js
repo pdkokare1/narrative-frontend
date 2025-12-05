@@ -1,55 +1,63 @@
 // In file: src/components/Header.js
-// --- *** HAMBURGER GLITCH FIX: Pass the 'event' (e) to onToggleSidebar *** ---
-// --- *** TYPO FIX: Removed extra 24" from hamburger SVG viewBox *** ---
-// --- BUG FIX (2): Removed special click handler for Dashboard link ---
-// --- BUG FIX (1): Component now manages its own state ---
-import React, { useState, useEffect, useRef } from 'react'; // <-- Import hooks
-import { Link } from 'react-router-dom';
-import '../App.css'; // For header styles
+import React, { useState, useEffect, useRef } from 'react'; 
+import { Link, useNavigate } from 'react-router-dom'; // <--- Added useNavigate
+import '../App.css'; 
 
 function Header({ theme, toggleTheme, onToggleSidebar, username }) {
-  // --- *** THIS IS THE FIX (BUG 1) *** ---
-  // This state is now managed *inside* the header, not in App.js
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null); // Ref to the dropdown container (trigger + menu)
+  const [isSearchOpen, setIsSearchOpen] = useState(false); // <--- New State
+  const [searchQuery, setSearchQuery] = useState('');      // <--- New State
+  
+  const dropdownRef = useRef(null); 
+  const searchRef = useRef(null); // <--- New Ref
+  const inputRef = useRef(null);  // <--- New Ref
+  
+  const navigate = useNavigate(); // <--- Hook for navigation
 
-  // Effect to close dropdown when clicking outside
+  // Effect to close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // If the dropdown is open and the click is outside the ref
+      // Close User Dropdown
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
+      // Close Search Bar
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsSearchOpen(false);
+      }
     };
-    // Add listener
     document.addEventListener('mousedown', handleClickOutside);
-    // Cleanup listener
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []); // Only run once
+  }, []);
 
-  // --- *** THIS IS THE FIX (BUG 2) *** ---
-  // --- REMOVED handleDashboardClick function ---
-  // It is no longer needed. The <Link> component will handle navigation.
-  // --- *** END OF FIX *** ---
-  
+  // Auto-focus input when search opens
+  useEffect(() => {
+    if (isSearchOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isSearchOpen]);
+
   const handleUsernameClick = (e) => {
-     e.stopPropagation(); // Stop click from bubbling to document
-     setIsDropdownOpen(prev => !prev); // Toggle
+     e.stopPropagation(); 
+     setIsDropdownOpen(prev => !prev); 
   };
-  // --- *** END OF FIX *** ---
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setIsSearchOpen(false);
+      setSearchQuery(''); // Optional: Clear after search
+    }
+  };
 
   return (
     <header className="header">
       <div className="header-left">
-         {/* --- *** THIS IS THE HAMBURGER GLITCH FIX *** --- */}
          <button className="hamburger-btn" onClick={(e) => onToggleSidebar(e)} title="Open Menu">
-         {/* --- *** END OF FIX *** --- */}
-            {/* --- *** THIS IS THE TYPO FIX *** --- */}
-            {/* The extra 24" after viewBox="0 0 24 24" has been removed. */}
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            {/* --- *** END OF FIX *** --- */}
               <line x1="3" y1="12" x2="21" y2="12"></line>
               <line x1="3" y1="6" x2="21" y2="6"></line>
               <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -57,32 +65,71 @@ function Header({ theme, toggleTheme, onToggleSidebar, username }) {
          </button>
 
         <div className="logo-container">
-          <h1 className="logo-text">The Gamut</h1>
-          <p className="tagline">Analyse The Full Spectrum</p>
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <h1 className="logo-text">The Gamut</h1>
+            <p className="tagline">Analyse The Full Spectrum</p>
+          </Link>
         </div>
       </div>
 
       <div className="header-right">
-        {/* --- *** THIS IS THE FIX (BUG 1 & 2) *** --- */}
-        {/* 1. Main Container Block: Attach ref here */}
-        <div className="header-user-desktop" ref={dropdownRef}> 
-          
-          {/* 2. Dashboard Link (now a normal link) */}
-          <Link 
-            to="/my-dashboard" 
-            className="header-dashboard-link" 
-            title="View your dashboard" 
-            // --- REMOVED onClick={handleDashboardClick} ---
+        
+        {/* --- NEW: Search Bar --- */}
+        <div ref={searchRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <form 
+            onSubmit={handleSearchSubmit} 
+            style={{ 
+              display: 'flex', alignItems: 'center',
+              width: isSearchOpen ? '200px' : '0px', 
+              overflow: 'hidden',
+              transition: 'width 0.3s ease',
+              background: 'var(--bg-elevated)',
+              borderRadius: '20px',
+              border: isSearchOpen ? '1px solid var(--border-color)' : 'none',
+              marginRight: isSearchOpen ? '10px' : '0'
+            }}
           >
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-primary)',
+                padding: '5px 15px',
+                width: '100%',
+                fontSize: '13px',
+                outline: 'none'
+              }}
+            />
+          </form>
+          
+          <button 
+            onClick={() => setIsSearchOpen(!isSearchOpen)}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--text-tertiary)', padding: '5px', display: 'flex'
+            }}
+            title="Search Articles"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+        </div>
+        {/* --- END Search Bar --- */}
+
+        <div className="header-user-desktop" ref={dropdownRef}> 
+          <Link to="/my-dashboard" className="header-dashboard-link" title="View your dashboard">
             Dashboard
           </Link>
           <span className="header-user-divider">|</span>
           
-          {/* 3. Clickable Username Area */}
-          <div 
-            className="header-user-clickable-area"
-            onClick={handleUsernameClick} /* Toggle handler */
-          >
+          <div className="header-user-clickable-area" onClick={handleUsernameClick}>
             <span className="header-username-desktop" title="Username">
               {username}
             </span>
@@ -91,19 +138,15 @@ function Header({ theme, toggleTheme, onToggleSidebar, username }) {
             </svg>
           </div>
 
-          {/* 4. Dropdown Menu (conditionally rendered sibling) */}
           {isDropdownOpen && (
             <div className="header-user-dropdown">
               <ul>
-                {/* Clicks here are inside the ref, so need to close manually */}
                 <li><Link to="/saved-articles" onClick={() => setIsDropdownOpen(false)}>Saved Articles</Link></li>
                 <li><Link to="/account-settings" onClick={() => setIsDropdownOpen(false)}>Account Settings</Link></li>
               </ul>
             </div>
           )}
         </div>
-        {/* --- *** END OF FIX *** --- */}
-
 
         <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
           {theme === 'dark' ? '🌙' : '☀️'}

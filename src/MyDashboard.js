@@ -1,7 +1,7 @@
 // In file: src/MyDashboard.js
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom'; 
-import * as api from './services/api'; // <--- Centralized API
+import * as api from './services/api'; 
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement,
@@ -32,6 +32,7 @@ const categoryColorsLight = ['#2E4E6B', '#3E6A8E', '#5085B2', '#63A0D6', '#243E5
 
 function MyDashboard({ theme }) {
   const [statsData, setStatsData] = useState(null);
+  const [digestData, setDigestData] = useState(null); // <--- NEW
   const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState('');
 
@@ -51,25 +52,30 @@ function MyDashboard({ theme }) {
    }, [theme]);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       setError('');
       setLoadingStats(true);
       try {
-        const { data } = await api.getStats(); // <--- API Call
-        setStatsData(data);
-      }
-      catch (err) {
-        console.error('Error fetching stats:', err);
-        setError('Could not load statistics data. ');
-      }
-      finally {
+        // Parallel Fetch for efficiency
+        const [statsRes, digestRes] = await Promise.all([
+            api.getStats(),
+            api.getWeeklyDigest()
+        ]);
+        
+        setStatsData(statsRes.data);
+        setDigestData(digestRes.data);
+
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Could not load statistics data.');
+      } finally {
         setLoadingStats(false);
       }
     };
-    fetchStats();
+    fetchData();
   }, []);
 
-  // --- Chart Options (Doughnut, Bar, StoriesRead) ---
+  // --- Chart Options ---
   const getDoughnutChartOptions = useCallback((title) => ({
       responsive: true, maintainAspectRatio: false,
       plugins: {
@@ -131,7 +137,7 @@ function MyDashboard({ theme }) {
       },
    }), [chartColors]);
 
-  // --- Data Prep ---
+  // --- Data Prep Helpers ---
   const prepareLeanData = (rawData) => {
     const counts = (rawData || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
     const data = leanOrder.map(lean => counts[lean] || 0);
@@ -272,6 +278,56 @@ function MyDashboard({ theme }) {
     { key: 'compared', title: 'Comparisons Viewed', value: totalCompared, desc: "No. of articles you've compared." }
   ];
 
+  // --- NEW: Weekly Pulse Renderer ---
+  const renderWeeklyPulse = () => {
+    if (!digestData || digestData.status === 'Insufficient Data') return null;
+
+    const isBubble = digestData.status.includes('Bubble');
+    const isBalanced = digestData.status === 'Balanced';
+    const rec = digestData.recommendation;
+
+    return (
+      <div className="dashboard-card" style={{ 
+          borderLeft: isBubble ? '4px solid #E57373' : '4px solid #4CAF50',
+          background: 'var(--bg-card-flat)',
+          marginTop: '0' 
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '15px' }}>
+            <div style={{ flex: 1, minWidth: '200px' }}>
+                <h3 style={{ margin: 0, fontSize: '16px', color: 'var(--text-primary)', borderBottom: 'none', paddingBottom: '5px' }}>
+                    Weekly Pulse: <span style={{ color: isBubble ? '#E57373' : '#4CAF50' }}>{digestData.status}</span>
+                </h3>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '5px 0' }}>
+                    {isBubble 
+                     ? `You've focused heavily on one perspective this week. Try diversifying.`
+                     : `Great job! Your reading habits are well-distributed across the spectrum.`}
+                </p>
+            </div>
+            
+            {isBubble && rec && (
+                <div style={{ 
+                    background: 'var(--bg-elevated)', padding: '12px', borderRadius: '8px', 
+                    border: '1px solid var(--border-color)', width: '100%', maxWidth: '300px' 
+                }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px' }}>
+                        Recommended Palate Cleanser
+                    </div>
+                    <div style={{ fontWeight: '600', fontSize: '13px', marginBottom: '4px', lineHeight: '1.4' }}>
+                        {rec.headline}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--accent-primary)' }}>{rec.politicalLean} Perspective</span>
+                        <a href={`/?article=${rec._id}`} className="btn-secondary" style={{ padding: '4px 10px', fontSize: '10px', textDecoration: 'none' }}>
+                            View
+                        </a>
+                    </div>
+                </div>
+            )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="dashboard-page">
       <div className="dashboard-content-wrapper">
@@ -355,6 +411,9 @@ function MyDashboard({ theme }) {
           <div className="dashboard-header-mobile">
             <h2 className="section-title-mobile">Your Reading Habits</h2>
           </div>
+
+          {/* --- NEW: Weekly Pulse Card --- */}
+          {renderWeeklyPulse()}
 
           <div className="dashboard-card full-width-chart-card stories-read-card"> 
               <div className="chart-container stories-read-chart">

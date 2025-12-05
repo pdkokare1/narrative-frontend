@@ -40,14 +40,15 @@ api.interceptors.request.use(
 
 // Articles
 export const fetchArticles = (params) => api.get('/articles', { params });
-export const fetchForYouArticles = () => api.get('/articles/for-you'); // <--- NEW
+export const fetchForYouArticles = () => api.get('/articles/for-you');
+export const searchArticles = (query, params) => api.get('/search', { params: { q: query, ...params } }); // <--- NEW
 export const fetchSavedArticles = () => api.get('/articles/saved');
 export const saveArticle = (id) => api.post(`/articles/${id}/save`);
 
 // Profile & Stats
 export const getProfile = () => api.get('/profile/me');
 export const getStats = () => api.get('/profile/stats');
-export const getWeeklyDigest = () => api.get('/profile/weekly-digest'); // <--- NEW
+export const getWeeklyDigest = () => api.get('/profile/weekly-digest');
 export const createProfile = (data) => api.post('/profile', data);
 
 // Activity Logs

@@ -1,15 +1,33 @@
 // In file: src/components/Sidebar.js
-// --- UPDATED: Added Dashboard link for mobile ---
-// --- FIX (2025-11-16): Made Account Settings link visible on desktop ---
-// --- FIX (2025-11-16b): Removed ul/li from Account Settings link ---
-// --- *** THIS IS THE FIX: Removed Account Settings button (moving to Dashboard) *** ---
-// --- *** MOBILE FIX: Removed Account Settings from sidebar footer *** ---
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import CustomSelect from './ui/CustomSelect'; // Import the CustomSelect component
-import '../App.css'; // For sidebar styles
+import React, { useState, useEffect } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import CustomSelect from './ui/CustomSelect'; 
+import * as api from '../services/api'; // <--- Import API
+import '../App.css'; 
 
 function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
+  const [trendingTopics, setTrendingTopics] = useState([]);
+  const navigate = useNavigate();
+
+  // --- Fetch Trending Topics on Mount ---
+  useEffect(() => {
+    const loadTrending = async () => {
+      try {
+        const { data } = await api.getTrendingTopics();
+        setTrendingTopics(data.topics || []);
+      } catch (error) {
+        console.error("Failed to load trending:", error);
+      }
+    };
+    if (isOpen) loadTrending(); // Only fetch when sidebar opens to save resources
+  }, [isOpen]);
+
+  const handleTopicClick = (topic) => {
+    onClose(); // Close sidebar
+    navigate(`/search?q=${encodeURIComponent(topic)}`); // Go to search
+  };
+
+  // --- Filter Options ---
   const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
   const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
   const regions = [
@@ -41,7 +59,7 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
     <NavLink
       to={to}
       className={({ isActive }) => "sidebar-nav-link " + (isActive ? "active-link" : "")}
-      onClick={onClose} // Close sidebar on nav click
+      onClick={onClose} 
     >
       {children}
     </NavLink>
@@ -49,97 +67,70 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
 
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
-      {/* --- Main Content Sections (User Nav, Filters, Sort) --- */}
       <div className="sidebar-main-content">
         <div className="sidebar-header-mobile">
           <h3>Menu</h3>
           <button className="sidebar-close-btn" onClick={onClose} title="Close Menu">×</button>
         </div>
 
-        {/* --- *** THIS IS THE FIX (Request 5) *** --- */}
-        {/* This div will be hidden on desktop by App.css */}
+        {/* Mobile Navigation Links */}
         <div className="sidebar-section sidebar-section-mobile-only">
-          {/* --- REMOVED <h3>Navigation</h3> --- */}
           <ul>
-            {/* --- *** THIS IS THE FIX: Added Dashboard Link *** --- */}
             <li><SidebarNavLink to="/my-dashboard">Dashboard</SidebarNavLink></li>
             <li><SidebarNavLink to="/saved-articles">Saved Articles</SidebarNavLink></li>
           </ul>
         </div>
-        {/* --- *** END OF FIX *** --- */}
 
+        {/* --- NEW: Trending Section --- */}
+        {trendingTopics.length > 0 && (
+          <div className="sidebar-section">
+            <h3>Trending Now</h3>
+            <div className="trending-tags-container">
+              {trendingTopics.map((item, index) => (
+                <button 
+                  key={index} 
+                  className="trending-tag" 
+                  onClick={() => handleTopicClick(item.topic)}
+                >
+                  #{item.topic}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* --- END Trending --- */}
 
-        {/* --- Filters Section --- */}
+        {/* Filters Section */}
         <div className="sidebar-section">
           <h3>Filters</h3>
           <div className="filter-group">
-            <CustomSelect
-              name="region"
-              value={filters.region}
-              options={regions}
-              onChange={handleChange}
-            />
+            <CustomSelect name="region" value={filters.region} options={regions} onChange={handleChange} />
           </div>
           <div className="filter-group">
-            <CustomSelect
-              name="articleType"
-              value={filters.articleType}
-              options={articleTypes}
-              onChange={handleChange}
-            />
+            <CustomSelect name="articleType" value={filters.articleType} options={articleTypes} onChange={handleChange} />
           </div>
           <div className="filter-group">
-            <CustomSelect
-              name="category"
-              value={filters.category}
-              options={categories}
-              onChange={handleChange}
-            />
+            <CustomSelect name="category" value={filters.category} options={categories} onChange={handleChange} />
           </div>
           <div className="filter-group">
-            <CustomSelect
-              name="lean"
-              value={filters.lean}
-              options={leans}
-              onChange={handleChange}
-            />
+            <CustomSelect name="lean" value={filters.lean} options={leans} onChange={handleChange} />
           </div>
           <div className="filter-group">
-            <CustomSelect
-              name="quality"
-              value={filters.quality}
-              options={qualityLevels}
-              onChange={handleChange}
-            />
+            <CustomSelect name="quality" value={filters.quality} options={qualityLevels} onChange={handleChange} />
           </div>
         </div>
-        {/* --- End Filters --- */}
 
-        {/* --- Sort By Section --- */}
+        {/* Sort By Section */}
         <div className="sidebar-section">
           <h3>Sort By</h3>
-          <CustomSelect
-            name="sort"
-            value={filters.sort}
-            options={sortOptions}
-            onChange={handleChange}
-          />
+          <CustomSelect name="sort" value={filters.sort} options={sortOptions} onChange={handleChange} />
         </div>
-        {/* --- End Sort By --- */}
-
-        {/* --- *** REMOVED Old Nav Sections *** --- */}
       </div>
 
-      {/* --- Footer Area (Logout) --- */}
       <div className="sidebar-footer">
-        
-        {/* --- *** THIS IS THE FIX: The Account Settings link has been REMOVED. *** --- */}
-
-        {/* --- Logout Button --- */}
         <button onClick={onLogout} className="sidebar-logout-btn">
           Sign Out
         </button>
-        {/* --- END Logout --- */}
       </div>
     </aside>
   );

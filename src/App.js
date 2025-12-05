@@ -17,7 +17,7 @@ import * as api from './services/api';
 import PageLoader from './components/PageLoader';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import NewsFeed from './components/NewsFeed'; // <--- NEW IMPORT
+import NewsFeed from './components/NewsFeed'; 
 
 // --- UI Components ---
 import CustomTooltip from './components/ui/CustomTooltip';
@@ -34,6 +34,7 @@ import CreateProfile from './CreateProfile';
 const MyDashboard = lazy(() => import('./MyDashboard'));
 const SavedArticles = lazy(() => import('./SavedArticles'));
 const AccountSettings = lazy(() => import('./AccountSettings'));
+const SearchResults = lazy(() => import('./SearchResults')); // <--- NEW IMPORT
 
 const isMobile = () => window.innerWidth <= 768;
 
@@ -198,6 +199,16 @@ function MainLayout({ profile }) {
             />
           } />
           
+          <Route path="/search" element={ 
+            <SearchResults 
+              onAnalyze={handleAnalyzeClick}
+              onCompare={handleCompareClick}
+              savedArticleIds={savedArticleIds}
+              onToggleSave={handleToggleSave}
+              showTooltip={showTooltip}
+            /> 
+          } />
+
           <Route path="/my-dashboard" element={<MyDashboard theme={theme} />} />
           
           <Route path="/saved-articles" element={ 
@@ -205,8 +216,8 @@ function MainLayout({ profile }) {
                 onToggleSave={handleToggleSave}
                 onCompare={handleCompareClick}
                 onAnalyze={handleAnalyzeClick}
-                onShare={() => {}} // SavedArticles handles share internally now or pass a dummy
-                onRead={() => {}} // SavedArticles handles read internally
+                onShare={() => {}} 
+                onRead={() => {}} 
                 showTooltip={showTooltip}
               /> 
           } />

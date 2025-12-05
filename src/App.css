@@ -1792,3 +1792,77 @@ button:disabled, button:disabled:hover {
     height: auto;
   }
 }
+
+
+
+
+
+/* ==================== MOBILE NAVIGATION BAR ==================== */
+
+/* Default: Hidden on Desktop */
+.mobile-nav {
+  display: none;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .mobile-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background-color: var(--bg-elevated); /* Matches header color */
+    border-top: 1px solid var(--border-color);
+    z-index: 1100; /* Above content, below modals */
+    padding-bottom: env(safe-area-inset-bottom); /* Fix for iPhone X+ home bar */
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+  }
+
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    font-size: 10px;
+    font-weight: 500;
+    text-decoration: none;
+    flex: 1; /* Equal width */
+    height: 100%;
+    transition: color 0.2s ease;
+  }
+
+  .mobile-nav-item svg {
+    margin-bottom: 4px;
+    stroke-width: 2px;
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Active State */
+  .mobile-nav-item.active {
+    color: var(--accent-primary);
+  }
+  .mobile-nav-item.active svg {
+    stroke: var(--accent-primary);
+    /* Optional: fill icon on active */
+    fill: rgba(179, 143, 95, 0.1); 
+  }
+
+  /* --- ADJUST CONTENT PADDING --- */
+  /* We must push the content up so it doesn't get hidden behind the new bar */
+  .content, 
+  .dashboard-page, 
+  .saved-articles-desktop-page {
+    padding-bottom: 80px !important; /* 60px nav + 20px buffer */
+  }
+  
+  /* Adjust the toast container so it floats above the nav bar */
+  .toast-container {
+    bottom: 75px !important;
+  }
+}

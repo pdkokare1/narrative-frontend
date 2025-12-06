@@ -1,10 +1,10 @@
 /* src/MyDashboard.css */
 
-/* ==================== LAYOUT CONTAINERS ==================== */
+/* ==================== LAYOUT CONTAINERS (Desktop Default) ==================== */
 .dashboard-page {
   width: 100%;
-  height: calc(100vh - 60px); /* Fill height below header */
-  overflow: hidden; /* Prevent double scrollbars on the page itself */
+  height: calc(100vh - 60px); /* Desktop: Fixed height to allow internal scrolling */
+  overflow: hidden; 
   display: flex;
   background-color: var(--bg-primary);
 }
@@ -17,22 +17,21 @@
   padding: 15px;
   max-width: 1800px;
   margin: 0 auto;
-  /* CRITICAL FIX: Ensures nested scrollbars work correctly */
-  min-height: 0; 
+  min-height: 0; /* Crucial for nested flex scrolling */
 }
 
 /* ==================== LEFT COLUMN (Stats & Bio) ==================== */
 .dashboard-left-column {
-  flex: 0 0 320px; /* Fixed width */
+  flex: 0 0 320px;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  overflow-y: auto; /* Allow internal scrolling */
+  height: 100%; /* Fill container */
+  overflow-y: auto; /* Scroll internally on desktop */
   padding-right: 5px;
 }
 
-/* Hide scrollbar for cleaner look */
+/* Hide scrollbar for cleaner look on left col */
 .dashboard-left-column::-webkit-scrollbar { display: none; }
 .dashboard-left-column { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -46,11 +45,10 @@
 .dashboard-right-column {
   flex: 1 1 auto;
   min-width: 0;
-  overflow-y: auto; /* This is the main scrollable area for charts */
+  overflow-y: auto; /* Scroll internally on desktop */
   height: 100%;
   padding-right: 10px;
-  /* CRITICAL FIX: Extra padding to ensure bottom row isn't hidden */
-  padding-bottom: 100px; 
+  padding-bottom: 100px; /* Extra space at bottom */
 }
 
 /* Custom Scrollbar for Right Column */
@@ -90,8 +88,7 @@
   border-radius: 12px;
   color: var(--text-tertiary);
   font-weight: 500;
-  /* CRITICAL FIX: Prevents text from wrapping to 2 lines */
-  white-space: nowrap; 
+  white-space: nowrap; /* FIX: Prevents text wrapping */
 }
 
 /* ==================== CARDS ==================== */
@@ -183,15 +180,14 @@
   overflow: hidden;
   background: var(--bg-primary); 
   margin-bottom: 15px;
-  width: 100%; /* Ensure it spans full width */
+  width: 100%;
 }
 
 .lean-segment {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* CRITICAL FIX: Height needed for segments to show up */
-  height: 100%; 
+  height: 100%; /* FIX: Ensures colors appear */
   transition: width 0.6s ease;
 }
 
@@ -217,39 +213,45 @@
   text-align: right;
 }
 
-/* ==================== MOBILE RESPONSIVE ==================== */
+/* ==================== MOBILE RESPONSIVE (Reverted to Natural Scroll) ==================== */
 @media (max-width: 1024px) {
-  .dashboard-content-wrapper {
-    flex-direction: column;
-    padding: 10px;
-    gap: 15px;
-    height: auto; /* Let it grow naturally on mobile */
-    overflow-y: auto; /* Scroll the whole wrapper */
-  }
-
+  /* 1. Reset Page Height */
   .dashboard-page {
-    height: auto;
-    overflow-y: auto;
+    height: auto; 
+    overflow-y: auto; /* Allow window scrolling */
     display: block;
   }
 
+  /* 2. Reset Wrapper Layout */
+  .dashboard-content-wrapper {
+    flex-direction: column;
+    padding: 15px;
+    gap: 15px;
+    height: auto;
+    overflow: visible;
+    display: flex;
+  }
+
+  /* 3. Reset Column Scrolling (No internal scroll) */
   .dashboard-left-column {
     position: relative;
     width: 100%;
     height: auto;
     overflow: visible;
     margin-bottom: 10px;
+    flex: none; /* Allow it to grow */
   }
 
   .dashboard-right-column {
     height: auto;
     overflow: visible;
-    padding-bottom: 80px; 
+    padding-bottom: 60px; /* Standard padding */
+    flex: none; /* Allow it to grow */
   }
 
-  /* Stack charts on tablet/mobile */
+  /* 4. Layout Stacking */
   .dashboard-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* Stack charts */
   }
 }
 

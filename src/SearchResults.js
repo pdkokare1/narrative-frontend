@@ -53,7 +53,7 @@ function SearchResults({ onAnalyze, onCompare, savedArticleIds, onToggleSave, sh
   };
 
   return (
-    <div className="content-router-outlet" style={{ padding: '30px 40px', overflowY: 'auto', height: 'calc(100vh - 60px)' }}>
+    <div className="content">
       <div style={{ marginBottom: '30px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)' }}>
           Search Results for "{query}"
@@ -87,10 +87,10 @@ function SearchResults({ onAnalyze, onCompare, savedArticleIds, onToggleSave, sh
               ))}
             </div>
           ) : (
-             <div className="placeholder-page" style={{ padding: '40px', textAlign: 'center' }}>
+             <div className="placeholder-page">
               <h2>No results found</h2>
               <p>We couldn't find any articles matching "{query}".</p>
-              <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>
+              <Link to="/" className="btn-secondary">
                 Back to Feed
               </Link>
             </div>

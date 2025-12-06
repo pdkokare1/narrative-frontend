@@ -22,6 +22,9 @@ import {
     getLineChartOptions 
 } from './utils/ChartConfig';
 
+// --- NEW: Import Bias Map ---
+import BiasMap from './components/BiasMap';
+
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement,
   Title, Tooltip, Legend, TimeScale
@@ -147,7 +150,6 @@ function MyDashboard({ theme }) {
       const counts = (statsData?.qualityDistribution_read || []).reduce((acc, item) => { acc[item.grade] = item.count; return acc; }, {});
       const labels = Object.keys(qualityColors);
       
-      // Map DB grades to Chart Labels
       const dataMap = {
           'A+ Excellent (90-100)': counts['A+'] || 0,
           'A High (80-89)': (counts['A'] || 0) + (counts['A-'] || 0),
@@ -165,7 +167,7 @@ function MyDashboard({ theme }) {
   }, [statsData?.qualityDistribution_read, themeColors]);
 
   // --- Stats Calculations ---
-  const leanReadData = prepareLeanData(statsData?.leanDistribution_read);
+  // Note: leanReadData is no longer used for the main chart, but we keep the logic in case we want a breakdown later
   const categoryReadData = prepareCategoryData(statsData?.categoryDistribution_read);
   const topSourcesData = prepareTopSourcesData(statsData?.topSources_read);
   const sentimentReadData = prepareSentimentData(statsData?.sentimentDistribution_read);
@@ -331,6 +333,18 @@ function MyDashboard({ theme }) {
           </div>
 
           <div className="dashboard-grid">
+             {/* --- REPLACED: Old Doughnut Chart is now Bias Map --- */}
+             <div className="dashboard-card" style={{ gridColumn: '1 / -1' }}>
+               <h3>Political Lean vs. Trust Score (Bias Map)</h3>
+               <div className="chart-container article-bias-chart" style={{ minHeight: '350px' }}>
+                   {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
+                   : (statsData?.allArticles?.length > 0) ? ( 
+                      <BiasMap articles={statsData.allArticles} theme={theme} /> 
+                   ) 
+                   : ( <p className="no-data-msg">Read more articles to populate your bias map.</p> )}
+               </div>
+             </div>
+
              <div className="dashboard-card">
                <h3>Top Categories (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
@@ -346,15 +360,6 @@ function MyDashboard({ theme }) {
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
                    : (totalAnalyzed > 0 && topSourcesData.labels.length > 0) ? ( <Bar options={getBarChartOptions('', 'Articles Analyzed', theme)} data={topSourcesData} /> ) 
                    : ( <p className="no-data-msg">No source data for this period.</p> )}
-               </div>
-             </div>
-
-             <div className="dashboard-card">
-               <h3>Political Lean (Analyzed)</h3>
-               <div className="chart-container article-bias-chart">
-                   {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalApplicableLeanArticles > 0) ? ( <Doughnut options={getDoughnutChartOptions('', theme)} data={leanReadData} /> ) 
-                   : ( <p className="no-data-msg">No lean data for this period.</p> )}
                </div>
              </div>
 

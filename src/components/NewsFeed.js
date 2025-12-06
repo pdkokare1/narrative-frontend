@@ -1,16 +1,16 @@
 // In file: src/components/NewsFeed.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Helmet } from 'react-helmet-async'; // <--- NEW: SEO
+import { Helmet } from 'react-helmet-async';
 import * as api from '../services/api'; 
 import ArticleCard from './ArticleCard';
 import SkeletonCard from './ui/SkeletonCard';
-import CategoryPills from './ui/CategoryPills'; // <--- NEW: Quick Filters
+import CategoryPills from './ui/CategoryPills'; 
 import { useToast } from '../context/ToastContext';
 import '../App.css'; 
 
 function NewsFeed({ 
   filters, 
-  onFilterChange, // <--- NEW: To update category
+  onFilterChange, 
   onAnalyze, 
   onCompare, 
   savedArticleIds, 
@@ -46,11 +46,9 @@ function NewsFeed({
     }
   };
 
-  // --- NEW: Category Select Handler ---
+  // --- Category Select Handler ---
   const handleCategorySelect = (category) => {
-    // If clicking the active one, or "All Categories", reset/set
     onFilterChange({ ...filters, category });
-    // Reset to top
     if (contentRef.current) contentRef.current.scrollTop = 0;
   };
 
@@ -137,7 +135,6 @@ function NewsFeed({
           }}
         >
           <span>Balanced For You</span>
-          {mode !== 'foryou' && <span style={{ fontSize: '10px' }}>✨</span>}
         </button>
       </div>
     </div>
@@ -161,7 +158,6 @@ function NewsFeed({
 
       {renderToggle()}
 
-      {/* --- NEW: Category Pills --- */}
       {mode === 'latest' && (
         <div style={{ marginBottom: '20px' }}>
           <CategoryPills 

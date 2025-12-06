@@ -1,9 +1,8 @@
 // In file: src/components/ArticleCard.js
 import React, { useState } from 'react';
-import '../App.css'; 
+import './ArticleCard.css'; // <--- NEW: Imports modular styles
 import { getSentimentClass } from '../utils/helpers';
 import SmartBriefingModal from './modals/SmartBriefingModal';
-// --- Use Custom Hook ---
 import useIsMobile from '../hooks/useIsMobile';
 
 function ArticleCard({ 
@@ -18,7 +17,7 @@ function ArticleCard({
 }) {
   const [showBriefing, setShowBriefing] = useState(false);
 
-  // --- Replace manual check with Hook ---
+  // --- Custom Hook ---
   const isMobileView = useIsMobile();
 
   const isReview = article.analysisType === 'SentimentOnly';
@@ -33,7 +32,7 @@ function ArticleCard({
     }
   };
 
-  // Updated to use the boolean variable directly
+  // Stop click propagation on mobile to prevent opening modal when clicking buttons
   const stopMobileClick = (e) => { if (isMobileView) { e.stopPropagation(); } };
 
   // --- Reusable Save Button ---

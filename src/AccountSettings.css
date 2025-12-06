@@ -1,0 +1,109 @@
+/* src/AccountSettings.css */
+
+.settings-container {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+  /* Centers the container vertically in the viewport if content is short */
+  min-height: calc(100vh - 140px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.settings-container h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 30px;
+}
+
+/* --- Profile Card --- */
+.settings-card {
+  text-align: left;
+  color: var(--text-primary);
+  width: 100%;
+  padding: 30px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.settings-card:hover {
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+}
+
+.settings-field {
+  margin-bottom: 20px;
+}
+
+.settings-label {
+  color: var(--text-tertiary);
+  display: block;
+  font-size: 11px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+}
+
+.settings-value {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.settings-divider {
+  border: 0;
+  border-top: 1px solid var(--border-light);
+  margin: 25px 0;
+}
+
+.settings-section-title {
+  font-size: 13px;
+  color: var(--accent-primary);
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* --- Stats Row --- */
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.stat-row:last-child {
+  border-bottom: none;
+}
+
+.stat-row strong {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.stat-row span {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 20px 0;
+    min-height: auto;
+    justify-content: flex-start;
+  }
+  
+  .settings-card {
+    padding: 20px;
+  }
+}

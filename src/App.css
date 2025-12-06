@@ -975,34 +975,107 @@ button:disabled, button:disabled:hover {
 .recommendations li::before { content: '▸'; color: var(--accent-primary); font-weight: bold; margin-right: 12px; font-size: 14px; line-height: 1.6; }
 
 /* --- Analysis Modal: Review Tab Specifics --- */
-.review-tab-content {
-  text-align: center;
-  padding: 20px;
+.review-tab-content { text-align: center; padding: 20px; }
+.review-type-label { color: var(--text-tertiary); font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
+.review-explainer { font-size: 14px; color: var(--text-secondary); max-width: 450px; margin: 10px auto 25px auto; }
+.score-circle.large-centered { max-width: 200px; margin: 0 auto; }
+.score-value.large { font-size: 28px; }
+.no-findings-msg { color: var(--text-tertiary); text-align: center; margin-top: 30px; }
+
+/* ==================== TIMELINE VISUALIZATION ==================== */
+.timeline-container {
+  position: relative;
+  padding: 10px 0 10px 20px; /* Space for the line */
+  max-width: 700px;
+  margin: 0 auto;
 }
-.review-type-label {
+
+/* The Vertical Line */
+.timeline-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 6px; /* Position line */
+  width: 2px;
+  background: var(--border-color);
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 25px;
+  padding-left: 20px; /* Space between line and content */
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+/* The Dot on the Line */
+.timeline-dot {
+  position: absolute;
+  left: 0; /* Align with container padding */
+  top: 5px; /* Align with title */
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-secondary); /* Create a 'cutout' effect */
+  background: var(--text-tertiary); /* Default color */
+  z-index: 1;
+}
+
+/* Lean-specific dot colors */
+.timeline-dot.Left { background: #dc2626; }
+.timeline-dot.Left-Leaning { background: #f87171; }
+.timeline-dot.Center { background: #4CAF50; }
+.timeline-dot.Right-Leaning { background: #60a5fa; }
+.timeline-dot.Right { background: #2563eb; }
+
+/* Content Card */
+.timeline-content {
+  background: var(--bg-card-flat);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 15px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.timeline-content:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--accent-primary);
+}
+
+.timeline-date {
+  font-size: 10px;
   color: var(--text-tertiary);
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 12px;
-  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  display: block;
 }
-.review-explainer {
+
+.timeline-headline {
   font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  line-height: 1.4;
+  display: block;
+  text-decoration: none;
+}
+
+.timeline-headline:hover {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+
+.timeline-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
   color: var(--text-secondary);
-  max-width: 450px;
-  margin: 10px auto 25px auto;
-}
-.score-circle.large-centered {
-  max-width: 200px;
-  margin: 0 auto;
-}
-.score-value.large {
-  font-size: 28px;
-}
-.no-findings-msg {
-    color: var(--text-tertiary);
-    text-align: center;
-    margin-top: 30px;
 }
 
 .tooltip-custom {

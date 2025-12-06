@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import '../App.css'; 
 import { getSentimentClass } from '../utils/helpers';
-import SmartBriefingModal from './modals/SmartBriefingModal'; // <--- NEW IMPORT
+import SmartBriefingModal from './modals/SmartBriefingModal';
 
 function ArticleCard({ 
   article, 
@@ -14,7 +14,7 @@ function ArticleCard({
   isSaved,      
   onToggleSave  
 }) {
-  const [showBriefing, setShowBriefing] = useState(false); // <--- NEW STATE
+  const [showBriefing, setShowBriefing] = useState(false);
 
   const isMobile = () => window.innerWidth <= 768;
   const isReview = article.analysisType === 'SentimentOnly';
@@ -42,7 +42,7 @@ function ArticleCard({
     </button>
   );
 
-  // --- NEW: Suggestion Badge Logic (For 'Balanced For You' Feed) ---
+  // --- Suggestion Badge Logic ---
   const renderSuggestionBadge = () => {
     if (!article.suggestionType) return null;
     
@@ -67,7 +67,7 @@ function ArticleCard({
 
     return (
       <div style={badgeStyle} title={isChallenge ? "This article offers a different perspective" : "Matches your usual reading habits"}>
-        {isChallenge ? '✨ Perspective Widener' : '♥ Comfort Read'}
+        {isChallenge ? 'Perspective Widener' : 'Comfort Read'}
       </div>
     );
   };
@@ -75,7 +75,7 @@ function ArticleCard({
   return (
     <>
       <div className="article-card">
-        {renderSuggestionBadge()} {/* <--- Added Badge */}
+        {renderSuggestionBadge()}
         
         <div className="article-image">
           {article.imageUrl ? (
@@ -118,7 +118,6 @@ function ArticleCard({
               {!isReview && (
                 <>
                   <div className="article-actions-top">
-                     {/* --- NEW: Quick Brief Button --- */}
                     <button 
                         onClick={(e) => { stopMobileClick(e); setShowBriefing(true); }} 
                         className="btn-primary" 
@@ -158,7 +157,6 @@ function ArticleCard({
         </div>
       </div>
 
-      {/* --- Render Modal Logic --- */}
       {showBriefing && (
         <SmartBriefingModal 
             article={article} 

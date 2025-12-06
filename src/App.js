@@ -10,6 +10,9 @@ import { Routes, Route, useNavigate, useLocation, Navigate, Link } from 'react-r
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider, useToast } from './context/ToastContext';
 
+// --- Custom Hooks ---
+import useIsMobile from './hooks/useIsMobile';
+
 // --- API Service ---
 import * as api from './services/api'; 
 
@@ -35,8 +38,6 @@ const MyDashboard = lazy(() => import('./MyDashboard'));
 const SavedArticles = lazy(() => import('./SavedArticles'));
 const AccountSettings = lazy(() => import('./AccountSettings'));
 const SearchResults = lazy(() => import('./SearchResults')); 
-
-const isMobile = () => window.innerWidth <= 768;
 
 function App() {
   return (
@@ -72,6 +73,9 @@ function MainLayout({ profile }) {
   const { logout } = useAuth();
   const { addToast } = useToast();
   
+  // --- Use Custom Hook ---
+  const isMobileView = useIsMobile();
+
   // --- Global State ---
   const [theme, setTheme] = useState('dark');
   const [filters, setFilters] = useState({
@@ -88,7 +92,6 @@ function MainLayout({ profile }) {
   const [analysisModal, setAnalysisModal] = useState({ open: false, article: null });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
-  const [isMobileView, setIsMobileView] = useState(isMobile());
   const [savedArticleIds, setSavedArticleIds] = useState(new Set(profile.savedArticles || []));
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
@@ -106,13 +109,6 @@ function MainLayout({ profile }) {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     setTheme(savedTheme);
     document.body.className = savedTheme + '-mode';
-  }, []);
-
-  // --- Resize Listener ---
-  useEffect(() => {
-    const handleResize = () => setIsMobileView(isMobile());
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // --- Handlers ---
@@ -191,7 +187,7 @@ function MainLayout({ profile }) {
           <Route path="/" element={
             <NewsFeed
               filters={filters}
-              onFilterChange={handleFilterChange} // <--- THIS IS THE FIX: Passing the handler
+              onFilterChange={handleFilterChange} 
               onAnalyze={handleAnalyzeClick}
               onCompare={handleCompareClick}
               savedArticleIds={savedArticleIds}

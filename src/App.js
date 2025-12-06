@@ -34,7 +34,7 @@ import CreateProfile from './CreateProfile';
 const MyDashboard = lazy(() => import('./MyDashboard'));
 const SavedArticles = lazy(() => import('./SavedArticles'));
 const AccountSettings = lazy(() => import('./AccountSettings'));
-const SearchResults = lazy(() => import('./SearchResults')); // <--- NEW IMPORT
+const SearchResults = lazy(() => import('./SearchResults')); 
 
 const isMobile = () => window.innerWidth <= 768;
 
@@ -191,6 +191,7 @@ function MainLayout({ profile }) {
           <Route path="/" element={
             <NewsFeed
               filters={filters}
+              onFilterChange={handleFilterChange} // <--- THIS IS THE FIX: Passing the handler
               onAnalyze={handleAnalyzeClick}
               onCompare={handleCompareClick}
               savedArticleIds={savedArticleIds}

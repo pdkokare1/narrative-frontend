@@ -144,3 +144,59 @@ export const getLineChartOptions = (theme) => {
         },
     };
 };
+
+// --- NEW: Scatter Plot Options (For Bias Map) ---
+export const getScatterChartOptions = (theme) => {
+    const colors = getChartTheme(theme);
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            x: {
+                min: -10,
+                max: 10,
+                title: { display: true, text: 'Political Lean (Left to Right)', color: colors.textSecondary, font: { size: 10 } },
+                ticks: {
+                    color: colors.textTertiary,
+                    font: { size: 10 },
+                    callback: (value) => {
+                        if (value === -10) return 'Left';
+                        if (value === 0) return 'Center';
+                        if (value === 10) return 'Right';
+                        return '';
+                    }
+                },
+                grid: { color: colors.borderColor, tickLength: 0 }
+            },
+            y: {
+                min: 0,
+                max: 100,
+                title: { display: true, text: 'Trust Score (Quality)', color: colors.textSecondary, font: { size: 10 } },
+                ticks: { color: colors.textTertiary, font: { size: 10 } },
+                grid: { color: colors.borderColor }
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: colors.tooltipBg,
+                titleColor: colors.textPrimary,
+                bodyColor: colors.textSecondary,
+                padding: 10,
+                callbacks: {
+                    label: (context) => {
+                        // Custom tooltip to show the headline
+                        const point = context.raw;
+                        return point.headline ? `${point.headline} (Score: ${point.y})` : `Score: ${point.y}`;
+                    }
+                }
+            },
+            title: {
+                display: true,
+                text: 'Bias vs. Reliability Map',
+                color: colors.textPrimary,
+                font: { size: 14 }
+            }
+        }
+    };
+};

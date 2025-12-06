@@ -1,18 +1,18 @@
 // In file: src/components/Header.js
 import React, { useState, useEffect, useRef } from 'react'; 
-import { Link, useNavigate } from 'react-router-dom'; // <--- Added useNavigate
+import { Link, useNavigate } from 'react-router-dom'; 
 import '../App.css'; 
 
 function Header({ theme, toggleTheme, onToggleSidebar, username }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false); // <--- New State
-  const [searchQuery, setSearchQuery] = useState('');      // <--- New State
+  const [isSearchOpen, setIsSearchOpen] = useState(false); 
+  const [searchQuery, setSearchQuery] = useState('');
   
   const dropdownRef = useRef(null); 
-  const searchRef = useRef(null); // <--- New Ref
-  const inputRef = useRef(null);  // <--- New Ref
+  const searchRef = useRef(null); 
+  const inputRef = useRef(null);
   
-  const navigate = useNavigate(); // <--- Hook for navigation
+  const navigate = useNavigate();
 
   // Effect to close dropdowns when clicking outside
   useEffect(() => {
@@ -23,7 +23,10 @@ function Header({ theme, toggleTheme, onToggleSidebar, username }) {
       }
       // Close Search Bar
       if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setIsSearchOpen(false);
+        // Only close if we aren't typing
+        if (document.activeElement !== inputRef.current) {
+             setIsSearchOpen(false);
+        }
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -49,8 +52,14 @@ function Header({ theme, toggleTheme, onToggleSidebar, username }) {
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
       setIsSearchOpen(false);
-      setSearchQuery(''); // Optional: Clear after search
+      setSearchQuery(''); 
+      // Remove focus to close keyboard on mobile
+      if (inputRef.current) inputRef.current.blur();
     }
+  };
+
+  const toggleSearch = () => {
+      setIsSearchOpen(!isSearchOpen);
   };
 
   return (
@@ -74,55 +83,46 @@ function Header({ theme, toggleTheme, onToggleSidebar, username }) {
 
       <div className="header-right">
         
-        {/* --- NEW: Search Bar --- */}
-        <div ref={searchRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+        {/* --- Responsive Search Bar --- */}
+        <div ref={searchRef} className="search-bar-wrapper">
           <form 
             onSubmit={handleSearchSubmit} 
-            style={{ 
-              display: 'flex', alignItems: 'center',
-              width: isSearchOpen ? '200px' : '0px', 
-              overflow: 'hidden',
-              transition: 'width 0.3s ease',
-              background: 'var(--bg-elevated)',
-              borderRadius: '20px',
-              border: isSearchOpen ? '1px solid var(--border-color)' : 'none',
-              marginRight: isSearchOpen ? '10px' : '0'
-            }}
+            className={`search-form ${isSearchOpen ? 'open' : ''}`}
           >
             <input
               ref={inputRef}
               type="text"
-              placeholder="Search..."
+              className="search-input"
+              placeholder="Search topics..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-primary)',
-                padding: '5px 15px',
-                width: '100%',
-                fontSize: '13px',
-                outline: 'none'
-              }}
             />
           </form>
           
           <button 
-            onClick={() => setIsSearchOpen(!isSearchOpen)}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--text-tertiary)', padding: '5px', display: 'flex'
-            }}
+            onClick={toggleSearch}
+            className="search-toggle-btn"
             title="Search Articles"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              {isSearchOpen ? (
+                // Close Icon (X)
+                <>
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </>
+              ) : (
+                // Search Icon (Glass)
+                <>
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </>
+              )}
             </svg>
           </button>
         </div>
-        {/* --- END Search Bar --- */}
 
+        {/* --- Desktop User Menu --- */}
         <div className="header-user-desktop" ref={dropdownRef}> 
           <Link to="/my-dashboard" className="header-dashboard-link" title="View your dashboard">
             Dashboard

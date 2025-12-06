@@ -1,10 +1,10 @@
 /* src/MyDashboard.css */
 
-/* ==================== LAYOUT CONTAINERS (Desktop Default) ==================== */
+/* ==================== LAYOUT CONTAINERS ==================== */
 .dashboard-page {
   width: 100%;
-  height: calc(100vh - 60px); /* Desktop: Fixed height to allow internal scrolling */
-  overflow: hidden; 
+  height: calc(100vh - 60px); /* Fill height below header */
+  overflow: hidden; /* Prevent double scrollbars */
   display: flex;
   background-color: var(--bg-primary);
 }
@@ -17,38 +17,38 @@
   padding: 15px;
   max-width: 1800px;
   margin: 0 auto;
-  min-height: 0; /* Crucial for nested flex scrolling */
 }
 
 /* ==================== LEFT COLUMN (Stats & Bio) ==================== */
 .dashboard-left-column {
-  flex: 0 0 320px;
+  flex: 0 0 320px; /* Fixed width */
   min-width: 0;
   display: flex;
   flex-direction: column;
-  height: 100%; /* Fill container */
-  overflow-y: auto; /* Scroll internally on desktop */
+  position: sticky;
+  top: 0;
+  height: 100%;
+  overflow-y: auto; /* Allow internal scrolling */
   padding-right: 5px;
 }
 
-/* Hide scrollbar for cleaner look on left col */
+/* Hide scrollbar for cleaner look */
 .dashboard-left-column::-webkit-scrollbar { display: none; }
 .dashboard-left-column { -ms-overflow-style: none; scrollbar-width: none; }
 
 .dashboard-left-footer {
   margin-top: auto;
   padding-top: 20px;
-  padding-bottom: 20px;
 }
 
 /* ==================== RIGHT COLUMN (Charts) ==================== */
 .dashboard-right-column {
   flex: 1 1 auto;
   min-width: 0;
-  overflow-y: auto; /* Scroll internally on desktop */
+  overflow-y: auto;
   height: 100%;
-  padding-right: 10px;
-  padding-bottom: 100px; /* Extra space at bottom */
+  padding-right: 5px;
+  padding-bottom: 40px;
 }
 
 /* Custom Scrollbar for Right Column */
@@ -82,13 +82,12 @@
 
 .date-range-badge {
   font-size: 11px;
-  padding: 4px 12px;
+  padding: 4px 10px;
   background: var(--bg-elevated);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   color: var(--text-tertiary);
   font-weight: 500;
-  white-space: nowrap; /* FIX: Prevents text wrapping */
 }
 
 /* ==================== CARDS ==================== */
@@ -99,8 +98,11 @@
   padding: 20px;
   margin-bottom: 20px;
   box-shadow: var(--shadow-sm);
-  display: flex;
-  flex-direction: column;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.dashboard-card:hover {
+  border-color: var(--accent-primary);
 }
 
 .dashboard-card h3 {
@@ -157,7 +159,6 @@
   position: relative;
   height: 250px;
   width: 100%;
-  flex-grow: 1;
 }
 
 .full-width-card {
@@ -178,22 +179,18 @@
   height: 16px;
   border-radius: 8px;
   overflow: hidden;
-  background: var(--bg-primary); 
+  background: var(--bg-primary);
   margin-bottom: 15px;
-  width: 100%;
 }
 
 .lean-segment {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%; /* FIX: Ensures colors appear */
+  font-size: 9px;
+  font-weight: 700;
+  color: white;
   transition: width 0.6s ease;
-}
-
-.lean-details {
-  padding: 0;
-  margin: 0;
 }
 
 .lean-details li {
@@ -201,57 +198,45 @@
   color: var(--text-secondary);
   margin-bottom: 6px;
   list-style: none;
-  display: flex;
-  align-items: center;
 }
 
 .lean-details span {
   font-weight: 700;
   color: var(--text-primary);
   margin-right: 8px;
-  min-width: 35px;
-  text-align: right;
 }
 
-/* ==================== MOBILE RESPONSIVE (Reverted to Natural Scroll) ==================== */
+/* ==================== MOBILE RESPONSIVE ==================== */
 @media (max-width: 1024px) {
-  /* 1. Reset Page Height */
+  .dashboard-content-wrapper {
+    flex-direction: column;
+    padding: 10px;
+    gap: 15px;
+  }
+
   .dashboard-page {
-    height: auto; 
-    overflow-y: auto; /* Allow window scrolling */
+    height: auto;
+    overflow-y: auto;
     display: block;
   }
 
-  /* 2. Reset Wrapper Layout */
-  .dashboard-content-wrapper {
-    flex-direction: column;
-    padding: 15px;
-    gap: 15px;
-    height: auto;
-    overflow: visible;
-    display: flex;
-  }
-
-  /* 3. Reset Column Scrolling (No internal scroll) */
   .dashboard-left-column {
     position: relative;
     width: 100%;
     height: auto;
     overflow: visible;
     margin-bottom: 10px;
-    flex: none; /* Allow it to grow */
   }
 
   .dashboard-right-column {
     height: auto;
     overflow: visible;
-    padding-bottom: 60px; /* Standard padding */
-    flex: none; /* Allow it to grow */
+    padding-bottom: 80px; /* Space for bottom nav or just clearance */
   }
 
-  /* 4. Layout Stacking */
+  /* Stack charts on tablet/mobile */
   .dashboard-grid {
-    grid-template-columns: 1fr; /* Stack charts */
+    grid-template-columns: 1fr;
   }
 }
 
@@ -263,6 +248,7 @@
     margin-bottom: 15px;
   }
 
+  /* Make stat boxes smaller/tighter on mobile */
   .stat-box-grid {
     gap: 10px;
   }
@@ -270,9 +256,10 @@
   .stat-number { font-size: 20px; }
   
   .chart-container {
-    height: 220px; 
+    height: 220px; /* Slightly shorter for mobile */
   }
   
+  /* Mobile Footer Button */
   .mobile-only-footer {
     margin-top: 20px;
     margin-bottom: 40px;

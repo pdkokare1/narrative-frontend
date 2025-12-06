@@ -1,10 +1,10 @@
 // In file: src/App.js
 import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
+import { Routes, Route, useLocation, Navigate, Link } from 'react-router-dom';
+
+// --- Styles ---
 import './App.css'; 
 import './DashboardPages.css'; 
-
-// --- React Router ---
-import { Routes, Route, useNavigate, useLocation, Navigate, Link } from 'react-router-dom';
 
 // --- Context Providers ---
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -29,11 +29,11 @@ import CustomTooltip from './components/ui/CustomTooltip';
 import CompareCoverageModal from './components/modals/CompareCoverageModal';
 import DetailedAnalysisModal from './components/modals/DetailedAnalysisModal';
 
-// --- Auth Component ---
+// --- Auth Components ---
 import Login from './Login';
 import CreateProfile from './CreateProfile';
 
-// --- Lazy Pages ---
+// --- Lazy Loaded Pages (Performance) ---
 const MyDashboard = lazy(() => import('./MyDashboard'));
 const SavedArticles = lazy(() => import('./SavedArticles'));
 const AccountSettings = lazy(() => import('./AccountSettings'));
@@ -49,12 +49,14 @@ function App() {
   );
 }
 
+// --- Routing Logic ---
 function AppRoutes() {
   const { user, profile, loading } = useAuth();
   
   if (loading) return <PageLoader />;
   if (!user) return <Login />;
   
+  // Force profile creation if authenticated but no profile exists
   if (!profile) {
      return <CreateProfile />;
   }
@@ -69,11 +71,12 @@ function AppRoutes() {
   );
 }
 
+// --- Main Layout (Header + Sidebar + Content) ---
 function MainLayout({ profile }) {
   const { logout } = useAuth();
   const { addToast } = useToast();
   
-  // --- Use Custom Hook ---
+  // Responsive Hook
   const isMobileView = useIsMobile();
 
   // --- Global State ---
@@ -87,17 +90,23 @@ function MainLayout({ profile }) {
     articleType: 'All Types'
   });
   
-  // --- Modals & UI State ---
+  // --- UI State ---
   const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '', articleId: null });
   const [analysisModal, setAnalysisModal] = useState({ open: false, article: null });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
+  
+  // Tracks saved articles locally for instant UI updates
   const [savedArticleIds, setSavedArticleIds] = useState(new Set(profile.savedArticles || []));
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
-  const location = useLocation();
+  // --- Theme Management ---
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    setTheme(savedTheme);
+    document.body.className = savedTheme + '-mode';
+  }, []);
 
-  // --- Theme Logic ---
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
@@ -105,26 +114,8 @@ function MainLayout({ profile }) {
     localStorage.setItem('theme', newTheme);
   };
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    setTheme(savedTheme);
-    document.body.className = savedTheme + '-mode';
-  }, []);
-
-  // --- Handlers ---
+  // --- Layout Handlers ---
   const handleLogout = useCallback(() => { logout(); }, [logout]);
-
-  const showTooltip = (text, e) => {
-    if (!isMobileView || !text) return; 
-    e.stopPropagation();
-    const x = e.clientX || (e.touches && e.touches[0].clientX);
-    const y = e.clientY || (e.touches && e.touches[0].clientY);
-    if (tooltip.visible && tooltip.text === text) {
-      setTooltip({ visible: false, text: '', x: 0, y: 0 });
-    } else {
-      setTooltip({ visible: true, text, x, y });
-    }
-  };
 
   const toggleSidebar = (e) => {
     if (e) e.stopPropagation(); 
@@ -136,17 +127,36 @@ function MainLayout({ profile }) {
       if (isSidebarOpen) setIsSidebarOpen(false);
   };
 
+  // --- Tooltip Handler (Mobile) ---
+  const showTooltip = (text, e) => {
+    if (!isMobileView || !text) return; 
+    e.stopPropagation();
+    const x = e.clientX || (e.touches && e.touches[0].clientX);
+    const y = e.clientY || (e.touches && e.touches[0].clientY);
+    
+    if (tooltip.visible && tooltip.text === text) {
+      setTooltip({ visible: false, text: '', x: 0, y: 0 });
+    } else {
+      setTooltip({ visible: true, text, x, y });
+    }
+  };
+
+  // --- Action Handlers ---
   const handleAnalyzeClick = useCallback((article) => {
     setAnalysisModal({ open: true, article });
     api.logView(article._id).catch(err => console.error("Log View Error:", err));
   }, []);
 
-  const handleCompareClick = (article) => {
-    setCompareModal({ open: true, clusterId: article.clusterId, articleTitle: article.headline, articleId: article._id });
+  const handleCompareClick = useCallback((article) => {
+    setCompareModal({ 
+      open: true, 
+      clusterId: article.clusterId, 
+      articleTitle: article.headline, 
+      articleId: article._id 
+    });
     api.logCompare(article._id).catch(err => console.error("Log Compare Error:", err));
-  };
+  }, []);
   
-  // --- Global Save Handler ---
   const handleToggleSave = useCallback(async (article) => {
     const articleId = article._id;
     const newSavedArticleIds = new Set(savedArticleIds);
@@ -162,6 +172,7 @@ function MainLayout({ profile }) {
     } catch (error) {
       console.error('Save failed:', error);
       addToast('Failed to save article', 'error');
+      // Revert on failure
       setSavedArticleIds(prev => {
         const reverted = new Set(prev);
         if (isSaving) reverted.delete(articleId);
@@ -171,17 +182,32 @@ function MainLayout({ profile }) {
     }
   }, [savedArticleIds, addToast]);
 
-
   // --- Render ---
   return (
     <div className="app">
-      <Header theme={theme} toggleTheme={toggleTheme} onToggleSidebar={toggleSidebar} username={profile.username} />
+      <Header 
+        theme={theme} 
+        toggleTheme={toggleTheme} 
+        onToggleSidebar={toggleSidebar} 
+        username={profile.username} 
+      />
+      
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
 
       <div className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''}`}>
-        <div className={`sidebar-mobile-overlay ${isSidebarOpen ? 'open' : ''}`} onClick={() => setIsSidebarOpen(false)}></div>
+        {/* Mobile Overlay */}
+        <div 
+          className={`sidebar-mobile-overlay ${isSidebarOpen ? 'open' : ''}`} 
+          onClick={() => setIsSidebarOpen(false)}
+        ></div>
 
-        <Sidebar filters={filters} onFilterChange={handleFilterChange} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onLogout={handleLogout} />
+        <Sidebar 
+          filters={filters} 
+          onFilterChange={handleFilterChange} 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)} 
+          onLogout={handleLogout} 
+        />
 
         <Routes>
           <Route path="/" element={
@@ -224,12 +250,29 @@ function MainLayout({ profile }) {
         </Routes>
       </div>
 
-      {compareModal.open && <CompareCoverageModal clusterId={compareModal.clusterId} articleTitle={compareModal.articleTitle} onClose={() => setCompareModal({ ...compareModal, open: false })} onAnalyze={handleAnalyzeClick} showTooltip={showTooltip} />}
-      {analysisModal.open && <DetailedAnalysisModal article={analysisModal.article} onClose={() => setAnalysisModal({ ...analysisModal, open: false })} showTooltip={showTooltip} />}
+      {/* Global Modals */}
+      {compareModal.open && (
+        <CompareCoverageModal 
+          clusterId={compareModal.clusterId} 
+          articleTitle={compareModal.articleTitle} 
+          onClose={() => setCompareModal({ ...compareModal, open: false })} 
+          onAnalyze={handleAnalyzeClick} 
+          showTooltip={showTooltip} 
+        />
+      )}
+      
+      {analysisModal.open && (
+        <DetailedAnalysisModal 
+          article={analysisModal.article} 
+          onClose={() => setAnalysisModal({ ...analysisModal, open: false })} 
+          showTooltip={showTooltip} 
+        />
+      )}
     </div>
   );
 }
 
+// --- 404 Page ---
 function PageNotFound() {
   return (
     <main className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 60px)' }}>

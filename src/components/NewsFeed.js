@@ -19,7 +19,9 @@ function NewsFeed({
 }) {
   const [mode, setMode] = useState('latest'); 
   const [articles, setArticles] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // FIX: Initialize loading to false so the fetch function can run. 
+  // We will set it to true immediately inside the effect.
+  const [loading, setLoading] = useState(false); 
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -46,7 +48,6 @@ function NewsFeed({
     }
   };
 
-  // --- Category Select Handler ---
   const handleCategorySelect = (category) => {
     onFilterChange({ ...filters, category });
     if (contentRef.current) contentRef.current.scrollTop = 0;
@@ -54,8 +55,8 @@ function NewsFeed({
 
   // --- Fetch Logic ---
   const fetchFeed = useCallback(async (isRefresh = false, isLoadMore = false) => {
-    // Prevent duplicate calls
-    if (loading || (isLoadMore && loadingMore)) return;
+    // FIX: Removed the restrictive 'if (loading)' check that was blocking the initial fetch
+    if (isLoadMore && loadingMore) return; 
 
     if (isRefresh) setIsRefreshing(true);
     else if (isLoadMore) setLoadingMore(true);
@@ -86,10 +87,12 @@ function NewsFeed({
       else if (isLoadMore) setLoadingMore(false);
       else setLoading(false);
     }
-  }, [filters, mode, addToast, articles.length, loading, loadingMore]);
+  }, [filters, mode, addToast, articles.length, loadingMore]);
 
-  // Initial Fetch
+  // Initial Fetch Effect
   useEffect(() => {
+    // Force loading state visually before fetch starts to prevent flash
+    setLoading(true); 
     fetchFeed(false, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, mode]); 
@@ -104,7 +107,7 @@ function NewsFeed({
           fetchFeed(false, true);
         }
       },
-      { threshold: 0.1, rootMargin: '300px' } // Pre-load 300px before bottom
+      { threshold: 0.1, rootMargin: '300px' } 
     );
     
     const currentSentinel = bottomSentinelRef.current;

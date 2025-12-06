@@ -1,0 +1,268 @@
+/* src/MyDashboard.css */
+
+/* ==================== LAYOUT CONTAINERS ==================== */
+.dashboard-page {
+  width: 100%;
+  height: calc(100vh - 60px); /* Fill height below header */
+  overflow: hidden; /* Prevent double scrollbars */
+  display: flex;
+  background-color: var(--bg-primary);
+}
+
+.dashboard-content-wrapper {
+  display: flex;
+  flex-grow: 1;
+  gap: 20px;
+  width: 100%;
+  padding: 15px;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+/* ==================== LEFT COLUMN (Stats & Bio) ==================== */
+.dashboard-left-column {
+  flex: 0 0 320px; /* Fixed width */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100%;
+  overflow-y: auto; /* Allow internal scrolling */
+  padding-right: 5px;
+}
+
+/* Hide scrollbar for cleaner look */
+.dashboard-left-column::-webkit-scrollbar { display: none; }
+.dashboard-left-column { -ms-overflow-style: none; scrollbar-width: none; }
+
+.dashboard-left-footer {
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+/* ==================== RIGHT COLUMN (Charts) ==================== */
+.dashboard-right-column {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+  height: 100%;
+  padding-right: 5px;
+  padding-bottom: 40px;
+}
+
+/* Custom Scrollbar for Right Column */
+.dashboard-right-column::-webkit-scrollbar { width: 6px; }
+.dashboard-right-column::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
+.dashboard-right-column::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 3px; }
+
+/* ==================== HEADERS ==================== */
+.section-title-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.date-range-badge {
+  font-size: 11px;
+  padding: 4px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+/* ==================== CARDS ==================== */
+.dashboard-card {
+  background: var(--bg-card-flat);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.dashboard-card:hover {
+  border-color: var(--accent-primary);
+}
+
+.dashboard-card h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ==================== STAT BOXES (Grid) ==================== */
+.stat-box-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stat-box {
+  background: var(--bg-elevated);
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.stat-box h3 {
+  font-size: 10px;
+  margin-bottom: 5px;
+  border: none;
+}
+
+.stat-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.stat-desc {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+/* ==================== CHART GRID ==================== */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.chart-container {
+  position: relative;
+  height: 250px;
+  width: 100%;
+}
+
+.full-width-card {
+  grid-column: 1 / -1;
+}
+
+/* ==================== BIAS BAR (Lean) ==================== */
+.lean-legend {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 10px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.lean-bar-container {
+  display: flex;
+  height: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-primary);
+  margin-bottom: 15px;
+}
+
+.lean-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: white;
+  transition: width 0.6s ease;
+}
+
+.lean-details li {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  list-style: none;
+}
+
+.lean-details span {
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-right: 8px;
+}
+
+/* ==================== MOBILE RESPONSIVE ==================== */
+@media (max-width: 1024px) {
+  .dashboard-content-wrapper {
+    flex-direction: column;
+    padding: 10px;
+    gap: 15px;
+  }
+
+  .dashboard-page {
+    height: auto;
+    overflow-y: auto;
+    display: block;
+  }
+
+  .dashboard-left-column {
+    position: relative;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    margin-bottom: 10px;
+  }
+
+  .dashboard-right-column {
+    height: auto;
+    overflow: visible;
+    padding-bottom: 80px; /* Space for bottom nav or just clearance */
+  }
+
+  /* Stack charts on tablet/mobile */
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .section-title { font-size: 16px; }
+  
+  .dashboard-card { 
+    padding: 15px; 
+    margin-bottom: 15px;
+  }
+
+  /* Make stat boxes smaller/tighter on mobile */
+  .stat-box-grid {
+    gap: 10px;
+  }
+  
+  .stat-number { font-size: 20px; }
+  
+  .chart-container {
+    height: 220px; /* Slightly shorter for mobile */
+  }
+  
+  /* Mobile Footer Button */
+  .mobile-only-footer {
+    margin-top: 20px;
+    margin-bottom: 40px;
+    text-align: center;
+  }
+}

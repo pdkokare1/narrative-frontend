@@ -54,6 +54,9 @@ function NewsFeed({
 
   // --- Fetch Logic ---
   const fetchFeed = useCallback(async (isRefresh = false, isLoadMore = false) => {
+    // Prevent duplicate calls
+    if (loading || (isLoadMore && loadingMore)) return;
+
     if (isRefresh) setIsRefreshing(true);
     else if (isLoadMore) setLoadingMore(true);
     else setLoading(true);
@@ -83,25 +86,30 @@ function NewsFeed({
       else if (isLoadMore) setLoadingMore(false);
       else setLoading(false);
     }
-  }, [filters, mode, addToast, articles.length]);
+  }, [filters, mode, addToast, articles.length, loading, loadingMore]);
 
+  // Initial Fetch
   useEffect(() => {
     fetchFeed(false, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, mode]); 
 
+  // Infinite Scroll Observer
   useEffect(() => {
     if (mode === 'foryou') return; 
+    
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !loading && !loadingMore && articles.length < totalCount) {
           fetchFeed(false, true);
         }
       },
-      { threshold: 0.1, rootMargin: '200px' } 
+      { threshold: 0.1, rootMargin: '300px' } // Pre-load 300px before bottom
     );
+    
     const currentSentinel = bottomSentinelRef.current;
     if (currentSentinel) observer.observe(currentSentinel);
+    
     return () => { if (currentSentinel) observer.unobserve(currentSentinel); };
   }, [loading, loadingMore, articles.length, totalCount, mode, fetchFeed]);
 
@@ -176,43 +184,54 @@ function NewsFeed({
         </div>
       )}
 
-      {(loading && !loadingMore) ? (
-        <div className="articles-grid">
-           {[...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> ))}
-        </div>
-      ) : (
-        <>
-          {articles.length > 0 ? (
-            <div className="articles-grid">
-              {articles.map((article) => (
-                <div className="article-card-wrapper" key={article._id || article.url}>
-                  <ArticleCard
-                    article={article}
-                    onCompare={() => onCompare(article)}
-                    onAnalyze={onAnalyze}
-                    onShare={() => handleShare(article)}
-                    onRead={() => handleReadClick(article)}
-                    showTooltip={showTooltip}
-                    isSaved={savedArticleIds.has(article._id)}
-                    onToggleSave={() => onToggleSave(article)}
-                  />
-                </div>
-              ))}
+      {/* Main Grid */}
+      <div className="articles-grid">
+        {loading && !loadingMore ? (
+           // Initial Loading Skeletons
+           [...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> ))
+        ) : (
+           // Actual Articles
+           articles.map((article) => (
+            <div className="article-card-wrapper" key={article._id || article.url}>
+              <ArticleCard
+                article={article}
+                onCompare={() => onCompare(article)}
+                onAnalyze={onAnalyze}
+                onShare={() => handleShare(article)}
+                onRead={() => handleReadClick(article)}
+                showTooltip={showTooltip}
+                isSaved={savedArticleIds.has(article._id)}
+                onToggleSave={() => onToggleSave(article)}
+              />
             </div>
-          ) : (
-            <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
-                {mode === 'foryou' 
-                 ? <p>Read more articles to unlock your personalized feed!</p> 
-                 : <p>No articles found matching your current filters.</p>}
-            </div>
-          )}
+          ))
+        )}
+        
+        {/* Infinite Scroll Skeletons */}
+        {loadingMore && (
+           [...Array(3)].map((_, i) => ( <div className="article-card-wrapper" key={`more-${i}`}><SkeletonCard /></div> ))
+        )}
+      </div>
 
-          {mode === 'latest' && articles.length < totalCount && (
-            <div ref={bottomSentinelRef} className="article-card-wrapper load-more-wrapper" style={{ minHeight: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              {loadingMore ? <div className="loading-container" style={{ minHeight: 'auto' }}><div className="spinner-small"></div></div> : <span style={{ opacity: 0 }}>Loading more...</span>}
-            </div>
-          )}
-        </>
+      {/* Empty State */}
+      {!loading && articles.length === 0 && (
+        <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
+            {mode === 'foryou' 
+             ? <p>Read more articles to unlock your personalized feed!</p> 
+             : <p>No articles found matching your current filters.</p>}
+        </div>
+      )}
+
+      {/* Sentinel for Infinite Scroll Detection */}
+      {mode === 'latest' && articles.length < totalCount && (
+        <div ref={bottomSentinelRef} style={{ height: '20px', marginBottom: '20px' }} />
+      )}
+      
+      {/* End of Content Indicator */}
+      {mode === 'latest' && !loading && !loadingMore && articles.length >= totalCount && articles.length > 0 && (
+          <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-tertiary)', fontSize: '12px' }}>
+              <p>You've caught up with the latest news!</p>
+          </div>
       )}
     </main>
   );

@@ -1,5 +1,5 @@
 // In file: src/MyDashboard.js
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom'; 
 import * as api from './services/api'; 
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
@@ -10,6 +10,17 @@ import {
 import 'chartjs-adapter-date-fns';
 import './App.css';
 import './DashboardPages.css';
+
+// --- Import Centralized Config ---
+import { 
+    leanColors, 
+    sentimentColors, 
+    qualityColors, 
+    getChartTheme, 
+    getDoughnutChartOptions, 
+    getBarChartOptions, 
+    getLineChartOptions 
+} from './utils/ChartConfig';
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement,
@@ -22,49 +33,27 @@ const getActionCount = (totals, action) => {
   return item ? item.count : 0;
 };
 const leanOrder = ['Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
-const leanColors = {
-    'Left': '#dc2626', 'Left-Leaning': '#f87171', 'Center': '#4CAF50',
-    'Right-Leaning': '#60a5fa', 'Right': '#2563eb', 'Not Applicable': '#a1a1aa'
-};
-const sentimentColors = { 'Positive': '#2563eb', 'Negative': '#dc2626', 'Neutral': '#6b7280' };
-const categoryColorsDark = ['#B38F5F', '#CCA573', '#D9B98A', '#E6CB9F', '#9C7C50', '#8F6B4D', '#C19A6B', '#AE8A53', '#D0B48F', '#B8860B'];
-const categoryColorsLight = ['#2E4E6B', '#3E6A8E', '#5085B2', '#63A0D6', '#243E56', '#1A2D3E', '#4B77A3', '#395D7D', '#5D92C1', '#004E8A'];
 
 function MyDashboard({ theme }) {
   const [statsData, setStatsData] = useState(null);
-  const [digestData, setDigestData] = useState(null); // <--- NEW
+  const [digestData, setDigestData] = useState(null); 
   const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState('');
 
-   const chartColors = useMemo(() => {
-      const isDark = theme === 'dark';
-      return {
-         textPrimary: isDark ? '#EAEAEA' : '#2C2C2C',
-         textSecondary: isDark ? '#B0B0B0' : '#555555',
-         textTertiary: isDark ? '#757575' : '#888888',
-         borderColor: isDark ? '#333333' : '#EAEAEA',
-         tooltipBg: isDark ? '#2C2C2C' : '#FDFDFD',
-         categoryPalette: isDark ? categoryColorsDark : categoryColorsLight,
-         accentPrimary: isDark ? '#B38F5F' : '#2E4E6B',
-         trendUp: isDark ? '#4CAF50' : '#2E7D32',
-         trendDown: isDark ? '#E57373' : '#C62828',
-      };
-   }, [theme]);
+  // Get current theme colors
+  const themeColors = useMemo(() => getChartTheme(theme), [theme]);
 
   useEffect(() => {
     const fetchData = async () => {
       setError('');
       setLoadingStats(true);
       try {
-        // Parallel Fetch for efficiency
         const [statsRes, digestRes] = await Promise.all([
             api.getStats(),
             api.getWeeklyDigest()
         ]);
-        
         setStatsData(statsRes.data);
         setDigestData(digestRes.data);
-
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
         setError('Could not load statistics data.');
@@ -75,69 +64,7 @@ function MyDashboard({ theme }) {
     fetchData();
   }, []);
 
-  // --- Chart Options ---
-  const getDoughnutChartOptions = useCallback((title) => ({
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom', labels: { color: chartColors.textSecondary, boxWidth: 12, padding: 15 } },
-        tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary },
-        title: { display: true, text: title, color: chartColors.textPrimary, font: { size: 14 } }
-      },
-      cutout: '60%',
-   }), [chartColors]);
-
-    const getBarChartOptions = useCallback((title, axisLabel = 'Number of Articles') => ({
-      responsive: true, maintainAspectRatio: false,
-      indexAxis: 'y',
-      scales: {
-        x: {
-          beginAtZero: true,
-          title: { display: true, text: axisLabel, color: chartColors.textSecondary },
-          ticks: { color: chartColors.textTertiary, stepSize: 1 },
-          grid: { color: chartColors.borderColor }
-        },
-        y: {
-          ticks: { color: chartColors.textSecondary },
-          grid: { display: false }
-        },
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary },
-        title: { display: true, text: title, color: chartColors.textPrimary, font: { size: 14 } }
-      },
-   }), [chartColors]);
-
-   const storiesReadOptions = useMemo(() => ({
-      responsive: true, maintainAspectRatio: false,
-      scales: {
-        x: {
-          type: 'time',
-          time: { unit: 'day', tooltipFormat: 'MMM d, yyyy', displayFormats: { day: 'MMM d' }},
-          title: { display: true, text: 'Date', color: chartColors.textSecondary },
-          ticks: { color: chartColors.textTertiary },
-          grid: { color: chartColors.borderColor }
-        },
-        y: {
-          beginAtZero: true,
-          title: { display: true, text: 'Stories Analyzed', color: chartColors.textSecondary },
-          ticks: { color: chartColors.textTertiary, stepSize: 1 },
-          grid: { color: chartColors.borderColor }
-        },
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: { backgroundColor: chartColors.tooltipBg, titleColor: chartColors.textPrimary, bodyColor: chartColors.textSecondary },
-        title: {
-          display: true,
-          text: 'Stories Analyzed Over Time',
-          color: chartColors.textPrimary,
-          font: { size: 14 }
-        }
-      },
-   }), [chartColors]);
-
-  // --- Data Prep Helpers ---
+  // --- Data Preparation ---
   const prepareLeanData = (rawData) => {
     const counts = (rawData || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
     const data = leanOrder.map(lean => counts[lean] || 0);
@@ -145,19 +72,18 @@ function MyDashboard({ theme }) {
     const filteredLabels = leanOrder.filter((_, index) => data[index] > 0);
     const filteredData = data.filter(count => count > 0);
     const filteredColors = backgroundColors.filter((_, index) => data[index] > 0);
-    return { labels: filteredLabels, datasets: [{ label: 'Articles', data: filteredData, backgroundColor: filteredColors, borderColor: chartColors.borderColor, borderWidth: 1 }] };
+    return { labels: filteredLabels, datasets: [{ label: 'Articles', data: filteredData, backgroundColor: filteredColors, borderColor: themeColors.borderColor, borderWidth: 1 }] };
   };
 
   const prepareCategoryData = (rawData) => {
     const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10).reverse();
-    const themeCategoryColors = chartColors.categoryPalette;
     return {
       labels: sortedData.map(d => d.category),
       datasets: [{
         label: 'Articles Read',
         data: sortedData.map(d => d.count),
-        backgroundColor: sortedData.map((_, i) => themeCategoryColors[i % themeCategoryColors.length]),
-        borderColor: chartColors.borderColor,
+        backgroundColor: sortedData.map((_, i) => themeColors.categoryPalette[i % themeColors.categoryPalette.length]),
+        borderColor: themeColors.borderColor,
         borderWidth: 1,
       }],
     };
@@ -165,14 +91,13 @@ function MyDashboard({ theme }) {
 
   const prepareTopSourcesData = (rawData) => {
     const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10).reverse();
-    const themeCategoryColors = chartColors.categoryPalette;
     return {
       labels: sortedData.map(d => d.source),
       datasets: [{
         label: 'Articles Analyzed',
         data: sortedData.map(d => d.count),
-        backgroundColor: sortedData.map((_, i) => themeCategoryColors[i % themeCategoryColors.length]),
-        borderColor: chartColors.borderColor,
+        backgroundColor: sortedData.map((_, i) => themeColors.categoryPalette[i % themeColors.categoryPalette.length]),
+        borderColor: themeColors.borderColor,
         borderWidth: 1,
       }],
     };
@@ -188,13 +113,7 @@ function MyDashboard({ theme }) {
     const filteredColors = backgroundColors.filter((_, index) => data[index] > 0);
     return {
       labels: filteredLabels,
-      datasets: [{
-        label: 'Articles',
-        data: filteredData,
-        backgroundColor: filteredColors,
-        borderColor: chartColors.borderColor,
-        borderWidth: 1
-      }]
+      datasets: [{ label: 'Articles', data: filteredData, backgroundColor: filteredColors, borderColor: themeColors.borderColor, borderWidth: 1 }]
     };
   };
 
@@ -205,20 +124,11 @@ function MyDashboard({ theme }) {
     const getSegmentBorderColor = (ctx) => {
       const y1 = ctx.p0.parsed.y;
       const y2 = ctx.p1.parsed.y;
-      if (y2 > y1) return chartColors.trendUp;
-      if (y2 < y1) return chartColors.trendDown;
-      return chartColors.textTertiary; 
+      if (y2 > y1) return themeColors.trendUp;
+      if (y2 < y1) return themeColors.trendDown;
+      return themeColors.textTertiary; 
     };
 
-    const getPointBackgroundColor = (ctx) => {
-      if (ctx.dataIndex === 0) return chartColors.accentPrimary; 
-      const y1 = ctx.chart.data.datasets[0].data[ctx.dataIndex - 1];
-      const y2 = ctx.chart.data.datasets[0].data[ctx.dataIndex];
-      if (y2 > y1) return chartColors.trendUp;
-      if (y2 < y1) return chartColors.trendDown;
-      return chartColors.textTertiary;
-    };
-    
     return {
       labels: labels,
       datasets: [{
@@ -227,29 +137,38 @@ function MyDashboard({ theme }) {
         fill: false,
         tension: 0.1,
         segment: { borderColor: getSegmentBorderColor },
-        pointBackgroundColor: getPointBackgroundColor,
-        pointBorderColor: (ctx) => getPointBackgroundColor(ctx), 
+        pointBackgroundColor: themeColors.accentPrimary,
+        pointBorderColor: themeColors.accentPrimary, 
       }],
     };
-  }, [statsData?.dailyCounts, chartColors]);
+  }, [statsData?.dailyCounts, themeColors]);
 
+  const qualityReadData = useMemo(() => {
+      const counts = (statsData?.qualityDistribution_read || []).reduce((acc, item) => { acc[item.grade] = item.count; return acc; }, {});
+      const labels = Object.keys(qualityColors);
+      
+      // Map DB grades to Chart Labels
+      const dataMap = {
+          'A+ Excellent (90-100)': counts['A+'] || 0,
+          'A High (80-89)': (counts['A'] || 0) + (counts['A-'] || 0),
+          'B Professional (70-79)': (counts['B+'] || 0) + (counts['B'] || 0) + (counts['B-'] || 0),
+          'C Acceptable (60-69)': (counts['C+'] || 0) + (counts['C'] || 0) + (counts['C-'] || 0),
+          'D-F Poor (0-59)': (counts['D+'] || 0) + (counts['D'] || 0) + (counts['D-'] || 0) + (counts['F'] || 0) + (counts['D-F'] || 0),
+          'N/A (Review/Opinion)': counts[null] || 0
+      };
+
+      const filteredLabels = labels.filter(label => dataMap[label] > 0);
+      const filteredData = filteredLabels.map(label => dataMap[label]);
+      const filteredColors = filteredLabels.map(label => qualityColors[label]);
+
+      return { labels: filteredLabels, datasets: [{ label: 'Articles Read', data: filteredData, backgroundColor: filteredColors, borderColor: themeColors.borderColor, borderWidth: 1 }] };
+  }, [statsData?.qualityDistribution_read, themeColors]);
+
+  // --- Stats Calculations ---
   const leanReadData = prepareLeanData(statsData?.leanDistribution_read);
   const categoryReadData = prepareCategoryData(statsData?.categoryDistribution_read);
   const topSourcesData = prepareTopSourcesData(statsData?.topSources_read);
   const sentimentReadData = prepareSentimentData(statsData?.sentimentDistribution_read);
-  const qualityReadData = useMemo(() => {
-    const qualityLabels = ['A+ Excellent (90-100)', 'A High (80-89)', 'B Professional (70-79)', 'C Acceptable (60-69)', 'D-F Poor (0-59)', 'N/A (Review/Opinion)'];
-    const qualityColorsMap = {'A+ Excellent (90-100)': '#2563eb', 'A High (80-89)': '#60a5fa', 'B Professional (70-79)': '#4CAF50', 'C Acceptable (60-69)': '#F59E0B', 'D-F Poor (0-59)': '#dc2626', 'N/A (Review/Opinion)': '#a1a1aa'};
-    const rawData = statsData?.qualityDistribution_read;
-    const rawCountsMap = (rawData || []).reduce((acc, item) => { acc[item.grade] = item.count; return acc; }, {});
-    const dbCounts = rawCountsMap;
-    const data = [dbCounts['A+'] || 0, (dbCounts['A'] || 0) + (dbCounts['A-'] || 0), (dbCounts['B+'] || 0) + (dbCounts['B'] || 0) + (dbCounts['B-'] || 0), (dbCounts['C+'] || 0) + (dbCounts['C'] || 0) + (dbCounts['C-'] || 0), (dbCounts['D+'] || 0) + (dbCounts['D'] || 0) + (dbCounts['D-'] || 0) + (dbCounts['F'] || 0) + (dbCounts['D-F'] || 0), dbCounts[null] || 0];
-    const backgroundColors = qualityLabels.map(label => qualityColorsMap[label] || '#a1a1aa');
-    const filteredLabels = qualityLabels.filter((_, index) => data[index] > 0);
-    const filteredData = data.filter(count => count > 0);
-    const filteredColors = backgroundColors.filter((_, index) => data[index] > 0);
-    return { labels: filteredLabels, datasets: [{ label: 'Articles Read', data: filteredData, backgroundColor: filteredColors, borderColor: chartColors.borderColor, borderWidth: 1 }] };
-  }, [statsData?.qualityDistribution_read, chartColors.borderColor]);
   const leanSharedData = prepareLeanData(statsData?.leanDistribution_shared);
 
   const totals = statsData?.totalCounts || [];
@@ -278,12 +197,11 @@ function MyDashboard({ theme }) {
     { key: 'compared', title: 'Comparisons Viewed', value: totalCompared, desc: "No. of articles you've compared." }
   ];
 
-  // --- NEW: Weekly Pulse Renderer ---
+  // --- Weekly Pulse Render ---
   const renderWeeklyPulse = () => {
     if (!digestData || digestData.status === 'Insufficient Data') return null;
 
     const isBubble = digestData.status.includes('Bubble');
-    const isBalanced = digestData.status === 'Balanced';
     const rec = digestData.recommendation;
 
     return (
@@ -336,21 +254,15 @@ function MyDashboard({ theme }) {
             <div className="section-title-header">
               <h2 className="section-title">Your Activity</h2>
               <div className="header-actions">
-                <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
-                  Back to Articles
-                </Link>
+                <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>Back to Articles</Link>
               </div>
             </div>
 
             <div className="dashboard-header-mobile">
               <h2 className="section-title-mobile">Your Activity</h2>
               <div className="header-actions-mobile">
-                <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>
-                  Back to Articles
-                </Link>
-                <div className="date-range-selector"> 
-                  <span>Viewing All-Time Stats</span> 
-                </div>
+                <Link to="/" className="btn-secondary btn-small" style={{ textDecoration: 'none' }}>Back to Articles</Link>
+                <div className="date-range-selector"><span>Viewing All-Time Stats</span></div>
               </div>
             </div>
 
@@ -392,9 +304,7 @@ function MyDashboard({ theme }) {
           </div> 
 
           <div className="dashboard-left-footer">
-            <Link to="/account-settings" className="account-settings-link-dashboard">
-              Account Settings
-            </Link>
+            <Link to="/account-settings" className="account-settings-link-dashboard">Account Settings</Link>
           </div>
         </div>
 
@@ -402,9 +312,7 @@ function MyDashboard({ theme }) {
           <div className="sticky-header-wrapper">
             <div className="section-title-header">
                 <h2 className="section-title">Your Reading Habits</h2>
-                <div className="date-range-selector"> 
-                  <span>Viewing All-Time Stats</span> 
-                </div>
+                <div className="date-range-selector"><span>Viewing All-Time Stats</span></div>
             </div>
           </div>
           
@@ -412,13 +320,12 @@ function MyDashboard({ theme }) {
             <h2 className="section-title-mobile">Your Reading Habits</h2>
           </div>
 
-          {/* --- NEW: Weekly Pulse Card --- */}
           {renderWeeklyPulse()}
 
           <div className="dashboard-card full-width-chart-card stories-read-card"> 
               <div className="chart-container stories-read-chart">
                  {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                  : (statsData?.dailyCounts?.length > 0) ? ( <Line options={storiesReadOptions} data={storiesReadData} /> )
+                  : (statsData?.dailyCounts?.length > 0) ? ( <Line options={getLineChartOptions(theme)} data={storiesReadData} /> )
                   : ( <p className="no-data-msg">No analysis data for this period.</p> )}
               </div>
           </div>
@@ -428,7 +335,7 @@ function MyDashboard({ theme }) {
                <h3>Top Categories (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && categoryReadData.labels.length > 0) ? ( <Bar options={getBarChartOptions('', 'Articles Analyzed')} data={categoryReadData} /> ) 
+                   : (totalAnalyzed > 0 && categoryReadData.labels.length > 0) ? ( <Bar options={getBarChartOptions('', 'Articles Analyzed', theme)} data={categoryReadData} /> ) 
                    : ( <p className="no-data-msg">No category data for this period.</p> )}
                </div>
              </div>
@@ -437,7 +344,7 @@ function MyDashboard({ theme }) {
                <h3>Top Sources (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && topSourcesData.labels.length > 0) ? ( <Bar options={getBarChartOptions('', 'Articles Analyzed')} data={topSourcesData} /> ) 
+                   : (totalAnalyzed > 0 && topSourcesData.labels.length > 0) ? ( <Bar options={getBarChartOptions('', 'Articles Analyzed', theme)} data={topSourcesData} /> ) 
                    : ( <p className="no-data-msg">No source data for this period.</p> )}
                </div>
              </div>
@@ -446,7 +353,7 @@ function MyDashboard({ theme }) {
                <h3>Political Lean (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalApplicableLeanArticles > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={leanReadData} /> ) 
+                   : (totalApplicableLeanArticles > 0) ? ( <Doughnut options={getDoughnutChartOptions('', theme)} data={leanReadData} /> ) 
                    : ( <p className="no-data-msg">No lean data for this period.</p> )}
                </div>
              </div>
@@ -455,7 +362,7 @@ function MyDashboard({ theme }) {
                <h3>Sentiment Breakdown (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && sentimentReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={sentimentReadData} /> ) 
+                   : (totalAnalyzed > 0 && sentimentReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('', theme)} data={sentimentReadData} /> ) 
                    : ( <p className="no-data-msg">No sentiment data for this period.</p> )}
                </div>
              </div>
@@ -464,7 +371,7 @@ function MyDashboard({ theme }) {
                <h3>Article Quality (Analyzed)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && qualityReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={qualityReadData} /> ) 
+                   : (totalAnalyzed > 0 && qualityReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('', theme)} data={qualityReadData} /> ) 
                    : ( <p className="no-data-msg">No quality data for this period.</p> )}
                </div>
              </div>
@@ -473,21 +380,17 @@ function MyDashboard({ theme }) {
                <h3>Political Lean (Shared)</h3>
                <div className="chart-container article-bias-chart">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalShared > 0 && leanSharedData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('')} data={leanSharedData} /> ) 
+                   : (totalShared > 0 && leanSharedData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('', theme)} data={leanSharedData} /> ) 
                    : ( <p className="no-data-msg">You haven't shared articles yet.</p> )}
                </div>
              </div>
-
           </div> 
 
           {error && <p style={{ color: 'red', textAlign: 'center', marginTop: '20px' }}>{error}</p>}
           
           <div className="mobile-only-footer">
-            <Link to="/account-settings" className="account-settings-link-dashboard">
-              Account Settings
-            </Link>
+            <Link to="/account-settings" className="account-settings-link-dashboard">Account Settings</Link>
           </div>
-
         </div> 
       </div> 
     </div> 

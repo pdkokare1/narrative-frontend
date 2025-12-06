@@ -1,9 +1,9 @@
 // In file: src/AccountSettings.js
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom'; 
-import * as api from './services/api'; // <--- Centralized API
+import * as api from './services/api'; 
 import './App.css'; 
-import './DashboardPages.css'; 
+import './AccountSettings.css'; // <--- NEW: Modular styles
 
 function AccountSettings() {
   const [profileData, setProfileData] = useState(null);
@@ -15,7 +15,7 @@ function AccountSettings() {
       setError('');
       setLoading(true);
       try {
-        const { data } = await api.getProfile(); // <--- API Call
+        const { data } = await api.getProfile(); 
         setProfileData(data);
       } catch (err) {
         console.error('Error fetching profile:', err);
@@ -29,49 +29,63 @@ function AccountSettings() {
   }, []);
 
   return (
-    <div className="dashboard-page">
-      <div className="placeholder-page" style={{ maxWidth: '600px', margin: '0 auto' }}>
+    // Replaced 'dashboard-page' with standard 'content' wrapper
+    <div className="content">
+      <div className="settings-container">
         
         <h1>Account Settings</h1>
 
         {loading && (
-          <div className="loading-container" style={{ minHeight: '150px' }}>
-            <div className="spinner" style={{ width: '32px', height: '32px' }}></div>
+          <div className="loading-container" style={{ minHeight: '200px' }}>
+            <div className="spinner"></div>
             <p style={{ color: 'var(--text-secondary)' }}>Loading profile...</p>
           </div>
         )}
 
         {error && (
-          <p style={{ color: 'red', marginBottom: '20px' }}>{error}</p>
-        )}
-
-        {profileData && !loading && (
-          <div style={{ 
-            textAlign: 'left', color: 'var(--text-primary)', width: '100%', padding: '20px', 
-            background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' 
-          }}>
-            <div style={{ marginBottom: '15px' }}>
-              <strong style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '12px' }}>Username</strong>
-              <p style={{ fontSize: '16px', margin: '2px 0 0 0' }}>{profileData.username}</p>
-            </div>
-
-            <div style={{ marginBottom: '25px' }}>
-              <strong style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '12px' }}>Email</strong>
-              <p style={{ fontSize: '16px', margin: '2px 0 0 0' }}>{profileData.email}</p>
-            </div>
-            
-            <hr style={{ borderColor: 'var(--border-light)', margin: '20px 0' }} />
-            
-            <h2 style={{ fontSize: '14px', color: 'var(--accent-primary)', marginBottom: '15px', textTransform: 'uppercase' }}>Your Stats</h2>
-            <p style={{ fontSize: '14px', marginBottom: '10px' }}><strong>Articles Analyzed:</strong> {profileData.articlesViewedCount || 0}</p>
-            <p style={{ fontSize: '14px', marginBottom: '10px' }}><strong>Comparisons Viewed:</strong> {profileData.comparisonsViewedCount || 0}</p>
-            <p style={{ fontSize: '14px', marginBottom: '10px' }}><strong>Articles Shared:</strong> {profileData.articlesSharedCount || 0}</p>
+          <div className="settings-card" style={{ textAlign: 'center', borderColor: '#E57373' }}>
+             <p style={{ color: '#E57373', marginBottom: '15px' }}>{error}</p>
+             <button onClick={() => window.location.reload()} className="btn-secondary">Retry</button>
           </div>
         )}
 
-        <Link to="/my-dashboard" className="btn-secondary" style={{ textDecoration: 'none', display: 'inline-block', marginTop: '25px' }}>
-          Back to Dashboard
-        </Link>
+        {profileData && !loading && (
+          <div className="settings-card">
+            
+            <div className="settings-field">
+              <span className="settings-label">Username</span>
+              <p className="settings-value">{profileData.username}</p>
+            </div>
+
+            <div className="settings-field">
+              <span className="settings-label">Email</span>
+              <p className="settings-value">{profileData.email}</p>
+            </div>
+            
+            <hr className="settings-divider" />
+            
+            <h2 className="settings-section-title">Your Stats</h2>
+            
+            <div className="stat-row">
+                <strong>Articles Analyzed</strong>
+                <span>{profileData.articlesViewedCount || 0}</span>
+            </div>
+            <div className="stat-row">
+                <strong>Comparisons Viewed</strong>
+                <span>{profileData.comparisonsViewedCount || 0}</span>
+            </div>
+            <div className="stat-row">
+                <strong>Articles Shared</strong>
+                <span>{profileData.articlesSharedCount || 0}</span>
+            </div>
+          </div>
+        )}
+
+        <div style={{ marginTop: '30px' }}>
+            <Link to="/my-dashboard" className="btn-secondary" style={{ textDecoration: 'none', padding: '10px 25px' }}>
+            Back to Dashboard
+            </Link>
+        </div>
       </div>
     </div>
   );

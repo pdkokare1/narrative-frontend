@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import CustomSelect from './ui/CustomSelect'; 
-import * as api from '../services/api'; // <--- Import API
+import * as api from '../services/api'; 
 import '../App.css'; 
+import './Sidebar.css'; // <--- NEW: Imports modular styles
 
 function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
   const [trendingTopics, setTrendingTopics] = useState([]);
@@ -81,7 +82,7 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
           </ul>
         </div>
 
-        {/* --- NEW: Trending Section --- */}
+        {/* --- Trending Section --- */}
         {trendingTopics.length > 0 && (
           <div className="sidebar-section">
             <h3>Trending Now</h3>
@@ -98,7 +99,6 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
             </div>
           </div>
         )}
-        {/* --- END Trending --- */}
 
         {/* Filters Section */}
         <div className="sidebar-section">

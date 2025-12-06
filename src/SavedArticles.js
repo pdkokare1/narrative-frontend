@@ -1,8 +1,8 @@
 // In file: src/SavedArticles.js
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import * as api from './services/api'; // <--- Centralized API
-import { useToast } from './context/ToastContext'; // <--- Notifications
+import * as api from './services/api'; 
+import { useToast } from './context/ToastContext'; 
 import ArticleCard from './components/ArticleCard'; 
 import './App.css'; 
 import './DashboardPages.css'; 
@@ -14,7 +14,7 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isMobileView, setIsMobileView] = useState(isMobile()); 
-  const { addToast } = useToast(); // Hook for popups
+  const { addToast } = useToast(); 
   
   const contentRef = useRef(null); 
 
@@ -42,12 +42,9 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Handle Unsave
   const handleLocalToggleSave = async (article) => {
-    // 1. Optimistic Update (Remove from UI immediately)
+    // Optimistic Update
     setSavedArticles(prev => prev.filter(a => a._id !== article._id));
-    
-    // 2. Call Global Handler (Updates App.js state)
     onToggleSave(article);
   };
   
@@ -55,19 +52,17 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
   const renderDesktopView = () => (
     <div className="content-router-outlet saved-articles-desktop-page" ref={contentRef}>
       {loading && (
-        <div className="loading-container" style={{ minHeight: '300px' }}>
+        <div className="loading-container page-loader">
           <div className="spinner"></div>
-          <p style={{ color: 'var(--text-tertiary)' }}>Loading saved articles...</p>
+          <p className="loading-text">Loading saved articles...</p>
         </div>
       )}
       
       {error && (
-        <div className="placeholder-page" style={{ padding: '20px' }}>
-          <h2 style={{ color: '#E57373' }}>Error</h2>
-          <p style={{ color: 'var(--text-tertiary)' }}>{error}</p>
-          <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>
-            Back to Articles
-          </Link>
+        <div className="placeholder-page">
+          <h2 className="error-text">Error</h2>
+          <p>{error}</p>
+          <Link to="/" className="btn-secondary">Back to Articles</Link>
         </div>
       )}
 
@@ -75,16 +70,11 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
         <>
           {savedArticles.length > 0 ? (
             <>
-              <div style={{ 
-                position: 'absolute', top: '0', left: '0', right: '0',
-                paddingTop: '10px', zIndex: 0, pointerEvents: 'none', textAlign: 'center'
-              }}>
-                <h1 style={{ fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '500', margin: 0 }}>
-                  {savedArticles.length} Saved Articles
-                </h1>
+              <div className="saved-articles-header">
+                <h1>{savedArticles.length} Saved Articles</h1>
               </div>
 
-              <div className="articles-grid" style={{ marginTop: '25px', position: 'relative', zIndex: 1 }}>
+              <div className="articles-grid">
                 {savedArticles.map((article) => (
                   <ArticleCard
                     key={article._id}
@@ -101,12 +91,10 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
               </div>
             </>
           ) : (
-            <div className="placeholder-page" style={{ padding: '20px', minHeight: 'calc(100vh - 200px)' }}>
+            <div className="placeholder-page">
               <h2>No Saved Articles</h2>
               <p>You haven't saved any articles yet.</p>
-              <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>
-                Back to Articles
-              </Link>
+              <Link to="/" className="btn-secondary">Back to Articles</Link>
             </div>
           )}
         </>
@@ -118,21 +106,19 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
     <main className="content" ref={contentRef}>
       {loading && (
         <div className="article-card-wrapper">
-          <div className="loading-container" style={{ minHeight: '300px' }}>
+          <div className="loading-container">
             <div className="spinner"></div>
-            <p style={{ color: 'var(--text-tertiary)' }}>Loading saved articles...</p>
+            <p>Loading saved articles...</p>
           </div>
         </div>
       )}
 
       {error && (
         <div className="article-card-wrapper">
-          <div className="placeholder-page" style={{ padding: '20px' }}>
-            <h2 style={{ color: '#E57373' }}>Error</h2>
-            <p style={{ color: 'var(--text-tertiary)' }}>{error}</p>
-            <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>
-              Back to Articles
-            </Link>
+          <div className="placeholder-page">
+            <h2 className="error-text">Error</h2>
+            <p>{error}</p>
+            <Link to="/" className="btn-secondary">Back to Articles</Link>
           </div>
         </div>
       )}
@@ -141,17 +127,12 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
         <>
           {savedArticles.length > 0 ? (
             <>
-              <div style={{ 
-                position: 'absolute', top: '0', left: '0', right: '0',
-                paddingTop: '10px', paddingBottom: '10px', zIndex: 0, pointerEvents: 'none' 
-              }}>
-                <h1 style={{ width: '100%', maxWidth: '500px', margin: '0 auto', textAlign: 'center', fontSize: '14px', color: 'var(--text-tertiary)', fontWeight: '500' }}>
-                  {savedArticles.length} Saved Articles 
-                </h1>
+              <div className="saved-articles-header-mobile">
+                <h1>{savedArticles.length} Saved Articles</h1>
               </div>
 
               {savedArticles.map((article, index) => (
-                <div className="article-card-wrapper" key={article._id} style={{ paddingTop: index === 0 ? '45px' : '20px' }}>
+                <div className="article-card-wrapper" key={article._id}>
                   <ArticleCard
                     article={article}
                     onCompare={() => onCompare(article)}
@@ -167,12 +148,10 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
             </>
           ) : (
             <div className="article-card-wrapper">
-              <div className="placeholder-page" style={{ padding: '20px' }}>
+              <div className="placeholder-page">
                 <h2>No Saved Articles</h2>
                 <p>You haven't saved any articles yet.</p>
-                <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>
-                  Back to Articles
-                </Link>
+                <Link to="/" className="btn-secondary">Back to Articles</Link>
               </div>
             </div>
           )}

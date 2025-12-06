@@ -1,7 +1,8 @@
 // In file: src/CreateProfile.js
 import React, { useState } from 'react';
-import * as api from './services/api'; // <--- Centralized API
+import * as api from './services/api'; 
 import './Login.css'; 
+// Note: We rely on App.css (loaded globally) for the .btn-primary class
 
 function CreateProfile() {
   const [username, setUsername] = useState('');
@@ -21,7 +22,7 @@ function CreateProfile() {
 
     try {
       // Send the new username to our backend
-      await api.createProfile({ username: username.trim() }); // <--- API Call
+      await api.createProfile({ username: username.trim() }); 
 
       // Success! Reload to trigger AuthContext update
       window.location.href = '/'; 
@@ -38,7 +39,7 @@ function CreateProfile() {
 
   return (
     <div className="login-page-wrapper">
-      <div className="login-container" style={{ maxWidth: '480px' }}>
+      <div className="login-container">
         <div className="login-form-panel">
           <h1>Welcome to The Gamut</h1>
           <p>Please choose a username to complete your registration.</p>
@@ -49,18 +50,28 @@ function CreateProfile() {
               placeholder="Enter your username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="username-input firebaseui-id-input firebaseui-input" 
-              style={{ marginBottom: '15px' }}
+              className="username-input" 
+              required
             />
 
             {error && (
-              <p style={{ color: 'red', fontSize: '12px', marginBottom: '15px' }}>{error}</p>
+              <div style={{ 
+                color: '#E57373', 
+                fontSize: '13px', 
+                marginBottom: '15px', 
+                background: 'rgba(229, 115, 115, 0.1)', 
+                padding: '8px', 
+                borderRadius: '4px' 
+              }}>
+                {error}
+              </div>
             )}
 
             <button 
               type="submit" 
               disabled={loading}
-              className="firebaseui-id-submit firebaseui-button" 
+              className="btn-primary"
+              style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: '14px' }}
             >
               {loading ? 'Saving...' : 'Save Profile'}
             </button>

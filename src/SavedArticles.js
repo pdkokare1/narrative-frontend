@@ -1,24 +1,20 @@
 // In file: src/SavedArticles.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import * as api from './services/api'; 
 import { useToast } from './context/ToastContext'; 
 import ArticleCard from './components/ArticleCard'; 
-// --- Use Custom Hook ---
 import useIsMobile from './hooks/useIsMobile';
 import './App.css'; 
-import './DashboardPages.css'; 
+import './SavedArticles.css'; // <--- NEW: Modular styles
 
 function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, showTooltip }) {
   const [savedArticles, setSavedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  // --- Replace manual listener with Hook ---
   const isMobileView = useIsMobile();
-  
   const { addToast } = useToast(); 
-  const contentRef = useRef(null); 
 
   useEffect(() => {
     const loadSavedArticles = async () => {
@@ -39,124 +35,113 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
   }, [addToast]);
 
   const handleLocalToggleSave = async (article) => {
-    // Optimistic Update
+    // Optimistic Update: Remove immediately from UI
     setSavedArticles(prev => prev.filter(a => a._id !== article._id));
     onToggleSave(article);
   };
+
+  // --- Render Helpers ---
   
-  // --- Render Views ---
-  const renderDesktopView = () => (
-    <div className="content-router-outlet saved-articles-desktop-page" ref={contentRef}>
-      {loading && (
-        <div className="loading-container page-loader">
-          <div className="spinner"></div>
-          <p className="loading-text">Loading saved articles...</p>
-        </div>
-      )}
-      
-      {error && (
-        <div className="placeholder-page">
-          <h2 className="error-text">Error</h2>
-          <p>{error}</p>
-          <Link to="/" className="btn-secondary">Back to Articles</Link>
-        </div>
-      )}
+  const renderHeader = () => (
+    <div className="saved-header">
+      <h1>Saved Articles</h1>
+      <span className="saved-count-badge">{savedArticles.length} Items</span>
+    </div>
+  );
 
-      {!loading && !error && (
+  const renderEmptyState = () => (
+    <div className="saved-placeholder">
+      <h2>No Saved Articles</h2>
+      <p>Articles you save will appear here for quick access.</p>
+      <Link to="/" className="btn-secondary" style={{ marginTop: '20px', textDecoration: 'none' }}>
+        Browse Articles
+      </Link>
+    </div>
+  );
+
+  const renderError = () => (
+    <div className="saved-placeholder">
+      <h2 className="error-text">Error</h2>
+      <p>{error}</p>
+      <Link to="/" className="btn-secondary" style={{ marginTop: '20px', textDecoration: 'none' }}>
+        Back to Home
+      </Link>
+    </div>
+  );
+
+  const renderLoading = () => (
+    <div className="loading-container">
+      <div className="spinner"></div>
+      <p>Loading your library...</p>
+    </div>
+  );
+
+  // --- Mobile View (Snap Scrolling) ---
+  if (isMobileView) {
+    return (
+      <main className="content">
+        {loading ? (
+           <div className="article-card-wrapper">{renderLoading()}</div>
+        ) : error ? (
+           <div className="article-card-wrapper">{renderError()}</div>
+        ) : savedArticles.length === 0 ? (
+           <div className="article-card-wrapper">{renderEmptyState()}</div>
+        ) : (
+          <>
+            {renderHeader()}
+            {savedArticles.map((article) => (
+              <div className="article-card-wrapper" key={article._id}>
+                <ArticleCard
+                  article={article}
+                  onCompare={() => onCompare(article)}
+                  onAnalyze={onAnalyze}
+                  onShare={onShare}
+                  onRead={onRead}
+                  showTooltip={showTooltip}
+                  isSaved={true}
+                  onToggleSave={() => handleLocalToggleSave(article)}
+                />
+              </div>
+            ))}
+          </>
+        )}
+      </main>
+    );
+  }
+
+  // --- Desktop View (Standard Grid) ---
+  return (
+    <div className="content saved-articles-container">
+      {loading ? (
+        renderLoading()
+      ) : error ? (
+        renderError()
+      ) : (
         <>
-          {savedArticles.length > 0 ? (
-            <>
-              <div className="saved-articles-header">
-                <h1>{savedArticles.length} Saved Articles</h1>
-              </div>
-
-              <div className="articles-grid">
-                {savedArticles.map((article) => (
-                  <ArticleCard
-                    key={article._id}
-                    article={article}
-                    onCompare={() => onCompare(article)}
-                    onAnalyze={onAnalyze}
-                    onShare={onShare}
-                    onRead={onRead}
-                    showTooltip={showTooltip}
-                    isSaved={true}
-                    onToggleSave={() => handleLocalToggleSave(article)}
-                  />
-                ))}
-              </div>
-            </>
+          {renderHeader()}
+          {savedArticles.length === 0 ? (
+            renderEmptyState()
           ) : (
-            <div className="placeholder-page">
-              <h2>No Saved Articles</h2>
-              <p>You haven't saved any articles yet.</p>
-              <Link to="/" className="btn-secondary">Back to Articles</Link>
+            <div className="articles-grid">
+              {savedArticles.map((article) => (
+                <ArticleCard
+                  key={article._id}
+                  article={article}
+                  onCompare={() => onCompare(article)}
+                  onAnalyze={onAnalyze}
+                  onShare={onShare}
+                  onRead={onRead}
+                  showTooltip={showTooltip}
+                  isSaved={true}
+                  onToggleSave={() => handleLocalToggleSave(article)}
+                />
+              ))}
             </div>
           )}
         </>
       )}
     </div>
   );
-  
-  const renderMobileView = () => (
-    <main className="content" ref={contentRef}>
-      {loading && (
-        <div className="article-card-wrapper">
-          <div className="loading-container">
-            <div className="spinner"></div>
-            <p>Loading saved articles...</p>
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="article-card-wrapper">
-          <div className="placeholder-page">
-            <h2 className="error-text">Error</h2>
-            <p>{error}</p>
-            <Link to="/" className="btn-secondary">Back to Articles</Link>
-          </div>
-        </div>
-      )}
-
-      {!loading && !error && (
-        <>
-          {savedArticles.length > 0 ? (
-            <>
-              <div className="saved-articles-header-mobile">
-                <h1>{savedArticles.length} Saved Articles</h1>
-              </div>
-
-              {savedArticles.map((article, index) => (
-                <div className="article-card-wrapper" key={article._id}>
-                  <ArticleCard
-                    article={article}
-                    onCompare={() => onCompare(article)}
-                    onAnalyze={onAnalyze}
-                    onShare={onShare}
-                    onRead={onRead}
-                    showTooltip={showTooltip}
-                    isSaved={true}
-                    onToggleSave={() => handleLocalToggleSave(article)}
-                  />
-                </div>
-              ))}
-            </>
-          ) : (
-            <div className="article-card-wrapper">
-              <div className="placeholder-page">
-                <h2>No Saved Articles</h2>
-                <p>You haven't saved any articles yet.</p>
-                <Link to="/" className="btn-secondary">Back to Articles</Link>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-    </main>
-  );
-
-  return isMobileView ? renderMobileView() : renderDesktopView();
 }
 
 export default SavedArticles;

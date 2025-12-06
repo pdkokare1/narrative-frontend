@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import '../App.css'; 
 import { getSentimentClass } from '../utils/helpers';
 import SmartBriefingModal from './modals/SmartBriefingModal';
+// --- Use Custom Hook ---
+import useIsMobile from '../hooks/useIsMobile';
 
 function ArticleCard({ 
   article, 
@@ -16,7 +18,9 @@ function ArticleCard({
 }) {
   const [showBriefing, setShowBriefing] = useState(false);
 
-  const isMobile = () => window.innerWidth <= 768;
+  // --- Replace manual check with Hook ---
+  const isMobileView = useIsMobile();
+
   const isReview = article.analysisType === 'SentimentOnly';
   const showCompareOnReview = isReview && (article.clusterCount > 1);
   const showReadOnReview = isReview && (article.clusterCount <= 1);
@@ -29,7 +33,8 @@ function ArticleCard({
     }
   };
 
-  const stopMobileClick = (e) => { if (isMobile()) { e.stopPropagation(); } };
+  // Updated to use the boolean variable directly
+  const stopMobileClick = (e) => { if (isMobileView) { e.stopPropagation(); } };
 
   // --- Reusable Save Button ---
   const SaveButton = () => (

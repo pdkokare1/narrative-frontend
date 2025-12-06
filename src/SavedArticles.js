@@ -4,18 +4,20 @@ import { Link } from 'react-router-dom';
 import * as api from './services/api'; 
 import { useToast } from './context/ToastContext'; 
 import ArticleCard from './components/ArticleCard'; 
+// --- Use Custom Hook ---
+import useIsMobile from './hooks/useIsMobile';
 import './App.css'; 
 import './DashboardPages.css'; 
-
-const isMobile = () => window.innerWidth <= 768;
 
 function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, showTooltip }) {
   const [savedArticles, setSavedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isMobileView, setIsMobileView] = useState(isMobile()); 
-  const { addToast } = useToast(); 
   
+  // --- Replace manual listener with Hook ---
+  const isMobileView = useIsMobile();
+  
+  const { addToast } = useToast(); 
   const contentRef = useRef(null); 
 
   useEffect(() => {
@@ -35,12 +37,6 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
     };
     loadSavedArticles();
   }, [addToast]);
-  
-  useEffect(() => {
-    const handleResize = () => setIsMobileView(isMobile());
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const handleLocalToggleSave = async (article) => {
     // Optimistic Update

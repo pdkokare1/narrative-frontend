@@ -1,7 +1,7 @@
 // In file: src/components/Header.js
 import React, { useState, useEffect, useRef } from 'react'; 
 import { Link, useNavigate } from 'react-router-dom'; 
-import '../App.css'; 
+import './Header.css'; // <--- UPDATED: Imports specific modular styles
 
 function Header({ theme, toggleTheme, onToggleSidebar, username }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);

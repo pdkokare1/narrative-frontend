@@ -73,10 +73,10 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
     onFilterChange({ ...filters, [name]: value });
   };
 
-  const SidebarNavLink = ({ to, children }) => (
+  const SidebarNavLink = ({ to, children, className }) => (
     <NavLink
       to={to}
-      className={({ isActive }) => "sidebar-nav-link " + (isActive ? "active-link" : "")}
+      className={({ isActive }) => `sidebar-nav-link ${isActive ? "active-link" : ""} ${className || ""}`}
       onClick={onClose} 
     >
       {children}
@@ -97,6 +97,22 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
             <li><SidebarNavLink to="/my-dashboard">Dashboard</SidebarNavLink></li>
             <li><SidebarNavLink to="/saved-articles">Saved Articles</SidebarNavLink></li>
           </ul>
+        </div>
+
+        {/* --- NEW: Emergency Help Button (Visible on Desktop & Mobile) --- */}
+        <div className="sidebar-section">
+           <SidebarNavLink 
+             to="/emergency-resources" 
+             style={{ 
+               borderColor: '#E57373', 
+               color: '#E57373', 
+               background: 'rgba(229, 115, 115, 0.05)'
+             }}
+           >
+             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '700' }}>
+                <span>🆘</span> Emergency Help
+             </span>
+           </SidebarNavLink>
         </div>
 
         {/* --- Trending Section --- */}

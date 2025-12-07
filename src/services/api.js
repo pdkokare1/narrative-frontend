@@ -45,7 +45,7 @@ export const searchArticles = (query, params) => api.get('/search', { params: { 
 export const fetchSavedArticles = () => api.get('/articles/saved');
 export const saveArticle = (id) => api.post(`/articles/${id}/save`);
 
-// NEW: Trending Topics
+// Trending Topics
 export const getTrendingTopics = () => api.get('/trending');
 
 // Profile & Stats
@@ -62,5 +62,8 @@ export const logRead = (id) => api.post('/activity/log-read', { articleId: id })
 
 // Cluster
 export const fetchCluster = (id) => api.get(`/cluster/${id}`);
+
+// --- NEW: Emergency Resources ---
+export const fetchEmergencyContacts = (params) => api.get('/emergency-resources', { params });
 
 export default api;

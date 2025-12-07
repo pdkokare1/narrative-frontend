@@ -1,21 +1,26 @@
 // In file: src/components/ui/CategoryPills.js
 import React, { useRef } from 'react';
-import '../../App.css'; // We will add the specific styles in the next step
+import '../../App.css'; 
 
 function CategoryPills({ selectedCategory, onSelect }) {
   const scrollRef = useRef(null);
 
+  // UPDATED: Matches the new Gatekeeper Service categories
   const categories = [
     'All Categories',
     'Politics',
+    'Global Conflict',
     'Economy',
-    'Technology',
-    'Health',
-    'Environment',
     'Justice',
+    'Science',
+    'Tech',
+    'Health',
     'Education',
-    'Entertainment',
+    'Business',
     'Sports',
+    'Entertainment',
+    'Lifestyle',
+    'Human Interest',
     'Other'
   ];
 

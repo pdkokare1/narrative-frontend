@@ -1,0 +1,226 @@
+/* src/EmergencyResources.css */
+
+/* --- Header Section --- */
+.emergency-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.emergency-page-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+}
+
+.emergency-subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* --- Controls (Search & Filter) --- */
+.emergency-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.emergency-search,
+.emergency-select {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.emergency-search {
+  min-width: 220px;
+}
+
+.emergency-search:focus,
+.emergency-select:focus {
+  border-color: var(--accent-primary);
+}
+
+/* --- Layout --- */
+.emergency-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.category-group {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.category-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent-primary);
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-left: 3px solid var(--accent-primary);
+  padding-left: 10px;
+}
+
+.card-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 15px;
+}
+
+/* --- Emergency Card --- */
+.emergency-card {
+  background: var(--bg-card-flat);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.emergency-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--accent-primary);
+}
+
+.emergency-info h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.emergency-info p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+/* --- Badges --- */
+.emergency-meta {
+  display: flex;
+  gap: 8px;
+}
+
+.badge-scope, .badge-hours {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-scope {
+  background: var(--bg-elevated);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-color);
+}
+
+.badge-hours {
+  background: rgba(76, 175, 80, 0.1); /* Green tint */
+  color: #4CAF50;
+  border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+/* --- Call Button --- */
+.call-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #2E7D32; /* Standard Green */
+  color: white;
+  text-decoration: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  min-width: 80px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.call-btn:hover {
+  background: #1B5E20;
+  text-decoration: none;
+  color: white;
+}
+
+.call-icon {
+  font-size: 18px;
+  margin-bottom: 2px;
+}
+
+.call-number {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* --- Error/Empty States --- */
+.error-banner {
+  background: #FFEBEE;
+  color: #C62828;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #FFCDD2;
+}
+
+.no-results {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-tertiary);
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px dashed var(--border-color);
+}
+
+/* --- Mobile Responsive --- */
+@media (max-width: 768px) {
+  .emergency-header-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .emergency-controls {
+    width: 100%;
+  }
+
+  .emergency-search {
+    flex: 1;
+    width: 100%;
+  }
+
+  .emergency-select {
+    width: 100%;
+  }
+
+  .card-list {
+    grid-template-columns: 1fr; /* Stack cards on mobile */
+  }
+
+  .emergency-card {
+    padding: 15px;
+  }
+  
+  .call-btn {
+    padding: 8px 12px;
+    min-width: 70px;
+  }
+}

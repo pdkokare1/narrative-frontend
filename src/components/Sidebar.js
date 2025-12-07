@@ -4,7 +4,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import CustomSelect from './ui/CustomSelect'; 
 import * as api from '../services/api'; 
 import '../App.css'; 
-import './Sidebar.css'; // <--- NEW: Imports modular styles
+import './Sidebar.css'; 
 
 function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
   const [trendingTopics, setTrendingTopics] = useState([]);
@@ -20,16 +20,33 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
         console.error("Failed to load trending:", error);
       }
     };
-    if (isOpen) loadTrending(); // Only fetch when sidebar opens to save resources
+    if (isOpen) loadTrending(); 
   }, [isOpen]);
 
   const handleTopicClick = (topic) => {
-    onClose(); // Close sidebar
-    navigate(`/search?q=${encodeURIComponent(topic)}`); // Go to search
+    onClose(); 
+    navigate(`/search?q=${encodeURIComponent(topic)}`); 
   };
 
-  // --- Filter Options ---
-  const categories = ['All Categories', 'Politics', 'Economy', 'Technology', 'Health', 'Environment', 'Justice', 'Education', 'Entertainment', 'Sports', 'Other'];
+  // --- UPDATED CATEGORY LIST (Matches Backend v2) ---
+  const categories = [
+    'All Categories',
+    'Politics',
+    'Global Conflict',
+    'Economy',
+    'Justice',
+    'Science',
+    'Tech',
+    'Health',
+    'Education',
+    'Business',
+    'Sports',
+    'Entertainment',
+    'Lifestyle',
+    'Human Interest',
+    'Other'
+  ];
+
   const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
   const regions = [
     { value: 'All', label: 'All Regions' },
@@ -38,8 +55,8 @@ function Sidebar({ filters, onFilterChange, isOpen, onClose, onLogout }) {
   ];
   const articleTypes = [
     { value: 'All Types', label: 'All Article Types' },
-    { value: 'Hard News', label: 'Hard News' },
-    { value: 'Opinion & Reviews', label: 'Opinion & Reviews' },
+    { value: 'Hard News', label: 'Hard News (Deep Analysis)' },
+    { value: 'Opinion & Reviews', label: 'Soft News (Summary Only)' },
   ];
   const qualityLevels = [
     { value: 'All Quality Levels', label: 'All Quality Levels' },

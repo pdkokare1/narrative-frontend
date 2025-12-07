@@ -38,6 +38,7 @@ const MyDashboard = lazy(() => import('./MyDashboard'));
 const SavedArticles = lazy(() => import('./SavedArticles'));
 const AccountSettings = lazy(() => import('./AccountSettings'));
 const SearchResults = lazy(() => import('./SearchResults')); 
+const EmergencyResources = lazy(() => import('./EmergencyResources')); // <--- NEW PAGE
 
 function App() {
   return (
@@ -244,6 +245,9 @@ function MainLayout({ profile }) {
                 showTooltip={showTooltip}
               /> 
           } />
+
+          {/* NEW ROUTE */}
+          <Route path="/emergency-resources" element={<EmergencyResources />} />
           
           <Route path="/account-settings" element={<AccountSettings />} />
           <Route path="*" element={<PageNotFound />} /> 

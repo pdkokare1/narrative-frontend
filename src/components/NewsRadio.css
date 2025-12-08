@@ -1,8 +1,8 @@
 /* src/components/NewsRadio.css */
 
-/* --- The Radio Control Bar (Sticky at Top) --- */
+/* ... (Keep existing Radio Bar styles) ... */
 .radio-bar-container {
-  background: var(--bg-card); /* Matches card background */
+  background: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
   padding: 10px 20px;
   display: flex;
@@ -11,9 +11,8 @@
   margin-bottom: 20px;
   border-radius: 8px;
   box-shadow: var(--shadow-sm);
-  /* Optional: Make it sticky below the header */
   position: sticky;
-  top: 70px; /* Adjust based on your header height */
+  top: 70px;
   z-index: 900;
 }
 
@@ -28,6 +27,20 @@
   color: var(--accent-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  margin-right: 10px;
+}
+
+/* --- NEW: Voice Select Dropdown --- */
+.voice-select {
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-size: 10px;
+    outline: none;
+    max-width: 120px;
+    cursor: pointer;
 }
 
 .radio-headline-preview {
@@ -37,16 +50,15 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 300px; /* Limit width on desktop */
+  max-width: 300px;
 }
 
-/* --- Radio Controls Group --- */
+/* ... (Keep Controls and Card styles) ... */
 .radio-controls {
   display: flex;
   gap: 10px;
 }
 
-/* Base style for all radio buttons */
 .radio-btn {
   border: 1px solid var(--border-color);
   background: var(--bg-elevated);
@@ -65,7 +77,6 @@
   border-color: var(--accent-primary);
 }
 
-/* Specific button styles */
 .radio-btn.primary-action {
   background: var(--accent-primary);
   color: white;
@@ -78,7 +89,7 @@
 }
 
 .radio-btn.stop-action {
-  color: #E57373; /* Red text */
+  color: #E57373;
   border-color: rgba(229, 115, 115, 0.3);
 }
 
@@ -87,21 +98,18 @@
   color: white;
 }
 
-/* --- Article Card "Now Playing" Effect --- */
-/* This class will be added conditionally to the active card */
 .article-card.now-playing {
   border: 2px solid var(--accent-primary);
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-  transform: scale(1.01); /* Slight pop */
+  transform: scale(1.01);
 }
 
-/* Mobile Adjustments */
 @media (max-width: 768px) {
   .radio-bar-container {
     flex-direction: column;
     gap: 12px;
     align-items: stretch;
-    top: 60px; /* Adjust for mobile header */
+    top: 60px;
   }
 
   .radio-info {
@@ -115,7 +123,7 @@
   }
 
   .radio-btn {
-    flex: 1; /* Make buttons distinct/large on mobile */
+    flex: 1;
     text-align: center;
   }
 }

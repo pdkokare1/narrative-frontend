@@ -1,165 +1,112 @@
 // src/hooks/useNewsRadio.js
 import { useState, useEffect, useRef, useCallback } from 'react';
+import * as api from '../services/api';
 
-// --- THE SILENT AUDIO HACK ---
-// A tiny, silent MP3 file (base64) to keep the OS media session alive
-const SILENT_MP3 = 'data:audio/mp3;base64,SUQzBAAAAAABAFRYWFgAAAASAAADbWFqb3JfYnJhbmQAbXA0MgBUWFhYAAAAEQAAA21pbm9yX3ZlcnNpb24AMABUWFhYAAAAHAAAA2NvbXBhdGlibGVfYnJhbmRzAGlzb21tcDQyAFRTU0UAAAAPAAADTGF2ZjU3LjU2LjEwMAAAAAAAAAAAAAAA//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWgAAAA0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABYaW5nAAAARAAAAAAAAADtAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC//uQZAAAAAAA0AAAAAAABAAAAAAAAA0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABMYXZjNTcuNjQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH//uQzAAAAAAA0AAAAAAABAAAAAAAAA0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAA';
+// The Voice ID you selected
+const DEFAULT_VOICE_ID = 'tNIuvXGG5RnGdTbvfnPR'; 
 
 const useNewsRadio = () => {
+  // State
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [currentArticleId, setCurrentArticleId] = useState(null);
   
-  // --- Autoplay & Countdown State ---
+  // Autoplay State
   const [isWaitingForNext, setIsWaitingForNext] = useState(false);
   const [autoplayTimer, setAutoplayTimer] = useState(0); 
-  const timerIntervalRef = useRef(null);
+  
+  // Fake "Voices" list to keep NewsFeed.js from breaking (we only have one high quality voice now)
+  const [availableVoices] = useState([{ name: 'ElevenLabs AI - Host', lang: 'en-US' }]);
+  const [selectedVoice, setSelectedVoice] = useState(availableVoices[0]);
 
-  // --- Voice Management ---
-  const [availableVoices, setAvailableVoices] = useState([]);
-  const [selectedVoice, setSelectedVoice] = useState(null);
-
-  // --- Refs ---
+  // Refs
+  const audioRef = useRef(new Audio()); // Standard HTML5 Audio
   const playlistRef = useRef([]);
   const currentIndexRef = useRef(-1);
-  const utteranceRef = useRef(null);
-  const silentAudioRef = useRef(null); // <--- Holds the silent player
+  const timerIntervalRef = useRef(null);
 
-  // 1. Initialize Silent Audio & Voices
+  // --- 1. Init Audio Event Listeners ---
   useEffect(() => {
-    // Setup the silent audio player
-    const audio = new Audio(SILENT_MP3);
-    audio.loop = true;
-    audio.volume = 0.1; // Non-zero volume is safer for iOS, but quiet enough to ignore
-    silentAudioRef.current = audio;
+    const audio = audioRef.current;
 
-    const loadVoices = () => {
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        setAvailableVoices(voices);
-        const bestVoice = voices.find(v => v.name === 'Google US English') 
-                       || voices.find(v => v.name.includes('Google')) 
-                       || voices.find(v => v.name.includes('Microsoft') && v.name.includes('Online'))
-                       || voices.find(v => v.name.includes('Natural')) 
-                       || voices[0];
-        setSelectedVoice(bestVoice);
-      }
+    const handleEnded = () => {
+      setIsSpeaking(false);
+      setIsPaused(false);
+      // Automatically trigger next article logic
+      startAutoplayCountdown(currentIndexRef.current);
     };
-    
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-    loadVoices();
+
+    const handleError = (e) => {
+      console.error("Audio Playback Error", e);
+      setIsSpeaking(false);
+      setIsLoading(false);
+    };
+
+    const handlePlay = () => {
+        setIsSpeaking(true);
+        setIsPaused(false);
+        setIsLoading(false);
+    };
+
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', () => setIsPaused(true));
 
     return () => {
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.onvoiceschanged = null;
-      if (silentAudioRef.current) {
-          silentAudioRef.current.pause();
-          silentAudioRef.current = null;
-      }
+      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('play', handlePlay);
+      audio.pause();
     };
   }, []);
 
-  const changeVoice = useCallback((voiceName) => {
-    const voice = availableVoices.find(v => v.name === voiceName);
-    if (voice) setSelectedVoice(voice);
-  }, [availableVoices]);
+  // --- 2. Playback Logic (ElevenLabs) ---
+  const playAudioForArticle = useCallback(async (article) => {
+      if (!article) return;
 
-  // --- HELPER: Play/Stop Silent Audio ---
-  const playSilentAudio = () => {
-    if (silentAudioRef.current && silentAudioRef.current.paused) {
-      silentAudioRef.current.play().catch(e => console.warn("Silent play blocked:", e));
-    }
-  };
-
-  const stopSilentAudio = () => {
-    if (silentAudioRef.current) {
-      silentAudioRef.current.pause();
-      silentAudioRef.current.currentTime = 0;
-    }
-  };
-
-  // --- HELPER: Media Session Metadata ---
-  const updateMediaSession = useCallback((article) => {
-    if ('mediaSession' in navigator) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: article.headline,
-        artist: `The Gamut Radio • ${article.source}`,
-        album: article.category || 'News Feed',
-        artwork: article.imageUrl ? [
-          { src: article.imageUrl, sizes: '96x96', type: 'image/jpeg' },
-          { src: article.imageUrl, sizes: '128x128', type: 'image/jpeg' },
-          { src: article.imageUrl, sizes: '256x256', type: 'image/jpeg' },
-          { src: article.imageUrl, sizes: '512x512', type: 'image/jpeg' },
-        ] : []
-      });
-      
-      // Ensure the browser knows we are "playing"
-      navigator.mediaSession.playbackState = "playing";
-    }
-  }, []);
-
-  // --- STOP Logic ---
-  const stop = useCallback(() => {
-    window.speechSynthesis.cancel();
-    stopSilentAudio(); // <--- Kill the background audio
-    
-    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    
-    setIsSpeaking(false);
-    setIsPaused(false);
-    setIsWaitingForNext(false); 
-    setAutoplayTimer(0);
-    
-    setCurrentArticleId(null);
-    playlistRef.current = [];
-    currentIndexRef.current = -1;
-
-    // Clear Lock Screen
-    if ('mediaSession' in navigator) {
-      navigator.mediaSession.playbackState = "none";
-      navigator.mediaSession.metadata = null;
-    }
-  }, []);
-
-  // --- CORE SPEECH FUNCTION ---
-  const speakText = useCallback((text, onEndCallback) => {
-    window.speechSynthesis.cancel();
-    
-    // IMPORTANT: Ensure silent audio is playing BEFORE speech starts
-    // This keeps the OS media session active
-    playSilentAudio();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utteranceRef.current = utterance;
-
-    if (selectedVoice) utterance.voice = selectedVoice;
-    utterance.rate = 0.95; 
-    utterance.pitch = 1.0;
-
-    utterance.onstart = () => {
-      setIsSpeaking(true);
+      // Reset states
+      setIsLoading(true);
+      setIsSpeaking(true); 
       setIsPaused(false);
-      setIsWaitingForNext(false); 
-      // Reinforce "Playing" state for OS
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.playbackState = "playing";
+      setIsWaitingForNext(false);
+      
+      try {
+          // Construct text: Headline + Summary
+          const textToSpeak = `${article.headline}. ${article.summary}`;
+
+          // Call our Backend (which calls ElevenLabs)
+          const response = await api.streamAudio(textToSpeak, DEFAULT_VOICE_ID);
+          
+          // Create a Blob URL from the audio stream
+          const audioUrl = URL.createObjectURL(response.data);
+          
+          // Play it
+          audioRef.current.src = audioUrl;
+          await audioRef.current.play();
+          
+          // Update Lock Screen Metadata
+          if ('mediaSession' in navigator) {
+              navigator.mediaSession.metadata = new MediaMetadata({
+                  title: article.headline,
+                  artist: `The Gamut • ${article.source}`,
+                  album: article.category || 'News Feed',
+                  artwork: article.imageUrl ? [
+                      { src: article.imageUrl, sizes: '512x512', type: 'image/jpeg' }
+                  ] : []
+              });
+              navigator.mediaSession.playbackState = "playing";
+          }
+
+      } catch (error) {
+          console.error("Failed to stream audio:", error);
+          setIsLoading(false);
+          setIsSpeaking(false);
       }
-    };
+  }, []);
 
-    utterance.onend = () => {
-      if (onEndCallback) onEndCallback();
-    };
-
-    utterance.onerror = (e) => {
-      console.error("Speech Error:", e);
-      setIsSpeaking(false);
-      // Don't stop silent audio here yet, let the flow handle it
-    };
-
-    window.speechSynthesis.speak(utterance);
-  }, [selectedVoice]);
-
-  // --- PLAY NEXT (The Chain) ---
+  // --- 3. Queue Logic ---
   const playNext = useCallback(() => {
     const nextIndex = currentIndexRef.current + 1;
     if (nextIndex >= playlistRef.current.length) {
@@ -170,18 +117,54 @@ const useNewsRadio = () => {
     currentIndexRef.current = nextIndex;
     const article = playlistRef.current[nextIndex];
     setCurrentArticleId(article._id);
+    
+    playAudioForArticle(article);
+  }, [playAudioForArticle]);
 
-    // Update Lock Screen
-    updateMediaSession(article);
+  // --- 4. Controls ---
+  const stop = useCallback(() => {
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+    
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    
+    setIsSpeaking(false);
+    setIsPaused(false);
+    setIsWaitingForNext(false); 
+    setIsLoading(false);
+    setAutoplayTimer(0);
+    
+    setCurrentArticleId(null);
+    playlistRef.current = [];
+    currentIndexRef.current = -1;
 
-    const textToRead = `${article.headline}. ... ${article.summary}`;
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = "none";
+    }
+  }, []);
 
-    speakText(textToRead, () => {
-      playNext();
-    });
-  }, [speakText, stop, updateMediaSession]);
+  const pause = useCallback(() => {
+    audioRef.current.pause();
+    setIsPaused(true);
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
+  }, []);
 
-  // --- COUNTDOWN LOGIC ---
+  const resume = useCallback(() => {
+    audioRef.current.play();
+    setIsPaused(false);
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "playing";
+  }, []);
+
+  const skip = useCallback(() => {
+    if (isWaitingForNext) {
+        if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+        playNext();
+    } else {
+        playNext();
+    }
+  }, [playNext, isWaitingForNext]);
+
+  // --- 5. Countdown Logic ---
   const startAutoplayCountdown = useCallback((currentArticleIndex) => {
     if (currentArticleIndex >= playlistRef.current.length - 1) {
       stop();
@@ -191,18 +174,9 @@ const useNewsRadio = () => {
     setIsSpeaking(false); 
     setIsWaitingForNext(true);
     setAutoplayTimer(5);
-    currentIndexRef.current = currentArticleIndex; 
-    
-    // Keep silent audio playing during countdown so session doesn't die!
-    playSilentAudio(); 
     
     if ('mediaSession' in navigator) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: "Up Next...",
-        artist: "The Gamut Radio",
-        album: "Autoplay"
-      });
-      navigator.mediaSession.playbackState = "playing"; // Keep as 'playing' to keep screen controls active
+      navigator.mediaSession.metadata = new MediaMetadata({ title: "Up Next...", artist: "The Gamut Radio" });
     }
 
     timerIntervalRef.current = setInterval(() => {
@@ -223,94 +197,26 @@ const useNewsRadio = () => {
     stop(); 
   }, [stop]);
 
-  // --- PUBLIC ACTIONS ---
-  
+  // --- 6. Public Triggers ---
   const startRadio = useCallback((articles, startIndex = 0) => {
     stop();
     if (!articles || articles.length === 0) return;
-    
-    // Ensure we trigger the "user interaction" requirement for audio
-    playSilentAudio();
-
     playlistRef.current = articles;
     currentIndexRef.current = startIndex - 1; 
-    
     playNext();
   }, [playNext, stop]);
 
   const playSingle = useCallback((article, allArticles) => {
     stop();
-    
-    // Ensure "user interaction" requirement
-    playSilentAudio();
-
     playlistRef.current = allArticles || [article];
     const thisIndex = playlistRef.current.findIndex(a => a._id === article._id);
     currentIndexRef.current = thisIndex; 
-    
     setCurrentArticleId(article._id);
-    updateMediaSession(article);
-
-    const textToRead = `${article.headline}. ... ${article.summary}`;
     
-    speakText(textToRead, () => {
-      startAutoplayCountdown(thisIndex);
-    });
-  }, [speakText, stop, startAutoplayCountdown, updateMediaSession]);
-
-  const pause = useCallback(() => {
-    window.speechSynthesis.pause();
-    setIsPaused(true);
-    // Pause silent audio too? 
-    // No, keep silent audio "playing" but silent, or pause it?
-    // Pausing 'silent audio' might lose the lock screen. Best to keep it playing or pause it and rely on metadata.
-    // For safety on iOS, we usually pause actual audio to reflect state.
-    if (silentAudioRef.current) silentAudioRef.current.pause();
-
-    if ('mediaSession' in navigator) {
-      navigator.mediaSession.playbackState = "paused";
-    }
-  }, []);
-
-  const resume = useCallback(() => {
-    window.speechSynthesis.resume();
-    setIsPaused(false);
-    playSilentAudio(); // Resume silent track
-
-    if ('mediaSession' in navigator) {
-      navigator.mediaSession.playbackState = "playing";
-    }
-  }, []);
-
-  const skip = useCallback(() => {
-    if (isWaitingForNext) {
-        if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-        playNext();
-    } else {
-        playNext();
-    }
-  }, [playNext, isWaitingForNext]);
-
-  // --- BIND HANDLERS ---
-  useEffect(() => {
-    if ('mediaSession' in navigator) {
-      try {
-        navigator.mediaSession.setActionHandler('play', resume);
-        navigator.mediaSession.setActionHandler('pause', pause);
-        navigator.mediaSession.setActionHandler('nexttrack', skip);
-        navigator.mediaSession.setActionHandler('previoustrack', () => {
-            // Optional: Restart current
-            if (currentIndexRef.current >= 0 && playlistRef.current[currentIndexRef.current]) {
-                const article = playlistRef.current[currentIndexRef.current];
-                const textToRead = `${article.headline}. ... ${article.summary}`;
-                speakText(textToRead, () => startAutoplayCountdown(currentIndexRef.current));
-            }
-        });
-      } catch (e) {
-        console.warn("Media Session API warning", e);
-      }
-    }
-  }, [resume, pause, skip, speakText, startAutoplayCountdown]);
+    playAudioForArticle(article);
+  }, [playAudioForArticle, stop]);
+  
+  const changeVoice = () => {}; // No-op now since we fixed the voice
 
   return {
     isSpeaking,
@@ -327,7 +233,8 @@ const useNewsRadio = () => {
     pause,
     resume,
     skip,
-    cancelAutoplay    
+    cancelAutoplay,
+    isLoading // Exported so UI can show a spinner if needed
   };
 };
 

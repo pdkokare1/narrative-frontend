@@ -7,7 +7,6 @@ import SkeletonCard from './ui/SkeletonCard';
 import CategoryPills from './ui/CategoryPills'; 
 import { useToast } from '../context/ToastContext';
 import '../App.css'; 
-// --- NEW IMPORTS ---
 import useNewsRadio from '../hooks/useNewsRadio';
 import './NewsRadio.css';
 
@@ -37,6 +36,9 @@ function NewsFeed({
     isSpeaking, 
     isPaused, 
     currentArticleId, 
+    availableVoices, // <--- Get list
+    selectedVoice,   // <--- Get current
+    changeVoice,     // <--- Get setter
     startRadio, 
     playSingle, 
     stop, 
@@ -67,7 +69,6 @@ function NewsFeed({
     if (contentRef.current) contentRef.current.scrollTop = 0;
   };
 
-  // --- Fetch Logic ---
   const fetchFeed = useCallback(async (isRefresh = false, isLoadMore = false) => {
     if (isLoadMore && loadingMore) return; 
 
@@ -102,14 +103,12 @@ function NewsFeed({
     }
   }, [filters, mode, addToast, articles.length, loadingMore]);
 
-  // Initial Fetch Effect
   useEffect(() => {
     setLoading(true); 
     fetchFeed(false, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, mode]); 
 
-  // Infinite Scroll Observer
   useEffect(() => {
     if (mode === 'foryou') return; 
     
@@ -163,19 +162,38 @@ function NewsFeed({
     </div>
   );
 
-  // --- NEW: Radio Bar Render ---
+  // --- UPDATED: Radio Bar with Voice Selector ---
   const renderRadioBar = () => {
     if (articles.length === 0) return null;
-    
-    // Find headline for display
     const activeArticle = articles.find(a => a._id === currentArticleId);
     
     return (
       <div className="radio-bar-container">
         <div className="radio-info">
-          <span className="radio-status-text">
-            {isSpeaking ? (isPaused ? "RADIO PAUSED" : "ON AIR • LISTENING") : "NEWS RADIO"}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <span className="radio-status-text">
+                {isSpeaking ? (isPaused ? "RADIO PAUSED" : "ON AIR") : "NEWS RADIO"}
+            </span>
+            
+            {/* VOICE SELECTOR */}
+            {!isSpeaking && availableVoices.length > 0 && (
+                <select 
+                    className="voice-select" 
+                    value={selectedVoice?.name || ''} 
+                    onChange={(e) => changeVoice(e.target.value)}
+                >
+                    {availableVoices
+                        .filter(v => v.lang.startsWith('en')) // Show only English
+                        .map(v => (
+                            <option key={v.name} value={v.name}>
+                                {v.name.replace(/Microsoft|Google|English|United States/g, '').trim() || v.name}
+                            </option>
+                        ))
+                    }
+                </select>
+            )}
+          </div>
+
           {isSpeaking && activeArticle && (
             <span className="radio-headline-preview">
               Now Reading: {activeArticle.headline}
@@ -195,7 +213,6 @@ function NewsFeed({
               ) : (
                 <button className="radio-btn" onClick={pause}>Pause</button>
               )}
-              
               <button className="radio-btn" onClick={skip}>Next</button>
               <button className="radio-btn stop-action" onClick={stop}>Stop</button>
             </>
@@ -232,7 +249,6 @@ function NewsFeed({
         </div>
       )}
 
-      {/* --- RENDER RADIO BAR --- */}
       {renderRadioBar()}
 
       {mode === 'foryou' && forYouMeta && !loading && (
@@ -244,7 +260,6 @@ function NewsFeed({
         </div>
       )}
 
-      {/* Main Grid */}
       <div className="articles-grid">
         {loading && !loadingMore ? (
            [...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> ))
@@ -260,8 +275,6 @@ function NewsFeed({
                 showTooltip={showTooltip}
                 isSaved={savedArticleIds.has(article._id)}
                 onToggleSave={() => onToggleSave(article)}
-                
-                // --- NEW PROPS FOR RADIO ---
                 isPlaying={currentArticleId === article._id}
                 onPlay={() => playSingle(article)}
                 onStop={stop}

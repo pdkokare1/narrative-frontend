@@ -2,8 +2,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as api from '../services/api';
 
-// The Voice ID you selected
-const DEFAULT_VOICE_ID = 'tNIuvXGG5RnGdTbvfnPR'; 
+// CHANGED: Using "Rachel" (Standard Voice) which works on all plans
+const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; 
 
 const useNewsRadio = () => {
   // State

@@ -59,6 +59,12 @@ const useNewsRadio = () => {
     setCurrentArticleId(null);
     playlistRef.current = [];
     currentIndexRef.current = -1;
+
+    // Clear Lock Screen Info
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = "none";
+      navigator.mediaSession.metadata = null;
+    }
   }, []);
 
   // --- CORE SPEECH FUNCTION ---
@@ -75,6 +81,10 @@ const useNewsRadio = () => {
       setIsSpeaking(true);
       setIsPaused(false);
       setIsWaitingForNext(false); 
+      // Update Lock Screen State
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = "playing";
+      }
     };
 
     utterance.onend = () => {
@@ -89,6 +99,25 @@ const useNewsRadio = () => {
     window.speechSynthesis.speak(utterance);
   }, [selectedVoice]);
 
+  // --- NEW: MEDIA SESSION HELPER ---
+  const updateMediaSession = useCallback((article) => {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: article.headline,
+        artist: `The Gamut Radio • ${article.source}`,
+        album: article.category || 'News Feed',
+        artwork: article.imageUrl ? [
+          { src: article.imageUrl, sizes: '96x96', type: 'image/jpeg' },
+          { src: article.imageUrl, sizes: '128x128', type: 'image/jpeg' },
+          { src: article.imageUrl, sizes: '192x192', type: 'image/jpeg' },
+          { src: article.imageUrl, sizes: '256x256', type: 'image/jpeg' },
+          { src: article.imageUrl, sizes: '384x384', type: 'image/jpeg' },
+          { src: article.imageUrl, sizes: '512x512', type: 'image/jpeg' },
+        ] : []
+      });
+    }
+  }, []);
+
   // --- PLAY NEXT (The Chain) ---
   const playNext = useCallback(() => {
     const nextIndex = currentIndexRef.current + 1;
@@ -101,14 +130,17 @@ const useNewsRadio = () => {
     const article = playlistRef.current[nextIndex];
     setCurrentArticleId(article._id);
 
+    // Update Lock Screen Info
+    updateMediaSession(article);
+
     const textToRead = `${article.headline}. ... ${article.summary}`;
 
     speakText(textToRead, () => {
       playNext();
     });
-  }, [speakText, stop]);
+  }, [speakText, stop, updateMediaSession]);
 
-  // --- UPDATED: COUNTDOWN LOGIC (5 Seconds) ---
+  // --- COUNTDOWN LOGIC (5 Seconds) ---
   const startAutoplayCountdown = useCallback((currentArticleIndex) => {
     if (currentArticleIndex >= playlistRef.current.length - 1) {
       stop();
@@ -117,8 +149,13 @@ const useNewsRadio = () => {
 
     setIsSpeaking(false); 
     setIsWaitingForNext(true);
-    setAutoplayTimer(5); // <--- CHANGED FROM 3 TO 5
+    setAutoplayTimer(5);
     currentIndexRef.current = currentArticleIndex; 
+    
+    // Update Lock Screen to "Paused" during countdown
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = "paused";
+    }
 
     timerIntervalRef.current = setInterval(() => {
       setAutoplayTimer((prev) => {
@@ -139,6 +176,31 @@ const useNewsRadio = () => {
   }, [stop]);
 
   // --- PUBLIC ACTIONS ---
+  const pause = useCallback(() => {
+    window.speechSynthesis.pause();
+    setIsPaused(true);
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = "paused";
+    }
+  }, []);
+
+  const resume = useCallback(() => {
+    window.speechSynthesis.resume();
+    setIsPaused(false);
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = "playing";
+    }
+  }, []);
+
+  const skip = useCallback(() => {
+    if (isWaitingForNext) {
+        if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+        playNext();
+    } else {
+        playNext();
+    }
+  }, [playNext, isWaitingForNext]);
+
   const startRadio = useCallback((articles, startIndex = 0) => {
     stop();
     if (!articles || articles.length === 0) return;
@@ -157,31 +219,32 @@ const useNewsRadio = () => {
     currentIndexRef.current = thisIndex; 
     
     setCurrentArticleId(article._id);
+    
+    // Update Lock Screen Info
+    updateMediaSession(article);
+
     const textToRead = `${article.headline}. ... ${article.summary}`;
     
     speakText(textToRead, () => {
       startAutoplayCountdown(thisIndex);
     });
-  }, [speakText, stop, startAutoplayCountdown]);
+  }, [speakText, stop, startAutoplayCountdown, updateMediaSession]);
 
-  const pause = useCallback(() => {
-    window.speechSynthesis.pause();
-    setIsPaused(true);
-  }, []);
-
-  const resume = useCallback(() => {
-    window.speechSynthesis.resume();
-    setIsPaused(false);
-  }, []);
-
-  const skip = useCallback(() => {
-    if (isWaitingForNext) {
-        if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-        playNext();
-    } else {
-        playNext();
+  // --- NEW: SETUP MEDIA HANDLERS ---
+  // This binds the Lock Screen / Headphone buttons to our functions
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.setActionHandler('play', resume);
+        navigator.mediaSession.setActionHandler('pause', pause);
+        navigator.mediaSession.setActionHandler('nexttrack', skip);
+        // Optional: 'previoustrack' could restart the article, but skipping it for now
+        // navigator.mediaSession.setActionHandler('previoustrack', () => playSingle(playlistRef.current[currentIndexRef.current]));
+      } catch (e) {
+        console.warn("Media Session API not fully supported", e);
+      }
     }
-  }, [playNext, isWaitingForNext]);
+  }, [resume, pause, skip]);
 
   return {
     isSpeaking,

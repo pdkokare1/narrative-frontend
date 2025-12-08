@@ -1,19 +1,33 @@
 /* src/components/NewsRadio.css */
 
-/* ... (Keep existing Radio Bar styles) ... */
+/* --- The Radio Control Bar (Sticky at Top) --- */
 .radio-bar-container {
-  background: var(--bg-card);
+  background: var(--bg-card); /* Keeps it solid so text doesn't show behind */
   border-bottom: 1px solid var(--border-color);
   padding: 10px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
-  border-radius: 8px;
+  margin-bottom: 25px; /* Adds space between bar and first article */
+  border-radius: 0 0 8px 8px; /* Round bottom corners only */
   box-shadow: var(--shadow-sm);
+  
+  /* --- STICKY LOGIC FIX --- */
   position: sticky;
-  top: 70px;
-  z-index: 900;
+  top: 0; /* Stick to the very top of the scrollable container */
+  z-index: 100; /* Higher than cards, lower than Main Header */
+}
+
+/* Add a pseudo-element to create a seamless border when sticking */
+.radio-bar-container::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: var(--bg-card); /* Matches bar background */
+  z-index: -1;
 }
 
 .radio-info {
@@ -30,7 +44,7 @@
   margin-right: 10px;
 }
 
-/* --- NEW: Voice Select Dropdown --- */
+/* --- Voice Select Dropdown --- */
 .voice-select {
     background: var(--bg-elevated);
     color: var(--text-secondary);
@@ -50,15 +64,16 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 300px;
+  max-width: 300px; /* Limit width on desktop */
 }
 
-/* ... (Keep Controls and Card styles) ... */
+/* --- Radio Controls Group --- */
 .radio-controls {
   display: flex;
   gap: 10px;
 }
 
+/* Base style for all radio buttons */
 .radio-btn {
   border: 1px solid var(--border-color);
   background: var(--bg-elevated);
@@ -77,6 +92,7 @@
   border-color: var(--accent-primary);
 }
 
+/* Specific button styles */
 .radio-btn.primary-action {
   background: var(--accent-primary);
   color: white;
@@ -89,7 +105,7 @@
 }
 
 .radio-btn.stop-action {
-  color: #E57373;
+  color: #E57373; /* Red text */
   border-color: rgba(229, 115, 115, 0.3);
 }
 
@@ -98,18 +114,22 @@
   color: white;
 }
 
+/* --- Article Card "Now Playing" Effect --- */
 .article-card.now-playing {
   border: 2px solid var(--accent-primary);
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-  transform: scale(1.01);
+  transform: scale(1.01); 
 }
 
+/* Mobile Adjustments */
 @media (max-width: 768px) {
   .radio-bar-container {
     flex-direction: column;
     gap: 12px;
     align-items: stretch;
-    top: 60px;
+    /* On mobile, sometimes body scrolls instead of div, keeping top:0 is usually safest for sticky headers */
+    top: 0; 
+    border-radius: 0; /* Full width on mobile */
   }
 
   .radio-info {
@@ -123,7 +143,7 @@
   }
 
   .radio-btn {
-    flex: 1;
+    flex: 1; /* Make buttons distinct/large on mobile */
     text-align: center;
   }
 }

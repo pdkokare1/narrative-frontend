@@ -27,24 +27,32 @@ function NewsFeed({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [forYouMeta, setForYouMeta] = useState(null);
 
+  // --- NEW: Scroll Tracking State ---
+  const [visibleArticleIndex, setVisibleArticleIndex] = useState(0);
+  const articleRefs = useRef([]); // Array of refs for each card
+
   const contentRef = useRef(null);
   const bottomSentinelRef = useRef(null);
   const { addToast } = useToast();
 
-  // --- RADIO HOOK INITIALIZATION ---
+  // --- RADIO HOOK ---
   const { 
     isSpeaking, 
     isPaused, 
     currentArticleId, 
-    availableVoices, // <--- Get list
-    selectedVoice,   // <--- Get current
-    changeVoice,     // <--- Get setter
+    availableVoices, 
+    selectedVoice,   
+    changeVoice,
     startRadio, 
     playSingle, 
     stop, 
     pause, 
     resume, 
-    skip 
+    skip,
+    // New Props for "Up Next" logic
+    isWaitingForNext,
+    autoplayTimer,
+    cancelAutoplay
   } = useNewsRadio();
 
   // --- Handlers ---
@@ -103,15 +111,44 @@ function NewsFeed({
     }
   }, [filters, mode, addToast, articles.length, loadingMore]);
 
+  // --- NEW: Scroll Observer for "Smart Start" ---
+  useEffect(() => {
+    if (loading || articles.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Get index from data-attribute
+            const index = Number(entry.target.dataset.index);
+            if (!isNaN(index)) {
+              // Update state to track what user is looking at
+              setVisibleArticleIndex(index);
+            }
+          }
+        });
+      },
+      { threshold: 0.6 } // Trigger when 60% of card is visible
+    );
+
+    // Observe all current card refs
+    articleRefs.current.forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, [articles, loading]);
+
+
   useEffect(() => {
     setLoading(true); 
     fetchFeed(false, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, mode]); 
 
+  // Infinite Scroll
   useEffect(() => {
     if (mode === 'foryou') return; 
-    
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !loading && !loadingMore && articles.length < totalCount) {
@@ -120,10 +157,8 @@ function NewsFeed({
       },
       { threshold: 0.1, rootMargin: '300px' } 
     );
-    
     const currentSentinel = bottomSentinelRef.current;
     if (currentSentinel) observer.observe(currentSentinel);
-    
     return () => { if (currentSentinel) observer.unobserve(currentSentinel); };
   }, [loading, loadingMore, articles.length, totalCount, mode, fetchFeed]);
 
@@ -162,7 +197,6 @@ function NewsFeed({
     </div>
   );
 
-  // --- UPDATED: Radio Bar with Voice Selector ---
   const renderRadioBar = () => {
     if (articles.length === 0) return null;
     const activeArticle = articles.find(a => a._id === currentArticleId);
@@ -175,7 +209,6 @@ function NewsFeed({
                 {isSpeaking ? (isPaused ? "RADIO PAUSED" : "ON AIR") : "NEWS RADIO"}
             </span>
             
-            {/* VOICE SELECTOR */}
             {!isSpeaking && availableVoices.length > 0 && (
                 <select 
                     className="voice-select" 
@@ -183,7 +216,7 @@ function NewsFeed({
                     onChange={(e) => changeVoice(e.target.value)}
                 >
                     {availableVoices
-                        .filter(v => v.lang.startsWith('en')) // Show only English
+                        .filter(v => v.lang.startsWith('en'))
                         .map(v => (
                             <option key={v.name} value={v.name}>
                                 {v.name.replace(/Microsoft|Google|English|United States/g, '').trim() || v.name}
@@ -203,7 +236,8 @@ function NewsFeed({
 
         <div className="radio-controls">
           {!isSpeaking ? (
-            <button className="radio-btn primary-action" onClick={() => startRadio(articles)}>
+            // --- UPDATED: Pass visibleArticleIndex to startRadio ---
+            <button className="radio-btn primary-action" onClick={() => startRadio(articles, visibleArticleIndex)}>
               Start Radio
             </button>
           ) : (
@@ -218,6 +252,22 @@ function NewsFeed({
             </>
           )}
         </div>
+      </div>
+    );
+  };
+
+  // --- NEW: Render "Up Next" Toast ---
+  const renderUpNextToast = () => {
+    if (!isWaitingForNext) return null;
+    return (
+      <div className="up-next-toast">
+        <div className="up-next-content">
+          <span className="up-next-label">Up Next in {autoplayTimer}s...</span>
+          <div className="up-next-loader" style={{ width: `${(autoplayTimer/3)*100}%` }}></div>
+        </div>
+        <button onClick={cancelAutoplay} className="up-next-cancel-btn">
+          Cancel
+        </button>
       </div>
     );
   };
@@ -264,8 +314,14 @@ function NewsFeed({
         {loading && !loadingMore ? (
            [...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> ))
         ) : (
-           articles.map((article) => (
-            <div className="article-card-wrapper" key={article._id || article.url}>
+           articles.map((article, index) => (
+            <div 
+                className="article-card-wrapper" 
+                key={article._id || article.url}
+                // --- NEW: Attach Ref for Scroll Tracking ---
+                ref={el => articleRefs.current[index] = el}
+                data-index={index}
+            >
               <ArticleCard
                 article={article}
                 onCompare={() => onCompare(article)}
@@ -276,7 +332,9 @@ function NewsFeed({
                 isSaved={savedArticleIds.has(article._id)}
                 onToggleSave={() => onToggleSave(article)}
                 isPlaying={currentArticleId === article._id}
-                onPlay={() => playSingle(article)}
+                
+                // --- UPDATED: Pass full list to enable autoplay ---
+                onPlay={() => playSingle(article, articles)}
                 onStop={stop}
               />
             </div>
@@ -300,6 +358,9 @@ function NewsFeed({
         <div ref={bottomSentinelRef} style={{ height: '20px', marginBottom: '20px' }} />
       )}
       
+      {/* --- RENDER TOAST --- */}
+      {renderUpNextToast()}
+
       {mode === 'latest' && !loading && !loadingMore && articles.length >= totalCount && articles.length > 0 && (
           <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-tertiary)', fontSize: '12px' }}>
               <p>You've caught up with the latest news!</p>

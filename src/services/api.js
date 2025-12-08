@@ -63,7 +63,13 @@ export const logRead = (id) => api.post('/activity/log-read', { articleId: id })
 // Cluster
 export const fetchCluster = (id) => api.get(`/cluster/${id}`);
 
-// --- NEW: Emergency Resources ---
+// Emergency Resources
 export const fetchEmergencyContacts = (params) => api.get('/emergency-resources', { params });
+
+// --- NEW: TTS (Audio) Streaming ---
+export const streamAudio = async (text, voiceId) => {
+    // We use responseType 'blob' because we are receiving binary audio data
+    return api.post('/tts/stream', { text, voiceId }, { responseType: 'blob' });
+};
 
 export default api;

@@ -203,3 +203,43 @@
   .sidebar-top-nav, .sidebar-account-nav { display: block; }
   .sidebar-top-nav { padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
 }
+
+
+/* src/components/Sidebar.css */
+
+/* ... (Existing styles remain the same) ... */
+
+/* ==================== EMERGENCY BUTTON STYLE ==================== */
+.emergency-sidebar-btn {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #E57373; /* Red text */
+  background-color: rgba(229, 115, 115, 0.08); /* Light red background */
+  border: 1px solid #E57373;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center; 
+  transition: all 0.2s ease;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.emergency-sidebar-btn:hover {
+  background-color: #E57373;
+  color: white;
+  border-color: #E57373;
+  text-decoration: none;
+  box-shadow: 0 2px 5px rgba(229, 115, 115, 0.3);
+}
+
+.emergency-sidebar-btn.active-link {
+  background-color: #D32F2F;
+  color: white;
+  border-color: #D32F2F;
+}
+
+/* ... (Rest of the file remains the same) ... */

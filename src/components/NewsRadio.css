@@ -5,14 +5,13 @@
   background: var(--bg-card);
   
   /* --- FIX: Match Content Width --- */
-  /* Remove negative margins so it aligns with the grid below */
   width: 100%; 
   margin-left: 0;
   margin-right: 0;
   
   /* Add a full border since it's now a "floating" element */
   border: 1px solid var(--border-color);
-  border-radius: 8px; /* Round all corners */
+  border-radius: 8px; 
   
   padding: 10px 20px;
   display: flex;
@@ -23,16 +22,10 @@
   
   /* --- STICKY LOGIC --- */
   position: sticky;
-  /* We keep top: -30px. 
-     This pulls the bar up into the page's top padding so it 
-     sticks flush against the header when you scroll, 
-     without leaving a gap.
-  */
   top: -30px; 
   z-index: 100;
 }
 
-/* We don't need the filler pseudo-element anymore */
 .radio-bar-container::before {
   display: none;
 }
@@ -82,7 +75,6 @@
   gap: 10px;
 }
 
-/* Base style for all radio buttons */
 .radio-btn {
   border: 1px solid var(--border-color);
   background: var(--bg-elevated);
@@ -129,13 +121,87 @@
   transform: scale(1.01); 
 }
 
+/* ==================== NEW: UP NEXT TOAST ==================== */
+.up-next-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent-primary);
+  padding: 15px 25px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  z-index: 2000;
+  min-width: 300px;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translate(-50%, 100%); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.up-next-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.up-next-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Progress Bar Background */
+.up-next-content::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 4px;
+  background: var(--bg-primary);
+  border-radius: 2px;
+  margin-top: 5px;
+}
+
+/* Moving Progress Bar */
+.up-next-loader {
+  height: 4px;
+  background: var(--accent-primary);
+  border-radius: 2px;
+  margin-top: -4px; /* Pull it up to overlay the background */
+  transition: width 1s linear;
+}
+
+.up-next-cancel-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.up-next-cancel-btn:hover {
+  background: var(--bg-primary);
+  color: #E57373;
+  border-color: #E57373;
+}
+
 /* Mobile Adjustments */
 @media (max-width: 768px) {
   .radio-bar-container {
     flex-direction: column;
     gap: 12px;
     align-items: stretch;
-    /* On mobile, usually simpler is better */
     top: 0; 
     border-radius: 8px;
   }
@@ -158,5 +224,11 @@
   .voice-select {
       margin-top: 5px;
       margin-left: 0;
+  }
+
+  .up-next-toast {
+    width: 90%;
+    bottom: 20px;
+    border-radius: 12px;
   }
 }

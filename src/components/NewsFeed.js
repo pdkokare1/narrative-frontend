@@ -27,9 +27,9 @@ function NewsFeed({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [forYouMeta, setForYouMeta] = useState(null);
 
-  // --- NEW: Scroll Tracking State ---
+  // Scroll Tracking State
   const [visibleArticleIndex, setVisibleArticleIndex] = useState(0);
-  const articleRefs = useRef([]); // Array of refs for each card
+  const articleRefs = useRef([]); 
 
   const contentRef = useRef(null);
   const bottomSentinelRef = useRef(null);
@@ -49,7 +49,6 @@ function NewsFeed({
     pause, 
     resume, 
     skip,
-    // New Props for "Up Next" logic
     isWaitingForNext,
     autoplayTimer,
     cancelAutoplay
@@ -111,7 +110,7 @@ function NewsFeed({
     }
   }, [filters, mode, addToast, articles.length, loadingMore]);
 
-  // --- NEW: Scroll Observer for "Smart Start" ---
+  // Scroll Observer for "Smart Start"
   useEffect(() => {
     if (loading || articles.length === 0) return;
 
@@ -119,19 +118,16 @@ function NewsFeed({
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // Get index from data-attribute
             const index = Number(entry.target.dataset.index);
             if (!isNaN(index)) {
-              // Update state to track what user is looking at
               setVisibleArticleIndex(index);
             }
           }
         });
       },
-      { threshold: 0.6 } // Trigger when 60% of card is visible
+      { threshold: 0.6 } 
     );
 
-    // Observe all current card refs
     articleRefs.current.forEach((el) => {
       if (el) observer.observe(el);
     });
@@ -236,7 +232,6 @@ function NewsFeed({
 
         <div className="radio-controls">
           {!isSpeaking ? (
-            // --- UPDATED: Pass visibleArticleIndex to startRadio ---
             <button className="radio-btn primary-action" onClick={() => startRadio(articles, visibleArticleIndex)}>
               Start Radio
             </button>
@@ -256,14 +251,15 @@ function NewsFeed({
     );
   };
 
-  // --- NEW: Render "Up Next" Toast ---
+  // --- UPDATED: Render "Up Next" Toast (5 Seconds Math) ---
   const renderUpNextToast = () => {
     if (!isWaitingForNext) return null;
     return (
       <div className="up-next-toast">
         <div className="up-next-content">
           <span className="up-next-label">Up Next in {autoplayTimer}s...</span>
-          <div className="up-next-loader" style={{ width: `${(autoplayTimer/3)*100}%` }}></div>
+          {/* Changed division from 3 to 5 to match new timer */}
+          <div className="up-next-loader" style={{ width: `${(autoplayTimer/5)*100}%` }}></div>
         </div>
         <button onClick={cancelAutoplay} className="up-next-cancel-btn">
           Cancel
@@ -318,7 +314,6 @@ function NewsFeed({
             <div 
                 className="article-card-wrapper" 
                 key={article._id || article.url}
-                // --- NEW: Attach Ref for Scroll Tracking ---
                 ref={el => articleRefs.current[index] = el}
                 data-index={index}
             >
@@ -332,8 +327,6 @@ function NewsFeed({
                 isSaved={savedArticleIds.has(article._id)}
                 onToggleSave={() => onToggleSave(article)}
                 isPlaying={currentArticleId === article._id}
-                
-                // --- UPDATED: Pass full list to enable autoplay ---
                 onPlay={() => playSingle(article, articles)}
                 onStop={stop}
               />
@@ -358,7 +351,6 @@ function NewsFeed({
         <div ref={bottomSentinelRef} style={{ height: '20px', marginBottom: '20px' }} />
       )}
       
-      {/* --- RENDER TOAST --- */}
       {renderUpNextToast()}
 
       {mode === 'latest' && !loading && !loadingMore && articles.length >= totalCount && articles.length > 0 && (

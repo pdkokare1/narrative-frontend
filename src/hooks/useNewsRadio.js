@@ -2,8 +2,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as api from '../services/api';
 
-// CHANGED: Using "Rachel" (Standard, Safe Voice ID)
-const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; 
+// PREMIUM VOICE ID (Restored)
+const DEFAULT_VOICE_ID = 'tNIuvXGG5RnGdTbvfnPR'; 
 
 const useNewsRadio = () => {
   // State
@@ -16,12 +16,11 @@ const useNewsRadio = () => {
   const [isWaitingForNext, setIsWaitingForNext] = useState(false);
   const [autoplayTimer, setAutoplayTimer] = useState(0); 
   
-  // Fake "Voices" list to keep NewsFeed.js from breaking
   const [availableVoices] = useState([{ name: 'ElevenLabs AI - Host', lang: 'en-US' }]);
   const [selectedVoice, setSelectedVoice] = useState(availableVoices[0]);
 
   // Refs
-  const audioRef = useRef(new Audio()); // Standard HTML5 Audio
+  const audioRef = useRef(new Audio()); 
   const playlistRef = useRef([]);
   const currentIndexRef = useRef(-1);
   const timerIntervalRef = useRef(null);
@@ -33,7 +32,6 @@ const useNewsRadio = () => {
     const handleEnded = () => {
       setIsSpeaking(false);
       setIsPaused(false);
-      // Automatically trigger next article logic
       startAutoplayCountdown(currentIndexRef.current);
     };
 
@@ -62,32 +60,24 @@ const useNewsRadio = () => {
     };
   }, []);
 
-  // --- 2. Playback Logic (ElevenLabs) ---
+  // --- 2. Playback Logic ---
   const playAudioForArticle = useCallback(async (article) => {
       if (!article) return;
 
-      // Reset states
       setIsLoading(true);
       setIsSpeaking(true); 
       setIsPaused(false);
       setIsWaitingForNext(false);
       
       try {
-          // Construct text: Headline + Summary
           const textToSpeak = `${article.headline}. ${article.summary}`;
 
-          // Call our Backend (which calls ElevenLabs)
-          // We pass the new SAFE voice ID here
           const response = await api.streamAudio(textToSpeak, DEFAULT_VOICE_ID);
           
-          // Create a Blob URL from the audio stream
           const audioUrl = URL.createObjectURL(response.data);
-          
-          // Play it
           audioRef.current.src = audioUrl;
           await audioRef.current.play();
           
-          // Update Lock Screen Metadata
           if ('mediaSession' in navigator) {
               navigator.mediaSession.metadata = new MediaMetadata({
                   title: article.headline,
@@ -114,11 +104,9 @@ const useNewsRadio = () => {
       stop(); 
       return;
     }
-
     currentIndexRef.current = nextIndex;
     const article = playlistRef.current[nextIndex];
     setCurrentArticleId(article._id);
-    
     playAudioForArticle(article);
   }, [playAudioForArticle]);
 
@@ -126,22 +114,16 @@ const useNewsRadio = () => {
   const stop = useCallback(() => {
     audioRef.current.pause();
     audioRef.current.currentTime = 0;
-    
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    
     setIsSpeaking(false);
     setIsPaused(false);
     setIsWaitingForNext(false); 
     setIsLoading(false);
     setAutoplayTimer(0);
-    
     setCurrentArticleId(null);
     playlistRef.current = [];
     currentIndexRef.current = -1;
-
-    if ('mediaSession' in navigator) {
-      navigator.mediaSession.playbackState = "none";
-    }
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "none";
   }, []);
 
   const pause = useCallback(() => {
@@ -171,14 +153,10 @@ const useNewsRadio = () => {
       stop();
       return;
     }
-
     setIsSpeaking(false); 
     setIsWaitingForNext(true);
     setAutoplayTimer(5);
-    
-    if ('mediaSession' in navigator) {
-      navigator.mediaSession.metadata = new MediaMetadata({ title: "Up Next...", artist: "The Gamut Radio" });
-    }
+    if ('mediaSession' in navigator) navigator.mediaSession.metadata = new MediaMetadata({ title: "Up Next...", artist: "The Gamut Radio" });
 
     timerIntervalRef.current = setInterval(() => {
       setAutoplayTimer((prev) => {
@@ -213,30 +191,12 @@ const useNewsRadio = () => {
     const thisIndex = playlistRef.current.findIndex(a => a._id === article._id);
     currentIndexRef.current = thisIndex; 
     setCurrentArticleId(article._id);
-    
     playAudioForArticle(article);
   }, [playAudioForArticle, stop]);
   
   const changeVoice = () => {}; 
 
-  return {
-    isSpeaking,
-    isPaused,
-    isWaitingForNext,
-    autoplayTimer,    
-    currentArticleId,
-    availableVoices,
-    selectedVoice,
-    changeVoice,
-    startRadio,
-    playSingle,
-    stop,
-    pause,
-    resume,
-    skip,
-    cancelAutoplay,
-    isLoading 
-  };
+  return { isSpeaking, isPaused, isWaitingForNext, autoplayTimer, currentArticleId, availableVoices, selectedVoice, changeVoice, startRadio, playSingle, stop, pause, resume, skip, cancelAutoplay, isLoading };
 };
 
 export default useNewsRadio;

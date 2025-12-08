@@ -7,6 +7,9 @@ import SkeletonCard from './ui/SkeletonCard';
 import CategoryPills from './ui/CategoryPills'; 
 import { useToast } from '../context/ToastContext';
 import '../App.css'; 
+// --- NEW IMPORTS ---
+import useNewsRadio from '../hooks/useNewsRadio';
+import './NewsRadio.css';
 
 function NewsFeed({ 
   filters, 
@@ -19,8 +22,6 @@ function NewsFeed({
 }) {
   const [mode, setMode] = useState('latest'); 
   const [articles, setArticles] = useState([]);
-  // FIX: Initialize loading to false so the fetch function can run. 
-  // We will set it to true immediately inside the effect.
   const [loading, setLoading] = useState(false); 
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
@@ -30,6 +31,19 @@ function NewsFeed({
   const contentRef = useRef(null);
   const bottomSentinelRef = useRef(null);
   const { addToast } = useToast();
+
+  // --- RADIO HOOK INITIALIZATION ---
+  const { 
+    isSpeaking, 
+    isPaused, 
+    currentArticleId, 
+    startRadio, 
+    playSingle, 
+    stop, 
+    pause, 
+    resume, 
+    skip 
+  } = useNewsRadio();
 
   // --- Handlers ---
   const handleReadClick = (article) => {
@@ -55,7 +69,6 @@ function NewsFeed({
 
   // --- Fetch Logic ---
   const fetchFeed = useCallback(async (isRefresh = false, isLoadMore = false) => {
-    // FIX: Removed the restrictive 'if (loading)' check that was blocking the initial fetch
     if (isLoadMore && loadingMore) return; 
 
     if (isRefresh) setIsRefreshing(true);
@@ -91,7 +104,6 @@ function NewsFeed({
 
   // Initial Fetch Effect
   useEffect(() => {
-    // Force loading state visually before fetch starts to prevent flash
     setLoading(true); 
     fetchFeed(false, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,6 +163,48 @@ function NewsFeed({
     </div>
   );
 
+  // --- NEW: Radio Bar Render ---
+  const renderRadioBar = () => {
+    if (articles.length === 0) return null;
+    
+    // Find headline for display
+    const activeArticle = articles.find(a => a._id === currentArticleId);
+    
+    return (
+      <div className="radio-bar-container">
+        <div className="radio-info">
+          <span className="radio-status-text">
+            {isSpeaking ? (isPaused ? "RADIO PAUSED" : "ON AIR • LISTENING") : "NEWS RADIO"}
+          </span>
+          {isSpeaking && activeArticle && (
+            <span className="radio-headline-preview">
+              Now Reading: {activeArticle.headline}
+            </span>
+          )}
+        </div>
+
+        <div className="radio-controls">
+          {!isSpeaking ? (
+            <button className="radio-btn primary-action" onClick={() => startRadio(articles)}>
+              Start Radio
+            </button>
+          ) : (
+            <>
+              {isPaused ? (
+                <button className="radio-btn" onClick={resume}>Resume</button>
+              ) : (
+                <button className="radio-btn" onClick={pause}>Pause</button>
+              )}
+              
+              <button className="radio-btn" onClick={skip}>Next</button>
+              <button className="radio-btn stop-action" onClick={stop}>Stop</button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const getPageTitle = () => {
     if (mode === 'foryou') return 'Balanced For You | The Gamut';
     if (filters.category && filters.category !== 'All Categories') return `${filters.category} News | The Gamut`;
@@ -178,6 +232,9 @@ function NewsFeed({
         </div>
       )}
 
+      {/* --- RENDER RADIO BAR --- */}
+      {renderRadioBar()}
+
       {mode === 'foryou' && forYouMeta && !loading && (
         <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
           <p>
@@ -190,10 +247,8 @@ function NewsFeed({
       {/* Main Grid */}
       <div className="articles-grid">
         {loading && !loadingMore ? (
-           // Initial Loading Skeletons
            [...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> ))
         ) : (
-           // Actual Articles
            articles.map((article) => (
             <div className="article-card-wrapper" key={article._id || article.url}>
               <ArticleCard
@@ -205,18 +260,21 @@ function NewsFeed({
                 showTooltip={showTooltip}
                 isSaved={savedArticleIds.has(article._id)}
                 onToggleSave={() => onToggleSave(article)}
+                
+                // --- NEW PROPS FOR RADIO ---
+                isPlaying={currentArticleId === article._id}
+                onPlay={() => playSingle(article)}
+                onStop={stop}
               />
             </div>
           ))
         )}
         
-        {/* Infinite Scroll Skeletons */}
         {loadingMore && (
            [...Array(3)].map((_, i) => ( <div className="article-card-wrapper" key={`more-${i}`}><SkeletonCard /></div> ))
         )}
       </div>
 
-      {/* Empty State */}
       {!loading && articles.length === 0 && (
         <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
             {mode === 'foryou' 
@@ -225,12 +283,10 @@ function NewsFeed({
         </div>
       )}
 
-      {/* Sentinel for Infinite Scroll Detection */}
       {mode === 'latest' && articles.length < totalCount && (
         <div ref={bottomSentinelRef} style={{ height: '20px', marginBottom: '20px' }} />
       )}
       
-      {/* End of Content Indicator */}
       {mode === 'latest' && !loading && !loadingMore && articles.length >= totalCount && articles.length > 0 && (
           <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-tertiary)', fontSize: '12px' }}>
               <p>You've caught up with the latest news!</p>

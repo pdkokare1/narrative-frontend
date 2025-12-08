@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as api from '../services/api';
 
-// CHANGED: Using "Rachel" (Standard Voice) which works on all plans
+// CHANGED: Using "Rachel" (Standard, Safe Voice ID)
 const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; 
 
 const useNewsRadio = () => {
@@ -16,7 +16,7 @@ const useNewsRadio = () => {
   const [isWaitingForNext, setIsWaitingForNext] = useState(false);
   const [autoplayTimer, setAutoplayTimer] = useState(0); 
   
-  // Fake "Voices" list to keep NewsFeed.js from breaking (we only have one high quality voice now)
+  // Fake "Voices" list to keep NewsFeed.js from breaking
   const [availableVoices] = useState([{ name: 'ElevenLabs AI - Host', lang: 'en-US' }]);
   const [selectedVoice, setSelectedVoice] = useState(availableVoices[0]);
 
@@ -77,6 +77,7 @@ const useNewsRadio = () => {
           const textToSpeak = `${article.headline}. ${article.summary}`;
 
           // Call our Backend (which calls ElevenLabs)
+          // We pass the new SAFE voice ID here
           const response = await api.streamAudio(textToSpeak, DEFAULT_VOICE_ID);
           
           // Create a Blob URL from the audio stream
@@ -216,7 +217,7 @@ const useNewsRadio = () => {
     playAudioForArticle(article);
   }, [playAudioForArticle, stop]);
   
-  const changeVoice = () => {}; // No-op now since we fixed the voice
+  const changeVoice = () => {}; 
 
   return {
     isSpeaking,
@@ -234,7 +235,7 @@ const useNewsRadio = () => {
     resume,
     skip,
     cancelAutoplay,
-    isLoading // Exported so UI can show a spinner if needed
+    isLoading 
   };
 };
 

@@ -13,19 +13,18 @@ function ArticleCard({
   onRead, 
   showTooltip, 
   isSaved,      
-  onToggleSave  
+  onToggleSave,
+  // --- NEW PROPS FOR AUDIO ---
+  isPlaying, 
+  onPlay, 
+  onStop 
 }) {
   const [showBriefing, setShowBriefing] = useState(false);
   const isMobileView = useIsMobile();
 
-  // In v2: 'SentimentOnly' means Soft News (Sports, Entertainment) 
-  // 'Full' means Hard News (Politics, Economy)
+  // Soft News vs Hard News Logic
   const isSoftNews = article.analysisType === 'SentimentOnly';
-  
-  // Logic: Soft News usually doesn't have multiple coverage comparisons, 
-  // but if it does (e.g. Super Bowl), we show the button.
   const showCompareOnSoft = isSoftNews && (article.clusterCount > 1);
-  const showReadOnSoft = isSoftNews && (article.clusterCount <= 1);
 
   const handleImageError = (e) => {
     e.target.style.display = 'none';
@@ -47,6 +46,29 @@ function ArticleCard({
     </button>
   );
 
+  // --- NEW: Audio Button Component ---
+  const ListenButton = () => {
+    if (isPlaying) {
+      return (
+        <button 
+          onClick={(e) => { stopMobileClick(e); onStop(); }} 
+          className="btn-secondary"
+          style={{ color: '#E57373', borderColor: '#E57373', fontWeight: '700' }}
+        >
+          Stop Audio
+        </button>
+      );
+    }
+    return (
+      <button 
+        onClick={(e) => { stopMobileClick(e); onPlay(); }} 
+        className="btn-secondary"
+      >
+        Listen
+      </button>
+    );
+  };
+
   const renderSuggestionBadge = () => {
     if (!article.suggestionType) return null;
     const isChallenge = article.suggestionType === 'Challenge';
@@ -63,7 +85,10 @@ function ArticleCard({
 
   return (
     <>
-      <div className="article-card">
+      {/* Updated Container Class:
+          We append "now-playing" if this card is currently being read by the Radio 
+      */}
+      <div className={`article-card ${isPlaying ? 'now-playing' : ''}`}>
         {renderSuggestionBadge()}
         
         <div className="article-image">
@@ -75,7 +100,6 @@ function ArticleCard({
         
         <div className="article-content">
           <div className="article-content-top">
-             {/* NEW: Display Category on the card */}
              <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ 
                     fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px', 
@@ -108,7 +132,6 @@ function ArticleCard({
             
             <div className="quality-display-v2">
                 {isSoftNews ? (
-                    // Updated Label for Soft News
                     <span className="quality-grade-text" style={{ color: 'var(--text-secondary)' }}>
                         <span style={{ fontSize: '12px', marginRight: '4px' }}>⚡</span> Quick Summary
                     </span>
@@ -127,7 +150,9 @@ function ArticleCard({
               {!isSoftNews && (
                 <>
                   <div className="article-actions-top">
-                    <button onClick={(e) => { stopMobileClick(e); setShowBriefing(true); }} className="btn-primary" style={{ background: 'var(--bg-elevated)', color: 'var(--accent-primary)', border: '1px solid var(--accent-primary)' }}>⚡ Brief</button>
+                    <button onClick={(e) => { stopMobileClick(e); setShowBriefing(true); }} className="btn-primary" style={{ background: 'var(--bg-elevated)', color: 'var(--accent-primary)', border: '1px solid var(--accent-primary)' }}>Brief</button>
+                    {/* Added Listen Button Here */}
+                    <ListenButton />
                     <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary">Share</button>
                     <SaveButton /> 
                   </div>
@@ -141,6 +166,7 @@ function ArticleCard({
               {isSoftNews && (
                 <>
                   <div className="article-actions-top">
+                    <ListenButton />
                     <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary">Share</button>
                     <SaveButton /> 
                   </div>

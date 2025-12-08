@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import * as api from './services/api';
 import './App.css';
-import './EmergencyResources.css'; // We will create this next
+import './EmergencyResources.css';
 
 function EmergencyResources() {
   const [contacts, setContacts] = useState([]);
@@ -10,15 +10,25 @@ function EmergencyResources() {
   const [error, setError] = useState('');
   
   // Filters
-  const [activeScope, setActiveScope] = useState('All'); // All, All India, Mumbai, Pune, etc.
+  const [activeScope, setActiveScope] = useState('All'); 
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch Data
+  // --- HARDCODED CRITICAL CONTACTS ---
+  const criticalContacts = [
+    { name: 'Police', number: '100' },
+    { name: 'Ambulance', number: '108' },
+    { name: 'Women In Distress', number: '1091' },
+    { name: 'Child Helpline', number: '1098' },
+    { name: 'Highway Helpline', number: '1033' },
+    { name: 'Railway Police (RPF)', number: '139' },
+    { name: 'Cyber Crime', number: '1930' },
+    { name: 'Fire', number: '101' }
+  ];
+
   useEffect(() => {
     const loadContacts = async () => {
       try {
         setLoading(true);
-        // We fetch ALL contacts once and filter client-side for instant speed
         const { data } = await api.fetchEmergencyContacts();
         setContacts(data.contacts || []);
       } catch (err) {
@@ -31,10 +41,8 @@ function EmergencyResources() {
     loadContacts();
   }, []);
 
-  // --- Filter Logic ---
   const filteredContacts = useMemo(() => {
     return contacts.filter(contact => {
-      // 1. Search Filter
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = 
         contact.serviceName.toLowerCase().includes(searchLower) ||
@@ -42,17 +50,13 @@ function EmergencyResources() {
         contact.number.includes(searchQuery);
 
       if (!matchesSearch) return false;
-
-      // 2. Scope Filter
       if (activeScope === 'All') return true;
       if (activeScope === 'National') return contact.scope === 'All India' || contact.scope === 'Pan-India';
       if (activeScope === 'Local') return contact.scope !== 'All India' && contact.scope !== 'Pan-India';
-      
       return contact.scope === activeScope;
     });
   }, [contacts, activeScope, searchQuery]);
 
-  // --- Group by Category ---
   const groupedContacts = useMemo(() => {
     const groups = {};
     filteredContacts.forEach(contact => {
@@ -62,11 +66,19 @@ function EmergencyResources() {
     return groups;
   }, [filteredContacts]);
 
-  // Extract unique scopes for the dropdown
   const uniqueScopes = useMemo(() => {
     const scopes = new Set(contacts.map(c => c.scope));
     return ['All', 'National', ...Array.from(scopes).filter(s => s !== 'All India' && s !== 'Pan-India').sort()];
   }, [contacts]);
+
+  // --- HELPER TO SPLIT NUMBERS ---
+  // Splits by comma, 'or', forward slash, or 'and'
+  const splitPhoneNumbers = (phoneString) => {
+    if (!phoneString) return [];
+    // Regex splits by: "," OR "/" OR " or " (case insensitive)
+    const rawNumbers = phoneString.split(/,|\/|\bor\b/i);
+    return rawNumbers.map(n => n.trim()).filter(n => n.length > 2); // Filter out tiny/empty strings
+  };
 
   return (
     <div className="content">
@@ -98,6 +110,19 @@ function EmergencyResources() {
         </div>
       </div>
 
+      {/* --- NEW: Critical Numbers Section --- */}
+      <div className="critical-section">
+        <h2 className="section-title-header" style={{ marginBottom: '15px' }}>Critical Helplines</h2>
+        <div className="critical-grid">
+            {criticalContacts.map((item, index) => (
+                <a key={index} href={`tel:${item.number}`} className="critical-card-btn">
+                    <span className="critical-name">{item.name}</span>
+                    <span className="critical-number">📞 {item.number}</span>
+                </a>
+            ))}
+        </div>
+      </div>
+
       {loading && (
         <div className="loading-container">
           <div className="spinner"></div>
@@ -119,22 +144,31 @@ function EmergencyResources() {
           <div key={category} className="category-group">
             <h2 className="category-title">{category}</h2>
             <div className="card-list">
-              {items.map(item => (
-                <div key={item._id} className="emergency-card">
-                  <div className="emergency-info">
-                    <h3>{item.serviceName}</h3>
-                    <p>{item.description}</p>
-                    <div className="emergency-meta">
-                      <span className="badge-scope">{item.scope}</span>
-                      <span className="badge-hours">{item.hours}</span>
+              {items.map(item => {
+                const numbers = splitPhoneNumbers(item.number);
+                return (
+                  <div key={item._id} className="emergency-card">
+                    <div className="emergency-info">
+                      <h3>{item.serviceName}</h3>
+                      <p>{item.description}</p>
+                      <div className="emergency-meta">
+                        <span className="badge-scope">{item.scope}</span>
+                        <span className="badge-hours">{item.hours}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Updated: Render split buttons for numbers */}
+                    <div className="call-actions-col">
+                        {numbers.map((num, idx) => (
+                            <a key={idx} href={`tel:${num.replace(/[^0-9]/g, '')}`} className="call-btn-small">
+                                <span className="call-icon">📞</span>
+                                <span className="call-number">{num}</span>
+                            </a>
+                        ))}
                     </div>
                   </div>
-                  <a href={`tel:${item.number.split(',')[0].replace(/[^0-9]/g, '')}`} className="call-btn">
-                    <span className="call-icon">📞</span>
-                    <span className="call-number">{item.number}</span>
-                  </a>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}

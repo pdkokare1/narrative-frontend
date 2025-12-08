@@ -1,276 +1,146 @@
-.emergency-resources-page {
-    padding: 30px;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-  
-  .emergency-header {
-    text-align: center;
+/* src/EmergencyResources.css */
+
+/* ... (Keep existing Header Styles) ... */
+.emergency-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.emergency-page-title { font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 5px; }
+.emergency-subtitle { color: var(--text-secondary); font-size: 14px; }
+.emergency-controls { display: flex; gap: 10px; flex-wrap: wrap; }
+.emergency-search, .emergency-select { padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-elevated); color: var(--text-primary); font-size: 13px; outline: none; }
+.emergency-search { min-width: 220px; }
+.emergency-search:focus, .emergency-select:focus { border-color: var(--accent-primary); }
+
+
+/* --- NEW: Critical Section --- */
+.critical-section {
     margin-bottom: 40px;
-  }
-  
-  .emergency-header h1 {
-    font-size: 2.5rem;
-    color: var(--text-primary);
-    margin-bottom: 10px;
-  }
-  
-  .emergency-header p {
-    color: var(--text-secondary);
-    font-size: 1.2rem;
-  }
-
-  /* --- New Critical Helplines Section --- */
-  .critical-helplines-section {
-    margin-bottom: 40px;
-    background-color: rgba(229, 57, 53, 0.05); /* Faint red background */
-    padding: 25px;
-    border-radius: 16px;
-    border: 1px solid rgba(229, 57, 53, 0.2);
-  }
-
-  .critical-helplines-section h2 {
-    text-align: center;
-    margin-bottom: 20px;
-    color: #d32f2f; /* Darker red title */
-    font-weight: 600;
-  }
-
-  .critical-cards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 20px;
-  }
-
-  .critical-card {
-    background: var(--card-bg);
+    background: var(--bg-card-flat);
     padding: 20px;
     border-radius: 12px;
-    text-align: center;
-    box-shadow: var(--card-shadow);
-    transition: transform 0.2s ease;
-    border: 2px solid transparent;
+    border: 1px solid var(--border-color);
+}
+
+.critical-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+}
+
+.critical-card-btn {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-  }
-  
-  .critical-card:hover {
-      transform: translateY(-3px);
-      border-color: #ef5350;
-  }
-
-  .critical-icon {
-      color: #d32f2f;
-      margin-bottom: 10px;
-      transform: scale(1.5);
-  }
-
-  .critical-info h3 {
-      font-size: 1rem;
-      margin-bottom: 15px;
-      color: var(--text-primary);
-      font-weight: 600;
-      height: 40px; /* Fixed height for alignment */
-      display: flex;
-      align-items: center;
-      justify-content: center;
-  }
-
-  .critical-call-btn {
-    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    background-color: #d32f2f; /* Red button */
-    color: white;
-    padding: 10px 16px;
-    border-radius: 30px;
+    background: rgba(220, 38, 38, 0.1); /* Light red tint */
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    padding: 15px 10px;
+    border-radius: 8px;
     text-decoration: none;
-    font-weight: 600;
-    transition: background-color 0.2s;
-    width: 100%;
-    box-sizing: border-box;
-  }
+    transition: all 0.2s ease;
+    text-align: center;
+}
 
-  .critical-call-btn:hover {
-    background-color: #b71c1c;
-  }
-  
-  /* --- Search and Main Grid --- */
-  .search-container {
-    position: relative;
-    margin-bottom: 35px;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  
-  .search-icon {
-    position: absolute;
-    left: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-secondary);
-  }
-  
-  .search-container input {
-    width: 100%;
-    padding: 14px 14px 14px 45px;
-    border-radius: 30px;
-    border: 2px solid var(--border-color);
-    background-color: var(--card-bg);
+.critical-card-btn:hover {
+    background: #dc2626; /* Red */
+    border-color: #dc2626;
+    transform: translateY(-2px);
+}
+
+.critical-name {
+    font-size: 11px;
+    font-weight: 600;
     color: var(--text-primary);
-    font-size: 1rem;
-    transition: border-color 0.3s;
-  }
-  
-  .search-container input:focus {
-    border-color: var(--primary-color);
-    outline: none;
-  }
-  
-  .contacts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 25px;
-  }
-  
-  .contact-card {
-    background-color: var(--card-bg);
-    border-radius: 16px;
-    padding: 25px;
-    box-shadow: var(--card-shadow);
-    position: relative;
-    border: 1px solid var(--border-color);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.critical-number {
+    font-size: 16px;
+    font-weight: 700;
+    color: #dc2626;
+}
+
+.critical-card-btn:hover .critical-name,
+.critical-card-btn:hover .critical-number {
+    color: white;
+}
+
+
+/* --- Main Grid Styles --- */
+.emergency-grid { display: flex; flex-direction: column; gap: 40px; }
+.category-group { animation: fadeIn 0.3s ease-in-out; }
+.category-title { font-size: 16px; font-weight: 600; color: var(--accent-primary); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.5px; border-left: 3px solid var(--accent-primary); padding-left: 10px; }
+.card-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; }
+
+/* --- Updated Card Styles --- */
+.emergency-card {
+  background: var(--bg-card-flat);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Changed from center to start */
+  gap: 15px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.emergency-info { flex: 1; }
+.emergency-info h3 { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+.emergency-info p { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.4; }
+
+.emergency-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+.badge-scope, .badge-hours { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
+.badge-scope { background: var(--bg-elevated); color: var(--text-tertiary); border: 1px solid var(--border-color); }
+.badge-hours { background: rgba(76, 175, 80, 0.1); color: #4CAF50; border: 1px solid rgba(76, 175, 80, 0.2); }
+
+/* --- New Action Column for Split Numbers --- */
+.call-actions-col {
     display: flex;
     flex-direction: column;
-  }
-  
-  .contact-type-badge {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background-color: var(--primary-light);
-    color: var(--primary-color);
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  
-  .contact-card h3 {
-    margin-top: 25px; /* Spacing for badge */
-    margin-bottom: 20px;
-    font-size: 1.3rem;
-    color: var(--text-primary);
-    padding-right: 80px; /* prevent overlap with badge */
-    line-height: 1.3;
-  }
-  
-  .contact-details {
-    margin-bottom: 20px;
-    flex-grow: 1;
-  }
+    gap: 8px;
+    flex-shrink: 0;
+    min-width: 100px;
+}
 
-  /* Styles for the container of multiple phone numbers */
-  .phone-list {
-      display: flex;
-      flex-direction: column; /* Stack numbers vertically */
-      gap: 10px;
-      margin-bottom: 15px;
-  }
-  
-  .contact-link {
-    display: flex;
-    align-items: center;
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.2s;
-    font-size: 1.05rem;
-  }
-  
-  /* Specific styling for phone links to make them look actionable */
-  .phone-link {
-      color: var(--primary-color);
-      background-color: var(--primary-light);
-      padding: 8px 12px;
-      border-radius: 8px;
-      width: fit-content; /* Only take necessary width */
-  }
+.call-btn-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #2E7D32; /* Standard Green */
+  color: white;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
 
-  .phone-link:hover {
-      background-color: var(--primary-color);
-      color: white;
-  }
+.call-btn-small:hover {
+  background: #1B5E20;
+  color: white;
+}
 
-  .no-phone {
-      color: var(--text-secondary);
-      font-style: italic;
-      margin-bottom: 15px;
-  }
-  
-  .location-info {
-    display: flex;
-    align-items: flex-start;
-    color: var(--text-secondary);
-    margin-top: 15px;
-  }
-  
-  .link-icon {
-    margin-right: 10px;
-    color: var(--primary-color);
-    font-size: 1.2rem;
-  }
+.call-icon { margin-right: 5px; font-size: 12px; }
 
-  /* Override icon color specifically for phone links when hovered */
-  .phone-link:hover .link-icon {
-      color: white;
-  }
+/* --- Mobile Responsive --- */
+@media (max-width: 768px) {
+  .emergency-header-container { flex-direction: column; align-items: flex-start; gap: 15px; }
+  .emergency-controls { width: 100%; }
+  .emergency-search, .emergency-select { width: 100%; }
+  .card-list { grid-template-columns: 1fr; }
   
-  .contact-description {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    line-height: 1.5;
-    border-top: 1px solid var(--border-color);
-    padding-top: 15px;
-  }
-  
-  .error-message {
-    color: #d32f2f;
-    text-align: center;
-    font-weight: 600;
-    margin-bottom: 20px;
-  }
-  
-  .no-results {
-    text-align: center;
-    color: var(--text-secondary);
-    font-size: 1.2rem;
-    grid-column: 1 / -1;
-    padding: 40px;
-  }
-  
-  @media (max-width: 768px) {
-    .emergency-header h1 {
-      font-size: 2rem;
-    }
-
-    .critical-cards-grid {
-        grid-template-columns: repeat(2, 1fr); /* 2 columns on tablets */
-    }
-  
-    .contacts-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .critical-cards-grid {
-        grid-template-columns: 1fr; /* 1 column on mobile */
-    }
-  }
+  .emergency-card { flex-direction: column; }
+  .call-actions-col { width: 100%; flex-direction: row; flex-wrap: wrap; }
+  .call-btn-small { flex: 1; justify-content: center; }
+}

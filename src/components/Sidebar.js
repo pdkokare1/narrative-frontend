@@ -5,9 +5,8 @@ import * as api from '../services/api';
 import '../App.css'; 
 import './Sidebar.css'; 
 
-// Added default values for props to prevent "undefined" map errors
+// FIX: Added default values for props (filters={}, trendingTopics=[]) to stop the crash
 function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout, trendingTopics = [] }) {
-  // We can keep the internal fetching logic as a fallback if trendingTopics isn't passed from parent
   const [localTrending, setLocalTrending] = useState([]);
   const navigate = useNavigate();
 
@@ -72,7 +71,7 @@ function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout, tren
           </ul>
         </div>
 
-        {/* --- UPDATED: Emergency Help Button (Styled like Sign Out) --- */}
+        {/* --- UPDATED: Emergency Help Button (Styled like Sign Out, No Icon) --- */}
         <div className="sidebar-section">
            <SidebarNavLink 
              to="/emergency-resources" 
@@ -82,7 +81,7 @@ function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout, tren
            </SidebarNavLink>
         </div>
 
-        {/* --- Trending Section --- */}
+        {/* --- Trending Section (Fixed Map Error) --- */}
         {displayTopics.length > 0 && (
           <div className="sidebar-section">
             <h3>Trending Now</h3>

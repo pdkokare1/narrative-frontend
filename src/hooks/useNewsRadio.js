@@ -6,19 +6,47 @@ const useNewsRadio = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [currentArticleId, setCurrentArticleId] = useState(null);
   
-  // Store the list of articles to play in a queue
+  // --- NEW: Voice Management ---
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const [selectedVoice, setSelectedVoice] = useState(null);
+
   const playlistRef = useRef([]);
-  // Track which index we are currently reading
   const currentIndexRef = useRef(-1);
-  // Store the SpeechSynthesisUtterance instance
   const utteranceRef = useRef(null);
 
+  // 1. Load Voices Properly (Fixes the "Robotic" issue)
   useEffect(() => {
-    // Cleanup on unmount: stop talking if the user leaves the page
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        setAvailableVoices(voices);
+        
+        // Try to auto-select the best voice (Non-robotic ones)
+        // Priority: Google US English > Microsoft Zira > Apple System > First Available
+        const bestVoice = voices.find(v => v.name === 'Google US English') // Chrome's best free voice
+                       || voices.find(v => v.name.includes('Google')) 
+                       || voices.find(v => v.name.includes('Microsoft') && v.name.includes('Online')) // Edge's best voice
+                       || voices.find(v => v.name.includes('Natural')) 
+                       || voices[0];
+                       
+        setSelectedVoice(bestVoice);
+      }
+    };
+
+    // Chrome loads voices asynchronously, so we must listen for this event
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices(); // Trigger immediately in case they are already loaded
+
     return () => {
       window.speechSynthesis.cancel();
+      window.speechSynthesis.onvoiceschanged = null;
     };
   }, []);
+
+  const changeVoice = useCallback((voiceName) => {
+    const voice = availableVoices.find(v => v.name === voiceName);
+    if (voice) setSelectedVoice(voice);
+  }, [availableVoices]);
 
   const stop = useCallback(() => {
     window.speechSynthesis.cancel();
@@ -30,18 +58,18 @@ const useNewsRadio = () => {
   }, []);
 
   const speakText = useCallback((text, onEndCallback) => {
-    // Cancel any existing speech
     window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
     utteranceRef.current = utterance;
 
-    // Configure Voice (Optional: Try to pick a Google/Microsoft English voice if available)
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => v.name.includes('Google US English') || v.name.includes('Microsoft David')) || voices[0];
-    if (preferredVoice) utterance.voice = preferredVoice;
+    // Apply the selected high-quality voice
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
 
-    utterance.rate = 1.0; // Normal speed
+    // Slightly slower rate sounds more natural for news
+    utterance.rate = 0.95; 
     utterance.pitch = 1.0;
 
     utterance.onstart = () => {
@@ -59,14 +87,12 @@ const useNewsRadio = () => {
     };
 
     window.speechSynthesis.speak(utterance);
-  }, []);
+  }, [selectedVoice]); // Re-create if voice changes
 
   const playNext = useCallback(() => {
     const nextIndex = currentIndexRef.current + 1;
-    
-    // Check if we have reached the end of the playlist
     if (nextIndex >= playlistRef.current.length) {
-      stop(); // End of Radio
+      stop(); 
       return;
     }
 
@@ -74,39 +100,27 @@ const useNewsRadio = () => {
     const article = playlistRef.current[nextIndex];
     setCurrentArticleId(article._id);
 
-    // Construct the text to read
-    // "Headline... [pause]... Summary"
-    const textToRead = `${article.headline}. . ${article.summary}`;
+    // Add a slight pause formatting for better listening
+    const textToRead = `${article.headline}. ... ${article.summary}`;
 
     speakText(textToRead, () => {
-      // When finished, automatically call playNext again (Recursion for Autoplay)
       playNext();
     });
   }, [speakText, stop]);
 
-  // --- Public Action: Start Radio Mode ---
   const startRadio = useCallback((articles) => {
-    stop(); // Reset everything
+    stop();
     if (!articles || articles.length === 0) return;
-
     playlistRef.current = articles;
-    currentIndexRef.current = -1; // Will become 0 in playNext()
-    
-    // Start the chain
+    currentIndexRef.current = -1;
     playNext();
   }, [playNext, stop]);
 
-  // --- Public Action: Play Single Article ---
   const playSingle = useCallback((article) => {
-    stop(); // Reset everything
+    stop();
     setCurrentArticleId(article._id);
-    
-    const textToRead = `${article.headline}. . ${article.summary}`;
-    
-    speakText(textToRead, () => {
-      // When finished, just stop (don't play next)
-      stop();
-    });
+    const textToRead = `${article.headline}. ... ${article.summary}`;
+    speakText(textToRead, () => stop());
   }, [speakText, stop]);
 
   const pause = useCallback(() => {
@@ -120,16 +134,18 @@ const useNewsRadio = () => {
   }, []);
 
   const skip = useCallback(() => {
-    // Just triggering playNext() will cancel current speech and move on
     playNext();
   }, [playNext]);
 
   return {
     isSpeaking,
     isPaused,
-    currentArticleId, // Used to highlight the active card
-    startRadio,       // Pass the whole array of articles here
-    playSingle,       // Pass just one article here
+    currentArticleId,
+    availableVoices, // List of voices for the UI
+    selectedVoice,   // Currently selected voice
+    changeVoice,     // Function to change voice
+    startRadio,
+    playSingle,
     stop,
     pause,
     resume,

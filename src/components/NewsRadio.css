@@ -3,27 +3,38 @@
 /* --- The Radio Control Bar (Sticky at Top) --- */
 .radio-bar-container {
   background: var(--bg-card);
-  border-bottom: 1px solid var(--border-color);
   
-  /* --- FIX FOR STICKY GAP --- */
-  /* 1. Pull the bar out to the edges (ignoring parent padding) */
-  margin-left: -40px;
-  margin-right: -40px;
-  width: calc(100% + 80px);
+  /* --- FIX: Match Content Width --- */
+  /* Remove negative margins so it aligns with the grid below */
+  width: 100%; 
+  margin-left: 0;
+  margin-right: 0;
   
-  /* 2. Restore internal padding so text lines up */
-  padding: 12px 40px;
+  /* Add a full border since it's now a "floating" element */
+  border: 1px solid var(--border-color);
+  border-radius: 8px; /* Round all corners */
   
-  /* 3. Stick logic: "top: -30px" counteracts the main content's top padding */
-  position: sticky;
-  top: -30px; 
-  z-index: 900;
-  
+  padding: 10px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 25px;
   box-shadow: var(--shadow-sm);
+  
+  /* --- STICKY LOGIC --- */
+  position: sticky;
+  /* We keep top: -30px. 
+     This pulls the bar up into the page's top padding so it 
+     sticks flush against the header when you scroll, 
+     without leaving a gap.
+  */
+  top: -30px; 
+  z-index: 100;
+}
+
+/* We don't need the filler pseudo-element anymore */
+.radio-bar-container::before {
+  display: none;
 }
 
 .radio-info {
@@ -121,17 +132,12 @@
 /* Mobile Adjustments */
 @media (max-width: 768px) {
   .radio-bar-container {
-    /* Reset margins for mobile since mobile usually has 0 padding */
-    width: 100%;
-    margin-left: 0;
-    margin-right: 0;
-    padding: 15px;
-    top: 0; /* On mobile, flush top usually works */
-    
     flex-direction: column;
     gap: 12px;
     align-items: stretch;
-    border-radius: 0;
+    /* On mobile, usually simpler is better */
+    top: 0; 
+    border-radius: 8px;
   }
 
   .radio-info {

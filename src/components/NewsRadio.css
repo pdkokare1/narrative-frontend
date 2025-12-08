@@ -1,0 +1,121 @@
+/* src/components/NewsRadio.css */
+
+/* --- The Radio Control Bar (Sticky at Top) --- */
+.radio-bar-container {
+  background: var(--bg-card); /* Matches card background */
+  border-bottom: 1px solid var(--border-color);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  /* Optional: Make it sticky below the header */
+  position: sticky;
+  top: 70px; /* Adjust based on your header height */
+  z-index: 900;
+}
+
+.radio-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.radio-status-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.radio-headline-preview {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px; /* Limit width on desktop */
+}
+
+/* --- Radio Controls Group --- */
+.radio-controls {
+  display: flex;
+  gap: 10px;
+}
+
+/* Base style for all radio buttons */
+.radio-btn {
+  border: 1px solid var(--border-color);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.radio-btn:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+/* Specific button styles */
+.radio-btn.primary-action {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+}
+
+.radio-btn.primary-action:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.radio-btn.stop-action {
+  color: #E57373; /* Red text */
+  border-color: rgba(229, 115, 115, 0.3);
+}
+
+.radio-btn.stop-action:hover {
+  background: #E57373;
+  color: white;
+}
+
+/* --- Article Card "Now Playing" Effect --- */
+/* This class will be added conditionally to the active card */
+.article-card.now-playing {
+  border: 2px solid var(--accent-primary);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  transform: scale(1.01); /* Slight pop */
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .radio-bar-container {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+    top: 60px; /* Adjust for mobile header */
+  }
+
+  .radio-info {
+    text-align: center;
+    align-items: center;
+  }
+
+  .radio-controls {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .radio-btn {
+    flex: 1; /* Make buttons distinct/large on mobile */
+    text-align: center;
+  }
+}

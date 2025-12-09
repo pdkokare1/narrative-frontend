@@ -6,9 +6,8 @@ import ArticleCard from './ArticleCard';
 import SkeletonCard from './ui/SkeletonCard';
 import CategoryPills from './ui/CategoryPills'; 
 import { useToast } from '../context/ToastContext';
+import { useRadio } from '../context/RadioContext'; // <--- CONNECT TO GLOBAL CONTEXT
 import '../App.css'; 
-import useNewsRadio from '../hooks/useNewsRadio';
-import './NewsRadio.css';
 
 function NewsFeed({ 
   filters, 
@@ -35,23 +34,14 @@ function NewsFeed({
   const bottomSentinelRef = useRef(null);
   const { addToast } = useToast();
 
-  // --- RADIO HOOK ---
+  // --- CONNECT TO GLOBAL RADIO ---
   const { 
-    isSpeaking, 
-    isPaused, 
-    currentArticleId, 
-    currentSpeaker, 
     startRadio, 
     playSingle, 
     stop, 
-    pause, 
-    resume, 
-    skip,
-    isWaitingForNext,
-    autoplayTimer,
-    cancelAutoplay,
-    isLoading: isRadioLoading
-  } = useNewsRadio();
+    currentArticle, // Use this to check what's playing
+    isPlaying // Use this to check if audio is active
+  } = useRadio();
 
   // --- Handlers ---
   const handleReadClick = (article) => {
@@ -192,72 +182,6 @@ function NewsFeed({
     </div>
   );
 
-  const renderRadioBar = () => {
-    if (articles.length === 0) return null;
-    const activeArticle = articles.find(a => a._id === currentArticleId);
-    
-    // Default text if nothing is playing yet
-    const speakerDisplay = currentSpeaker ? (
-        <div className="radio-live-indicator">
-            <div className="pulse-dot"></div>
-            <span className="speaker-name">{currentSpeaker.name}</span>
-            <span className="speaker-role">| {currentSpeaker.role}</span>
-        </div>
-    ) : (
-        <span className="radio-brand">THE GAMUT RADIO</span>
-    );
-
-    return (
-      <div className="radio-bar-container">
-        <div className="radio-info">
-          
-          <div className="radio-meta-row">
-             {speakerDisplay}
-          </div>
-
-          {activeArticle && (
-            <span className="radio-headline-preview">
-              {isRadioLoading ? 'Buffering...' : `Now Reading: ${activeArticle.headline}`}
-            </span>
-          )}
-        </div>
-
-        <div className="radio-controls">
-          {!isSpeaking && !isRadioLoading ? (
-            <button className="radio-btn primary-action" onClick={() => startRadio(articles, visibleArticleIndex)}>
-               ▶ Start Radio
-            </button>
-          ) : (
-            <>
-              {isPaused ? (
-                <button className="radio-btn" onClick={resume}>▶ Resume</button>
-              ) : (
-                <button className="radio-btn" onClick={pause}>⏸ Pause</button>
-              )}
-              <button className="radio-btn" onClick={skip}>⏭ Next</button>
-              <button className="radio-btn stop-action" onClick={stop}>Stop</button>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderUpNextToast = () => {
-    if (!isWaitingForNext) return null;
-    return (
-      <div className="up-next-toast">
-        <div className="up-next-content">
-          <span className="up-next-label">Up Next in {autoplayTimer}s...</span>
-          <div className="up-next-loader" style={{ width: `${(autoplayTimer/5)*100}%` }}></div>
-        </div>
-        <button onClick={cancelAutoplay} className="up-next-cancel-btn">
-          Cancel
-        </button>
-      </div>
-    );
-  };
-
   const getPageTitle = () => {
     if (mode === 'foryou') return 'Balanced For You | The Gamut';
     if (filters.category && filters.category !== 'All Categories') return `${filters.category} News | The Gamut`;
@@ -285,7 +209,19 @@ function NewsFeed({
         </div>
       )}
 
-      {renderRadioBar()}
+      {/* --- RADIO TRIGGER BUTTON --- */}
+      {/* If nothing is playing, show a big "Start Radio" button here */}
+      {!isPlaying && articles.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px' }}>
+            <button 
+                onClick={() => startRadio(articles, visibleArticleIndex)}
+                className="btn-primary"
+                style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+                <span>▶</span> Start News Radio
+            </button>
+        </div>
+      )}
 
       {mode === 'foryou' && forYouMeta && !loading && (
         <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
@@ -316,8 +252,9 @@ function NewsFeed({
                 showTooltip={showTooltip}
                 isSaved={savedArticleIds.has(article._id)}
                 onToggleSave={() => onToggleSave(article)}
-                isPlaying={currentArticleId === article._id}
-                onPlay={() => playSingle(article, articles)}
+                // --- CONNECTED PROPS ---
+                isPlaying={currentArticle && currentArticle._id === article._id}
+                onPlay={() => playSingle(article)}
                 onStop={stop}
               />
             </div>
@@ -341,8 +278,6 @@ function NewsFeed({
         <div ref={bottomSentinelRef} style={{ height: '20px', marginBottom: '20px' }} />
       )}
       
-      {renderUpNextToast()}
-
       {mode === 'latest' && !loading && !loadingMore && articles.length >= totalCount && articles.length > 0 && (
           <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-tertiary)', fontSize: '12px' }}>
               <p>You've caught up with the latest news!</p>

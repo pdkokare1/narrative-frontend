@@ -2,8 +2,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as api from '../services/api';
 
-// NEW VOICE ID: "News Anchor" Style
-const DEFAULT_VOICE_ID = 'Dslrhjl3ZpzrctukrQSN'; 
+// NEW VOICE ID (From Chat)
+const DEFAULT_VOICE_ID = 'NxHFlWKeVmQmgAp9c7Pk'; 
 
 const useNewsRadio = () => {
   // State

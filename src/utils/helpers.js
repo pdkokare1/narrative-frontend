@@ -1,20 +1,52 @@
 // In file: src/utils/helpers.js
 
 /**
- * Returns the correct CSS class for a sentiment string.
+ * Returns display details for a sentiment value.
+ * Maps backend "Positive/Negative" to frontend "Supportive/Critical".
  * @param {string} sentiment - 'Positive', 'Negative', or 'Neutral'
- * @returns {string} - 'sentiment-positive', 'sentiment-negative', or 'sentiment-neutral'
+ * @returns {object} - { label: string, className: string, icon: string }
+ */
+export const getSentimentInfo = (sentiment) => {
+  if (!sentiment) return { label: 'Neutral', className: 'sentiment-neutral', icon: '😐' };
+  
+  const lower = sentiment.toLowerCase();
+  
+  if (lower === 'positive') {
+    return { label: 'Supportive', className: 'sentiment-positive', icon: '📈' };
+  }
+  if (lower === 'negative') {
+    return { label: 'Critical', className: 'sentiment-negative', icon: '📉' };
+  }
+  return { label: 'Neutral', className: 'sentiment-neutral', icon: '😐' };
+};
+
+/**
+ * Returns the correct CSS class for a sentiment string (Legacy support).
  */
 export const getSentimentClass = (sentiment) => {
-  if (sentiment === 'Positive') return 'sentiment-positive';
-  if (sentiment === 'Negative') return 'sentiment-negative';
-  return 'sentiment-neutral';
+  return getSentimentInfo(sentiment).className;
+};
+
+/**
+ * Checks if an article is likely an Opinion/Op-Ed piece.
+ */
+export const isOpinion = (article) => {
+  if (!article) return false;
+  const cat = (article.category || '').toLowerCase();
+  const headline = (article.headline || '').toLowerCase();
+  
+  return (
+    cat.includes('opinion') || 
+    cat.includes('editorial') || 
+    cat.includes('commentary') ||
+    cat.includes('perspective') ||
+    headline.startsWith('opinion:') ||
+    headline.includes(' op-ed ')
+  );
 };
 
 /**
  * Returns the tooltip text for a given analysis breakdown label.
- * @param {string} label - The label of the component (e.g., "Sentiment Polarity")
- * @returns {string} - The explanation text.
  */
 export const getBreakdownTooltip = (label) => {
   const tooltips = {
@@ -44,5 +76,5 @@ export const getBreakdownTooltip = (label) => {
     "Corrections Policy": "Assesses the clarity, visibility, and timeliness of corrections for errors.",
     "Update Maintenance": "Measures how well the source updates developing stories with new information.",
   };
-  return tooltips[label] || label; // Return explanation or the label itself as fallback
+  return tooltips[label] || label;
 };

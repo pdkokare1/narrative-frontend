@@ -66,10 +66,10 @@ export const fetchCluster = (id) => api.get(`/cluster/${id}`);
 // Emergency Resources
 export const fetchEmergencyContacts = (params) => api.get('/emergency-resources', { params });
 
-// --- NEW: TTS (Audio) Streaming ---
-export const streamAudio = async (text, voiceId) => {
-    // We use responseType 'blob' because we are receiving binary audio data
-    return api.post('/tts/stream', { text, voiceId }, { responseType: 'blob' });
+// --- NEW: Audio Cache Fetching ---
+// We no longer stream binary blobs. We get a URL string.
+export const getAudio = async (text, voiceId, articleId) => {
+    return api.post('/tts/get-audio', { text, voiceId, articleId });
 };
 
 export default api;

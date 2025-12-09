@@ -115,7 +115,7 @@ const useNewsRadio = () => {
       return VOICES.ANCHOR;
   };
 
-  // --- 3. Playback Logic ---
+  // --- 3. Playback Logic (UPDATED FOR CLOUDINARY) ---
   const playAudioForArticle = useCallback(async (article) => {
       if (!article) return;
 
@@ -127,20 +127,24 @@ const useNewsRadio = () => {
       try {
           // 1. Determine Persona
           const persona = getPersonaForCategory(article.category);
-          setCurrentSpeaker(persona); // Update UI to show name
+          setCurrentSpeaker(persona); 
           
           console.log(`🎙️ On Air: ${persona.name} (${persona.role}) reading "${article.headline}"`);
 
           // 2. Prepare Text
           const textToSpeak = `${article.headline}. ${article.summary}`;
 
-          // 3. Call Backend
-          const response = await api.streamAudio(textToSpeak, persona.id);
+          // 3. Call Backend (UPDATED: Uses getAudio instead of streamAudio)
+          // This will check the database cache first!
+          const response = await api.getAudio(textToSpeak, persona.id, article._id);
           
-          // 4. Play
-          const audioUrl = URL.createObjectURL(response.data);
-          audioRef.current.src = audioUrl;
-          await audioRef.current.play();
+          if (response.data && response.data.audioUrl) {
+              // 4. Play the Cloudinary URL directly
+              audioRef.current.src = response.data.audioUrl;
+              await audioRef.current.play();
+          } else {
+              throw new Error("No audio URL returned");
+          }
           
           // 5. Update Lock Screen
           if ('mediaSession' in navigator) {
@@ -156,7 +160,7 @@ const useNewsRadio = () => {
           }
 
       } catch (error) {
-          console.error("Failed to stream audio:", error);
+          console.error("Failed to fetch audio:", error);
           setIsLoading(false);
           setIsSpeaking(false);
       }
@@ -186,7 +190,7 @@ const useNewsRadio = () => {
     setIsLoading(false);
     setAutoplayTimer(0);
     setCurrentArticleId(null);
-    setCurrentSpeaker(null); // Reset speaker display
+    setCurrentSpeaker(null); 
     playlistRef.current = [];
     currentIndexRef.current = -1;
     if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "none";
@@ -266,7 +270,7 @@ const useNewsRadio = () => {
       isWaitingForNext, 
       autoplayTimer, 
       currentArticleId, 
-      currentSpeaker, // Exporting the name object
+      currentSpeaker, 
       startRadio, 
       playSingle, 
       stop, 

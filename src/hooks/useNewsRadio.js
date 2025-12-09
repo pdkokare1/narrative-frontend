@@ -2,19 +2,25 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as api from '../services/api';
 
-// --- VOICE PERSONAS ---
+// --- THE GAMUT NEWS TEAM ---
 
-// 1. THE ANCHOR (Female - Serious, Incisive)
-// For: Politics, Global Conflict, Justice, Crime, General News
-const VOICE_ANCHOR = 'SmLgXu8CcwHJvjiqq2rw'; 
-
-// 2. THE ANALYST (Male - Elite, Intellectual)
-// For: Economy, Business, Tech, Science, Education
-const VOICE_ANALYST = 'NnNA7MrsdZZzXTNJ4u8q';
-
-// 3. THE CURATOR (Female - Warm, Conversational)
-// For: Entertainment, Lifestyle, Health, Human Interest, Sports, Arts
-const VOICE_CURATOR = 'AwEl6phyzczpCHHDxyfO';
+const VOICES = {
+  ANCHOR: { 
+    id: 'SmLgXu8CcwHJvjiqq2rw', 
+    name: 'Mira', 
+    role: 'The Anchor' 
+  },
+  ANALYST: { 
+    id: 'NnNA7MrsdZZzXTNJ4u8q', 
+    name: 'Kabir', 
+    role: 'The Analyst' 
+  },
+  CURATOR: { 
+    id: 'AwEl6phyzczpCHHDxyfO', 
+    name: 'Tara', 
+    role: 'The Curator' 
+  }
+};
 
 const useNewsRadio = () => {
   // State
@@ -23,13 +29,12 @@ const useNewsRadio = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentArticleId, setCurrentArticleId] = useState(null);
   
+  // New: Tracks who is currently speaking
+  const [currentSpeaker, setCurrentSpeaker] = useState(null);
+  
   // Autoplay State
   const [isWaitingForNext, setIsWaitingForNext] = useState(false);
   const [autoplayTimer, setAutoplayTimer] = useState(0); 
-  
-  // UI Placeholder
-  const [availableVoices] = useState([{ name: 'The Gamut AI Team', lang: 'en-US' }]);
-  const [selectedVoice, setSelectedVoice] = useState(availableVoices[0]);
 
   // Refs
   const audioRef = useRef(new Audio()); 
@@ -72,13 +77,13 @@ const useNewsRadio = () => {
     };
   }, []);
 
-  // --- 2. Helper: Select Voice by Category ---
-  const getVoiceForCategory = (category) => {
-      if (!category) return VOICE_ANCHOR; // Default safety
+  // --- 2. Helper: Select Persona by Category ---
+  const getPersonaForCategory = (category) => {
+      if (!category) return VOICES.ANCHOR;
 
       const cat = category.toLowerCase();
 
-      // THE ANALYST (Smart/Money/Tech)
+      // THE ANALYST (Kabir)
       if (
           cat.includes('economy') || 
           cat.includes('business') || 
@@ -88,10 +93,10 @@ const useNewsRadio = () => {
           cat.includes('startup') ||
           cat.includes('market')
       ) {
-          return VOICE_ANALYST;
+          return VOICES.ANALYST;
       }
 
-      // THE CURATOR (Soft/Culture/Fun)
+      // THE CURATOR (Tara)
       if (
           cat.includes('entertainment') || 
           cat.includes('lifestyle') || 
@@ -103,12 +108,11 @@ const useNewsRadio = () => {
           cat.includes('food') ||
           cat.includes('culture')
       ) {
-          return VOICE_CURATOR;
+          return VOICES.CURATOR;
       }
 
-      // THE ANCHOR (Hard News/Default)
-      // Covers: Politics, Conflict, Justice, Crime, World, etc.
-      return VOICE_ANCHOR;
+      // THE ANCHOR (Mira) - Default
+      return VOICES.ANCHOR;
   };
 
   // --- 3. Playback Logic ---
@@ -121,15 +125,17 @@ const useNewsRadio = () => {
       setIsWaitingForNext(false);
       
       try {
-          // 1. Determine Voice based on Category
-          const targetVoiceId = getVoiceForCategory(article.category);
-          console.log(`🎙️ Playing "${article.headline}" using Voice: ${targetVoiceId} (${article.category})`);
+          // 1. Determine Persona
+          const persona = getPersonaForCategory(article.category);
+          setCurrentSpeaker(persona); // Update UI to show name
+          
+          console.log(`🎙️ On Air: ${persona.name} (${persona.role}) reading "${article.headline}"`);
 
           // 2. Prepare Text
           const textToSpeak = `${article.headline}. ${article.summary}`;
 
           // 3. Call Backend
-          const response = await api.streamAudio(textToSpeak, targetVoiceId);
+          const response = await api.streamAudio(textToSpeak, persona.id);
           
           // 4. Play
           const audioUrl = URL.createObjectURL(response.data);
@@ -140,7 +146,7 @@ const useNewsRadio = () => {
           if ('mediaSession' in navigator) {
               navigator.mediaSession.metadata = new MediaMetadata({
                   title: article.headline,
-                  artist: `The Gamut • ${article.category || 'News'}`,
+                  artist: `The Gamut • ${persona.name}`,
                   album: "News Radio",
                   artwork: article.imageUrl ? [
                       { src: article.imageUrl, sizes: '512x512', type: 'image/jpeg' }
@@ -180,6 +186,7 @@ const useNewsRadio = () => {
     setIsLoading(false);
     setAutoplayTimer(0);
     setCurrentArticleId(null);
+    setCurrentSpeaker(null); // Reset speaker display
     playlistRef.current = [];
     currentIndexRef.current = -1;
     if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "none";
@@ -253,9 +260,22 @@ const useNewsRadio = () => {
     playAudioForArticle(article);
   }, [playAudioForArticle, stop]);
   
-  const changeVoice = () => {}; 
-
-  return { isSpeaking, isPaused, isWaitingForNext, autoplayTimer, currentArticleId, availableVoices, selectedVoice, changeVoice, startRadio, playSingle, stop, pause, resume, skip, cancelAutoplay, isLoading };
+  return { 
+      isSpeaking, 
+      isPaused, 
+      isWaitingForNext, 
+      autoplayTimer, 
+      currentArticleId, 
+      currentSpeaker, // Exporting the name object
+      startRadio, 
+      playSingle, 
+      stop, 
+      pause, 
+      resume, 
+      skip, 
+      cancelAutoplay, 
+      isLoading 
+  };
 };
 
 export default useNewsRadio;

@@ -14,7 +14,7 @@ function ArticleCard({
   showTooltip, 
   isSaved,      
   onToggleSave,
-  // --- NEW PROPS FOR AUDIO ---
+  // --- AUDIO PROPS (Passed from NewsFeed) ---
   isPlaying, 
   onPlay, 
   onStop 
@@ -46,7 +46,7 @@ function ArticleCard({
     </button>
   );
 
-  // --- NEW: Audio Button Component ---
+  // --- AUDIO BUTTON ---
   const ListenButton = () => {
     if (isPlaying) {
       return (
@@ -55,7 +55,7 @@ function ArticleCard({
           className="btn-secondary"
           style={{ color: '#E57373', borderColor: '#E57373', fontWeight: '700' }}
         >
-          Stop Audio
+          Stop
         </button>
       );
     }
@@ -85,9 +85,7 @@ function ArticleCard({
 
   return (
     <>
-      {/* Updated Container Class:
-          We append "now-playing" if this card is currently being read by the Radio 
-      */}
+      {/* Dynamic Class: Adds a glow border if this card is currently playing */}
       <div className={`article-card ${isPlaying ? 'now-playing' : ''}`}>
         {renderSuggestionBadge()}
         
@@ -151,7 +149,7 @@ function ArticleCard({
                 <>
                   <div className="article-actions-top">
                     <button onClick={(e) => { stopMobileClick(e); setShowBriefing(true); }} className="btn-primary" style={{ background: 'var(--bg-elevated)', color: 'var(--accent-primary)', border: '1px solid var(--accent-primary)' }}>Brief</button>
-                    {/* Added Listen Button Here */}
+                    {/* The New Listen Button */}
                     <ListenButton />
                     <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary">Share</button>
                     <SaveButton /> 
@@ -162,7 +160,7 @@ function ArticleCard({
                 </>
               )}
               
-              {/* Soft News Actions (Summary Mode) */}
+              {/* Soft News Actions */}
               {isSoftNews && (
                 <>
                   <div className="article-actions-top">

@@ -40,7 +40,7 @@ function NewsFeed({
     isSpeaking, 
     isPaused, 
     currentArticleId, 
-    currentSpeaker, // <--- Access the name (Mira/Kabir/Tara)
+    currentSpeaker, 
     startRadio, 
     playSingle, 
     stop, 

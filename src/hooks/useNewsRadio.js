@@ -2,8 +2,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as api from '../services/api';
 
-// PREMIUM VOICE ID (Restored)
-const DEFAULT_VOICE_ID = 'tNIuvXGG5RnGdTbvfnPR'; 
+// NEW VOICE ID: "News Anchor" Style
+const DEFAULT_VOICE_ID = 'Dslrhjl3ZpzrctukrQSN'; 
 
 const useNewsRadio = () => {
   // State

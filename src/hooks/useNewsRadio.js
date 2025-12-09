@@ -2,8 +2,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as api from '../services/api';
 
-// NEW VOICE ID (From Chat)
-const DEFAULT_VOICE_ID = 'SmLgXu8CcwHJvjiqq2rw'; 
+// --- VOICE PERSONAS ---
+
+// 1. THE ANCHOR (Female - Serious, Incisive)
+// For: Politics, Global Conflict, Justice, Crime, General News
+const VOICE_ANCHOR = 'SmLgXu8CcwHJvjiqq2rw'; 
+
+// 2. THE ANALYST (Male - Elite, Intellectual)
+// For: Economy, Business, Tech, Science, Education
+const VOICE_ANALYST = 'NnNA7MrsdZZzXTNJ4u8q';
+
+// 3. THE CURATOR (Female - Warm, Conversational)
+// For: Entertainment, Lifestyle, Health, Human Interest, Sports, Arts
+const VOICE_CURATOR = 'AwEl6phyzczpCHHDxyfO';
 
 const useNewsRadio = () => {
   // State
@@ -16,7 +27,8 @@ const useNewsRadio = () => {
   const [isWaitingForNext, setIsWaitingForNext] = useState(false);
   const [autoplayTimer, setAutoplayTimer] = useState(0); 
   
-  const [availableVoices] = useState([{ name: 'ElevenLabs AI - Host', lang: 'en-US' }]);
+  // UI Placeholder
+  const [availableVoices] = useState([{ name: 'The Gamut AI Team', lang: 'en-US' }]);
   const [selectedVoice, setSelectedVoice] = useState(availableVoices[0]);
 
   // Refs
@@ -60,7 +72,46 @@ const useNewsRadio = () => {
     };
   }, []);
 
-  // --- 2. Playback Logic ---
+  // --- 2. Helper: Select Voice by Category ---
+  const getVoiceForCategory = (category) => {
+      if (!category) return VOICE_ANCHOR; // Default safety
+
+      const cat = category.toLowerCase();
+
+      // THE ANALYST (Smart/Money/Tech)
+      if (
+          cat.includes('economy') || 
+          cat.includes('business') || 
+          cat.includes('tech') || 
+          cat.includes('science') || 
+          cat.includes('education') ||
+          cat.includes('startup') ||
+          cat.includes('market')
+      ) {
+          return VOICE_ANALYST;
+      }
+
+      // THE CURATOR (Soft/Culture/Fun)
+      if (
+          cat.includes('entertainment') || 
+          cat.includes('lifestyle') || 
+          cat.includes('health') || 
+          cat.includes('human') || 
+          cat.includes('sports') || 
+          cat.includes('art') || 
+          cat.includes('travel') ||
+          cat.includes('food') ||
+          cat.includes('culture')
+      ) {
+          return VOICE_CURATOR;
+      }
+
+      // THE ANCHOR (Hard News/Default)
+      // Covers: Politics, Conflict, Justice, Crime, World, etc.
+      return VOICE_ANCHOR;
+  };
+
+  // --- 3. Playback Logic ---
   const playAudioForArticle = useCallback(async (article) => {
       if (!article) return;
 
@@ -70,19 +121,27 @@ const useNewsRadio = () => {
       setIsWaitingForNext(false);
       
       try {
+          // 1. Determine Voice based on Category
+          const targetVoiceId = getVoiceForCategory(article.category);
+          console.log(`🎙️ Playing "${article.headline}" using Voice: ${targetVoiceId} (${article.category})`);
+
+          // 2. Prepare Text
           const textToSpeak = `${article.headline}. ${article.summary}`;
 
-          const response = await api.streamAudio(textToSpeak, DEFAULT_VOICE_ID);
+          // 3. Call Backend
+          const response = await api.streamAudio(textToSpeak, targetVoiceId);
           
+          // 4. Play
           const audioUrl = URL.createObjectURL(response.data);
           audioRef.current.src = audioUrl;
           await audioRef.current.play();
           
+          // 5. Update Lock Screen
           if ('mediaSession' in navigator) {
               navigator.mediaSession.metadata = new MediaMetadata({
                   title: article.headline,
-                  artist: `The Gamut • ${article.source}`,
-                  album: article.category || 'News Feed',
+                  artist: `The Gamut • ${article.category || 'News'}`,
+                  album: "News Radio",
                   artwork: article.imageUrl ? [
                       { src: article.imageUrl, sizes: '512x512', type: 'image/jpeg' }
                   ] : []
@@ -97,7 +156,7 @@ const useNewsRadio = () => {
       }
   }, []);
 
-  // --- 3. Queue Logic ---
+  // --- 4. Queue Logic ---
   const playNext = useCallback(() => {
     const nextIndex = currentIndexRef.current + 1;
     if (nextIndex >= playlistRef.current.length) {
@@ -110,7 +169,7 @@ const useNewsRadio = () => {
     playAudioForArticle(article);
   }, [playAudioForArticle]);
 
-  // --- 4. Controls ---
+  // --- 5. Controls ---
   const stop = useCallback(() => {
     audioRef.current.pause();
     audioRef.current.currentTime = 0;
@@ -147,7 +206,7 @@ const useNewsRadio = () => {
     }
   }, [playNext, isWaitingForNext]);
 
-  // --- 5. Countdown Logic ---
+  // --- 6. Countdown Logic ---
   const startAutoplayCountdown = useCallback((currentArticleIndex) => {
     if (currentArticleIndex >= playlistRef.current.length - 1) {
       stop();
@@ -176,7 +235,7 @@ const useNewsRadio = () => {
     stop(); 
   }, [stop]);
 
-  // --- 6. Public Triggers ---
+  // --- 7. Public Triggers ---
   const startRadio = useCallback((articles, startIndex = 0) => {
     stop();
     if (!articles || articles.length === 0) return;

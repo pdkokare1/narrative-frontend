@@ -9,6 +9,7 @@ import './DashboardPages.css';
 // --- Context Providers ---
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider, useToast } from './context/ToastContext';
+import { RadioProvider } from './context/RadioContext'; // <--- NEW IMPORT
 
 // --- Custom Hooks ---
 import useIsMobile from './hooks/useIsMobile';
@@ -21,6 +22,7 @@ import PageLoader from './components/PageLoader';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import NewsFeed from './components/NewsFeed'; 
+import GlobalPlayerBar from './components/GlobalPlayerBar'; // <--- NEW IMPORT
 
 // --- UI Components ---
 import CustomTooltip from './components/ui/CustomTooltip';
@@ -38,13 +40,15 @@ const MyDashboard = lazy(() => import('./MyDashboard'));
 const SavedArticles = lazy(() => import('./SavedArticles'));
 const AccountSettings = lazy(() => import('./AccountSettings'));
 const SearchResults = lazy(() => import('./SearchResults')); 
-const EmergencyResources = lazy(() => import('./EmergencyResources')); // <--- NEW PAGE
+const EmergencyResources = lazy(() => import('./EmergencyResources'));
 
 function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <AppRoutes />
+        <RadioProvider> {/* <--- WRAPPED HERE */}
+           <AppRoutes />
+        </RadioProvider>
       </ToastProvider>
     </AuthProvider>
   );
@@ -246,9 +250,7 @@ function MainLayout({ profile }) {
               /> 
           } />
 
-          {/* NEW ROUTE */}
           <Route path="/emergency-resources" element={<EmergencyResources />} />
-          
           <Route path="/account-settings" element={<AccountSettings />} />
           <Route path="*" element={<PageNotFound />} /> 
         </Routes>
@@ -272,6 +274,9 @@ function MainLayout({ profile }) {
           showTooltip={showTooltip} 
         />
       )}
+
+      {/* --- THE GLOBAL PLAYER (Sticky Footer) --- */}
+      <GlobalPlayerBar />
     </div>
   );
 }

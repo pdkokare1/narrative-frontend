@@ -40,9 +40,7 @@ function NewsFeed({
     isSpeaking, 
     isPaused, 
     currentArticleId, 
-    availableVoices, 
-    selectedVoice,   
-    changeVoice,
+    currentSpeaker, // <--- Access the name (Mira/Kabir/Tara)
     startRadio, 
     playSingle, 
     stop, 
@@ -51,7 +49,8 @@ function NewsFeed({
     skip,
     isWaitingForNext,
     autoplayTimer,
-    cancelAutoplay
+    cancelAutoplay,
+    isLoading: isRadioLoading
   } = useNewsRadio();
 
   // --- Handlers ---
@@ -197,52 +196,45 @@ function NewsFeed({
     if (articles.length === 0) return null;
     const activeArticle = articles.find(a => a._id === currentArticleId);
     
+    // Default text if nothing is playing yet
+    const speakerDisplay = currentSpeaker ? (
+        <div className="radio-live-indicator">
+            <div className="pulse-dot"></div>
+            <span className="speaker-name">{currentSpeaker.name}</span>
+            <span className="speaker-role">| {currentSpeaker.role}</span>
+        </div>
+    ) : (
+        <span className="radio-brand">THE GAMUT RADIO</span>
+    );
+
     return (
       <div className="radio-bar-container">
         <div className="radio-info">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <span className="radio-status-text">
-                {isSpeaking ? (isPaused ? "RADIO PAUSED" : "ON AIR") : "NEWS RADIO"}
-            </span>
-            
-            {!isSpeaking && availableVoices.length > 0 && (
-                <select 
-                    className="voice-select" 
-                    value={selectedVoice?.name || ''} 
-                    onChange={(e) => changeVoice(e.target.value)}
-                >
-                    {availableVoices
-                        .filter(v => v.lang.startsWith('en'))
-                        .map(v => (
-                            <option key={v.name} value={v.name}>
-                                {v.name.replace(/Microsoft|Google|English|United States/g, '').trim() || v.name}
-                            </option>
-                        ))
-                    }
-                </select>
-            )}
+          
+          <div className="radio-meta-row">
+             {speakerDisplay}
           </div>
 
-          {isSpeaking && activeArticle && (
+          {activeArticle && (
             <span className="radio-headline-preview">
-              Now Reading: {activeArticle.headline}
+              {isRadioLoading ? 'Buffering...' : `Now Reading: ${activeArticle.headline}`}
             </span>
           )}
         </div>
 
         <div className="radio-controls">
-          {!isSpeaking ? (
+          {!isSpeaking && !isRadioLoading ? (
             <button className="radio-btn primary-action" onClick={() => startRadio(articles, visibleArticleIndex)}>
-              Start Radio
+               ▶ Start Radio
             </button>
           ) : (
             <>
               {isPaused ? (
-                <button className="radio-btn" onClick={resume}>Resume</button>
+                <button className="radio-btn" onClick={resume}>▶ Resume</button>
               ) : (
-                <button className="radio-btn" onClick={pause}>Pause</button>
+                <button className="radio-btn" onClick={pause}>⏸ Pause</button>
               )}
-              <button className="radio-btn" onClick={skip}>Next</button>
+              <button className="radio-btn" onClick={skip}>⏭ Next</button>
               <button className="radio-btn stop-action" onClick={stop}>Stop</button>
             </>
           )}
@@ -251,14 +243,12 @@ function NewsFeed({
     );
   };
 
-  // --- UPDATED: Render "Up Next" Toast (5 Seconds Math) ---
   const renderUpNextToast = () => {
     if (!isWaitingForNext) return null;
     return (
       <div className="up-next-toast">
         <div className="up-next-content">
           <span className="up-next-label">Up Next in {autoplayTimer}s...</span>
-          {/* Changed division from 3 to 5 to match new timer */}
           <div className="up-next-loader" style={{ width: `${(autoplayTimer/5)*100}%` }}></div>
         </div>
         <button onClick={cancelAutoplay} className="up-next-cancel-btn">

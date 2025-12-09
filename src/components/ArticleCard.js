@@ -1,7 +1,7 @@
 // In file: src/components/ArticleCard.js
 import React, { useState } from 'react';
 import './ArticleCard.css'; 
-import { getSentimentClass } from '../utils/helpers';
+import { getSentimentInfo, isOpinion } from '../utils/helpers';
 import SmartBriefingModal from './modals/SmartBriefingModal';
 import useIsMobile from '../hooks/useIsMobile';
 
@@ -14,7 +14,7 @@ function ArticleCard({
   showTooltip, 
   isSaved,      
   onToggleSave,
-  // --- AUDIO PROPS (Passed from NewsFeed) ---
+  // --- AUDIO PROPS ---
   isPlaying, 
   onPlay, 
   onStop 
@@ -22,9 +22,13 @@ function ArticleCard({
   const [showBriefing, setShowBriefing] = useState(false);
   const isMobileView = useIsMobile();
 
-  // Soft News vs Hard News Logic
-  const isSoftNews = article.analysisType === 'SentimentOnly';
-  const showCompareOnSoft = isSoftNews && (article.clusterCount > 1);
+  // Logic Types
+  const isHardNews = article.analysisType === 'Full';
+  const isOpEd = isOpinion(article);
+  const showCompareOnSoft = !isHardNews && (article.clusterCount > 1);
+
+  // Sentiment Data (for Soft/Opinion)
+  const sentimentInfo = getSentimentInfo(article.sentiment);
 
   const handleImageError = (e) => {
     e.target.style.display = 'none';
@@ -46,7 +50,6 @@ function ArticleCard({
     </button>
   );
 
-  // --- AUDIO BUTTON ---
   const ListenButton = () => {
     if (isPlaying) {
       return (
@@ -69,25 +72,45 @@ function ArticleCard({
     );
   };
 
-  const renderSuggestionBadge = () => {
-    if (!article.suggestionType) return null;
-    const isChallenge = article.suggestionType === 'Challenge';
-    const badgeStyle = {
-      position: 'absolute', top: '10px', right: '10px',
-      background: isChallenge ? 'var(--accent-primary)' : 'var(--bg-elevated)',
-      color: isChallenge ? 'white' : 'var(--text-secondary)',
-      border: isChallenge ? 'none' : '1px solid var(--border-color)',
-      padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: '600',
-      zIndex: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
-    };
-    return <div style={badgeStyle}>{isChallenge ? 'Perspective Widener' : 'Comfort Read'}</div>;
+  // --- BADGES ---
+  const renderTopBadges = () => {
+    return (
+      <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '5px', zIndex: 2 }}>
+        
+        {/* Suggestion Badge (Comfort/Challenge) */}
+        {article.suggestionType && (
+            <div style={{
+              background: article.suggestionType === 'Challenge' ? 'var(--accent-primary)' : 'var(--bg-elevated)',
+              color: article.suggestionType === 'Challenge' ? 'white' : 'var(--text-secondary)',
+              border: article.suggestionType === 'Challenge' ? 'none' : '1px solid var(--border-color)',
+              padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: '600',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+            }}>
+              {article.suggestionType === 'Challenge' ? 'Perspective Widener' : 'Comfort Read'}
+            </div>
+        )}
+
+        {/* OPINION Badge */}
+        {isOpEd && (
+           <div style={{
+              background: '#FFB300', // Amber/Yellow
+              color: '#000',
+              border: 'none',
+              padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: '700',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+              letterSpacing: '0.5px'
+           }}>
+              OPINION
+           </div>
+        )}
+      </div>
+    );
   };
 
   return (
     <>
-      {/* Dynamic Class: Adds a glow border if this card is currently playing */}
       <div className={`article-card ${isPlaying ? 'now-playing' : ''}`}>
-        {renderSuggestionBadge()}
+        {renderTopBadges()}
         
         <div className="article-image">
           {article.imageUrl ? (
@@ -118,7 +141,9 @@ function ArticleCard({
           <div className="article-content-bottom">
             <div className="article-meta-v2">
               <span className="source" title={article.source}>{article.source}</span>
-              {!isSoftNews && (
+              
+              {/* Show Scores ONLY for Hard News */}
+              {isHardNews && (
                 <>
                   <span className="meta-divider">|</span>
                   <span className="bias-score-card" onClick={(e) => showTooltip("Bias Score (0-100). Less is better.", e)}>Bias: <span className="accent-text">{article.biasScore}</span></span>
@@ -129,27 +154,36 @@ function ArticleCard({
             </div>
             
             <div className="quality-display-v2">
-                {isSoftNews ? (
-                    <span className="quality-grade-text" style={{ color: 'var(--text-secondary)' }}>
-                        <span style={{ fontSize: '12px', marginRight: '4px' }}>⚡</span> Quick Summary
-                    </span>
+                {/* Soft News / Opinion: Show Argument & Sentiment */}
+                {!isHardNews ? (
+                    <>
+                        <span className="quality-grade-text" style={{ color: 'var(--text-secondary)' }}>
+                            <span style={{ fontSize: '12px', marginRight: '4px' }}>{isOpEd ? '🗣️' : '⚡'}</span> 
+                            {isOpEd ? 'Core Argument' : 'Quick Summary'}
+                        </span>
+                        <span className="sentiment-text" onClick={(e) => showTooltip("The tone of this article.", e)}>
+                            Sentiment: <span className={sentimentInfo.className}>{sentimentInfo.label}</span>
+                        </span>
+                    </>
                 ) : (
-                    <span className="quality-grade-text" onClick={(e) => showTooltip("Grade based on credibility.", e)}>
-                        Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}
-                    </span>
+                    /* Hard News: Show Grade & Sentiment */
+                    <>
+                        <span className="quality-grade-text" onClick={(e) => showTooltip("Grade based on credibility.", e)}>
+                            Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}
+                        </span>
+                        <span className="sentiment-text" onClick={(e) => showTooltip("Overall Sentiment.", e)}>
+                            Sentiment: <span className={sentimentInfo.className}>{sentimentInfo.label}</span>
+                        </span>
+                    </>
                 )}
-                <span className="sentiment-text" onClick={(e) => showTooltip("Overall Sentiment.", e)}>
-                    Sentiment: <span className={getSentimentClass(article.sentiment)}>{' '}{article.sentiment}</span>
-                </span>
             </div>
             
             <div className="article-actions">
               {/* Hard News Actions */}
-              {!isSoftNews && (
+              {isHardNews && (
                 <>
                   <div className="article-actions-top">
                     <button onClick={(e) => { stopMobileClick(e); setShowBriefing(true); }} className="btn-primary" style={{ background: 'var(--bg-elevated)', color: 'var(--accent-primary)', border: '1px solid var(--accent-primary)' }}>Brief</button>
-                    {/* The New Listen Button */}
                     <ListenButton />
                     <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary">Share</button>
                     <SaveButton /> 
@@ -160,8 +194,8 @@ function ArticleCard({
                 </>
               )}
               
-              {/* Soft News Actions */}
-              {isSoftNews && (
+              {/* Soft News / Opinion Actions */}
+              {!isHardNews && (
                 <>
                   <div className="article-actions-top">
                     <ListenButton />
@@ -171,7 +205,9 @@ function ArticleCard({
                   {showCompareOnSoft ? (
                      <button onClick={(e) => { stopMobileClick(e); onCompare(article); }} className="btn-primary btn-full-width">Compare Coverage ({article.clusterCount})</button>
                   ) : (
-                     <button onClick={(e) => { stopMobileClick(e); onRead(article); }} className="btn-primary btn-full-width">Read Article</button>
+                     <button onClick={(e) => { stopMobileClick(e); onRead(article); }} className="btn-primary btn-full-width">
+                        {isOpEd ? 'Read Full Opinion' : 'Read Article'}
+                     </button>
                   )}
                 </>
               )}

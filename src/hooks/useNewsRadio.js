@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import * as api from '../services/api';
 
 // NEW VOICE ID (From Chat)
-const DEFAULT_VOICE_ID = 'oNyiuZtYpPBK0fk8y3SM'; 
+const DEFAULT_VOICE_ID = 'SmLgXu8CcwHJvjiqq2rw'; 
 
 const useNewsRadio = () => {
   // State

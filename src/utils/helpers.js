@@ -1,3 +1,7 @@
+{
+type: uploaded file
+fileName: helpers.js
+fullContent:
 // In file: src/utils/helpers.js
 
 /**
@@ -7,17 +11,17 @@
  * @returns {object} - { label: string, className: string, icon: string }
  */
 export const getSentimentInfo = (sentiment) => {
-  if (!sentiment) return { label: 'Neutral', className: 'sentiment-neutral', icon: '😐' };
+  if (!sentiment) return { label: 'Neutral', className: 'sentiment-neutral', icon: '' };
   
   const lower = sentiment.toLowerCase();
   
   if (lower === 'positive') {
-    return { label: 'Supportive', className: 'sentiment-positive', icon: '📈' };
+    return { label: 'Supportive', className: 'sentiment-positive', icon: '嶋' };
   }
   if (lower === 'negative') {
-    return { label: 'Critical', className: 'sentiment-negative', icon: '📉' };
+    return { label: 'Critical', className: 'sentiment-negative', icon: '悼' };
   }
-  return { label: 'Neutral', className: 'sentiment-neutral', icon: '😐' };
+  return { label: 'Neutral', className: 'sentiment-neutral', icon: '' };
 };
 
 /**
@@ -78,3 +82,34 @@ export const getBreakdownTooltip = (label) => {
   };
   return tooltips[label] || label;
 };
+
+/**
+ * NEW: Generates a Cloudinary Fetch URL for optimized image delivery.
+ * This proxies external images through Cloudinary to resize and compress them.
+ * * @param {string} originalUrl - The source URL of the image.
+ * @param {number} width - The desired width (default 600px).
+ * @returns {string} - The optimized URL or the original if config is missing.
+ */
+export const getOptimizedImageUrl = (originalUrl, width = 600) => {
+  if (!originalUrl) return null;
+
+  // 1. If it's already a Cloudinary URL (e.g. our own assets), return as is.
+  if (originalUrl.includes('cloudinary.com')) return originalUrl;
+
+  // 2. Get Cloud Name from Environment Variables
+  // You need to add REACT_APP_CLOUDINARY_CLOUD_NAME to your Vercel/Env variables.
+  const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+
+  // 3. Fallback: If no cloud name is set, return the original URL so the app doesn't break.
+  if (!cloudName) {
+    return originalUrl;
+  }
+
+  // 4. Construct Fetch URL
+  // w_{width} = Resize to width
+  // f_auto = Auto format (WebP/AVIF)
+  // q_auto = Auto quality (compression)
+  return `https://res.cloudinary.com/${cloudName}/image/fetch/w_${width},f_auto,q_auto/${originalUrl}`;
+};
+
+}

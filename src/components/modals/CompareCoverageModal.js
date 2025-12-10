@@ -1,16 +1,16 @@
 // In file: src/components/modals/CompareCoverageModal.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import TopicTimeline from '../TopicTimeline'; // <--- NEW IMPORT
+import TopicTimeline from '../TopicTimeline'; 
 import '../../App.css'; 
-import { getSentimentClass } from '../../utils/helpers'; 
+import { getSentimentClass, getOptimizedImageUrl } from '../../utils/helpers'; // <--- UPDATED IMPORT
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, showTooltip }) {
   const [clusterData, setClusterData] = useState({ left: [], center: [], right: [], reviews: [], stats: {} });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('timeline'); // Default to Timeline for better "Story Arc" view
+  const [activeTab, setActiveTab] = useState('timeline'); 
 
   useEffect(() => {
     const fetchCluster = async () => {
@@ -101,6 +101,9 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
       <h3 className={`perspective-title ${perspective.toLowerCase()}`}>{perspective} Perspective</h3>
       {articleList.map(article => {
         const isReview = article.analysisType === 'SentimentOnly';
+        // --- NEW: Optimize the image URL ---
+        const optimizedImg = getOptimizedImageUrl(article.imageUrl, 150); // Small size for lists
+
         return (
           <div key={article._id || article.url} className="coverage-article">
             <div className="coverage-content">
@@ -122,7 +125,7 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
               </div>
             </div>
             <div className="coverage-image">
-              {article.imageUrl ? ( <img src={article.imageUrl} alt="thumbnail" loading="lazy" /> ) : ( <div className="image-placeholder-small">📰</div> )}
+              {article.imageUrl ? ( <img src={optimizedImg || article.imageUrl} alt="thumbnail" loading="lazy" /> ) : ( <div className="image-placeholder-small">📰</div> )}
             </div>
           </div>
         );

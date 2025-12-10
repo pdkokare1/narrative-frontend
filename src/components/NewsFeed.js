@@ -3,6 +3,7 @@ import React, { useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import LatestFeed from './feeds/LatestFeed';
 import ForYouFeed from './feeds/ForYouFeed';
+import InFocusBar from './InFocusBar'; // <--- NEW IMPORT
 import '../App.css'; 
 
 function NewsFeed({ 
@@ -14,8 +15,8 @@ function NewsFeed({
   onToggleSave, 
   showTooltip 
 }) {
-  const [mode, setMode] = useState('latest'); // 'latest' or 'foryou'
-  const contentRef = useRef(null); // Reference to the main container for scrolling
+  const [mode, setMode] = useState('latest'); 
+  const contentRef = useRef(null); 
 
   const getPageTitle = () => {
     if (mode === 'foryou') return 'Balanced For You | The Gamut';
@@ -24,7 +25,7 @@ function NewsFeed({
   };
 
   const renderToggle = () => (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px', marginTop: '10px' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', marginTop: '10px' }}>
       <div style={{ 
         display: 'flex', background: 'var(--bg-elevated)', borderRadius: '25px', 
         padding: '4px', border: '1px solid var(--border-color)', position: 'relative' 
@@ -63,6 +64,9 @@ function NewsFeed({
       <Helmet>
         <title>{getPageTitle()}</title>
       </Helmet>
+
+      {/* --- NEW: In Focus Bar --- */}
+      <InFocusBar />
 
       {renderToggle()}
 

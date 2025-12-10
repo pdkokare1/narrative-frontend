@@ -23,7 +23,7 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import NewsFeed from './components/NewsFeed'; 
 import GlobalPlayerBar from './components/GlobalPlayerBar'; 
-import InstallPrompt from './components/ui/InstallPrompt'; 
+// REMOVED: InstallPrompt import
 
 // --- UI Components ---
 import CustomTooltip from './components/ui/CustomTooltip';
@@ -108,14 +108,13 @@ function MainLayout({ profile }) {
 
   // --- Theme Management (System Detection) ---
   useEffect(() => {
-    // 1. Check if user has explicitly saved a preference before
     const savedTheme = localStorage.getItem('theme');
     
     if (savedTheme) {
       setTheme(savedTheme);
       document.body.className = savedTheme + '-mode';
     } else {
-      // 2. No preference? Check the device settings
+      // Auto-detect system preference
       const userPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       const initialTheme = userPrefersDark ? 'dark' : 'light';
       
@@ -287,8 +286,7 @@ function MainLayout({ profile }) {
         />
       )}
 
-      {/* --- Global Floating Elements --- */}
-      <InstallPrompt /> 
+      {/* REMOVED: InstallPrompt */}
       <GlobalPlayerBar />
     </div>
   );

@@ -23,7 +23,7 @@ export const RadioProvider = ({ children }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // --- NEW: Playback State ---
+  // Playback State
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1.0);
@@ -38,6 +38,7 @@ export const RadioProvider = ({ children }) => {
   // Refs
   const audioRef = useRef(new Audio());
   const timerIntervalRef = useRef(null);
+  const hasPrefetchedRef = useRef(false); // <--- NEW: Tracks if we already fetched the next track
 
   // --- HELPER: Select Persona ---
   const getPersonaForCategory = (category) => {
@@ -59,9 +60,10 @@ export const RadioProvider = ({ children }) => {
       setCurrentArticle(article);
       setIsVisible(true);
       
-      // Reset time for new track
+      // Reset state for new track
       setCurrentTime(0);
       setDuration(0);
+      hasPrefetchedRef.current = false; // Reset prefetch flag
 
       try {
           // 1. Setup Speaker
@@ -88,8 +90,6 @@ export const RadioProvider = ({ children }) => {
                   artist: `The Gamut • ${persona.name}`,
                   artwork: article.imageUrl ? [{ src: article.imageUrl, sizes: '512x512', type: 'image/jpeg' }] : []
               });
-              
-              // Set playback state
               navigator.mediaSession.playbackState = "playing";
           }
 
@@ -98,7 +98,7 @@ export const RadioProvider = ({ children }) => {
           setIsLoading(false);
           setIsPlaying(false);
       }
-  }, [playbackRate]); // Re-run if playbackRate logic changes (rare)
+  }, [playbackRate]);
 
   // --- QUEUE LOGIC ---
   const playNext = useCallback(() => {
@@ -110,7 +110,6 @@ export const RadioProvider = ({ children }) => {
   }, [currentIndex, playlist]);
 
   const playPrevious = useCallback(() => {
-      // Standard Podcast Logic: 
       // If > 3 seconds in, restart track. If at start, go to previous track.
       if (audioRef.current.currentTime > 3) {
           audioRef.current.currentTime = 0;
@@ -145,6 +144,7 @@ export const RadioProvider = ({ children }) => {
       setPlaylist([]);
       setCurrentTime(0);
       setDuration(0);
+      hasPrefetchedRef.current = false;
       
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "none";
   }, []);
@@ -161,11 +161,8 @@ export const RadioProvider = ({ children }) => {
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "playing";
   }, []);
 
-  // --- NEW: Advanced Controls (Scrubbing & Speed) ---
-  
   const seekTo = useCallback((time) => {
       if (audioRef.current) {
-          // Clamp time between 0 and duration
           const safeTime = Math.max(0, Math.min(time, audioRef.current.duration || 0));
           audioRef.current.currentTime = safeTime;
           setCurrentTime(safeTime);
@@ -218,11 +215,29 @@ export const RadioProvider = ({ children }) => {
       stop();
   }, [stop]);
 
-  // --- EVENT LISTENERS & LOCK SCREEN HANDLERS ---
+  // --- EVENT LISTENERS & PRE-FETCHING ---
   useEffect(() => {
       const audio = audioRef.current;
 
-      const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
+      const handleTimeUpdate = () => {
+          const cTime = audio.currentTime;
+          const dur = audio.duration;
+          setCurrentTime(cTime);
+
+          // --- SMART PRE-FETCH LOGIC ---
+          // If we are within 15 seconds of the end, AND we haven't fetched yet, AND there is a next track
+          if (dur > 0 && (dur - cTime) < 15 && !hasPrefetchedRef.current && playlist[currentIndex + 1]) {
+              hasPrefetchedRef.current = true; // Lock it so we don't ask twice
+              
+              const nextArticle = playlist[currentIndex + 1];
+              const nextPersona = getPersonaForCategory(nextArticle.category);
+              const nextText = `${nextArticle.headline}. ${nextArticle.summary}`;
+              
+              console.log(`🎧 Pre-fetching audio for next track: "${nextArticle.headline}"`);
+              api.prefetchAudio(nextText, nextPersona.id, nextArticle._id);
+          }
+      };
+
       const handleDurationChange = () => setDuration(audio.duration);
       const handleLoadStart = () => setIsLoading(true);
       const handlePlaying = () => { setIsLoading(false); setIsPlaying(true); };
@@ -240,7 +255,7 @@ export const RadioProvider = ({ children }) => {
       audio.addEventListener('playing', handlePlaying);
       audio.addEventListener('ended', handleEnded);
 
-      // --- Setup Lock Screen / Hardware Media Keys ---
+      // --- Setup Lock Screen Controls ---
       if ('mediaSession' in navigator) {
           try {
               navigator.mediaSession.setActionHandler('play', resume);
@@ -272,7 +287,7 @@ export const RadioProvider = ({ children }) => {
               navigator.mediaSession.setActionHandler('seekto', null);
           }
       };
-  }, [resume, pause, playNext, playPrevious, startAutoplayCountdown]);
+  }, [resume, pause, playNext, playPrevious, startAutoplayCountdown, playlist, currentIndex]);
 
   return (
       <RadioContext.Provider value={{
@@ -285,21 +300,19 @@ export const RadioProvider = ({ children }) => {
           isWaitingForNext,
           autoplayTimer,
           
-          // New State
           currentTime,
           duration,
           playbackRate,
 
-          // Actions
           startRadio,
           playSingle,
           stop,
           pause,
           resume,
-          playNext, // Manually calling next (Skip)
-          playPrevious, // New
-          seekTo, // New
-          changeSpeed, // New
+          playNext, 
+          playPrevious, 
+          seekTo, 
+          changeSpeed, 
           cancelAutoplay
       }}>
           {children}

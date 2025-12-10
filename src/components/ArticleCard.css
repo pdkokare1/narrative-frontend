@@ -21,6 +21,50 @@
   border-color: var(--border-color);
 }
 
+/* "Now Playing" Active State */
+.article-card.now-playing {
+  border: 1px solid var(--accent-primary);
+  box-shadow: 0 0 0 1px var(--accent-primary), 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* ==================== BADGES (Top Right) ==================== */
+.card-badges {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 5px;
+  z-index: 2;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  letter-spacing: 0.5px;
+}
+
+.badge.challenge {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+}
+
+.badge.comfort {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.badge.opinion {
+  background: #FFB300; /* Amber/Yellow */
+  color: #000;
+  border: none;
+  font-weight: 700;
+}
+
 /* ==================== IMAGE SECTION ==================== */
 .article-image {
   width: 100%;
@@ -45,17 +89,6 @@
   filter: brightness(1);
 }
 
-.image-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 48px;
-  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-elevated));
-  color: var(--text-muted);
-}
-
 /* ==================== CONTENT SECTION ==================== */
 .article-content {
   padding: 20px;
@@ -75,7 +108,27 @@
   flex-shrink: 0;
 }
 
-/* ==================== HEADLINE & SUMMARY ==================== */
+/* Category Tag */
+.category-row {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.category-tag {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  background: var(--bg-elevated);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+/* Headline & Summary */
 .article-headline {
   font-size: 13px;
   font-weight: 600;
@@ -88,6 +141,7 @@
 .article-headline-link {
   text-decoration: none;
   color: inherit;
+  cursor: pointer;
 }
 
 .article-headline-link:hover .article-headline {
@@ -160,6 +214,15 @@
   letter-spacing: 0.5px;
 }
 
+.quality-grade-text.info {
+  color: var(--text-secondary);
+}
+
+.quality-grade-text .icon {
+  font-size: 12px;
+  margin-right: 4px;
+}
+
 .sentiment-text {
   font-weight: 500;
   text-transform: none;
@@ -169,7 +232,7 @@
 .sentiment-negative { color: #C62828; font-weight: 600; }
 .sentiment-neutral { color: var(--text-tertiary); font-weight: 600; }
 
-/* Dark mode overrides (handled via global class nesting) */
+/* Dark mode overrides */
 :global(.dark-mode) .sentiment-positive { color: #4CAF50; }
 :global(.dark-mode) .sentiment-negative { color: #E57373; }
 
@@ -198,15 +261,29 @@
   width: 100%;
 }
 
+/* Specific Button Styles */
+.brief-btn {
+  background: var(--bg-elevated);
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+}
+
+.stop-btn {
+  color: #E57373;
+  border-color: #E57373;
+  font-weight: 700;
+}
+
+.stop-btn:hover {
+  background: rgba(229, 115, 115, 0.1);
+}
+
 /* Full width buttons inside actions */
 .article-actions > .btn-secondary.btn-full-width,
-.article-actions > a.btn-primary.btn-full-width {
-  grid-column: 1 / -1;
+.article-actions > .btn-primary.btn-full-width {
+  width: 100%;
 }
 
 .article-actions > .btn-secondary.btn-full-width:only-child {
   margin-bottom: 0;
 }
-
-/* Note: .btn-primary and .btn-secondary definitions remain in App.css 
-   as they are global utility classes used throughout the app */

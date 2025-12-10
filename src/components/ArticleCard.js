@@ -1,8 +1,8 @@
 // In file: src/components/ArticleCard.js
 import React, { useState, useEffect } from 'react';
 import './ArticleCard.css'; 
-import { getSentimentInfo, isOpinion } from '../utils/helpers';
-import { getFallbackImage } from '../utils/constants'; // <--- NEW IMPORT
+import { getSentimentInfo, isOpinion, getOptimizedImageUrl } from '../utils/helpers'; // <--- NEW IMPORT
+import { getFallbackImage } from '../utils/constants'; 
 import SmartBriefingModal from './modals/SmartBriefingModal';
 import useIsMobile from '../hooks/useIsMobile';
 
@@ -31,17 +31,20 @@ function ArticleCard({
   // Sentiment Data
   const sentimentInfo = getSentimentInfo(article.sentiment);
 
-  // --- NEW: Image Handling State ---
-  // Initialize with the article image, OR the fallback if it's missing immediately
-  const [imgSrc, setImgSrc] = useState(article.imageUrl || getFallbackImage(article.category));
+  // --- NEW: Image Handling State with Optimization ---
+  // We wrap the URL in getOptimizedImageUrl to resize it via Cloudinary
+  const optimizedUrl = getOptimizedImageUrl(article.imageUrl);
+  
+  const [imgSrc, setImgSrc] = useState(optimizedUrl || getFallbackImage(article.category));
 
   // Reset image if the article prop changes (e.g. during scrolling/recycling)
   useEffect(() => {
-      setImgSrc(article.imageUrl || getFallbackImage(article.category));
+      const newUrl = getOptimizedImageUrl(article.imageUrl);
+      setImgSrc(newUrl || getFallbackImage(article.category));
   }, [article.imageUrl, article.category]);
 
   const handleImageError = () => {
-      // If the real image fails to load, swap to the category fallback
+      // If the optimized image fails, swap to the category fallback
       const fallback = getFallbackImage(article.category);
       if (imgSrc !== fallback) {
           setImgSrc(fallback);
@@ -130,7 +133,6 @@ function ArticleCard({
             onError={handleImageError} 
             loading="lazy" 
           />
-          {/* No placeholder div needed anymore! */}
         </div>
         
         <div className="article-content">

@@ -3,13 +3,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom'; 
 import * as api from './services/api'; 
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
+import { useAuth } from './context/AuthContext'; // <--- NEW IMPORT for User ID
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement,
   BarElement, ArcElement, Title, Tooltip, Legend, TimeScale
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import './App.css';
-import './MyDashboard.css'; // <--- NEW: Using modular styles
+import './MyDashboard.css';
 
 // --- Import Centralized Config ---
 import { 
@@ -36,7 +37,11 @@ const getActionCount = (totals, action) => {
 };
 const leanOrder = ['Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
 
+// Cache duration: 15 Minutes
+const CACHE_DURATION = 15 * 60 * 1000; 
+
 function MyDashboard({ theme }) {
+  const { user } = useAuth(); // Get current user
   const [statsData, setStatsData] = useState(null);
   const [digestData, setDigestData] = useState(null); 
   const [loadingStats, setLoadingStats] = useState(true);
@@ -48,13 +53,55 @@ function MyDashboard({ theme }) {
     const fetchData = async () => {
       setError('');
       setLoadingStats(true);
+      
+      const userId = user?.uid || 'guest';
+      const CACHE_KEY_STATS = `dashboard_stats_${userId}`;
+      const CACHE_KEY_DIGEST = `dashboard_digest_${userId}`;
+
+      // 1. Try to load from Cache first
+      try {
+          const cachedStatsRaw = localStorage.getItem(CACHE_KEY_STATS);
+          const cachedDigestRaw = localStorage.getItem(CACHE_KEY_DIGEST);
+
+          if (cachedStatsRaw && cachedDigestRaw) {
+              const cachedStats = JSON.parse(cachedStatsRaw);
+              const cachedDigest = JSON.parse(cachedDigestRaw);
+              const now = Date.now();
+
+              // Check if cache is still valid (less than 15 mins old)
+              if (now - cachedStats.timestamp < CACHE_DURATION) {
+                  console.log("⚡ Dashboard loaded from Cache");
+                  setStatsData(cachedStats.data);
+                  setDigestData(cachedDigest.data);
+                  setLoadingStats(false);
+                  return; // EXIT EARLY - No API Call needed!
+              }
+          }
+      } catch (e) {
+          console.warn("Cache parsing error", e);
+      }
+
+      // 2. Cache Miss - Fetch from API
+      console.log("🔄 Dashboard fetching fresh data...");
       try {
         const [statsRes, digestRes] = await Promise.all([
             api.getStats(),
             api.getWeeklyDigest()
         ]);
+        
         setStatsData(statsRes.data);
         setDigestData(digestRes.data);
+
+        // 3. Save to Cache
+        localStorage.setItem(CACHE_KEY_STATS, JSON.stringify({
+            data: statsRes.data,
+            timestamp: Date.now()
+        }));
+        localStorage.setItem(CACHE_KEY_DIGEST, JSON.stringify({
+            data: digestRes.data,
+            timestamp: Date.now()
+        }));
+
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
         setError('Could not load statistics data.');
@@ -62,8 +109,9 @@ function MyDashboard({ theme }) {
         setLoadingStats(false);
       }
     };
-    fetchData();
-  }, []);
+
+    if (user) fetchData();
+  }, [user]);
 
   // --- Data Preparation Logic ---
   const prepareCategoryData = (rawData) => {
@@ -106,16 +154,6 @@ function MyDashboard({ theme }) {
       labels: filteredLabels,
       datasets: [{ label: 'Articles', data: filteredData, backgroundColor: filteredColors, borderColor: themeColors.borderColor, borderWidth: 1 }]
     };
-  };
-
-  const prepareLeanData = (rawData) => {
-    const counts = (rawData || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
-    const data = leanOrder.map(lean => counts[lean] || 0);
-    const backgroundColors = leanOrder.map(lean => leanColors[lean]);
-    const filteredLabels = leanOrder.filter((_, index) => data[index] > 0);
-    const filteredData = data.filter(count => count > 0);
-    const filteredColors = backgroundColors.filter((_, index) => data[index] > 0);
-    return { labels: filteredLabels, datasets: [{ label: 'Articles', data: filteredData, backgroundColor: filteredColors, borderColor: themeColors.borderColor, borderWidth: 1 }] };
   };
 
   const storiesReadData = useMemo(() => {

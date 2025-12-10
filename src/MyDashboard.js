@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom'; 
 import * as api from './services/api'; 
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
-import { useAuth } from './context/AuthContext'; // <--- NEW IMPORT for User ID
+import { useAuth } from './context/AuthContext'; 
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement,
   BarElement, ArcElement, Title, Tooltip, Legend, TimeScale
@@ -12,7 +12,6 @@ import 'chartjs-adapter-date-fns';
 import './App.css';
 import './MyDashboard.css';
 
-// --- Import Centralized Config ---
 import { 
     leanColors, 
     sentimentColors, 
@@ -35,13 +34,12 @@ const getActionCount = (totals, action) => {
   const item = totals.find(t => t.action === action);
   return item ? item.count : 0;
 };
-const leanOrder = ['Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
 
 // Cache duration: 15 Minutes
 const CACHE_DURATION = 15 * 60 * 1000; 
 
 function MyDashboard({ theme }) {
-  const { user } = useAuth(); // Get current user
+  const { user } = useAuth(); 
   const [statsData, setStatsData] = useState(null);
   const [digestData, setDigestData] = useState(null); 
   const [loadingStats, setLoadingStats] = useState(true);
@@ -68,13 +66,12 @@ function MyDashboard({ theme }) {
               const cachedDigest = JSON.parse(cachedDigestRaw);
               const now = Date.now();
 
-              // Check if cache is still valid (less than 15 mins old)
               if (now - cachedStats.timestamp < CACHE_DURATION) {
                   console.log("⚡ Dashboard loaded from Cache");
                   setStatsData(cachedStats.data);
                   setDigestData(cachedDigest.data);
                   setLoadingStats(false);
-                  return; // EXIT EARLY - No API Call needed!
+                  return; 
               }
           }
       } catch (e) {
@@ -82,7 +79,6 @@ function MyDashboard({ theme }) {
       }
 
       // 2. Cache Miss - Fetch from API
-      console.log("🔄 Dashboard fetching fresh data...");
       try {
         const [statsRes, digestRes] = await Promise.all([
             api.getStats(),
@@ -203,7 +199,6 @@ function MyDashboard({ theme }) {
   const topSourcesData = prepareTopSourcesData(statsData?.topSources_read);
   const sentimentReadData = prepareSentimentData(statsData?.sentimentDistribution_read);
   
-  // Calculate Totals & Percentages
   const totals = statsData?.totalCounts || [];
   const totalAnalyzed = getActionCount(totals, 'view_analysis');
   const totalShared = getActionCount(totals, 'share_article');
@@ -230,42 +225,32 @@ function MyDashboard({ theme }) {
     { key: 'compared', title: 'Comparisons', value: totalCompared, desc: "Coverage comparisons." }
   ];
 
-  // --- Render Pulse ---
+  // --- Render Pulse (Updated with Classes) ---
   const renderWeeklyPulse = () => {
     if (!digestData || digestData.status === 'Insufficient Data') return null;
     const isBubble = digestData.status.includes('Bubble');
     const rec = digestData.recommendation;
 
     return (
-      <div className="dashboard-card" style={{ 
-          borderLeft: isBubble ? '4px solid #E57373' : '4px solid #4CAF50',
-          marginTop: '0' 
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '15px' }}>
-            <div style={{ flex: 1, minWidth: '200px' }}>
-                <h3 style={{ margin: 0, borderBottom: 'none', paddingBottom: '5px' }}>
-                    Weekly Pulse: <span style={{ color: isBubble ? '#E57373' : '#4CAF50' }}>{digestData.status}</span>
+      <div className={`dashboard-card pulse-card ${isBubble ? 'bubble' : 'balanced'}`}>
+        <div className="pulse-layout">
+            <div className="pulse-text-col">
+                <h3 className="pulse-title">
+                    Weekly Pulse: <span className={`pulse-status ${isBubble ? 'bubble' : 'balanced'}`}>{digestData.status}</span>
                 </h3>
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '5px 0' }}>
+                <p className="pulse-desc">
                     {isBubble 
                      ? `You've focused heavily on one perspective this week. Try diversifying.`
                      : `Great job! Your reading habits are well-distributed across the spectrum.`}
                 </p>
             </div>
             {isBubble && rec && (
-                <div style={{ 
-                    background: 'var(--bg-elevated)', padding: '12px', borderRadius: '8px', 
-                    border: '1px solid var(--border-color)', width: '100%', maxWidth: '300px' 
-                }}>
-                    <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px' }}>
-                        Recommended Palate Cleanser
-                    </div>
-                    <div style={{ fontWeight: '600', fontSize: '13px', marginBottom: '4px', lineHeight: '1.4' }}>
-                        {rec.headline}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                        <span style={{ fontSize: '11px', color: 'var(--accent-primary)' }}>{rec.politicalLean} Perspective</span>
-                        <a href={`/?article=${rec._id}`} className="btn-secondary" style={{ padding: '4px 10px', fontSize: '10px', textDecoration: 'none' }}>View</a>
+                <div className="pulse-rec-box">
+                    <div className="pulse-rec-label">Recommended Palate Cleanser</div>
+                    <div className="pulse-rec-headline">{rec.headline}</div>
+                    <div className="pulse-rec-footer">
+                        <span className="pulse-rec-lean">{rec.politicalLean} Perspective</span>
+                        <a href={`/?article=${rec._id}`} className="btn-secondary btn-mini">View</a>
                     </div>
                 </div>
             )}
@@ -278,19 +263,17 @@ function MyDashboard({ theme }) {
     <div className="dashboard-page">
       <div className="dashboard-content-wrapper">
         
-        {/* --- LEFT COLUMN: Stats & Bias --- */}
+        {/* --- LEFT COLUMN --- */}
         <div className="dashboard-left-column">
             
-            {/* Header */}
             <div className="section-title-header">
               <h2 className="section-title">Your Activity</h2>
               <div className="header-actions">
-                <Link to="/" className="btn-secondary" style={{ fontSize: '11px', padding: '4px 10px', textDecoration: 'none' }}>Back to Feed</Link>
+                <Link to="/" className="btn-secondary btn-mini">Back to Feed</Link>
               </div>
             </div>
 
-            {/* Stat Boxes */}
-            <div className="dashboard-card" style={{ padding: '15px' }}>
+            <div className="dashboard-card card-tight">
               <div className="stat-box-grid">
                 {statBoxes.map(box => (
                   <div key={box.key} className="stat-box">
@@ -302,15 +285,14 @@ function MyDashboard({ theme }) {
               </div>
             </div>
 
-            {/* Lean Summary */}
-            <h2 className="section-title" style={{ marginTop: '20px', marginBottom: '15px' }}>Reading Bias</h2>
+            <h2 className="section-title section-margin-top">Reading Bias</h2>
             <div className="dashboard-card">
                 {loadingStats ? <div className="loading-container simple"><div className="spinner small"></div></div> : totalApplicableLeanArticles > 0 ? (
                   <>
                     <div className="lean-legend">
-                      <div className="legend-item"><span className="legend-dot" style={{ backgroundColor: leanColors['Left'], width: '8px', height: '8px', borderRadius: '50%', display: 'inline-block', marginRight: '5px' }}></span> Left</div>
-                      <div className="legend-item"><span className="legend-dot" style={{ backgroundColor: leanColors['Center'], width: '8px', height: '8px', borderRadius: '50%', display: 'inline-block', marginRight: '5px' }}></span> Center</div>
-                      <div className="legend-item"><span className="legend-dot" style={{ backgroundColor: leanColors['Right'], width: '8px', height: '8px', borderRadius: '50%', display: 'inline-block', marginRight: '5px' }}></span> Right</div>
+                      <div className="legend-item"><span className="legend-dot" style={{ backgroundColor: leanColors['Left'] }}></span> Left</div>
+                      <div className="legend-item"><span className="legend-dot" style={{ backgroundColor: leanColors['Center'] }}></span> Center</div>
+                      <div className="legend-item"><span className="legend-dot" style={{ backgroundColor: leanColors['Right'] }}></span> Right</div>
                     </div>
 
                     <div className="lean-bar-container">
@@ -324,15 +306,15 @@ function MyDashboard({ theme }) {
                       <li><span>{rightCombinedPerc}%</span> Right Leaning</li>
                     </ul>
                   </>
-                ) : ( <p className="no-data-msg small" style={{textAlign:'center', padding:'10px'}}>No analysis data yet.</p> )}
+                ) : ( <p className="no-data-msg small">No analysis data yet.</p> )}
             </div>
 
             <div className="dashboard-left-footer">
-               <Link to="/account-settings" className="btn-secondary" style={{ width: '100%', display: 'block', textAlign: 'center', textDecoration: 'none' }}>Account Settings</Link>
+               <Link to="/account-settings" className="btn-secondary btn-full">Account Settings</Link>
             </div>
         </div>
 
-        {/* --- RIGHT COLUMN: Charts --- */}
+        {/* --- RIGHT COLUMN --- */}
         <div className="dashboard-right-column">
           
           <div className="section-title-header">
@@ -347,7 +329,7 @@ function MyDashboard({ theme }) {
               <div className="chart-container">
                  {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
                   : (statsData?.dailyCounts?.length > 0) ? ( <Line options={getLineChartOptions(theme)} data={storiesReadData} /> )
-                  : ( <p className="no-data-msg" style={{textAlign:'center', padding:'40px'}}>No data available.</p> )}
+                  : ( <p className="no-data-msg">No data available.</p> )}
               </div>
           </div>
 
@@ -355,12 +337,12 @@ function MyDashboard({ theme }) {
              {/* Bias Map */}
              <div className="dashboard-card full-width-card">
                <h3>Bias vs. Trust Map</h3>
-               <div className="chart-container" style={{ minHeight: '300px' }}>
+               <div className="chart-container-large">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
                    : (statsData?.allArticles?.length > 0) ? (
                       <BiasMap articles={statsData.allArticles} theme={theme} />
                    )
-                   : ( <p className="no-data-msg" style={{textAlign:'center', padding:'40px'}}>Read more to populate map.</p> )}
+                   : ( <p className="no-data-msg">Read more to populate map.</p> )}
                </div>
              </div>
 
@@ -369,7 +351,7 @@ function MyDashboard({ theme }) {
                <div className="chart-container">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
                    : (totalAnalyzed > 0 && categoryReadData.labels.length > 0) ? ( <Bar options={getBarChartOptions('', 'Articles', theme)} data={categoryReadData} /> )
-                   : ( <p className="no-data-msg" style={{textAlign:'center', padding:'40px'}}>No data.</p> )}
+                   : ( <p className="no-data-msg">No data.</p> )}
                </div>
              </div>
 
@@ -378,7 +360,7 @@ function MyDashboard({ theme }) {
                <div className="chart-container">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
                    : (totalAnalyzed > 0 && topSourcesData.labels.length > 0) ? ( <Bar options={getBarChartOptions('', 'Articles', theme)} data={topSourcesData} /> )
-                   : ( <p className="no-data-msg" style={{textAlign:'center', padding:'40px'}}>No data.</p> )}
+                   : ( <p className="no-data-msg">No data.</p> )}
                </div>
              </div>
 
@@ -387,7 +369,7 @@ function MyDashboard({ theme }) {
                <div className="chart-container">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
                    : (totalAnalyzed > 0 && sentimentReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('', theme)} data={sentimentReadData} /> )
-                   : ( <p className="no-data-msg" style={{textAlign:'center', padding:'40px'}}>No data.</p> )}
+                   : ( <p className="no-data-msg">No data.</p> )}
                </div>
              </div>
 
@@ -396,13 +378,13 @@ function MyDashboard({ theme }) {
                <div className="chart-container">
                    {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
                    : (totalAnalyzed > 0 && qualityReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('', theme)} data={qualityReadData} /> )
-                   : ( <p className="no-data-msg" style={{textAlign:'center', padding:'40px'}}>No data.</p> )}
+                   : ( <p className="no-data-msg">No data.</p> )}
                </div>
              </div>
           </div>
 
           <div className="mobile-only-footer">
-            <Link to="/account-settings" className="btn-secondary" style={{ width: '100%', display: 'block', textDecoration: 'none' }}>Account Settings</Link>
+            <Link to="/account-settings" className="btn-secondary btn-full">Account Settings</Link>
           </div>
 
         </div>

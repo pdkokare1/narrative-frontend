@@ -12,7 +12,7 @@ const api = axios.create({
   },
 });
 
-// --- Interceptor: Automatically adds Tokens to every request ---
+// --- REQUEST INTERCEPTOR: Automatically adds Tokens ---
 api.interceptors.request.use(
   async (config) => {
     const user = auth.currentUser;
@@ -34,6 +34,27 @@ api.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// --- RESPONSE INTERCEPTOR: Centralized Error Formatting ---
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // 1. Extract the actual error message from the backend response
+    const message = error.response?.data?.message || error.response?.data?.error || error.message;
+    
+    // 2. Create a clean error object to pass back to the component
+    const cleanError = new Error(message);
+    cleanError.status = error.response?.status;
+    cleanError.original = error;
+
+    // 3. Log 401/403 errors (Optional: You could trigger a global logout here later)
+    if (error.response?.status === 401) {
+      console.warn("Session expired or unauthorized.");
+    }
+
+    return Promise.reject(cleanError);
+  }
 );
 
 // --- API Methods ---
@@ -66,10 +87,19 @@ export const fetchCluster = (id) => api.get(`/cluster/${id}`);
 // Emergency Resources
 export const fetchEmergencyContacts = (params) => api.get('/emergency-resources', { params });
 
-// --- NEW: Audio Cache Fetching ---
-// We no longer stream binary blobs. We get a URL string.
+// Audio Services
 export const getAudio = async (text, voiceId, articleId) => {
     return api.post('/tts/get-audio', { text, voiceId, articleId });
+};
+
+// --- NEW: Audio Pre-fetching ---
+// This tells the backend to generate the audio in the background, but doesn't wait for the file.
+export const prefetchAudio = (text, voiceId, articleId) => {
+    // We use 'catch' to suppress errors because prefetching is a background task.
+    // We don't want to alert the user if a prefetch fails.
+    api.post('/tts/get-audio', { text, voiceId, articleId }).catch(err => 
+      console.log(`Prefetch skipped for ${articleId}:`, err.message)
+    );
 };
 
 export default api;

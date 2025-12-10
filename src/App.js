@@ -9,7 +9,7 @@ import './DashboardPages.css';
 // --- Context Providers ---
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider, useToast } from './context/ToastContext';
-import { RadioProvider } from './context/RadioContext'; // <--- NEW IMPORT
+import { RadioProvider } from './context/RadioContext'; 
 
 // --- Custom Hooks ---
 import useIsMobile from './hooks/useIsMobile';
@@ -22,7 +22,8 @@ import PageLoader from './components/PageLoader';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import NewsFeed from './components/NewsFeed'; 
-import GlobalPlayerBar from './components/GlobalPlayerBar'; // <--- NEW IMPORT
+import GlobalPlayerBar from './components/GlobalPlayerBar'; 
+import InstallPrompt from './components/ui/InstallPrompt'; 
 
 // --- UI Components ---
 import CustomTooltip from './components/ui/CustomTooltip';
@@ -46,7 +47,7 @@ function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <RadioProvider> {/* <--- WRAPPED HERE */}
+        <RadioProvider> 
            <AppRoutes />
         </RadioProvider>
       </ToastProvider>
@@ -105,11 +106,22 @@ function MainLayout({ profile }) {
   const [savedArticleIds, setSavedArticleIds] = useState(new Set(profile.savedArticles || []));
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
-  // --- Theme Management ---
+  // --- Theme Management (System Detection) ---
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    setTheme(savedTheme);
-    document.body.className = savedTheme + '-mode';
+    // 1. Check if user has explicitly saved a preference before
+    const savedTheme = localStorage.getItem('theme');
+    
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.body.className = savedTheme + '-mode';
+    } else {
+      // 2. No preference? Check the device settings
+      const userPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initialTheme = userPrefersDark ? 'dark' : 'light';
+      
+      setTheme(initialTheme);
+      document.body.className = initialTheme + '-mode';
+    }
   }, []);
 
   const toggleTheme = () => {
@@ -275,7 +287,8 @@ function MainLayout({ profile }) {
         />
       )}
 
-      {/* --- THE GLOBAL PLAYER (Sticky Footer) --- */}
+      {/* --- Global Floating Elements --- */}
+      <InstallPrompt /> 
       <GlobalPlayerBar />
     </div>
   );

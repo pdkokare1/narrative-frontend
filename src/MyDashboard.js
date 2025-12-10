@@ -12,6 +12,9 @@ import 'chartjs-adapter-date-fns';
 import './App.css';
 import './MyDashboard.css';
 
+// --- NEW: Import Skeleton ---
+import DashboardSkeleton from './components/ui/DashboardSkeleton';
+
 import { 
     leanColors, 
     sentimentColors, 
@@ -152,48 +155,48 @@ function MyDashboard({ theme }) {
     };
   };
 
-  const storiesReadData = useMemo(() => {
-    const labels = statsData?.dailyCounts?.map(item => item.date) || [];
-    const data = statsData?.dailyCounts?.map(item => item.count) || [];
-    
-    const getSegmentBorderColor = (ctx) => {
-      const y1 = ctx.p0.parsed.y;
-      const y2 = ctx.p1.parsed.y;
-      if (y2 > y1) return themeColors.trendUp;
-      if (y2 < y1) return themeColors.trendDown;
-      return themeColors.textTertiary; 
-    };
+  // --- Early Return: Show Skeleton while loading ---
+  if (loadingStats) {
+      return <DashboardSkeleton />;
+  }
 
-    return {
-      labels: labels,
-      datasets: [{
-        label: 'Stories Analyzed',
-        data: data,
-        fill: false,
-        tension: 0.1,
-        segment: { borderColor: getSegmentBorderColor },
-        pointBackgroundColor: themeColors.accentPrimary,
-        pointBorderColor: themeColors.accentPrimary, 
-      }],
-    };
-  }, [statsData?.dailyCounts, themeColors]);
+  // --- Normal Render (Data is Ready) ---
+  const storiesReadData = {
+    labels: statsData?.dailyCounts?.map(item => item.date) || [],
+    datasets: [{
+      label: 'Stories Analyzed',
+      data: statsData?.dailyCounts?.map(item => item.count) || [],
+      fill: false,
+      tension: 0.1,
+      segment: { 
+          borderColor: ctx => {
+              const y1 = ctx.p0.parsed.y;
+              const y2 = ctx.p1.parsed.y;
+              if (y2 > y1) return themeColors.trendUp;
+              if (y2 < y1) return themeColors.trendDown;
+              return themeColors.textTertiary; 
+          }
+      },
+      pointBackgroundColor: themeColors.accentPrimary,
+      pointBorderColor: themeColors.accentPrimary, 
+    }],
+  };
 
-  const qualityReadData = useMemo(() => {
-      const counts = (statsData?.qualityDistribution_read || []).reduce((acc, item) => { acc[item.grade] = item.count; return acc; }, {});
-      const labels = Object.keys(qualityColors);
-      const dataMap = {
-          'A+ Excellent (90-100)': counts['A+'] || 0,
-          'A High (80-89)': (counts['A'] || 0) + (counts['A-'] || 0),
-          'B Professional (70-79)': (counts['B+'] || 0) + (counts['B'] || 0) + (counts['B-'] || 0),
-          'C Acceptable (60-69)': (counts['C+'] || 0) + (counts['C'] || 0) + (counts['C-'] || 0),
-          'D-F Poor (0-59)': (counts['D+'] || 0) + (counts['D'] || 0) + (counts['D-'] || 0) + (counts['F'] || 0) + (counts['D-F'] || 0),
-          'N/A (Review/Opinion)': counts[null] || 0
-      };
-      const filteredLabels = labels.filter(label => dataMap[label] > 0);
-      const filteredData = filteredLabels.map(label => dataMap[label]);
-      const filteredColors = filteredLabels.map(label => qualityColors[label]);
-      return { labels: filteredLabels, datasets: [{ label: 'Articles Read', data: filteredData, backgroundColor: filteredColors, borderColor: themeColors.borderColor, borderWidth: 1 }] };
-  }, [statsData?.qualityDistribution_read, themeColors]);
+  const qualityCounts = (statsData?.qualityDistribution_read || []).reduce((acc, item) => { acc[item.grade] = item.count; return acc; }, {});
+  const qualityLabels = Object.keys(qualityColors);
+  const qualityDataMap = {
+      'A+ Excellent (90-100)': qualityCounts['A+'] || 0,
+      'A High (80-89)': (qualityCounts['A'] || 0) + (qualityCounts['A-'] || 0),
+      'B Professional (70-79)': (qualityCounts['B+'] || 0) + (qualityCounts['B'] || 0) + (qualityCounts['B-'] || 0),
+      'C Acceptable (60-69)': (qualityCounts['C+'] || 0) + (qualityCounts['C'] || 0) + (qualityCounts['C-'] || 0),
+      'D-F Poor (0-59)': (qualityCounts['D+'] || 0) + (qualityCounts['D'] || 0) + (qualityCounts['D-'] || 0) + (qualityCounts['F'] || 0) + (qualityCounts['D-F'] || 0),
+      'N/A (Review/Opinion)': qualityCounts[null] || 0
+  };
+  const filteredQLabels = qualityLabels.filter(label => qualityDataMap[label] > 0);
+  const qualityReadData = { 
+      labels: filteredQLabels, 
+      datasets: [{ label: 'Articles Read', data: filteredQLabels.map(l => qualityDataMap[l]), backgroundColor: filteredQLabels.map(l => qualityColors[l]), borderColor: themeColors.borderColor, borderWidth: 1 }] 
+  };
 
   const categoryReadData = prepareCategoryData(statsData?.categoryDistribution_read);
   const topSourcesData = prepareTopSourcesData(statsData?.topSources_read);
@@ -225,7 +228,7 @@ function MyDashboard({ theme }) {
     { key: 'compared', title: 'Comparisons', value: totalCompared, desc: "Coverage comparisons." }
   ];
 
-  // --- Render Pulse (Updated with Classes) ---
+  // --- Render Pulse ---
   const renderWeeklyPulse = () => {
     if (!digestData || digestData.status === 'Insufficient Data') return null;
     const isBubble = digestData.status.includes('Bubble');
@@ -278,7 +281,7 @@ function MyDashboard({ theme }) {
                 {statBoxes.map(box => (
                   <div key={box.key} className="stat-box">
                     <h3>{box.title}</h3>
-                    <p className="stat-number">{loadingStats ? '...' : box.value}</p>
+                    <p className="stat-number">{box.value}</p>
                     <p className="stat-desc">{box.desc}</p>
                   </div>
                 ))}
@@ -287,7 +290,7 @@ function MyDashboard({ theme }) {
 
             <h2 className="section-title section-margin-top">Reading Bias</h2>
             <div className="dashboard-card">
-                {loadingStats ? <div className="loading-container simple"><div className="spinner small"></div></div> : totalApplicableLeanArticles > 0 ? (
+                {totalApplicableLeanArticles > 0 ? (
                   <>
                     <div className="lean-legend">
                       <div className="legend-item"><span className="legend-dot" style={{ backgroundColor: leanColors['Left'] }}></span> Left</div>
@@ -327,9 +330,9 @@ function MyDashboard({ theme }) {
           <div className="dashboard-card full-width-card">
               <h3>Stories Read Over Time</h3>
               <div className="chart-container">
-                 {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                  : (statsData?.dailyCounts?.length > 0) ? ( <Line options={getLineChartOptions(theme)} data={storiesReadData} /> )
-                  : ( <p className="no-data-msg">No data available.</p> )}
+                 {statsData?.dailyCounts?.length > 0 ? ( 
+                    <Line options={getLineChartOptions(theme)} data={storiesReadData} /> 
+                 ) : ( <p className="no-data-msg">No data available.</p> )}
               </div>
           </div>
 
@@ -338,47 +341,45 @@ function MyDashboard({ theme }) {
              <div className="dashboard-card full-width-card">
                <h3>Bias vs. Trust Map</h3>
                <div className="chart-container-large">
-                   {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (statsData?.allArticles?.length > 0) ? (
+                   {statsData?.allArticles?.length > 0 ? (
                       <BiasMap articles={statsData.allArticles} theme={theme} />
-                   )
-                   : ( <p className="no-data-msg">Read more to populate map.</p> )}
+                   ) : ( <p className="no-data-msg">Read more to populate map.</p> )}
                </div>
              </div>
 
              <div className="dashboard-card">
                <h3>Top Categories</h3>
                <div className="chart-container">
-                   {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && categoryReadData.labels.length > 0) ? ( <Bar options={getBarChartOptions('', 'Articles', theme)} data={categoryReadData} /> )
-                   : ( <p className="no-data-msg">No data.</p> )}
+                   {totalAnalyzed > 0 && categoryReadData.labels.length > 0 ? ( 
+                      <Bar options={getBarChartOptions('', 'Articles', theme)} data={categoryReadData} /> 
+                   ) : ( <p className="no-data-msg">No data.</p> )}
                </div>
              </div>
 
              <div className="dashboard-card">
                <h3>Top Sources</h3>
                <div className="chart-container">
-                   {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && topSourcesData.labels.length > 0) ? ( <Bar options={getBarChartOptions('', 'Articles', theme)} data={topSourcesData} /> )
-                   : ( <p className="no-data-msg">No data.</p> )}
+                   {totalAnalyzed > 0 && topSourcesData.labels.length > 0 ? ( 
+                      <Bar options={getBarChartOptions('', 'Articles', theme)} data={topSourcesData} /> 
+                   ) : ( <p className="no-data-msg">No data.</p> )}
                </div>
              </div>
 
              <div className="dashboard-card">
                <h3>Sentiment</h3>
                <div className="chart-container">
-                   {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && sentimentReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('', theme)} data={sentimentReadData} /> )
-                   : ( <p className="no-data-msg">No data.</p> )}
+                   {totalAnalyzed > 0 && sentimentReadData.labels.length > 0 ? ( 
+                      <Doughnut options={getDoughnutChartOptions('', theme)} data={sentimentReadData} /> 
+                   ) : ( <p className="no-data-msg">No data.</p> )}
                </div>
              </div>
 
              <div className="dashboard-card">
                <h3>Quality Grade</h3>
                <div className="chart-container">
-                   {loadingStats ? ( <div className="loading-container"><div className="spinner"></div></div> )
-                   : (totalAnalyzed > 0 && qualityReadData.labels.length > 0) ? ( <Doughnut options={getDoughnutChartOptions('', theme)} data={qualityReadData} /> )
-                   : ( <p className="no-data-msg">No data.</p> )}
+                   {totalAnalyzed > 0 && qualityReadData.labels.length > 0 ? ( 
+                      <Doughnut options={getDoughnutChartOptions('', theme)} data={qualityReadData} /> 
+                   ) : ( <p className="no-data-msg">No data.</p> )}
                </div>
              </div>
           </div>

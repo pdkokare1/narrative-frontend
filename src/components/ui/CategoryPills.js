@@ -1,28 +1,10 @@
 // In file: src/components/ui/CategoryPills.js
 import React, { useRef } from 'react';
+import { CATEGORIES } from '../../utils/constants'; // <--- NEW IMPORT
 import '../../App.css'; 
 
 function CategoryPills({ selectedCategory, onSelect }) {
   const scrollRef = useRef(null);
-
-  // UPDATED: Matches the new Gatekeeper Service categories
-  const categories = [
-    'All Categories',
-    'Politics',
-    'Global Conflict',
-    'Economy',
-    'Justice',
-    'Science',
-    'Tech',
-    'Health',
-    'Education',
-    'Business',
-    'Sports',
-    'Entertainment',
-    'Lifestyle',
-    'Human Interest',
-    'Other'
-  ];
 
   const handleWheel = (e) => {
     if (scrollRef.current) {
@@ -32,8 +14,10 @@ function CategoryPills({ selectedCategory, onSelect }) {
 
   return (
     <div className="category-pills-container" onWheel={handleWheel} ref={scrollRef}>
-      {categories.map((cat) => {
+      {CATEGORIES.map((cat) => {
+        // Handle "All Categories" logic
         const isActive = selectedCategory === cat || (cat === 'All Categories' && !selectedCategory);
+        
         return (
           <button
             key={cat}

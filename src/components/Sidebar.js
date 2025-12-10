@@ -1,3 +1,4 @@
+// In file: src/components/Sidebar.js
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import CustomSelect from './ui/CustomSelect'; 
@@ -5,7 +6,16 @@ import * as api from '../services/api';
 import '../App.css'; 
 import './Sidebar.css'; 
 
-// FIX: Added default values for props (filters={}, trendingTopics=[]) to stop the crash
+// --- NEW IMPORTS ---
+import { 
+  CATEGORIES, 
+  LEANS, 
+  REGIONS, 
+  ARTICLE_TYPES, 
+  QUALITY_LEVELS, 
+  SORT_OPTIONS 
+} from '../utils/constants';
+
 function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout, trendingTopics = [] }) {
   const [localTrending, setLocalTrending] = useState([]);
   const navigate = useNavigate();
@@ -38,14 +48,6 @@ function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout, tren
     onFilterChange({ ...filters, [name]: value });
   };
 
-  // Options definitions
-  const categories = ['All Categories','Politics','Global Conflict','Economy','Justice','Science','Tech','Health','Education','Business','Sports','Entertainment','Lifestyle','Human Interest','Other'];
-  const leans = ['All Leans', 'Left', 'Left-Leaning', 'Center', 'Right-Leaning', 'Right', 'Not Applicable'];
-  const regions = [{ value: 'All', label: 'All Regions' },{ value: 'Global', label: 'Global' },{ value: 'India', label: 'India' }];
-  const articleTypes = [{ value: 'All Types', label: 'All Article Types' },{ value: 'Hard News', label: 'Hard News (Deep Analysis)' },{ value: 'Opinion & Reviews', label: 'Soft News (Summary Only)' }];
-  const qualityLevels = [{ value: 'All Quality Levels', label: 'All Quality Levels' },{ value: 'A+ Excellent (90-100)', label: 'A+ : Excellent' },{ value: 'A High (80-89)', label: 'A : High' },{ value: 'B Professional (70-79)', label: 'B : Professional' },{ value: 'C Acceptable (60-69)', label: 'C : Acceptable' },{ value: 'D-F Poor (0-59)', label: 'D-F : Poor' }];
-  const sortOptions = ['Latest First', 'Highest Quality', 'Most Covered', 'Lowest Bias'];
-
   const SidebarNavLink = ({ to, children, className }) => (
     <NavLink
       to={to}
@@ -71,7 +73,7 @@ function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout, tren
           </ul>
         </div>
 
-        {/* --- UPDATED: Emergency Help Button (Styled like Sign Out, No Icon) --- */}
+        {/* Emergency Help Button */}
         <div className="sidebar-section">
            <SidebarNavLink 
              to="/emergency-resources" 
@@ -81,7 +83,7 @@ function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout, tren
            </SidebarNavLink>
         </div>
 
-        {/* --- Trending Section (Fixed Map Error) --- */}
+        {/* Trending Section */}
         {displayTopics.length > 0 && (
           <div className="sidebar-section">
             <h3>Trending Now</h3>
@@ -99,19 +101,19 @@ function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout, tren
           </div>
         )}
 
-        {/* Filters Section */}
+        {/* Filters Section (Now using Constants) */}
         <div className="sidebar-section">
           <h3>Filters</h3>
-          <div className="filter-group"><CustomSelect name="region" value={filters.region} options={regions} onChange={handleChange} /></div>
-          <div className="filter-group"><CustomSelect name="articleType" value={filters.articleType} options={articleTypes} onChange={handleChange} /></div>
-          <div className="filter-group"><CustomSelect name="category" value={filters.category} options={categories} onChange={handleChange} /></div>
-          <div className="filter-group"><CustomSelect name="lean" value={filters.lean} options={leans} onChange={handleChange} /></div>
-          <div className="filter-group"><CustomSelect name="quality" value={filters.quality} options={qualityLevels} onChange={handleChange} /></div>
+          <div className="filter-group"><CustomSelect name="region" value={filters.region} options={REGIONS} onChange={handleChange} /></div>
+          <div className="filter-group"><CustomSelect name="articleType" value={filters.articleType} options={ARTICLE_TYPES} onChange={handleChange} /></div>
+          <div className="filter-group"><CustomSelect name="category" value={filters.category} options={CATEGORIES} onChange={handleChange} /></div>
+          <div className="filter-group"><CustomSelect name="lean" value={filters.lean} options={LEANS} onChange={handleChange} /></div>
+          <div className="filter-group"><CustomSelect name="quality" value={filters.quality} options={QUALITY_LEVELS} onChange={handleChange} /></div>
         </div>
 
         <div className="sidebar-section">
           <h3>Sort By</h3>
-          <CustomSelect name="sort" value={filters.sort} options={sortOptions} onChange={handleChange} />
+          <CustomSelect name="sort" value={filters.sort} options={SORT_OPTIONS} onChange={handleChange} />
         </div>
       </div>
 

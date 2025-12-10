@@ -9,7 +9,7 @@ export const useRadio = () => useContext(RadioContext);
 // --- PERSONAS ---
 const VOICES = {
   ANCHOR: { id: 'SmLgXu8CcwHJvjiqq2rw', name: 'Mira', role: 'The Anchor' },
-  ANALYST: { id: 'NnNA7MrsdZZzXTNJ4u8q', name: 'Kabir', role: 'The Analyst' },
+  ANALYST: { id: 'czw3FmTwixwtnkpOKXZ0', name: 'Kabir', role: 'The Analyst' }, // <--- UPDATED ID
   CURATOR: { id: 'AwEl6phyzczpCHHDxyfO', name: 'Tara', role: 'The Curator' }
 };
 
@@ -38,15 +38,30 @@ export const RadioProvider = ({ children }) => {
   // Refs
   const audioRef = useRef(new Audio());
   const timerIntervalRef = useRef(null);
-  const hasPrefetchedRef = useRef(false); // <--- NEW: Tracks if we already fetched the next track
+  const hasPrefetchedRef = useRef(false); 
 
   // --- HELPER: Select Persona ---
   const getPersonaForCategory = (category) => {
       if (!category) return VOICES.ANCHOR;
       const cat = category.toLowerCase();
-      if (cat.includes('economy') || cat.includes('business') || cat.includes('tech') || cat.includes('science')) return VOICES.ANALYST;
-      if (cat.includes('entertainment') || cat.includes('lifestyle') || cat.includes('culture') || cat.includes('human')) return VOICES.CURATOR;
+      if (cat.includes('economy') || cat.includes('business') || cat.includes('tech') || cat.includes('science') || cat.includes('finance') || cat.includes('crypto')) return VOICES.ANALYST;
+      if (cat.includes('entertainment') || cat.includes('lifestyle') || cat.includes('culture') || cat.includes('human') || cat.includes('gaming') || cat.includes('sports')) return VOICES.CURATOR;
       return VOICES.ANCHOR;
+  };
+
+  // --- HELPER: Format Text for Audio (Tone & Pause) ---
+  const prepareAudioText = (headline, summary) => {
+      // 1. Clean the headline: Remove trailing periods to prevent "falling" tone.
+      // This often keeps the pitch slightly higher/suspended.
+      const cleanHeadline = headline.replace(/[.]+$/, '');
+
+      // 2. The "Pause Bridge": 
+      // We use a double-dash for a natural clause break, plus an explicit break tag if supported, 
+      // plus a newline. This forces the AI to take a solid breath.
+      // Note: ElevenLabs handles "..." or " - " as a pause. 
+      // We structure it to sound like: "HEADLINE [pause] BODY"
+      
+      return `${cleanHeadline} ... \n\n ${summary}`;
   };
 
   // --- CORE: Play Audio ---
@@ -63,7 +78,7 @@ export const RadioProvider = ({ children }) => {
       // Reset state for new track
       setCurrentTime(0);
       setDuration(0);
-      hasPrefetchedRef.current = false; // Reset prefetch flag
+      hasPrefetchedRef.current = false; 
 
       try {
           // 1. Setup Speaker
@@ -71,13 +86,15 @@ export const RadioProvider = ({ children }) => {
           setCurrentSpeaker(persona);
 
           // 2. Fetch Audio (Cache First)
-          const textToSpeak = `${article.headline}. ${article.summary}`;
+          // --- UPDATED: Use the new text formatter ---
+          const textToSpeak = prepareAudioText(article.headline, article.summary);
+          
           const response = await api.getAudio(textToSpeak, persona.id, article._id);
 
           if (response.data && response.data.audioUrl) {
               const audio = audioRef.current;
               audio.src = response.data.audioUrl;
-              audio.playbackRate = playbackRate; // Maintain speed across tracks
+              audio.playbackRate = playbackRate; 
               await audio.play();
           } else {
               throw new Error("No audio URL");
@@ -105,17 +122,15 @@ export const RadioProvider = ({ children }) => {
       if (currentIndex + 1 < playlist.length) {
           setCurrentIndex(prev => prev + 1);
       } else {
-          stop(); // End of playlist
+          stop(); 
       }
   }, [currentIndex, playlist]);
 
   const playPrevious = useCallback(() => {
-      // If > 3 seconds in, restart track. If at start, go to previous track.
       if (audioRef.current.currentTime > 3) {
           audioRef.current.currentTime = 0;
           return;
       }
-
       if (currentIndex - 1 >= 0) {
           setCurrentIndex(prev => prev - 1);
       }
@@ -225,13 +240,14 @@ export const RadioProvider = ({ children }) => {
           setCurrentTime(cTime);
 
           // --- SMART PRE-FETCH LOGIC ---
-          // If we are within 15 seconds of the end, AND we haven't fetched yet, AND there is a next track
           if (dur > 0 && (dur - cTime) < 15 && !hasPrefetchedRef.current && playlist[currentIndex + 1]) {
-              hasPrefetchedRef.current = true; // Lock it so we don't ask twice
+              hasPrefetchedRef.current = true; 
               
               const nextArticle = playlist[currentIndex + 1];
               const nextPersona = getPersonaForCategory(nextArticle.category);
-              const nextText = `${nextArticle.headline}. ${nextArticle.summary}`;
+              
+              // Apply the same text formatting for the pre-fetch
+              const nextText = prepareAudioText(nextArticle.headline, nextArticle.summary);
               
               console.log(`🎧 Pre-fetching audio for next track: "${nextArticle.headline}"`);
               api.prefetchAudio(nextText, nextPersona.id, nextArticle._id);
@@ -248,14 +264,12 @@ export const RadioProvider = ({ children }) => {
           startAutoplayCountdown();
       };
 
-      // Add DOM Listeners
       audio.addEventListener('timeupdate', handleTimeUpdate);
       audio.addEventListener('durationchange', handleDurationChange);
       audio.addEventListener('loadstart', handleLoadStart);
       audio.addEventListener('playing', handlePlaying);
       audio.addEventListener('ended', handleEnded);
 
-      // --- Setup Lock Screen Controls ---
       if ('mediaSession' in navigator) {
           try {
               navigator.mediaSession.setActionHandler('play', resume);

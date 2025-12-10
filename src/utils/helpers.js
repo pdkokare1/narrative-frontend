@@ -1,7 +1,3 @@
-{
-type: uploaded file
-fileName: helpers.js
-fullContent:
 // In file: src/utils/helpers.js
 
 /**
@@ -111,5 +107,3 @@ export const getOptimizedImageUrl = (originalUrl, width = 600) => {
   // q_auto = Auto quality (compression)
   return `https://res.cloudinary.com/${cloudName}/image/fetch/w_${width},f_auto,q_auto/${originalUrl}`;
 };
-
-}

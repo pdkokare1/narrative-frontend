@@ -1,12 +1,11 @@
 // In file: src/components/Sidebar.js
-import React, { useState, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { NavLink } from 'react-router-dom';
 import CustomSelect from './ui/CustomSelect'; 
-import * as api from '../services/api'; 
+// REMOVED: api and useState imports as we don't fetch trending here anymore
 import '../App.css'; 
 import './Sidebar.css'; 
 
-// --- NEW IMPORTS ---
 import { 
   CATEGORIES, 
   LEANS, 
@@ -16,32 +15,8 @@ import {
   SORT_OPTIONS 
 } from '../utils/constants';
 
-function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout, trendingTopics = [] }) {
-  const [localTrending, setLocalTrending] = useState([]);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Only fetch if not provided by parent
-    if (trendingTopics.length === 0 && isOpen) {
-      const loadTrending = async () => {
-        try {
-          const { data } = await api.getTrendingTopics();
-          setLocalTrending(data.topics || []);
-        } catch (error) {
-          console.error("Failed to load trending:", error);
-        }
-      };
-      loadTrending();
-    }
-  }, [isOpen, trendingTopics]);
-
-  // Use passed props or local state
-  const displayTopics = trendingTopics.length > 0 ? trendingTopics : localTrending;
-
-  const handleTopicClick = (topic) => {
-    if (onClose) onClose(); 
-    navigate(`/search?q=${encodeURIComponent(topic)}`); 
-  };
+function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout }) {
+  // REMOVED: Trending state logic
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -83,25 +58,9 @@ function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout, tren
            </SidebarNavLink>
         </div>
 
-        {/* Trending Section */}
-        {displayTopics.length > 0 && (
-          <div className="sidebar-section">
-            <h3>Trending Now</h3>
-            <div className="trending-tags-container">
-              {displayTopics.map((item, index) => (
-                <button 
-                  key={index} 
-                  className="trending-tag" 
-                  onClick={() => handleTopicClick(item.topic)}
-                >
-                  #{item.topic}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* REMOVED: Trending Section */}
 
-        {/* Filters Section (Now using Constants) */}
+        {/* Filters Section */}
         <div className="sidebar-section">
           <h3>Filters</h3>
           <div className="filter-group"><CustomSelect name="region" value={filters.region} options={REGIONS} onChange={handleChange} /></div>

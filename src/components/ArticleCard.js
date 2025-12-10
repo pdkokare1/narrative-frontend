@@ -1,7 +1,8 @@
 // In file: src/components/ArticleCard.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './ArticleCard.css'; 
 import { getSentimentInfo, isOpinion } from '../utils/helpers';
+import { getFallbackImage } from '../utils/constants'; // <--- NEW IMPORT
 import SmartBriefingModal from './modals/SmartBriefingModal';
 import useIsMobile from '../hooks/useIsMobile';
 
@@ -27,15 +28,24 @@ function ArticleCard({
   const isOpEd = isOpinion(article);
   const showCompareOnSoft = !isHardNews && (article.clusterCount > 1);
 
-  // Sentiment Data (for Soft/Opinion)
+  // Sentiment Data
   const sentimentInfo = getSentimentInfo(article.sentiment);
 
-  const handleImageError = (e) => {
-    e.target.style.display = 'none';
-    const placeholder = e.target.nextElementSibling;
-    if (placeholder && placeholder.classList.contains('image-placeholder')) {
-      placeholder.style.display = 'flex';
-    }
+  // --- NEW: Image Handling State ---
+  // Initialize with the article image, OR the fallback if it's missing immediately
+  const [imgSrc, setImgSrc] = useState(article.imageUrl || getFallbackImage(article.category));
+
+  // Reset image if the article prop changes (e.g. during scrolling/recycling)
+  useEffect(() => {
+      setImgSrc(article.imageUrl || getFallbackImage(article.category));
+  }, [article.imageUrl, article.category]);
+
+  const handleImageError = () => {
+      // If the real image fails to load, swap to the category fallback
+      const fallback = getFallbackImage(article.category);
+      if (imgSrc !== fallback) {
+          setImgSrc(fallback);
+      }
   };
 
   const stopMobileClick = (e) => { if (isMobileView) { e.stopPropagation(); } };
@@ -112,11 +122,15 @@ function ArticleCard({
       <div className={`article-card ${isPlaying ? 'now-playing' : ''}`}>
         {renderTopBadges()}
         
+        {/* --- UPDATED IMAGE SECTION --- */}
         <div className="article-image">
-          {article.imageUrl ? (
-            <img src={article.imageUrl} alt={article.headline} onError={handleImageError} loading="lazy" />
-          ) : null}
-          <div className="image-placeholder" style={{ display: article.imageUrl ? 'none' : 'flex' }}>📰</div>
+          <img 
+            src={imgSrc} 
+            alt={article.headline} 
+            onError={handleImageError} 
+            loading="lazy" 
+          />
+          {/* No placeholder div needed anymore! */}
         </div>
         
         <div className="article-content">

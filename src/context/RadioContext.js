@@ -36,10 +36,7 @@ export const RadioProvider = ({ children }) => {
 
   // Refs
   const audioRef = useRef(new Audio());
-  const hasPrefetchedRef = useRef(false); // Prevents duplicate downloads
-  
-  // NEW: Store downloaded audio BLOBS here for instant playback
-  // Format: { [articleId]: "blob:https://..." }
+  const hasPrefetchedRef = useRef(false);
   const preloadedBlobsRef = useRef({}); 
 
   // --- HELPER: Select Persona ---
@@ -148,20 +145,18 @@ export const RadioProvider = ({ children }) => {
       
       setCurrentTime(0);
       setDuration(0);
-      hasPrefetchedRef.current = false; // Reset for the NEXT track
+      hasPrefetchedRef.current = false; 
 
       try {
           const persona = article.isSystemAudio ? article.speaker : getPersonaForCategory(article.category);
           setCurrentSpeaker(persona);
           const audio = audioRef.current;
 
-          // === 1. CHECK FOR PRELOADED BLOB ===
-          // If we already downloaded this file in the background, use the local Blob URL
+          // Check for preloaded Blob
           if (preloadedBlobsRef.current[article._id]) {
-              console.log(`⚡ Instant Play (from Blob): ${article.headline}`);
+              console.log(`⚡ Instant Play: ${article.headline}`);
               audio.src = preloadedBlobsRef.current[article._id];
           } 
-          // === 2. FALLBACK TO NETWORK ===
           else if (article.isSystemAudio && article.audioUrl) {
               audio.src = article.audioUrl;
           } else {
@@ -188,8 +183,7 @@ export const RadioProvider = ({ children }) => {
               navigator.mediaSession.playbackState = "playing";
           }
 
-          // === CLEAN UP MEMORY ===
-          // Release memory for the previous track's blob if it exists
+          // Cleanup Memory
           const prevId = playlist[currentIndex - 1]?._id;
           if (prevId && preloadedBlobsRef.current[prevId]) {
               URL.revokeObjectURL(preloadedBlobsRef.current[prevId]);
@@ -221,9 +215,8 @@ export const RadioProvider = ({ children }) => {
           if (currentIndex < playlist.length) {
               const nextTrack = playlist[currentIndex];
               
-              // === SEGUE DELAY LOGIC (UPDATED) ===
-              // 0.5s Delay (500ms) for Segues
-              const delay = (nextTrack.isSystemAudio && nextTrack.summary === "Segue") ? 500 : 0;
+              // === SEGUE DELAY LOGIC (UPDATED to 300ms) ===
+              const delay = (nextTrack.isSystemAudio && nextTrack.summary === "Segue") ? 300 : 0;
               
               if (delay > 0) {
                   setIsLoading(true);
@@ -254,7 +247,6 @@ export const RadioProvider = ({ children }) => {
       setCurrentTime(0);
       setDuration(0);
       hasPrefetchedRef.current = false;
-      // Clean up all blobs on stop
       Object.values(preloadedBlobsRef.current).forEach(url => URL.revokeObjectURL(url));
       preloadedBlobsRef.current = {};
       
@@ -324,18 +316,15 @@ export const RadioProvider = ({ children }) => {
           setIsLoading(false); 
           setIsPlaying(true); 
 
-          // === ROBUST PRE-DOWNLOAD (BLOB) LOGIC ===
+          // === ROBUST PRE-DOWNLOAD ===
           if (playlist.length > 0 && currentIndex + 1 < playlist.length) {
               const nextItem = playlist[currentIndex + 1];
 
-              // Only download if we haven't already
               if (!hasPrefetchedRef.current && !preloadedBlobsRef.current[nextItem._id]) {
                   hasPrefetchedRef.current = true; 
                   
                   try {
                       let urlToFetch = null;
-
-                      // Step 1: Get the URL (Static or Generated)
                       if (nextItem.isSystemAudio && nextItem.audioUrl) {
                           urlToFetch = nextItem.audioUrl;
                       } else {
@@ -348,19 +337,16 @@ export const RadioProvider = ({ children }) => {
                           }
                       }
 
-                      // Step 2: FETCH AS BLOB (Force Download to RAM)
                       if (urlToFetch) {
                           console.log(`⬇️ Downloading Blob: ${nextItem.headline}`);
                           const fetchRes = await fetch(urlToFetch);
                           const blob = await fetchRes.blob();
                           const blobUrl = URL.createObjectURL(blob);
-                          
-                          // Step 3: Store Blob URL for next track
                           preloadedBlobsRef.current[nextItem._id] = blobUrl;
                           console.log(`✅ Ready in Memory: ${nextItem.headline}`);
                       }
                   } catch (err) {
-                      console.warn("Pre-download failed (will stream normally):", err);
+                      console.warn("Pre-download failed:", err);
                   }
               }
           }

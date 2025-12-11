@@ -1,6 +1,7 @@
 // In file: src/MyDashboard.js
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom'; 
+import { useQuery } from '@tanstack/react-query'; // <--- NEW: Import hook
 import * as api from './services/api'; 
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
 import { useAuth } from './context/AuthContext'; 
@@ -12,7 +13,6 @@ import 'chartjs-adapter-date-fns';
 import './App.css';
 import './MyDashboard.css';
 
-// --- NEW: Import Skeleton ---
 import DashboardSkeleton from './components/ui/DashboardSkeleton';
 
 import { 
@@ -34,83 +34,40 @@ ChartJS.register(
 
 // --- Helpers ---
 const getActionCount = (totals, action) => {
-  const item = totals.find(t => t.action === action);
+  const item = (totals || []).find(t => t.action === action);
   return item ? item.count : 0;
 };
 
-// Cache duration: 15 Minutes
-const CACHE_DURATION = 15 * 60 * 1000; 
-
 function MyDashboard({ theme }) {
   const { user } = useAuth(); 
-  const [statsData, setStatsData] = useState(null);
-  const [digestData, setDigestData] = useState(null); 
-  const [loadingStats, setLoadingStats] = useState(true);
-  const [error, setError] = useState('');
-
   const themeColors = useMemo(() => getChartTheme(theme), [theme]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setError('');
-      setLoadingStats(true);
-      
-      const userId = user?.uid || 'guest';
-      const CACHE_KEY_STATS = `dashboard_stats_${userId}`;
-      const CACHE_KEY_DIGEST = `dashboard_digest_${userId}`;
+  // --- QUERY 1: User Statistics ---
+  const { 
+    data: statsData, 
+    isLoading: statsLoading, 
+    error: statsError 
+  } = useQuery({
+    queryKey: ['dashboardStats', user?.uid],
+    queryFn: async () => {
+      const { data } = await api.getStats();
+      return data;
+    },
+    enabled: !!user, // Only fetch if user is logged in
+  });
 
-      // 1. Try to load from Cache first
-      try {
-          const cachedStatsRaw = localStorage.getItem(CACHE_KEY_STATS);
-          const cachedDigestRaw = localStorage.getItem(CACHE_KEY_DIGEST);
-
-          if (cachedStatsRaw && cachedDigestRaw) {
-              const cachedStats = JSON.parse(cachedStatsRaw);
-              const cachedDigest = JSON.parse(cachedDigestRaw);
-              const now = Date.now();
-
-              if (now - cachedStats.timestamp < CACHE_DURATION) {
-                  console.log("⚡ Dashboard loaded from Cache");
-                  setStatsData(cachedStats.data);
-                  setDigestData(cachedDigest.data);
-                  setLoadingStats(false);
-                  return; 
-              }
-          }
-      } catch (e) {
-          console.warn("Cache parsing error", e);
-      }
-
-      // 2. Cache Miss - Fetch from API
-      try {
-        const [statsRes, digestRes] = await Promise.all([
-            api.getStats(),
-            api.getWeeklyDigest()
-        ]);
-        
-        setStatsData(statsRes.data);
-        setDigestData(digestRes.data);
-
-        // 3. Save to Cache
-        localStorage.setItem(CACHE_KEY_STATS, JSON.stringify({
-            data: statsRes.data,
-            timestamp: Date.now()
-        }));
-        localStorage.setItem(CACHE_KEY_DIGEST, JSON.stringify({
-            data: digestRes.data,
-            timestamp: Date.now()
-        }));
-
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError('Could not load statistics data.');
-      } finally {
-        setLoadingStats(false);
-      }
-    };
-
-    if (user) fetchData();
-  }, [user]);
+  // --- QUERY 2: Weekly Digest ---
+  const { 
+    data: digestData, 
+    isLoading: digestLoading 
+  } = useQuery({
+    queryKey: ['dashboardDigest', user?.uid],
+    queryFn: async () => {
+      const { data } = await api.getWeeklyDigest();
+      return data;
+    },
+    enabled: !!user,
+  });
 
   // --- Data Preparation Logic ---
   const prepareCategoryData = (rawData) => {
@@ -156,8 +113,19 @@ function MyDashboard({ theme }) {
   };
 
   // --- Early Return: Show Skeleton while loading ---
-  if (loadingStats) {
+  if (statsLoading || digestLoading) {
       return <DashboardSkeleton />;
+  }
+
+  // --- Error State ---
+  if (statsError) {
+      return (
+        <div className="dashboard-page">
+            <div className="no-data-msg">
+                <p>Could not load dashboard data. Please try refreshing.</p>
+            </div>
+        </div>
+      );
   }
 
   // --- Normal Render (Data is Ready) ---

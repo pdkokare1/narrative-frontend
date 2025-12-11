@@ -27,7 +27,6 @@ export const RadioProvider = ({ children }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Playback State
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1.0);
@@ -35,14 +34,11 @@ export const RadioProvider = ({ children }) => {
   const [currentSpeaker, setCurrentSpeaker] = useState(null);
   const [isVisible, setIsVisible] = useState(false); 
 
-  // Autoplay Timer
-  const [isWaitingForNext, setIsWaitingForNext] = useState(false);
-  const [autoplayTimer, setAutoplayTimer] = useState(0);
+  // (Removed Autoplay Timer State - We play instantly now)
 
   // Refs
   const audioRef = useRef(new Audio());
-  const timerIntervalRef = useRef(null);
-  const hasPrefetchedRef = useRef(false); 
+  const hasPrefetchedRef = useRef(false); // Tracks if we already fetched the NEXT item
 
   // --- HELPER: Select Persona ---
   const getPersonaForCategory = useCallback((category) => {
@@ -67,6 +63,7 @@ export const RadioProvider = ({ children }) => {
   // --- HELPER: Format Text for Audio ---
   const prepareAudioText = (headline, summary) => {
       const cleanHeadline = headline.replace(/[.]+$/, '');
+      // Force long pause between headline and body
       return `${cleanHeadline}. . . . . . ${summary}`;
   };
 
@@ -74,7 +71,6 @@ export const RadioProvider = ({ children }) => {
   const getGreetingTrack = (firstArticle) => {
       const userId = user?.uid || 'guest';
       const storageKey = `lastRadioSession_${userId}`;
-      
       const lastSession = localStorage.getItem(storageKey);
       const now = Date.now();
       const THIRTY_MINS = 30 * 60 * 1000;
@@ -87,7 +83,6 @@ export const RadioProvider = ({ children }) => {
 
       const persona = getPersonaForCategory(firstArticle.category);
       const hostKey = persona.name.toUpperCase(); 
-
       const hour = new Date().getHours();
       let timeKey = 'MORNING';
       if (hour >= 12 && hour < 17) timeKey = 'AFTERNOON';
@@ -108,45 +103,35 @@ export const RadioProvider = ({ children }) => {
       };
   };
 
-  // --- HELPER: Inject Segues (Connective Tissue) ---
+  // --- HELPER: Inject Segues ---
   const injectSegues = useCallback((rawArticles) => {
       const processed = [];
-      
       for (let i = 0; i < rawArticles.length; i++) {
           processed.push(rawArticles[i]);
-
-          // Look ahead to the next article
           if (i < rawArticles.length - 1) {
               const currentItem = rawArticles[i];
               const nextItem = rawArticles[i+1];
-
-              // Skip logic if items are already system audio (shouldn't happen in raw input)
               if (currentItem.isSystemAudio || nextItem.isSystemAudio) continue;
 
               const currentHost = getPersonaForCategory(currentItem.category);
               const nextHost = getPersonaForCategory(nextItem.category);
 
-              // 1. SAME HOST? -> Insert Segue
               if (currentHost.name === nextHost.name) {
                   const hostKey = currentHost.name.toUpperCase();
                   const segues = VOICE_ASSETS.SEGUES?.[hostKey];
-
                   if (segues && segues.length > 0) {
                       const randomSegue = segues[Math.floor(Math.random() * segues.length)];
-                      
                       processed.push({
                           _id: `segue_${currentItem._id}_to_${nextItem._id}`,
                           headline: "Transition",
                           summary: "Segue",
                           isSystemAudio: true,
                           audioUrl: randomSegue,
-                          speaker: currentHost, // Same speaker continues
+                          speaker: currentHost, 
                           category: 'System'
                       });
                   }
               }
-              
-              // 2. DIFFERENT HOST? -> (Handover logic will go here later)
           }
       }
       return processed;
@@ -159,13 +144,12 @@ export const RadioProvider = ({ children }) => {
       setIsLoading(true);
       setIsPlaying(true);
       setIsPaused(false);
-      setIsWaitingForNext(false);
       setCurrentArticle(article);
       setIsVisible(true);
       
       setCurrentTime(0);
       setDuration(0);
-      hasPrefetchedRef.current = false; 
+      hasPrefetchedRef.current = false; // Reset prefetch flag for this new track
 
       try {
           const persona = article.isSystemAudio ? article.speaker : getPersonaForCategory(article.category);
@@ -185,10 +169,8 @@ export const RadioProvider = ({ children }) => {
               }
           }
 
-          // Apply Relative Speed
           const baseSpeed = getBaseSpeed(persona.name);
-          const finalSpeed = baseSpeed * playbackRate;
-          audio.playbackRate = finalSpeed;
+          audio.playbackRate = baseSpeed * playbackRate;
           
           await audio.play();
 
@@ -203,12 +185,8 @@ export const RadioProvider = ({ children }) => {
 
       } catch (error) {
           console.error("Radio Error:", error);
-          if (article.isSystemAudio) {
-              playNext(); 
-          } else {
-              setIsLoading(false);
-              setIsPlaying(false);
-          }
+          // If a track fails, immediately skip to the next to maintain flow
+          playNext(); 
       }
   }, [playbackRate, getPersonaForCategory]);
 
@@ -225,12 +203,13 @@ export const RadioProvider = ({ children }) => {
       setCurrentIndex(prev => Math.max(0, prev - 1));
   }, []);
 
+  // Trigger play when index changes
   useEffect(() => {
       if (currentIndex >= 0 && playlist.length > 0) {
           if (currentIndex < playlist.length) {
               playArticle(playlist[currentIndex]);
           } else {
-              stop(); 
+              stop(); // End of playlist
           }
       }
   }, [currentIndex, playlist, playArticle]);
@@ -239,11 +218,8 @@ export const RadioProvider = ({ children }) => {
   const stop = useCallback(() => {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-      
       setIsPlaying(false);
       setIsPaused(false);
-      setIsWaitingForNext(false);
       setIsLoading(false);
       setIsVisible(false);
       setCurrentArticle(null);
@@ -251,8 +227,6 @@ export const RadioProvider = ({ children }) => {
       setPlaylist([]);
       setCurrentTime(0);
       setDuration(0);
-      hasPrefetchedRef.current = false;
-      
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "none";
   }, []);
 
@@ -270,9 +244,8 @@ export const RadioProvider = ({ children }) => {
 
   const seekTo = useCallback((time) => {
       if (audioRef.current) {
-          const safeTime = Math.max(0, Math.min(time, audioRef.current.duration || 0));
-          audioRef.current.currentTime = safeTime;
-          setCurrentTime(safeTime);
+          audioRef.current.currentTime = time;
+          setCurrentTime(time);
       }
   }, []);
 
@@ -288,23 +261,12 @@ export const RadioProvider = ({ children }) => {
   const startRadio = useCallback((articles, startIndex = 0) => {
       if (!articles || articles.length === 0) return;
 
-      // 1. Slice the user's intended queue
       const userQueue = articles.slice(startIndex);
-
-      // 2. Inject Segues into the queue
       const connectedQueue = injectSegues(userQueue);
-
-      // 3. Check for Greeting (based on the very first real article)
       const firstArticle = articles[startIndex];
       const greetingTrack = getGreetingTrack(firstArticle);
 
-      let finalPlaylist = [];
-
-      if (greetingTrack) {
-          finalPlaylist = [greetingTrack, ...connectedQueue];
-      } else {
-          finalPlaylist = connectedQueue;
-      }
+      let finalPlaylist = greetingTrack ? [greetingTrack, ...connectedQueue] : connectedQueue;
 
       setPlaylist(finalPlaylist);
       setCurrentIndex(0); 
@@ -315,30 +277,6 @@ export const RadioProvider = ({ children }) => {
       setCurrentIndex(0);
   }, []);
 
-  // --- AUTOPLAY COUNTDOWN ---
-  const startAutoplayCountdown = useCallback(() => {
-      setIsPlaying(false);
-      setIsWaitingForNext(true);
-      setAutoplayTimer(5);
-
-      timerIntervalRef.current = setInterval(() => {
-          setAutoplayTimer((prev) => {
-              if (prev <= 1) {
-                  clearInterval(timerIntervalRef.current);
-                  setIsWaitingForNext(false);
-                  playNext(); 
-                  return 0;
-              }
-              return prev - 1;
-          });
-      }, 1000);
-  }, [playNext]);
-
-  const cancelAutoplay = useCallback(() => {
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-      stop();
-  }, [stop]);
-
   // --- EVENT LISTENERS ---
   useEffect(() => {
       const audio = audioRef.current;
@@ -348,14 +286,28 @@ export const RadioProvider = ({ children }) => {
           const dur = audio.duration;
           setCurrentTime(cTime);
 
+          // --- SMART PRE-FETCH LOGIC (FIXED) ---
+          // We look ahead to the NEXT item in the playlist
           if (playlist.length > 0 && currentIndex + 1 < playlist.length) {
               const nextItem = playlist[currentIndex + 1];
               
-              if (!nextItem.isSystemAudio && dur > 0 && (dur - cTime) < 15 && !hasPrefetchedRef.current) {
-                  hasPrefetchedRef.current = true; 
-                  const nextPersona = getPersonaForCategory(nextItem.category);
-                  const nextText = prepareAudioText(nextItem.headline, nextItem.summary);
-                  api.prefetchAudio(nextText, nextPersona.id, nextItem._id);
+              // If current track has < 15s remaining and we haven't prefetched yet
+              if (dur > 0 && (dur - cTime) < 15 && !hasPrefetchedRef.current) {
+                  hasPrefetchedRef.current = true; // Mark done so we don't spam calls
+                  
+                  if (nextItem.isSystemAudio && nextItem.audioUrl) {
+                      // 1. Static Audio (Segues/Greetings) -> Force Browser Cache
+                      // Creating a new Audio object causes the browser to download the file
+                      console.log(`🎧 Pre-loading Static Audio: ${nextItem.headline}`);
+                      const preload = new Audio(nextItem.audioUrl);
+                      preload.load(); 
+                  } else {
+                      // 2. AI News -> Generate via API
+                      console.log(`🎧 Pre-generating AI Audio: ${nextItem.headline}`);
+                      const nextPersona = getPersonaForCategory(nextItem.category);
+                      const nextText = prepareAudioText(nextItem.headline, nextItem.summary);
+                      api.prefetchAudio(nextText, nextPersona.id, nextItem._id);
+                  }
               }
           }
       };
@@ -365,13 +317,9 @@ export const RadioProvider = ({ children }) => {
       const handlePlaying = () => { setIsLoading(false); setIsPlaying(true); };
       
       const handleEnded = () => {
-          setIsPlaying(false);
-          setIsPaused(false);
-          if (currentArticle && currentArticle.isSystemAudio) {
-              playNext(); 
-          } else {
-              startAutoplayCountdown();
-          }
+          // --- IMMEDIATE TRANSITION ---
+          // No timers. No countdowns. Just play next.
+          playNext();
       };
 
       audio.addEventListener('timeupdate', handleTimeUpdate);
@@ -396,13 +344,13 @@ export const RadioProvider = ({ children }) => {
           audio.removeEventListener('playing', handlePlaying);
           audio.removeEventListener('ended', handleEnded);
       };
-  }, [resume, pause, playNext, playPrevious, startAutoplayCountdown, playlist, currentIndex, currentArticle, getPersonaForCategory]);
+  }, [resume, pause, playNext, playPrevious, playlist, currentIndex, getPersonaForCategory]);
 
   return (
       <RadioContext.Provider value={{
           currentArticle, currentSpeaker, isPlaying, isPaused, isLoading, isVisible,
-          isWaitingForNext, autoplayTimer, currentTime, duration, playbackRate,
-          startRadio, playSingle, stop, pause, resume, playNext, playPrevious, seekTo, changeSpeed, cancelAutoplay
+          currentTime, duration, playbackRate,
+          startRadio, playSingle, stop, pause, resume, playNext, playPrevious, seekTo, changeSpeed
       }}>
           {children}
       </RadioContext.Provider>

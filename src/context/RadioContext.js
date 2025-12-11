@@ -9,8 +9,8 @@ export const useRadio = () => useContext(RadioContext);
 // --- PERSONAS ---
 const VOICES = {
   ANCHOR: { id: 'SmLgXu8CcwHJvjiqq2rw', name: 'Mira', role: 'The Anchor' },
-  ANALYST: { id: 'czw3FmTwixwtnkpOKXZ0', name: 'Kabir', role: 'The Analyst' }, // <--- UPDATED ID
-  CURATOR: { id: 'AwEl6phyzczpCHHDxyfO', name: 'Tara', role: 'The Curator' }
+  ANALYST: { id: 'czw3FmTwixwtnkpOKXZ0', name: 'Rajat', role: 'The Analyst' }, 
+  CURATOR: { id: 'AwEl6phyzczpCHHDxyfO', name: 'Shubhi', role: 'The Curator' }
 };
 
 export const RadioProvider = ({ children }) => {

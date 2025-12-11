@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import * as api from '../services/api';
 import { VOICE_ASSETS } from '../utils/VoiceAssets'; 
+import { useAuth } from './AuthContext'; // <--- NEW IMPORT
 
 const RadioContext = createContext();
 
@@ -15,6 +16,8 @@ const VOICES = {
 };
 
 export const RadioProvider = ({ children }) => {
+  const { user } = useAuth(); // <--- GET USER ID FOR SESSION TRACKING
+
   // --- STATE ---
   const [playlist, setPlaylist] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
@@ -27,7 +30,9 @@ export const RadioProvider = ({ children }) => {
   // Playback State
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [playbackRate, setPlaybackRate] = useState(1.0);
+  
+  // --- UPDATED: Default Speed is now 0.9 ---
+  const [playbackRate, setPlaybackRate] = useState(0.9);
   
   const [currentSpeaker, setCurrentSpeaker] = useState(null);
   const [isVisible, setIsVisible] = useState(false); 
@@ -58,14 +63,18 @@ export const RadioProvider = ({ children }) => {
 
   // --- HELPER: Select Greeting (Smart Start) ---
   const getGreetingTrack = (firstArticle) => {
-      const lastSession = localStorage.getItem('lastRadioSession');
+      // --- FIX: User-Specific Session Key ---
+      const userId = user?.uid || 'guest';
+      const storageKey = `lastRadioSession_${userId}`;
+      
+      const lastSession = localStorage.getItem(storageKey);
       const now = Date.now();
       const THIRTY_MINS = 30 * 60 * 1000;
 
-      // Update session time
-      localStorage.setItem('lastRadioSession', now);
+      // Update session time for THIS user
+      localStorage.setItem(storageKey, now);
 
-      // 1. Check Frequency (Skip if listened recently)
+      // 1. Check Frequency (Skip if this user listened recently)
       if (lastSession && (now - lastSession < THIRTY_MINS)) {
           return null; 
       }
@@ -125,8 +134,7 @@ export const RadioProvider = ({ children }) => {
               // Direct URL for Greetings
               audio.src = article.audioUrl;
               
-              // --- FIX: Force Slower Speed for Greetings ---
-              // 0.85x speed makes it sound more relaxed and conversational
+              // --- FIX: Force 0.85x Speed for Greetings ---
               audio.playbackRate = 0.85; 
           } else {
               // Standard News Article
@@ -134,7 +142,8 @@ export const RadioProvider = ({ children }) => {
               const response = await api.getAudio(textToSpeak, persona.id, article._id);
               if (response.data && response.data.audioUrl) {
                   audio.src = response.data.audioUrl;
-                  // Use standard playback rate (usually 1.0 or user pref)
+                  
+                  // --- FIX: Use 0.90x Speed (Default State) for News ---
                   audio.playbackRate = playbackRate; 
               } else {
                   throw new Error("No audio URL");
@@ -259,7 +268,7 @@ export const RadioProvider = ({ children }) => {
 
       setPlaylist(newPlaylist);
       setCurrentIndex(newStartIndex); 
-  }, [getPersonaForCategory]);
+  }, [getPersonaForCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const playSingle = useCallback((article) => {
       setPlaylist([article]);

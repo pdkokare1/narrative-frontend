@@ -11,8 +11,8 @@ export const useRadio = () => useContext(RadioContext);
 // --- PERSONAS ---
 const VOICES = {
   ANCHOR: { id: 'SmLgXu8CcwHJvjiqq2rw', name: 'Mira', role: 'The Anchor' },
-  ANALYST: { id: 'SZQ4R1VKS2t6wmBJpK5H', name: 'Rajat', role: 'The Analyst' }, // <--- UPDATED
-  CURATOR: { id: '2n8AzqIsQUPMvb1OgO72', name: 'Shubhi', role: 'The Curator' } // <--- UPDATED
+  ANALYST: { id: 'SZQ4R1VKS2t6wmBJpK5H', name: 'Rajat', role: 'The Analyst' }, 
+  CURATOR: { id: '2n8AzqIsQUPMvb1OgO72', name: 'Shubhi', role: 'The Curator' }
 };
 
 export const RadioProvider = ({ children }) => {
@@ -31,8 +31,8 @@ export const RadioProvider = ({ children }) => {
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   
-  // Default Base Speed
-  const [playbackRate, setPlaybackRate] = useState(0.9);
+  // User Preference Speed (UI shows this) - Default 1.0
+  const [playbackRate, setPlaybackRate] = useState(1.0);
   
   const [currentSpeaker, setCurrentSpeaker] = useState(null);
   const [isVisible, setIsVisible] = useState(false); 
@@ -55,10 +55,22 @@ export const RadioProvider = ({ children }) => {
       return VOICES.ANCHOR;
   }, []);
 
+  // --- HELPER: Get Base Speed per Host ---
+  const getBaseSpeed = (personaName) => {
+      if (!personaName) return 0.9;
+      switch (personaName) {
+          case 'Rajat': return 1.0;  // Standard
+          case 'Shubhi': return 1.1; // Energetic/Fast
+          case 'Mira': return 0.9;   // Relaxed/Anchor
+          default: return 0.9;
+      }
+  };
+
   // --- HELPER: Format Text for Audio ---
   const prepareAudioText = (headline, summary) => {
       const cleanHeadline = headline.replace(/[.]+$/, '');
-      return `${cleanHeadline} ... \n\n ${summary}`;
+      // Added extra dots to force a longer pause between headline and body
+      return `${cleanHeadline}. . . . ${summary}`;
   };
 
   // --- HELPER: Select Greeting (Smart Start) ---
@@ -70,31 +82,27 @@ export const RadioProvider = ({ children }) => {
       const now = Date.now();
       const THIRTY_MINS = 30 * 60 * 1000;
 
-      // Update session time
       localStorage.setItem(storageKey, now);
 
-      // 1. Check Frequency (Skip if this user listened recently)
+      // Check Frequency
       if (lastSession && (now - lastSession < THIRTY_MINS)) {
           return null; 
       }
 
-      // 2. Identify Host
+      // Identify Host & Time
       const persona = getPersonaForCategory(firstArticle.category);
       const hostKey = persona.name.toUpperCase(); 
 
-      // 3. Identify Time of Day
       const hour = new Date().getHours();
       let timeKey = 'MORNING';
       if (hour >= 12 && hour < 17) timeKey = 'AFTERNOON';
       if (hour >= 17 || hour < 5) timeKey = 'EVENING';
 
-      // 4. Select Random Clip
       const clips = VOICE_ASSETS.OPENERS[hostKey]?.[timeKey];
       if (!clips || clips.length === 0) return null;
 
       const randomClip = clips[Math.floor(Math.random() * clips.length)];
 
-      // 5. Create "Ghost Article" for the Greeting
       return {
           _id: 'greeting_track',
           headline: `${timeKey === 'MORNING' ? 'Good Morning' : timeKey === 'AFTERNOON' ? 'Good Afternoon' : 'Good Evening'} from ${persona.name}`,
@@ -116,7 +124,6 @@ export const RadioProvider = ({ children }) => {
       setCurrentArticle(article);
       setIsVisible(true);
       
-      // Reset state
       setCurrentTime(0);
       setDuration(0);
       hasPrefetchedRef.current = false; 
@@ -128,31 +135,25 @@ export const RadioProvider = ({ children }) => {
 
           // 2. Play Audio
           const audio = audioRef.current;
-          let targetSpeed = 0.9; // Base default
-
+          
           if (article.isSystemAudio && article.audioUrl) {
-              // --- GREETINGS ---
               audio.src = article.audioUrl;
-              
-              // Rajat Greeting: 0.90 | Others: 0.85
-              targetSpeed = (persona.name === 'Rajat') ? 0.90 : 0.85;
-
           } else {
-              // --- NEWS ARTICLES ---
               const textToSpeak = prepareAudioText(article.headline, article.summary);
               const response = await api.getAudio(textToSpeak, persona.id, article._id);
               if (response.data && response.data.audioUrl) {
                   audio.src = response.data.audioUrl;
-                  
-                  // Rajat News: 1.0 | Others: 0.90
-                  targetSpeed = (persona.name === 'Rajat') ? 1.0 : 0.90;
               } else {
                   throw new Error("No audio URL");
               }
           }
 
-          // Apply Calculated Speed
-          audio.playbackRate = targetSpeed;
+          // --- APPLY RELATIVE SPEED ---
+          // Actual Speed = Host Base Speed * User Preference (1x, 1.5x etc)
+          const baseSpeed = getBaseSpeed(persona.name);
+          const finalSpeed = baseSpeed * playbackRate;
+          
+          audio.playbackRate = finalSpeed;
           
           await audio.play();
 
@@ -169,13 +170,13 @@ export const RadioProvider = ({ children }) => {
       } catch (error) {
           console.error("Radio Error:", error);
           if (article.isSystemAudio) {
-              playNext(); // Skip broken greeting
+              playNext(); 
           } else {
               setIsLoading(false);
               setIsPlaying(false);
           }
       }
-  }, [getPersonaForCategory]); 
+  }, [playbackRate, getPersonaForCategory]);
 
   // --- QUEUE LOGIC ---
   const playNext = useCallback(() => {
@@ -190,13 +191,12 @@ export const RadioProvider = ({ children }) => {
       setCurrentIndex(prev => Math.max(0, prev - 1));
   }, []);
 
-  // Trigger play when index changes
   useEffect(() => {
       if (currentIndex >= 0 && playlist.length > 0) {
           if (currentIndex < playlist.length) {
               playArticle(playlist[currentIndex]);
           } else {
-              stop(); // End of playlist
+              stop(); 
           }
       }
   }, [currentIndex, playlist, playArticle]);
@@ -243,17 +243,20 @@ export const RadioProvider = ({ children }) => {
   }, []);
 
   const changeSpeed = useCallback((newSpeed) => {
-      if (audioRef.current) {
-          audioRef.current.playbackRate = newSpeed;
-          setPlaybackRate(newSpeed);
+      // Update UI state
+      setPlaybackRate(newSpeed);
+      
+      // Update running audio immediately
+      if (audioRef.current && currentSpeaker) {
+          const baseSpeed = getBaseSpeed(currentSpeaker.name);
+          audioRef.current.playbackRate = baseSpeed * newSpeed;
       }
-  }, []);
+  }, [currentSpeaker]);
 
   // --- PUBLIC API ---
   const startRadio = useCallback((articles, startIndex = 0) => {
       if (!articles || articles.length === 0) return;
 
-      // 1. Get appropriate Greeting for the FIRST article's host
       const firstArticle = articles[startIndex];
       const greetingTrack = getGreetingTrack(firstArticle);
 
@@ -261,11 +264,9 @@ export const RadioProvider = ({ children }) => {
       let newStartIndex = 0;
 
       if (greetingTrack) {
-          // Play Greeting -> Then the requested article
           newPlaylist = [greetingTrack, ...articles.slice(startIndex)];
           newStartIndex = 0; 
       } else {
-          // Just start playing
           newPlaylist = articles.slice(startIndex);
           newStartIndex = 0;
       }
@@ -312,7 +313,6 @@ export const RadioProvider = ({ children }) => {
           const dur = audio.duration;
           setCurrentTime(cTime);
 
-          // Smart Pre-fetch
           if (playlist.length > 0 && currentIndex + 1 < playlist.length) {
               const nextItem = playlist[currentIndex + 1];
               
@@ -334,7 +334,7 @@ export const RadioProvider = ({ children }) => {
           setIsPlaying(false);
           setIsPaused(false);
           if (currentArticle && currentArticle.isSystemAudio) {
-              playNext(); // Skip countdown for system audio
+              playNext(); 
           } else {
               startAutoplayCountdown();
           }

@@ -61,7 +61,6 @@ export const RadioProvider = ({ children }) => {
   // --- HELPER: Format Text for Audio ---
   const prepareAudioText = (headline, summary) => {
       const cleanHeadline = headline.replace(/[.]+$/, '');
-      // Force long pause between headline and body
       return `${cleanHeadline}. . . . . . ${summary}`;
   };
 
@@ -123,7 +122,7 @@ export const RadioProvider = ({ children }) => {
                           _id: `segue_${currentItem._id}_to_${nextItem._id}`,
                           headline: "Transition",
                           summary: "Segue",
-                          isSystemAudio: true,
+                          isSystemAudio: true, // Mark as system audio
                           audioUrl: randomSegue,
                           speaker: currentHost, 
                           category: 'System'
@@ -167,7 +166,6 @@ export const RadioProvider = ({ children }) => {
               }
           }
 
-          // Apply Relative Speed
           const baseSpeed = getBaseSpeed(persona.name);
           const finalSpeed = baseSpeed * playbackRate;
           audio.playbackRate = finalSpeed;
@@ -202,13 +200,29 @@ export const RadioProvider = ({ children }) => {
       setCurrentIndex(prev => Math.max(0, prev - 1));
   }, []);
 
-  // Trigger play when index changes
+  // --- SMART PLAYBACK TRIGGER ---
   useEffect(() => {
       if (currentIndex >= 0 && playlist.length > 0) {
           if (currentIndex < playlist.length) {
-              playArticle(playlist[currentIndex]);
+              const nextTrack = playlist[currentIndex];
+              
+              // === SEGUE DELAY LOGIC ===
+              // If the track we are about to play is a SEGUE, wait 1s.
+              // If it's a News Article or Greeting, play immediately (0ms).
+              const delay = (nextTrack.isSystemAudio && nextTrack.summary === "Segue") ? 1000 : 0;
+              
+              if (delay > 0) {
+                  // Set loading state during the pause so UI doesn't look broken
+                  setIsLoading(true);
+                  const timer = setTimeout(() => {
+                      playArticle(nextTrack);
+                  }, delay);
+                  return () => clearTimeout(timer);
+              } else {
+                  playArticle(nextTrack);
+              }
           } else {
-              stop(); // End of playlist
+              stop(); 
           }
       }
   }, [currentIndex, playlist, playArticle]);
@@ -276,7 +290,6 @@ export const RadioProvider = ({ children }) => {
       setCurrentIndex(0);
   }, []);
 
-  // --- AUTOPLAY REMOVED (Instant Transition) ---
   const cancelAutoplay = useCallback(() => {
       stop();
   }, [stop]);
@@ -289,21 +302,31 @@ export const RadioProvider = ({ children }) => {
           const cTime = audio.currentTime;
           const dur = audio.duration;
           setCurrentTime(cTime);
+      };
 
-          // Smart Pre-fetch
+      const handleDurationChange = () => setDuration(audio.duration);
+      
+      const handleLoadStart = () => setIsLoading(true);
+      
+      const handlePlaying = () => { 
+          setIsLoading(false); 
+          setIsPlaying(true); 
+
+          // === INSTANT PRE-FETCH LOGIC ===
+          // Trigger download for NEXT item immediately when current item starts playing.
           if (playlist.length > 0 && currentIndex + 1 < playlist.length) {
               const nextItem = playlist[currentIndex + 1];
-              
-              if (dur > 0 && (dur - cTime) < 15 && !hasPrefetchedRef.current) {
-                  hasPrefetchedRef.current = true; 
+
+              if (!hasPrefetchedRef.current) {
+                  hasPrefetchedRef.current = true; // Lock it so we don't spam
                   
                   if (nextItem.isSystemAudio && nextItem.audioUrl) {
-                      // Static Audio -> Browser Cache
+                      // 1. Static Audio (Segue/Greeting) -> Force Browser Download
                       console.log(`🎧 Pre-loading Static Audio: ${nextItem.headline}`);
                       const preload = new Audio(nextItem.audioUrl);
                       preload.load(); 
                   } else {
-                      // AI News -> Generate
+                      // 2. AI News -> Generate via API
                       console.log(`🎧 Pre-generating AI Audio: ${nextItem.headline}`);
                       const nextPersona = getPersonaForCategory(nextItem.category);
                       const nextText = prepareAudioText(nextItem.headline, nextItem.summary);
@@ -312,13 +335,9 @@ export const RadioProvider = ({ children }) => {
               }
           }
       };
-
-      const handleDurationChange = () => setDuration(audio.duration);
-      const handleLoadStart = () => setIsLoading(true);
-      const handlePlaying = () => { setIsLoading(false); setIsPlaying(true); };
       
       const handleEnded = () => {
-          playNext(); // Instant transition
+          playNext(); 
       };
 
       audio.addEventListener('timeupdate', handleTimeUpdate);

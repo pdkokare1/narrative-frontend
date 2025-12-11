@@ -27,7 +27,6 @@ export const RadioProvider = ({ children }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Playback State
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1.0);
@@ -62,7 +61,7 @@ export const RadioProvider = ({ children }) => {
   // --- HELPER: Format Text for Audio ---
   const prepareAudioText = (headline, summary) => {
       const cleanHeadline = headline.replace(/[.]+$/, '');
-      // Long pause between headline and body
+      // Force long pause between headline and body
       return `${cleanHeadline}. . . . . . ${summary}`;
   };
 
@@ -168,12 +167,9 @@ export const RadioProvider = ({ children }) => {
               }
           }
 
-          // --- UNIFIED SPEED LOGIC ---
-          // Apply the same natural speed rule to EVERYTHING (Greetings, Segues, News)
-          // This ensures the voice texture remains consistent.
+          // Apply Relative Speed
           const baseSpeed = getBaseSpeed(persona.name);
           const finalSpeed = baseSpeed * playbackRate;
-          
           audio.playbackRate = finalSpeed;
           
           await audio.play();
@@ -212,7 +208,7 @@ export const RadioProvider = ({ children }) => {
           if (currentIndex < playlist.length) {
               playArticle(playlist[currentIndex]);
           } else {
-              stop(); 
+              stop(); // End of playlist
           }
       }
   }, [currentIndex, playlist, playArticle]);
@@ -280,13 +276,7 @@ export const RadioProvider = ({ children }) => {
       setCurrentIndex(0);
   }, []);
 
-  // --- AUTOPLAY COUNTDOWN ---
-  const startAutoplayCountdown = useCallback(() => {
-      setIsPlaying(false);
-      setIsWaitingForNext(true);
-      // No Timer State needed anymore, logic is instant
-  }, []);
-
+  // --- AUTOPLAY REMOVED (Instant Transition) ---
   const cancelAutoplay = useCallback(() => {
       stop();
   }, [stop]);

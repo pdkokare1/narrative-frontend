@@ -1,5 +1,6 @@
 // src/components/feeds/LatestFeed.js
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query'; // <--- NEW
 import * as api from '../../services/api'; 
 import ArticleCard from '../ArticleCard';
 import SkeletonCard from '../ui/SkeletonCard';
@@ -15,75 +16,84 @@ function LatestFeed({
   savedArticleIds, 
   onToggleSave, 
   showTooltip,
-  scrollToTopRef // Parent passes this so we can scroll top on filter change
+  scrollToTopRef 
 }) {
-  const [articles, setArticles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
+  const { addToast } = useToast();
+  const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
   
-  // Scroll Tracking
+  // Refs for "Smart Start" Radio
   const [visibleArticleIndex, setVisibleArticleIndex] = useState(0);
   const articleRefs = useRef([]);
   const bottomSentinelRef = useRef(null);
-  
-  const { addToast } = useToast();
-  const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
 
-  // --- 1. Fetch Logic ---
-  const fetchFeed = useCallback(async (isLoadMore = false) => {
-    if (isLoadMore && loadingMore) return;
-
-    if (isLoadMore) setLoadingMore(true);
-    else setLoading(true);
-
-    try {
-      const offset = isLoadMore ? articles.length : 0;
-      const { data } = await api.fetchArticles({ ...filters, limit: 12, offset });
+  // --- QUERY: Infinite Feed ---
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+    status,
+    error
+  } = useInfiniteQuery({
+    queryKey: ['latestFeed', filters], // Filters in key = Auto-refetch on change
+    queryFn: async ({ pageParam = 0 }) => {
+      const { data } = await api.fetchArticles({ ...filters, limit: 12, offset: pageParam });
+      return data;
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      // Calculate total articles loaded so far
+      const loadedCount = allPages.reduce((acc, page) => acc + page.articles.length, 0);
+      const totalAvailable = lastPage.pagination?.total || 0;
       
-      if (isLoadMore) {
-        setArticles(prev => [...prev, ...data.articles]);
-      } else {
-        setArticles(data.articles || []);
-      }
-      setTotalCount(data.pagination?.total || 0);
-    } catch (error) {
-      console.error('Fetch error:', error);
-      addToast('Failed to load articles.', 'error');
-    } finally {
-      if (isLoadMore) setLoadingMore(false);
-      else setLoading(false);
-    }
-  }, [filters, articles.length, loadingMore, addToast]);
+      // If we have more to load, return the next offset
+      return loadedCount < totalAvailable ? loadedCount : undefined;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+  });
 
-  // --- 2. Initial Load & Filter Change ---
+  // Flatten the pages into a single list of articles
+  const articles = useMemo(() => {
+    return data?.pages.flatMap(page => page.articles) || [];
+  }, [data]);
+
+  // --- 1. Scroll to Top on Filter Change ---
   useEffect(() => {
-    setLoading(true);
-    fetchFeed(false);
-    if (scrollToTopRef?.current) scrollToTopRef.current.scrollTop = 0;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters]);
+    if (scrollToTopRef?.current) {
+        scrollToTopRef.current.scrollTop = 0;
+    }
+  }, [filters, scrollToTopRef]);
+
+  // --- 2. Error Handling ---
+  useEffect(() => {
+    if (status === 'error') {
+        console.error("Feed Error:", error);
+        addToast('Failed to load articles.', 'error');
+    }
+  }, [status, error, addToast]);
 
   // --- 3. Infinite Scroll Observer ---
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !loading && !loadingMore && articles.length < totalCount) {
-          fetchFeed(true);
+        // If bottom visible AND we have more pages AND we aren't already fetching
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
         }
       },
-      { threshold: 0.1, rootMargin: '300px' }
+      { threshold: 0.1, rootMargin: '400px' } // Pre-fetch before user hits absolute bottom
     );
     
     const sentinel = bottomSentinelRef.current;
     if (sentinel) observer.observe(sentinel);
     return () => { if (sentinel) observer.unobserve(sentinel); };
-  }, [loading, loadingMore, articles.length, totalCount, fetchFeed]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // --- 4. "Smart Start" Radio Observer ---
-  // Tracks which article is at the top of the screen so Radio starts there
   useEffect(() => {
-    if (loading || articles.length === 0) return;
+    if (isFetching && !isFetchingNextPage) return; // Don't track during initial load
+    if (articles.length === 0) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -96,9 +106,10 @@ function LatestFeed({
       { threshold: 0.6 }
     );
     
+    // Observe new refs
     articleRefs.current.forEach(el => { if (el) observer.observe(el); });
     return () => observer.disconnect();
-  }, [articles, loading]);
+  }, [articles.length, isFetching, isFetchingNextPage]);
 
   // --- Handlers ---
   const handleCategorySelect = (category) => {
@@ -114,7 +125,8 @@ function LatestFeed({
     api.logShare(article._id).catch(err => console.error("Log Share Error:", err));
     const shareUrl = `${window.location.origin}?article=${article._id}`;
     if (navigator.share) {
-      navigator.share({ title: article.headline, text: `Check this out: ${article.headline}`, url: shareUrl });
+      navigator.share({ title: article.headline, text: `Check this out: ${article.headline}`, url: shareUrl })
+        .catch(() => navigator.clipboard.writeText(shareUrl).then(() => addToast('Link copied!', 'success')));
     } else {
       navigator.clipboard.writeText(shareUrl).then(() => addToast('Link copied!', 'success'));
     }
@@ -146,13 +158,14 @@ function LatestFeed({
 
       {/* Articles Grid */}
       <div className="articles-grid">
-        {loading && !loadingMore ? (
+        {/* Initial Loading State */}
+        {status === 'pending' ? (
            [...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> ))
         ) : (
            articles.map((article, index) => (
             <div 
                 className="article-card-wrapper" 
-                key={article._id || article.url}
+                key={article._id || index}
                 ref={el => articleRefs.current[index] = el}
                 data-index={index}
             >
@@ -173,25 +186,24 @@ function LatestFeed({
           ))
         )}
         
-        {loadingMore && (
+        {/* Load More Skeletons */}
+        {isFetchingNextPage && (
            [...Array(3)].map((_, i) => ( <div className="article-card-wrapper" key={`more-${i}`}><SkeletonCard /></div> ))
         )}
       </div>
 
       {/* Empty State */}
-      {!loading && articles.length === 0 && (
+      {status === 'success' && articles.length === 0 && (
         <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
             <p>No articles found matching your current filters.</p>
         </div>
       )}
 
-      {/* Scroll Sentinel */}
-      {articles.length < totalCount && (
-        <div ref={bottomSentinelRef} style={{ height: '20px', marginBottom: '20px' }} />
-      )}
+      {/* Scroll Sentinel (Invisible line to trigger load more) */}
+      <div ref={bottomSentinelRef} style={{ height: '20px', marginBottom: '20px', marginTop: '20px' }} />
       
       {/* End of Feed Message */}
-      {!loading && !loadingMore && articles.length >= totalCount && articles.length > 0 && (
+      {!hasNextPage && status === 'success' && articles.length > 0 && (
           <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-tertiary)', fontSize: '12px' }}>
               <p>You've caught up with the latest news!</p>
           </div>

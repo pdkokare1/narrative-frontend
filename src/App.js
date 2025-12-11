@@ -1,6 +1,7 @@
 // In file: src/App.js
 import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
 import { Routes, Route, useLocation, Navigate, Link } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; // <--- NEW IMPORT
 
 // --- Styles ---
 import './App.css'; 
@@ -23,7 +24,6 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import NewsFeed from './components/NewsFeed'; 
 import GlobalPlayerBar from './components/GlobalPlayerBar'; 
-// REMOVED: InstallPrompt import
 
 // --- UI Components ---
 import CustomTooltip from './components/ui/CustomTooltip';
@@ -43,15 +43,30 @@ const AccountSettings = lazy(() => import('./AccountSettings'));
 const SearchResults = lazy(() => import('./SearchResults')); 
 const EmergencyResources = lazy(() => import('./EmergencyResources'));
 
+// --- NEW: Initialize Query Client ---
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // Data remains fresh for 5 minutes
+      gcTime: 1000 * 60 * 30,   // Keep unused data in memory for 30 minutes
+      retry: 1,                 // Retry failed requests once
+      refetchOnWindowFocus: false, // Don't refetch when switching tabs/windows
+    },
+  },
+});
+
 function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <RadioProvider> 
-           <AppRoutes />
-        </RadioProvider>
-      </ToastProvider>
-    </AuthProvider>
+    // --- NEW: Wrap App in QueryClientProvider ---
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ToastProvider>
+          <RadioProvider> 
+             <AppRoutes />
+          </RadioProvider>
+        </ToastProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
@@ -286,7 +301,6 @@ function MainLayout({ profile }) {
         />
       )}
 
-      {/* REMOVED: InstallPrompt */}
       <GlobalPlayerBar />
     </div>
   );

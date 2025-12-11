@@ -11,8 +11,8 @@ export const useRadio = () => useContext(RadioContext);
 // --- PERSONAS ---
 const VOICES = {
   ANCHOR: { id: 'SmLgXu8CcwHJvjiqq2rw', name: 'Mira', role: 'The Anchor' },
-  ANALYST: { id: 'czw3FmTwixwtnkpOKXZ0', name: 'Rajat', role: 'The Analyst' }, 
-  CURATOR: { id: 'AwEl6phyzczpCHHDxyfO', name: 'Shubhi', role: 'The Curator' }
+  ANALYST: { id: 'SZQ4R1VKS2t6wmBJpK5H', name: 'Rajat', role: 'The Analyst' }, // <--- UPDATED
+  CURATOR: { id: '2n8AzqIsQUPMvb1OgO72', name: 'Shubhi', role: 'The Curator' } // <--- UPDATED
 };
 
 export const RadioProvider = ({ children }) => {
@@ -175,7 +175,7 @@ export const RadioProvider = ({ children }) => {
               setIsPlaying(false);
           }
       }
-  }, [getPersonaForCategory]); // Removing playbackRate from deps to prevent loop, speed is handled per-track now.
+  }, [getPersonaForCategory]); 
 
   // --- QUEUE LOGIC ---
   const playNext = useCallback(() => {

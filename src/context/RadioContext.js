@@ -39,6 +39,13 @@ export const RadioProvider = ({ children }) => {
   const hasPrefetchedRef = useRef(false);
   const preloadedBlobsRef = useRef({}); 
 
+  // --- HELPER: Cloudinary Optimization (64kbps) ---
+  const optimizeUrl = (url) => {
+      if (!url || !url.includes('cloudinary')) return url;
+      // Inject 'br_64k' (Bitrate 64kbps) after /upload/ to reduce file size by 50%
+      return url.replace('/upload/', '/upload/br_64k/');
+  };
+
   // --- HELPER: Select Persona ---
   const getPersonaForCategory = useCallback((category) => {
       if (!category) return VOICES.ANCHOR;
@@ -152,18 +159,19 @@ export const RadioProvider = ({ children }) => {
           setCurrentSpeaker(persona);
           const audio = audioRef.current;
 
-          // Check for preloaded Blob
+          // Check for preloaded Blob (Best Speed)
           if (preloadedBlobsRef.current[article._id]) {
               console.log(`⚡ Instant Play: ${article.headline}`);
               audio.src = preloadedBlobsRef.current[article._id];
           } 
+          // Network Fallback with Optimization
           else if (article.isSystemAudio && article.audioUrl) {
-              audio.src = article.audioUrl;
+              audio.src = optimizeUrl(article.audioUrl);
           } else {
               const textToSpeak = prepareAudioText(article.headline, article.summary);
               const response = await api.getAudio(textToSpeak, persona.id, article._id);
               if (response.data && response.data.audioUrl) {
-                  audio.src = response.data.audioUrl;
+                  audio.src = optimizeUrl(response.data.audioUrl);
               } else {
                   throw new Error("No audio URL");
               }
@@ -215,8 +223,8 @@ export const RadioProvider = ({ children }) => {
           if (currentIndex < playlist.length) {
               const nextTrack = playlist[currentIndex];
               
-              // === SEGUE DELAY LOGIC (UPDATED to 300ms) ===
-              const delay = (nextTrack.isSystemAudio && nextTrack.summary === "Segue") ? 300 : 0;
+              // 0.5s Delay for Segues
+              const delay = (nextTrack.isSystemAudio && nextTrack.summary === "Segue") ? 500 : 0;
               
               if (delay > 0) {
                   setIsLoading(true);
@@ -316,7 +324,7 @@ export const RadioProvider = ({ children }) => {
           setIsLoading(false); 
           setIsPlaying(true); 
 
-          // === ROBUST PRE-DOWNLOAD ===
+          // === PRE-DOWNLOAD NEXT TRACK (OPTIMIZED) ===
           if (playlist.length > 0 && currentIndex + 1 < playlist.length) {
               const nextItem = playlist[currentIndex + 1];
 
@@ -338,8 +346,11 @@ export const RadioProvider = ({ children }) => {
                       }
 
                       if (urlToFetch) {
-                          console.log(`⬇️ Downloading Blob: ${nextItem.headline}`);
-                          const fetchRes = await fetch(urlToFetch);
+                          // Apply optimization before downloading the blob!
+                          const optimizedUrl = optimizeUrl(urlToFetch);
+                          console.log(`⬇️ Downloading Optimized Blob: ${nextItem.headline}`);
+                          
+                          const fetchRes = await fetch(optimizedUrl);
                           const blob = await fetchRes.blob();
                           const blobUrl = URL.createObjectURL(blob);
                           preloadedBlobsRef.current[nextItem._id] = blobUrl;

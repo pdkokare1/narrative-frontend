@@ -11,12 +11,12 @@ const VOICES = {
     role: 'The Anchor' 
   },
   ANALYST: { 
-    id: 'czw3FmTwixwtnkpOKXZ0', 
+    id: 'SZQ4R1VKS2t6wmBJpK5H', // <--- UPDATED (Rajat)
     name: 'Rajat', 
     role: 'The Analyst' 
   },
   CURATOR: { 
-    id: 'AwEl6phyzczpCHHDxyfO', 
+    id: '2n8AzqIsQUPMvb1OgO72', // <--- UPDATED (Shubhi)
     name: 'Shubhi', 
     role: 'The Curator' 
   }

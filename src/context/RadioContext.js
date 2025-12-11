@@ -36,9 +36,11 @@ export const RadioProvider = ({ children }) => {
 
   // Refs
   const audioRef = useRef(new Audio());
-  const hasPrefetchedRef = useRef(false);
-  // NEW: A ref to hold the preloaded audio object so it doesn't get garbage collected
-  const preloadObjectRef = useRef(null);
+  const hasPrefetchedRef = useRef(false); // Prevents duplicate downloads
+  
+  // NEW: Store downloaded audio BLOBS here for instant playback
+  // Format: { [articleId]: "blob:https://..." }
+  const preloadedBlobsRef = useRef({}); 
 
   // --- HELPER: Select Persona ---
   const getPersonaForCategory = useCallback((category) => {
@@ -146,15 +148,21 @@ export const RadioProvider = ({ children }) => {
       
       setCurrentTime(0);
       setDuration(0);
-      hasPrefetchedRef.current = false; 
+      hasPrefetchedRef.current = false; // Reset for the NEXT track
 
       try {
           const persona = article.isSystemAudio ? article.speaker : getPersonaForCategory(article.category);
           setCurrentSpeaker(persona);
-
           const audio = audioRef.current;
-          
-          if (article.isSystemAudio && article.audioUrl) {
+
+          // === 1. CHECK FOR PRELOADED BLOB ===
+          // If we already downloaded this file in the background, use the local Blob URL
+          if (preloadedBlobsRef.current[article._id]) {
+              console.log(`⚡ Instant Play (from Blob): ${article.headline}`);
+              audio.src = preloadedBlobsRef.current[article._id];
+          } 
+          // === 2. FALLBACK TO NETWORK ===
+          else if (article.isSystemAudio && article.audioUrl) {
               audio.src = article.audioUrl;
           } else {
               const textToSpeak = prepareAudioText(article.headline, article.summary);
@@ -180,11 +188,19 @@ export const RadioProvider = ({ children }) => {
               navigator.mediaSession.playbackState = "playing";
           }
 
+          // === CLEAN UP MEMORY ===
+          // Release memory for the previous track's blob if it exists
+          const prevId = playlist[currentIndex - 1]?._id;
+          if (prevId && preloadedBlobsRef.current[prevId]) {
+              URL.revokeObjectURL(preloadedBlobsRef.current[prevId]);
+              delete preloadedBlobsRef.current[prevId];
+          }
+
       } catch (error) {
           console.error("Radio Error:", error);
           playNext(); 
       }
-  }, [playbackRate, getPersonaForCategory]);
+  }, [playbackRate, getPersonaForCategory, currentIndex, playlist]);
 
   // --- QUEUE LOGIC ---
   const playNext = useCallback(() => {
@@ -205,8 +221,9 @@ export const RadioProvider = ({ children }) => {
           if (currentIndex < playlist.length) {
               const nextTrack = playlist[currentIndex];
               
-              // 1s Delay ONLY for Segues to create a "breath"
-              const delay = (nextTrack.isSystemAudio && nextTrack.summary === "Segue") ? 1000 : 0;
+              // === SEGUE DELAY LOGIC (UPDATED) ===
+              // 0.5s Delay (500ms) for Segues
+              const delay = (nextTrack.isSystemAudio && nextTrack.summary === "Segue") ? 500 : 0;
               
               if (delay > 0) {
                   setIsLoading(true);
@@ -236,6 +253,11 @@ export const RadioProvider = ({ children }) => {
       setPlaylist([]);
       setCurrentTime(0);
       setDuration(0);
+      hasPrefetchedRef.current = false;
+      // Clean up all blobs on stop
+      Object.values(preloadedBlobsRef.current).forEach(url => URL.revokeObjectURL(url));
+      preloadedBlobsRef.current = {};
+      
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "none";
   }, []);
 
@@ -302,42 +324,43 @@ export const RadioProvider = ({ children }) => {
           setIsLoading(false); 
           setIsPlaying(true); 
 
-          // === TRUE PRE-DOWNLOAD LOGIC ===
+          // === ROBUST PRE-DOWNLOAD (BLOB) LOGIC ===
           if (playlist.length > 0 && currentIndex + 1 < playlist.length) {
               const nextItem = playlist[currentIndex + 1];
 
-              if (!hasPrefetchedRef.current) {
+              // Only download if we haven't already
+              if (!hasPrefetchedRef.current && !preloadedBlobsRef.current[nextItem._id]) {
                   hasPrefetchedRef.current = true; 
                   
-                  let urlToPreload = null;
+                  try {
+                      let urlToFetch = null;
 
-                  if (nextItem.isSystemAudio && nextItem.audioUrl) {
-                      // 1. Static Audio: Use direct URL
-                      urlToPreload = nextItem.audioUrl;
-                  } else {
-                      // 2. AI News: Ask Backend to Generate & Return URL
-                      try {
-                          console.log(`🎧 Pre-generating AI Audio: ${nextItem.headline}`);
+                      // Step 1: Get the URL (Static or Generated)
+                      if (nextItem.isSystemAudio && nextItem.audioUrl) {
+                          urlToFetch = nextItem.audioUrl;
+                      } else {
+                          console.log(`🎧 Pre-generating URL: ${nextItem.headline}`);
                           const nextPersona = getPersonaForCategory(nextItem.category);
                           const nextText = prepareAudioText(nextItem.headline, nextItem.summary);
                           const res = await api.getAudio(nextText, nextPersona.id, nextItem._id);
                           if (res.data && res.data.audioUrl) {
-                              urlToPreload = res.data.audioUrl;
+                              urlToFetch = res.data.audioUrl;
                           }
-                      } catch (err) {
-                          console.warn("Pre-generation failed:", err);
                       }
-                  }
 
-                  // 3. FORCE BROWSER CACHE
-                  // We create a hidden audio object and force it to load.
-                  // This pulls the bytes down so the next track is 0ms latency.
-                  if (urlToPreload) {
-                      console.log(`🚀 DOWNLOADING AHEAD: ${nextItem.headline}`);
-                      const buffer = new Audio(urlToPreload);
-                      buffer.preload = 'auto'; // Force download
-                      buffer.load(); // Start buffering
-                      preloadObjectRef.current = buffer; // Keep reference to prevent garbage collection
+                      // Step 2: FETCH AS BLOB (Force Download to RAM)
+                      if (urlToFetch) {
+                          console.log(`⬇️ Downloading Blob: ${nextItem.headline}`);
+                          const fetchRes = await fetch(urlToFetch);
+                          const blob = await fetchRes.blob();
+                          const blobUrl = URL.createObjectURL(blob);
+                          
+                          // Step 3: Store Blob URL for next track
+                          preloadedBlobsRef.current[nextItem._id] = blobUrl;
+                          console.log(`✅ Ready in Memory: ${nextItem.headline}`);
+                      }
+                  } catch (err) {
+                      console.warn("Pre-download failed (will stream normally):", err);
                   }
               }
           }

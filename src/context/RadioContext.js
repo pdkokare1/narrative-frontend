@@ -36,13 +36,16 @@ export const RadioProvider = ({ children }) => {
 
   // Refs
   const audioRef = useRef(new Audio());
-  const hasPrefetchedRef = useRef(false);
+  
+  // NEW: Track exactly which IDs we have already requested to avoid duplicates
+  const prefetchedIdsRef = useRef(new Set());
+  
+  // Store downloaded audio BLOBS
   const preloadedBlobsRef = useRef({}); 
 
   // --- HELPER: Cloudinary Optimization (64kbps) ---
   const optimizeUrl = (url) => {
       if (!url || !url.includes('cloudinary')) return url;
-      // Inject 'br_64k' (Bitrate 64kbps) after /upload/ to reduce file size by 50%
       return url.replace('/upload/', '/upload/br_64k/');
   };
 
@@ -152,7 +155,6 @@ export const RadioProvider = ({ children }) => {
       
       setCurrentTime(0);
       setDuration(0);
-      hasPrefetchedRef.current = false; 
 
       try {
           const persona = article.isSystemAudio ? article.speaker : getPersonaForCategory(article.category);
@@ -191,11 +193,12 @@ export const RadioProvider = ({ children }) => {
               navigator.mediaSession.playbackState = "playing";
           }
 
-          // Cleanup Memory
+          // Cleanup Memory (Previous Track only)
           const prevId = playlist[currentIndex - 1]?._id;
           if (prevId && preloadedBlobsRef.current[prevId]) {
               URL.revokeObjectURL(preloadedBlobsRef.current[prevId]);
               delete preloadedBlobsRef.current[prevId];
+              prefetchedIdsRef.current.delete(prevId); // Allow re-fetch if we go back
           }
 
       } catch (error) {
@@ -254,7 +257,9 @@ export const RadioProvider = ({ children }) => {
       setPlaylist([]);
       setCurrentTime(0);
       setDuration(0);
-      hasPrefetchedRef.current = false;
+      
+      // Cleanup Everything
+      prefetchedIdsRef.current.clear();
       Object.values(preloadedBlobsRef.current).forEach(url => URL.revokeObjectURL(url));
       preloadedBlobsRef.current = {};
       
@@ -324,40 +329,52 @@ export const RadioProvider = ({ children }) => {
           setIsLoading(false); 
           setIsPlaying(true); 
 
-          // === PRE-DOWNLOAD NEXT TRACK (OPTIMIZED) ===
-          if (playlist.length > 0 && currentIndex + 1 < playlist.length) {
-              const nextItem = playlist[currentIndex + 1];
+          // === MULTI-TRACK LOOKAHEAD (Prefetch Next 2 Items) ===
+          if (playlist.length > 0) {
+              const lookaheadCount = 2; // Buffer Next + NextNext
 
-              if (!hasPrefetchedRef.current && !preloadedBlobsRef.current[nextItem._id]) {
-                  hasPrefetchedRef.current = true; 
-                  
-                  try {
-                      let urlToFetch = null;
-                      if (nextItem.isSystemAudio && nextItem.audioUrl) {
-                          urlToFetch = nextItem.audioUrl;
-                      } else {
-                          console.log(`🎧 Pre-generating URL: ${nextItem.headline}`);
-                          const nextPersona = getPersonaForCategory(nextItem.category);
-                          const nextText = prepareAudioText(nextItem.headline, nextItem.summary);
-                          const res = await api.getAudio(nextText, nextPersona.id, nextItem._id);
-                          if (res.data && res.data.audioUrl) {
-                              urlToFetch = res.data.audioUrl;
+              for (let i = 1; i <= lookaheadCount; i++) {
+                  const targetIndex = currentIndex + i;
+                  if (targetIndex >= playlist.length) break;
+
+                  const targetItem = playlist[targetIndex];
+
+                  // Only download if not already requested
+                  if (!prefetchedIdsRef.current.has(targetItem._id)) {
+                      prefetchedIdsRef.current.add(targetItem._id);
+                      
+                      // Run in background (don't await)
+                      (async () => {
+                          try {
+                              let urlToFetch = null;
+                              if (targetItem.isSystemAudio && targetItem.audioUrl) {
+                                  urlToFetch = targetItem.audioUrl;
+                              } else {
+                                  console.log(`🎧 Pre-generating: ${targetItem.headline}`);
+                                  const nextPersona = getPersonaForCategory(targetItem.category);
+                                  const nextText = prepareAudioText(targetItem.headline, targetItem.summary);
+                                  const res = await api.getAudio(nextText, nextPersona.id, targetItem._id);
+                                  if (res.data && res.data.audioUrl) {
+                                      urlToFetch = res.data.audioUrl;
+                                  }
+                              }
+
+                              if (urlToFetch) {
+                                  // Optimize before downloading
+                                  const optimizedUrl = optimizeUrl(urlToFetch);
+                                  console.log(`⬇️ Downloading Blob: ${targetItem.headline}`);
+                                  
+                                  const fetchRes = await fetch(optimizedUrl);
+                                  const blob = await fetchRes.blob();
+                                  const blobUrl = URL.createObjectURL(blob);
+                                  preloadedBlobsRef.current[targetItem._id] = blobUrl;
+                                  console.log(`✅ Cached in Memory: ${targetItem.headline}`);
+                              }
+                          } catch (err) {
+                              console.warn(`Buffer failed for ${targetItem.headline}:`, err);
+                              prefetchedIdsRef.current.delete(targetItem._id); // Retry later if failed
                           }
-                      }
-
-                      if (urlToFetch) {
-                          // Apply optimization before downloading the blob!
-                          const optimizedUrl = optimizeUrl(urlToFetch);
-                          console.log(`⬇️ Downloading Optimized Blob: ${nextItem.headline}`);
-                          
-                          const fetchRes = await fetch(optimizedUrl);
-                          const blob = await fetchRes.blob();
-                          const blobUrl = URL.createObjectURL(blob);
-                          preloadedBlobsRef.current[nextItem._id] = blobUrl;
-                          console.log(`✅ Ready in Memory: ${nextItem.headline}`);
-                      }
-                  } catch (err) {
-                      console.warn("Pre-download failed:", err);
+                      })();
                   }
               }
           }

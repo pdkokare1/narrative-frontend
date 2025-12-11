@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import * as api from './services/api'; 
 import './Login.css'; 
-// Note: We rely on App.css (loaded globally) for the .btn-primary class
 
 function CreateProfile() {
   const [username, setUsername] = useState('');
@@ -28,11 +27,19 @@ function CreateProfile() {
       window.location.href = '/'; 
 
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.error) {
-        setError(err.response.data.error); 
+      console.error("Profile Creation Error:", err);
+      
+      // --- FIX: Correctly read the error message from api.js interceptor ---
+      // The interceptor puts the real backend message into 'err.message'
+      if (err.message) {
+        setError(err.message);
+      } else if (err.original && err.original.response && err.original.response.data) {
+        // Fallback to raw response if available
+        setError(err.original.response.data.message || err.original.response.data.error || 'Server error occurred.');
       } else {
-        setError('Failed to create profile. Please try again.');
+        setError('Failed to create profile. Please check your connection.');
       }
+      
       setLoading(false);
     }
   };

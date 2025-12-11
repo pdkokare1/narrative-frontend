@@ -30,8 +30,6 @@ export const RadioProvider = ({ children }) => {
   // Playback State
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  
-  // User Preference Speed (UI shows this) - Default 1.0
   const [playbackRate, setPlaybackRate] = useState(1.0);
   
   const [currentSpeaker, setCurrentSpeaker] = useState(null);
@@ -59,9 +57,9 @@ export const RadioProvider = ({ children }) => {
   const getBaseSpeed = (personaName) => {
       if (!personaName) return 0.9;
       switch (personaName) {
-          case 'Rajat': return 1.0;  // Standard
-          case 'Shubhi': return 1.1; // Energetic/Fast
-          case 'Mira': return 0.9;   // Relaxed/Anchor
+          case 'Rajat': return 1.0; 
+          case 'Shubhi': return 1.1;
+          case 'Mira': return 0.9;
           default: return 0.9;
       }
   };
@@ -69,7 +67,6 @@ export const RadioProvider = ({ children }) => {
   // --- HELPER: Format Text for Audio ---
   const prepareAudioText = (headline, summary) => {
       const cleanHeadline = headline.replace(/[.]+$/, '');
-      // --- UPDATED: Extended pause sequence (. . . . . .) to force a breath ---
       return `${cleanHeadline}. . . . . . ${summary}`;
   };
 
@@ -84,12 +81,10 @@ export const RadioProvider = ({ children }) => {
 
       localStorage.setItem(storageKey, now);
 
-      // Check Frequency
       if (lastSession && (now - lastSession < THIRTY_MINS)) {
           return null; 
       }
 
-      // Identify Host & Time
       const persona = getPersonaForCategory(firstArticle.category);
       const hostKey = persona.name.toUpperCase(); 
 
@@ -113,6 +108,50 @@ export const RadioProvider = ({ children }) => {
       };
   };
 
+  // --- HELPER: Inject Segues (Connective Tissue) ---
+  const injectSegues = useCallback((rawArticles) => {
+      const processed = [];
+      
+      for (let i = 0; i < rawArticles.length; i++) {
+          processed.push(rawArticles[i]);
+
+          // Look ahead to the next article
+          if (i < rawArticles.length - 1) {
+              const currentItem = rawArticles[i];
+              const nextItem = rawArticles[i+1];
+
+              // Skip logic if items are already system audio (shouldn't happen in raw input)
+              if (currentItem.isSystemAudio || nextItem.isSystemAudio) continue;
+
+              const currentHost = getPersonaForCategory(currentItem.category);
+              const nextHost = getPersonaForCategory(nextItem.category);
+
+              // 1. SAME HOST? -> Insert Segue
+              if (currentHost.name === nextHost.name) {
+                  const hostKey = currentHost.name.toUpperCase();
+                  const segues = VOICE_ASSETS.SEGUES?.[hostKey];
+
+                  if (segues && segues.length > 0) {
+                      const randomSegue = segues[Math.floor(Math.random() * segues.length)];
+                      
+                      processed.push({
+                          _id: `segue_${currentItem._id}_to_${nextItem._id}`,
+                          headline: "Transition",
+                          summary: "Segue",
+                          isSystemAudio: true,
+                          audioUrl: randomSegue,
+                          speaker: currentHost, // Same speaker continues
+                          category: 'System'
+                      });
+                  }
+              }
+              
+              // 2. DIFFERENT HOST? -> (Handover logic will go here later)
+          }
+      }
+      return processed;
+  }, [getPersonaForCategory]);
+
   // --- CORE: Play Audio ---
   const playArticle = useCallback(async (article) => {
       if (!article) return;
@@ -129,11 +168,9 @@ export const RadioProvider = ({ children }) => {
       hasPrefetchedRef.current = false; 
 
       try {
-          // 1. Setup Speaker
           const persona = article.isSystemAudio ? article.speaker : getPersonaForCategory(article.category);
           setCurrentSpeaker(persona);
 
-          // 2. Play Audio
           const audio = audioRef.current;
           
           if (article.isSystemAudio && article.audioUrl) {
@@ -148,15 +185,13 @@ export const RadioProvider = ({ children }) => {
               }
           }
 
-          // --- APPLY RELATIVE SPEED ---
+          // Apply Relative Speed
           const baseSpeed = getBaseSpeed(persona.name);
           const finalSpeed = baseSpeed * playbackRate;
-          
           audio.playbackRate = finalSpeed;
           
           await audio.play();
 
-          // 3. Media Session
           if ('mediaSession' in navigator) {
               navigator.mediaSession.metadata = new MediaMetadata({
                   title: article.headline,
@@ -242,10 +277,7 @@ export const RadioProvider = ({ children }) => {
   }, []);
 
   const changeSpeed = useCallback((newSpeed) => {
-      // Update UI state
       setPlaybackRate(newSpeed);
-      
-      // Update running audio immediately
       if (audioRef.current && currentSpeaker) {
           const baseSpeed = getBaseSpeed(currentSpeaker.name);
           audioRef.current.playbackRate = baseSpeed * newSpeed;
@@ -256,23 +288,27 @@ export const RadioProvider = ({ children }) => {
   const startRadio = useCallback((articles, startIndex = 0) => {
       if (!articles || articles.length === 0) return;
 
+      // 1. Slice the user's intended queue
+      const userQueue = articles.slice(startIndex);
+
+      // 2. Inject Segues into the queue
+      const connectedQueue = injectSegues(userQueue);
+
+      // 3. Check for Greeting (based on the very first real article)
       const firstArticle = articles[startIndex];
       const greetingTrack = getGreetingTrack(firstArticle);
 
-      let newPlaylist = [];
-      let newStartIndex = 0;
+      let finalPlaylist = [];
 
       if (greetingTrack) {
-          newPlaylist = [greetingTrack, ...articles.slice(startIndex)];
-          newStartIndex = 0; 
+          finalPlaylist = [greetingTrack, ...connectedQueue];
       } else {
-          newPlaylist = articles.slice(startIndex);
-          newStartIndex = 0;
+          finalPlaylist = connectedQueue;
       }
 
-      setPlaylist(newPlaylist);
-      setCurrentIndex(newStartIndex); 
-  }, [getPersonaForCategory]);
+      setPlaylist(finalPlaylist);
+      setCurrentIndex(0); 
+  }, [getPersonaForCategory, injectSegues]);
 
   const playSingle = useCallback((article) => {
       setPlaylist([article]);
@@ -317,7 +353,6 @@ export const RadioProvider = ({ children }) => {
               
               if (!nextItem.isSystemAudio && dur > 0 && (dur - cTime) < 15 && !hasPrefetchedRef.current) {
                   hasPrefetchedRef.current = true; 
-                  
                   const nextPersona = getPersonaForCategory(nextItem.category);
                   const nextText = prepareAudioText(nextItem.headline, nextItem.summary);
                   api.prefetchAudio(nextText, nextPersona.id, nextItem._id);

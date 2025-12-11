@@ -1,7 +1,7 @@
 // src/context/RadioContext.js
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import * as api from '../services/api';
-import { VOICE_ASSETS } from '../utils/VoiceAssets'; // <--- Import Assets
+import { VOICE_ASSETS } from '../utils/VoiceAssets'; 
 
 const RadioContext = createContext();
 
@@ -56,7 +56,7 @@ export const RadioProvider = ({ children }) => {
       return `${cleanHeadline} ... \n\n ${summary}`;
   };
 
-  // --- HELPER: Select Greeting (NEW) ---
+  // --- HELPER: Select Greeting (Smart Start) ---
   const getGreetingTrack = (firstArticle) => {
       const lastSession = localStorage.getItem('lastRadioSession');
       const now = Date.now();
@@ -91,8 +91,8 @@ export const RadioProvider = ({ children }) => {
           _id: 'greeting_track',
           headline: `${timeKey === 'MORNING' ? 'Good Morning' : timeKey === 'AFTERNOON' ? 'Good Afternoon' : 'Good Evening'} from ${persona.name}`,
           summary: "Session Opener",
-          isSystemAudio: true, // Marker to distinguish from real news
-          audioUrl: randomClip, // Direct URL
+          isSystemAudio: true, 
+          audioUrl: randomClip, 
           speaker: persona
       };
   };
@@ -115,7 +115,6 @@ export const RadioProvider = ({ children }) => {
 
       try {
           // 1. Setup Speaker
-          // If it's a System Audio (Greeting), use the assigned speaker
           const persona = article.isSystemAudio ? article.speaker : getPersonaForCategory(article.category);
           setCurrentSpeaker(persona);
 
@@ -125,18 +124,23 @@ export const RadioProvider = ({ children }) => {
           if (article.isSystemAudio && article.audioUrl) {
               // Direct URL for Greetings
               audio.src = article.audioUrl;
+              
+              // --- FIX: Force Slower Speed for Greetings ---
+              // 0.85x speed makes it sound more relaxed and conversational
+              audio.playbackRate = 0.85; 
           } else {
-              // Generate/Fetch for News
+              // Standard News Article
               const textToSpeak = prepareAudioText(article.headline, article.summary);
               const response = await api.getAudio(textToSpeak, persona.id, article._id);
               if (response.data && response.data.audioUrl) {
                   audio.src = response.data.audioUrl;
+                  // Use standard playback rate (usually 1.0 or user pref)
+                  audio.playbackRate = playbackRate; 
               } else {
                   throw new Error("No audio URL");
               }
           }
 
-          audio.playbackRate = playbackRate; 
           await audio.play();
 
           // 3. Media Session
@@ -151,25 +155,18 @@ export const RadioProvider = ({ children }) => {
 
       } catch (error) {
           console.error("Radio Error:", error);
-          // If greeting fails, just skip to next
           if (article.isSystemAudio) {
-              playNext();
+              playNext(); // Skip broken greeting
           } else {
               setIsLoading(false);
               setIsPlaying(false);
           }
       }
-  }, [playbackRate, getPersonaForCategory]); // Removed playNext from deps to avoid circular dep
+  }, [playbackRate, getPersonaForCategory]);
 
   // --- QUEUE LOGIC ---
   const playNext = useCallback(() => {
-      // Need to use functional state update to get fresh playlist/index
-      setCurrentIndex(prevIndex => {
-          // We can't access 'playlist' here directly if it's stale, 
-          // but we can trust the component state if playNext is called from an event.
-          // However, for safety in callbacks, we'll rely on the effect hook below.
-          return prevIndex + 1;
-      });
+      setCurrentIndex(prevIndex => prevIndex + 1);
   }, []);
 
   const playPrevious = useCallback(() => {
@@ -189,7 +186,7 @@ export const RadioProvider = ({ children }) => {
               stop(); // End of playlist
           }
       }
-  }, [currentIndex, playlist, playArticle]); // Removed stop from deps
+  }, [currentIndex, playlist, playArticle]);
 
   // --- CONTROLS ---
   const stop = useCallback(() => {
@@ -243,27 +240,19 @@ export const RadioProvider = ({ children }) => {
   const startRadio = useCallback((articles, startIndex = 0) => {
       if (!articles || articles.length === 0) return;
 
-      // 1. Get appropriate Greeting
-      // We check the FIRST article the user wanted to play to decide the host
+      // 1. Get appropriate Greeting for the FIRST article's host
       const firstArticle = articles[startIndex];
       const greetingTrack = getGreetingTrack(firstArticle);
 
-      let newPlaylist = [...articles];
-      let newStartIndex = startIndex;
+      let newPlaylist = [];
+      let newStartIndex = 0;
 
       if (greetingTrack) {
-          // If we have a greeting, inject it at the very top of the CURRENT queue
-          // If startIndex is 0 (playing from top), we prepend.
-          // If playing from middle, we still want to hear the greeting first.
-          
-          // Strategy: Play Greeting -> Then the requested article
+          // Play Greeting -> Then the requested article
           newPlaylist = [greetingTrack, ...articles.slice(startIndex)];
-          newStartIndex = 0; // Start at the greeting
-          
-          // Note: The rest of the original playlist (before startIndex) is discarded 
-          // in this logic if we click "Play" from the middle, which is standard radio behavior.
+          newStartIndex = 0; 
       } else {
-          // No greeting needed, just slice the list to start from the clicked article
+          // Just start playing
           newPlaylist = articles.slice(startIndex);
           newStartIndex = 0;
       }
@@ -279,9 +268,6 @@ export const RadioProvider = ({ children }) => {
 
   // --- AUTOPLAY COUNTDOWN ---
   const startAutoplayCountdown = useCallback(() => {
-      // Check if we are at the end
-      // Note: We use a ref-like check or functional state if needed, 
-      // but here we rely on the effect to trigger `playNext` logic
       setIsPlaying(false);
       setIsWaitingForNext(true);
       setAutoplayTimer(5);
@@ -304,7 +290,7 @@ export const RadioProvider = ({ children }) => {
       stop();
   }, [stop]);
 
-  // --- EVENT LISTENERS & PRE-FETCHING ---
+  // --- EVENT LISTENERS ---
   useEffect(() => {
       const audio = audioRef.current;
 
@@ -313,8 +299,7 @@ export const RadioProvider = ({ children }) => {
           const dur = audio.duration;
           setCurrentTime(cTime);
 
-          // --- SMART PRE-FETCH LOGIC ---
-          // Don't prefetch if next item is system audio (it loads instantly)
+          // Smart Pre-fetch
           if (playlist.length > 0 && currentIndex + 1 < playlist.length) {
               const nextItem = playlist[currentIndex + 1];
               
@@ -323,8 +308,6 @@ export const RadioProvider = ({ children }) => {
                   
                   const nextPersona = getPersonaForCategory(nextItem.category);
                   const nextText = prepareAudioText(nextItem.headline, nextItem.summary);
-                  
-                  console.log(`🎧 Pre-fetching audio for: "${nextItem.headline}"`);
                   api.prefetchAudio(nextText, nextPersona.id, nextItem._id);
               }
           }
@@ -337,9 +320,8 @@ export const RadioProvider = ({ children }) => {
       const handleEnded = () => {
           setIsPlaying(false);
           setIsPaused(false);
-          // If it was a system greeting, skip the countdown and go straight to news
           if (currentArticle && currentArticle.isSystemAudio) {
-              playNext();
+              playNext(); // Skip countdown for system audio
           } else {
               startAutoplayCountdown();
           }
@@ -357,14 +339,7 @@ export const RadioProvider = ({ children }) => {
               navigator.mediaSession.setActionHandler('pause', pause);
               navigator.mediaSession.setActionHandler('previoustrack', playPrevious);
               navigator.mediaSession.setActionHandler('nexttrack', playNext);
-              navigator.mediaSession.setActionHandler('seekto', (details) => {
-                  if (details.seekTime && audio) {
-                      audio.currentTime = details.seekTime;
-                  }
-              });
-          } catch (e) {
-              console.warn("Media Session API warning:", e);
-          }
+          } catch (e) { console.warn("Media Session API warning:", e); }
       }
 
       return () => {
@@ -373,42 +348,14 @@ export const RadioProvider = ({ children }) => {
           audio.removeEventListener('loadstart', handleLoadStart);
           audio.removeEventListener('playing', handlePlaying);
           audio.removeEventListener('ended', handleEnded);
-          
-          if ('mediaSession' in navigator) {
-              navigator.mediaSession.setActionHandler('play', null);
-              navigator.mediaSession.setActionHandler('pause', null);
-              navigator.mediaSession.setActionHandler('previoustrack', null);
-              navigator.mediaSession.setActionHandler('nexttrack', null);
-              navigator.mediaSession.setActionHandler('seekto', null);
-          }
       };
   }, [resume, pause, playNext, playPrevious, startAutoplayCountdown, playlist, currentIndex, currentArticle, getPersonaForCategory]);
 
   return (
       <RadioContext.Provider value={{
-          currentArticle,
-          currentSpeaker,
-          isPlaying,
-          isPaused,
-          isLoading,
-          isVisible,
-          isWaitingForNext,
-          autoplayTimer,
-          
-          currentTime,
-          duration,
-          playbackRate,
-
-          startRadio,
-          playSingle,
-          stop,
-          pause,
-          resume,
-          playNext, 
-          playPrevious, 
-          seekTo, 
-          changeSpeed, 
-          cancelAutoplay
+          currentArticle, currentSpeaker, isPlaying, isPaused, isLoading, isVisible,
+          isWaitingForNext, autoplayTimer, currentTime, duration, playbackRate,
+          startRadio, playSingle, stop, pause, resume, playNext, playPrevious, seekTo, changeSpeed, cancelAutoplay
       }}>
           {children}
       </RadioContext.Provider>

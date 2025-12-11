@@ -27,6 +27,7 @@ export const RadioProvider = ({ children }) => {
   const [isPaused, setIsPaused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
+  // Playback State
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1.0);
@@ -34,11 +35,9 @@ export const RadioProvider = ({ children }) => {
   const [currentSpeaker, setCurrentSpeaker] = useState(null);
   const [isVisible, setIsVisible] = useState(false); 
 
-  // (Removed Autoplay Timer State - We play instantly now)
-
   // Refs
   const audioRef = useRef(new Audio());
-  const hasPrefetchedRef = useRef(false); // Tracks if we already fetched the NEXT item
+  const hasPrefetchedRef = useRef(false); 
 
   // --- HELPER: Select Persona ---
   const getPersonaForCategory = useCallback((category) => {
@@ -63,7 +62,7 @@ export const RadioProvider = ({ children }) => {
   // --- HELPER: Format Text for Audio ---
   const prepareAudioText = (headline, summary) => {
       const cleanHeadline = headline.replace(/[.]+$/, '');
-      // Force long pause between headline and body
+      // Long pause between headline and body
       return `${cleanHeadline}. . . . . . ${summary}`;
   };
 
@@ -149,7 +148,7 @@ export const RadioProvider = ({ children }) => {
       
       setCurrentTime(0);
       setDuration(0);
-      hasPrefetchedRef.current = false; // Reset prefetch flag for this new track
+      hasPrefetchedRef.current = false; 
 
       try {
           const persona = article.isSystemAudio ? article.speaker : getPersonaForCategory(article.category);
@@ -169,8 +168,13 @@ export const RadioProvider = ({ children }) => {
               }
           }
 
+          // --- UNIFIED SPEED LOGIC ---
+          // Apply the same natural speed rule to EVERYTHING (Greetings, Segues, News)
+          // This ensures the voice texture remains consistent.
           const baseSpeed = getBaseSpeed(persona.name);
-          audio.playbackRate = baseSpeed * playbackRate;
+          const finalSpeed = baseSpeed * playbackRate;
+          
+          audio.playbackRate = finalSpeed;
           
           await audio.play();
 
@@ -185,7 +189,6 @@ export const RadioProvider = ({ children }) => {
 
       } catch (error) {
           console.error("Radio Error:", error);
-          // If a track fails, immediately skip to the next to maintain flow
           playNext(); 
       }
   }, [playbackRate, getPersonaForCategory]);
@@ -209,7 +212,7 @@ export const RadioProvider = ({ children }) => {
           if (currentIndex < playlist.length) {
               playArticle(playlist[currentIndex]);
           } else {
-              stop(); // End of playlist
+              stop(); 
           }
       }
   }, [currentIndex, playlist, playArticle]);
@@ -277,6 +280,17 @@ export const RadioProvider = ({ children }) => {
       setCurrentIndex(0);
   }, []);
 
+  // --- AUTOPLAY COUNTDOWN ---
+  const startAutoplayCountdown = useCallback(() => {
+      setIsPlaying(false);
+      setIsWaitingForNext(true);
+      // No Timer State needed anymore, logic is instant
+  }, []);
+
+  const cancelAutoplay = useCallback(() => {
+      stop();
+  }, [stop]);
+
   // --- EVENT LISTENERS ---
   useEffect(() => {
       const audio = audioRef.current;
@@ -286,23 +300,20 @@ export const RadioProvider = ({ children }) => {
           const dur = audio.duration;
           setCurrentTime(cTime);
 
-          // --- SMART PRE-FETCH LOGIC (FIXED) ---
-          // We look ahead to the NEXT item in the playlist
+          // Smart Pre-fetch
           if (playlist.length > 0 && currentIndex + 1 < playlist.length) {
               const nextItem = playlist[currentIndex + 1];
               
-              // If current track has < 15s remaining and we haven't prefetched yet
               if (dur > 0 && (dur - cTime) < 15 && !hasPrefetchedRef.current) {
-                  hasPrefetchedRef.current = true; // Mark done so we don't spam calls
+                  hasPrefetchedRef.current = true; 
                   
                   if (nextItem.isSystemAudio && nextItem.audioUrl) {
-                      // 1. Static Audio (Segues/Greetings) -> Force Browser Cache
-                      // Creating a new Audio object causes the browser to download the file
+                      // Static Audio -> Browser Cache
                       console.log(`🎧 Pre-loading Static Audio: ${nextItem.headline}`);
                       const preload = new Audio(nextItem.audioUrl);
                       preload.load(); 
                   } else {
-                      // 2. AI News -> Generate via API
+                      // AI News -> Generate
                       console.log(`🎧 Pre-generating AI Audio: ${nextItem.headline}`);
                       const nextPersona = getPersonaForCategory(nextItem.category);
                       const nextText = prepareAudioText(nextItem.headline, nextItem.summary);
@@ -317,9 +328,7 @@ export const RadioProvider = ({ children }) => {
       const handlePlaying = () => { setIsLoading(false); setIsPlaying(true); };
       
       const handleEnded = () => {
-          // --- IMMEDIATE TRANSITION ---
-          // No timers. No countdowns. Just play next.
-          playNext();
+          playNext(); // Instant transition
       };
 
       audio.addEventListener('timeupdate', handleTimeUpdate);
@@ -350,7 +359,7 @@ export const RadioProvider = ({ children }) => {
       <RadioContext.Provider value={{
           currentArticle, currentSpeaker, isPlaying, isPaused, isLoading, isVisible,
           currentTime, duration, playbackRate,
-          startRadio, playSingle, stop, pause, resume, playNext, playPrevious, seekTo, changeSpeed
+          startRadio, playSingle, stop, pause, resume, playNext, playPrevious, seekTo, changeSpeed, cancelAutoplay
       }}>
           {children}
       </RadioContext.Provider>

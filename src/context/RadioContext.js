@@ -69,8 +69,8 @@ export const RadioProvider = ({ children }) => {
   // --- HELPER: Format Text for Audio ---
   const prepareAudioText = (headline, summary) => {
       const cleanHeadline = headline.replace(/[.]+$/, '');
-      // Added extra dots to force a longer pause between headline and body
-      return `${cleanHeadline}. . . . ${summary}`;
+      // --- UPDATED: Extended pause sequence (. . . . . .) to force a breath ---
+      return `${cleanHeadline}. . . . . . ${summary}`;
   };
 
   // --- HELPER: Select Greeting (Smart Start) ---
@@ -149,7 +149,6 @@ export const RadioProvider = ({ children }) => {
           }
 
           // --- APPLY RELATIVE SPEED ---
-          // Actual Speed = Host Base Speed * User Preference (1x, 1.5x etc)
           const baseSpeed = getBaseSpeed(persona.name);
           const finalSpeed = baseSpeed * playbackRate;
           

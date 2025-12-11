@@ -11,13 +11,13 @@ const VOICES = {
     role: 'The Anchor' 
   },
   ANALYST: { 
-    id: 'NnNA7MrsdZZzXTNJ4u8q', 
-    name: 'Kabir', 
+    id: 'czw3FmTwixwtnkpOKXZ0', 
+    name: 'Rajat', 
     role: 'The Analyst' 
   },
   CURATOR: { 
     id: 'AwEl6phyzczpCHHDxyfO', 
-    name: 'Tara', 
+    name: 'Shubhi', 
     role: 'The Curator' 
   }
 };
@@ -83,7 +83,7 @@ const useNewsRadio = () => {
 
       const cat = category.toLowerCase();
 
-      // THE ANALYST (Kabir)
+      // THE ANALYST (Rajat)
       if (
           cat.includes('economy') || 
           cat.includes('business') || 
@@ -96,7 +96,7 @@ const useNewsRadio = () => {
           return VOICES.ANALYST;
       }
 
-      // THE CURATOR (Tara)
+      // THE CURATOR (Shubhi)
       if (
           cat.includes('entertainment') || 
           cat.includes('lifestyle') || 

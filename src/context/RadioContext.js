@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import * as api from '../services/api';
 import { VOICE_ASSETS } from '../utils/VoiceAssets'; 
-import { useAuth } from './AuthContext'; // <--- NEW IMPORT
+import { useAuth } from './AuthContext'; 
 
 const RadioContext = createContext();
 
@@ -16,7 +16,7 @@ const VOICES = {
 };
 
 export const RadioProvider = ({ children }) => {
-  const { user } = useAuth(); // <--- GET USER ID FOR SESSION TRACKING
+  const { user } = useAuth(); 
 
   // --- STATE ---
   const [playlist, setPlaylist] = useState([]);
@@ -31,7 +31,7 @@ export const RadioProvider = ({ children }) => {
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   
-  // --- UPDATED: Default Speed is now 0.9 ---
+  // Default Base Speed
   const [playbackRate, setPlaybackRate] = useState(0.9);
   
   const [currentSpeaker, setCurrentSpeaker] = useState(null);
@@ -63,7 +63,6 @@ export const RadioProvider = ({ children }) => {
 
   // --- HELPER: Select Greeting (Smart Start) ---
   const getGreetingTrack = (firstArticle) => {
-      // --- FIX: User-Specific Session Key ---
       const userId = user?.uid || 'guest';
       const storageKey = `lastRadioSession_${userId}`;
       
@@ -71,7 +70,7 @@ export const RadioProvider = ({ children }) => {
       const now = Date.now();
       const THIRTY_MINS = 30 * 60 * 1000;
 
-      // Update session time for THIS user
+      // Update session time
       localStorage.setItem(storageKey, now);
 
       // 1. Check Frequency (Skip if this user listened recently)
@@ -81,7 +80,7 @@ export const RadioProvider = ({ children }) => {
 
       // 2. Identify Host
       const persona = getPersonaForCategory(firstArticle.category);
-      const hostKey = persona.name.toUpperCase(); // MIRA, RAJAT, SHUBHI
+      const hostKey = persona.name.toUpperCase(); 
 
       // 3. Identify Time of Day
       const hour = new Date().getHours();
@@ -129,27 +128,32 @@ export const RadioProvider = ({ children }) => {
 
           // 2. Play Audio
           const audio = audioRef.current;
-          
+          let targetSpeed = 0.9; // Base default
+
           if (article.isSystemAudio && article.audioUrl) {
-              // Direct URL for Greetings
+              // --- GREETINGS ---
               audio.src = article.audioUrl;
               
-              // --- FIX: Force 0.85x Speed for Greetings ---
-              audio.playbackRate = 0.85; 
+              // Rajat Greeting: 0.90 | Others: 0.85
+              targetSpeed = (persona.name === 'Rajat') ? 0.90 : 0.85;
+
           } else {
-              // Standard News Article
+              // --- NEWS ARTICLES ---
               const textToSpeak = prepareAudioText(article.headline, article.summary);
               const response = await api.getAudio(textToSpeak, persona.id, article._id);
               if (response.data && response.data.audioUrl) {
                   audio.src = response.data.audioUrl;
                   
-                  // --- FIX: Use 0.90x Speed (Default State) for News ---
-                  audio.playbackRate = playbackRate; 
+                  // Rajat News: 1.0 | Others: 0.90
+                  targetSpeed = (persona.name === 'Rajat') ? 1.0 : 0.90;
               } else {
                   throw new Error("No audio URL");
               }
           }
 
+          // Apply Calculated Speed
+          audio.playbackRate = targetSpeed;
+          
           await audio.play();
 
           // 3. Media Session
@@ -171,7 +175,7 @@ export const RadioProvider = ({ children }) => {
               setIsPlaying(false);
           }
       }
-  }, [playbackRate, getPersonaForCategory]);
+  }, [getPersonaForCategory]); // Removing playbackRate from deps to prevent loop, speed is handled per-track now.
 
   // --- QUEUE LOGIC ---
   const playNext = useCallback(() => {
@@ -268,7 +272,7 @@ export const RadioProvider = ({ children }) => {
 
       setPlaylist(newPlaylist);
       setCurrentIndex(newStartIndex); 
-  }, [getPersonaForCategory]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [getPersonaForCategory]);
 
   const playSingle = useCallback((article) => {
       setPlaylist([article]);

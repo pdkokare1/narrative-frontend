@@ -36,7 +36,9 @@ export const RadioProvider = ({ children }) => {
 
   // Refs
   const audioRef = useRef(new Audio());
-  const hasPrefetchedRef = useRef(false); 
+  const hasPrefetchedRef = useRef(false);
+  // NEW: A ref to hold the preloaded audio object so it doesn't get garbage collected
+  const preloadObjectRef = useRef(null);
 
   // --- HELPER: Select Persona ---
   const getPersonaForCategory = useCallback((category) => {
@@ -64,7 +66,7 @@ export const RadioProvider = ({ children }) => {
       return `${cleanHeadline}. . . . . . ${summary}`;
   };
 
-  // --- HELPER: Select Greeting (Smart Start) ---
+  // --- HELPER: Select Greeting ---
   const getGreetingTrack = (firstArticle) => {
       const userId = user?.uid || 'guest';
       const storageKey = `lastRadioSession_${userId}`;
@@ -74,9 +76,7 @@ export const RadioProvider = ({ children }) => {
 
       localStorage.setItem(storageKey, now);
 
-      if (lastSession && (now - lastSession < THIRTY_MINS)) {
-          return null; 
-      }
+      if (lastSession && (now - lastSession < THIRTY_MINS)) return null; 
 
       const persona = getPersonaForCategory(firstArticle.category);
       const hostKey = persona.name.toUpperCase(); 
@@ -122,7 +122,7 @@ export const RadioProvider = ({ children }) => {
                           _id: `segue_${currentItem._id}_to_${nextItem._id}`,
                           headline: "Transition",
                           summary: "Segue",
-                          isSystemAudio: true, // Mark as system audio
+                          isSystemAudio: true,
                           audioUrl: randomSegue,
                           speaker: currentHost, 
                           category: 'System'
@@ -167,8 +167,7 @@ export const RadioProvider = ({ children }) => {
           }
 
           const baseSpeed = getBaseSpeed(persona.name);
-          const finalSpeed = baseSpeed * playbackRate;
-          audio.playbackRate = finalSpeed;
+          audio.playbackRate = baseSpeed * playbackRate;
           
           await audio.play();
 
@@ -206,13 +205,10 @@ export const RadioProvider = ({ children }) => {
           if (currentIndex < playlist.length) {
               const nextTrack = playlist[currentIndex];
               
-              // === SEGUE DELAY LOGIC ===
-              // If the track we are about to play is a SEGUE, wait 1s.
-              // If it's a News Article or Greeting, play immediately (0ms).
+              // 1s Delay ONLY for Segues to create a "breath"
               const delay = (nextTrack.isSystemAudio && nextTrack.summary === "Segue") ? 1000 : 0;
               
               if (delay > 0) {
-                  // Set loading state during the pause so UI doesn't look broken
                   setIsLoading(true);
                   const timer = setTimeout(() => {
                       playArticle(nextTrack);
@@ -270,17 +266,13 @@ export const RadioProvider = ({ children }) => {
       }
   }, [currentSpeaker]);
 
-  // --- PUBLIC API ---
   const startRadio = useCallback((articles, startIndex = 0) => {
       if (!articles || articles.length === 0) return;
-
       const userQueue = articles.slice(startIndex);
       const connectedQueue = injectSegues(userQueue);
       const firstArticle = articles[startIndex];
       const greetingTrack = getGreetingTrack(firstArticle);
-
       let finalPlaylist = greetingTrack ? [greetingTrack, ...connectedQueue] : connectedQueue;
-
       setPlaylist(finalPlaylist);
       setCurrentIndex(0); 
   }, [getPersonaForCategory, injectSegues]);
@@ -300,37 +292,52 @@ export const RadioProvider = ({ children }) => {
 
       const handleTimeUpdate = () => {
           const cTime = audio.currentTime;
-          const dur = audio.duration;
           setCurrentTime(cTime);
       };
 
       const handleDurationChange = () => setDuration(audio.duration);
-      
       const handleLoadStart = () => setIsLoading(true);
       
-      const handlePlaying = () => { 
+      const handlePlaying = async () => { 
           setIsLoading(false); 
           setIsPlaying(true); 
 
-          // === INSTANT PRE-FETCH LOGIC ===
-          // Trigger download for NEXT item immediately when current item starts playing.
+          // === TRUE PRE-DOWNLOAD LOGIC ===
           if (playlist.length > 0 && currentIndex + 1 < playlist.length) {
               const nextItem = playlist[currentIndex + 1];
 
               if (!hasPrefetchedRef.current) {
-                  hasPrefetchedRef.current = true; // Lock it so we don't spam
+                  hasPrefetchedRef.current = true; 
                   
+                  let urlToPreload = null;
+
                   if (nextItem.isSystemAudio && nextItem.audioUrl) {
-                      // 1. Static Audio (Segue/Greeting) -> Force Browser Download
-                      console.log(`🎧 Pre-loading Static Audio: ${nextItem.headline}`);
-                      const preload = new Audio(nextItem.audioUrl);
-                      preload.load(); 
+                      // 1. Static Audio: Use direct URL
+                      urlToPreload = nextItem.audioUrl;
                   } else {
-                      // 2. AI News -> Generate via API
-                      console.log(`🎧 Pre-generating AI Audio: ${nextItem.headline}`);
-                      const nextPersona = getPersonaForCategory(nextItem.category);
-                      const nextText = prepareAudioText(nextItem.headline, nextItem.summary);
-                      api.prefetchAudio(nextText, nextPersona.id, nextItem._id);
+                      // 2. AI News: Ask Backend to Generate & Return URL
+                      try {
+                          console.log(`🎧 Pre-generating AI Audio: ${nextItem.headline}`);
+                          const nextPersona = getPersonaForCategory(nextItem.category);
+                          const nextText = prepareAudioText(nextItem.headline, nextItem.summary);
+                          const res = await api.getAudio(nextText, nextPersona.id, nextItem._id);
+                          if (res.data && res.data.audioUrl) {
+                              urlToPreload = res.data.audioUrl;
+                          }
+                      } catch (err) {
+                          console.warn("Pre-generation failed:", err);
+                      }
+                  }
+
+                  // 3. FORCE BROWSER CACHE
+                  // We create a hidden audio object and force it to load.
+                  // This pulls the bytes down so the next track is 0ms latency.
+                  if (urlToPreload) {
+                      console.log(`🚀 DOWNLOADING AHEAD: ${nextItem.headline}`);
+                      const buffer = new Audio(urlToPreload);
+                      buffer.preload = 'auto'; // Force download
+                      buffer.load(); // Start buffering
+                      preloadObjectRef.current = buffer; // Keep reference to prevent garbage collection
                   }
               }
           }

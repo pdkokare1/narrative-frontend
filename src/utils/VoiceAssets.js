@@ -1,7 +1,7 @@
 // src/utils/VoiceAssets.js
 
 export const VOICE_ASSETS = {
-  // --- SESSION OPENERS (Generated) ---
+  // --- SESSION OPENERS (Live) ---
   OPENERS: {
     MIRA: {
       MORNING: [
@@ -56,7 +56,7 @@ export const VOICE_ASSETS = {
     }
   },
 
-  // --- PLACEHOLDERS (We will fill these later) ---
+  // --- PLACEHOLDERS (To be generated next) ---
   WELCOME_BACK: {
     MIRA: [], RAJAT: [], SHUBHI: []
   },

@@ -5,10 +5,9 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(18, 18, 18, 0.98); /* Deep dark background */
+  background: rgba(18, 18, 18, 0.98);
   backdrop-filter: blur(12px);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  /* Padding top increased slightly to make room for scrubber touch area */
   padding: 8px 20px 12px 20px; 
   display: flex;
   flex-direction: column;
@@ -16,7 +15,7 @@
   box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
   color: white;
   animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  transition: padding 0.3s ease;
+  transition: bottom 0.3s ease, padding 0.3s ease; /* Added transition for bottom */
 }
 
 @keyframes slideUp {
@@ -24,205 +23,61 @@
   to { transform: translateY(0); }
 }
 
-/* ==================== SCRUBBER (Top Edge) ==================== */
+/* ==================== SCRUBBER ==================== */
 .scrubber-container {
   position: absolute;
-  top: -6px; /* Sits slightly above the bar */
+  top: -6px;
   left: 0;
   right: 0;
   height: 6px;
   width: 100%;
   cursor: pointer;
-  z-index: 2002; /* Top priority for touch */
+  z-index: 2002;
 }
 
-/* Custom Range Input Styling */
 .scrubber-range {
   -webkit-appearance: none;
   width: 100%;
-  height: 4px; /* Visible height */
-  background: rgba(255, 255, 255, 0.2); /* Track background */
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 0;
   outline: none;
   margin: 0;
   cursor: pointer;
   position: relative;
-  
-  /* The "Filled" part logic is handled via inline style in JS using background-size */
   background-image: linear-gradient(#B38F5F, #B38F5F);
   background-repeat: no-repeat;
   transition: height 0.1s ease;
 }
 
-/* Make it thicker on hover/touch for easier grabbing */
-.scrubber-container:hover .scrubber-range,
-.scrubber-range:active {
-  height: 6px;
-}
+.scrubber-container:hover .scrubber-range, .scrubber-range:active { height: 6px; }
+.scrubber-range::-webkit-slider-thumb { -webkit-appearance: none; width: 0; height: 0; background: #fff; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5); transition: all 0.1s ease; }
+.scrubber-container:hover .scrubber-range::-webkit-slider-thumb, .scrubber-range:active::-webkit-slider-thumb { width: 12px; height: 12px; }
 
-/* The Thumb (Handle) - Hidden by default for clean look, visible on hover */
-.scrubber-range::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 0;
-  height: 0;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 0 0 4px rgba(0,0,0,0.5);
-  transition: all 0.1s ease;
-}
+/* ==================== MAIN LAYOUT ==================== */
+.player-main-row { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 15px; }
+.player-info { display: flex; flex-direction: column; flex: 1; min-width: 0; margin-right: 10px; }
+.player-meta-top { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
 
-/* Show thumb on interact */
-.scrubber-container:hover .scrubber-range::-webkit-slider-thumb,
-.scrubber-range:active::-webkit-slider-thumb {
-  width: 12px;
-  height: 12px;
-}
+.speaker-name-small { display: flex; align-items: center; gap: 5px; font-size: 9px; text-transform: uppercase; font-weight: 700; color: #B38F5F; letter-spacing: 0.5px; }
+.pulse-dot-small { width: 4px; height: 4px; background-color: #B38F5F; border-radius: 50%; opacity: 0.6; }
+.pulse-dot-small.active { animation: radioPulse 1.5s infinite; }
+.time-display { font-size: 9px; color: #888; font-family: monospace; letter-spacing: -0.5px; }
+.player-headline { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; color: #EAEAEA; }
 
-/* ==================== MAIN ROW ==================== */
-.player-main-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 15px;
-}
+.player-controls { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.player-btn { background: transparent; border: 1px solid rgba(255, 255, 255, 0.15); color: #DDD; cursor: pointer; border-radius: 6px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+.player-btn:hover { background: rgba(255, 255, 255, 0.1); color: white; border-color: rgba(255, 255, 255, 0.3); }
+.player-btn:active { transform: scale(0.95); }
+.player-btn.icon-only { width: 32px; height: 32px; font-size: 12px; }
+.player-btn.primary-play { border-color: #B38F5F; color: #B38F5F; background: rgba(179, 143, 95, 0.1); width: 36px; height: 36px; font-size: 14px; }
+.player-btn.primary-play:hover { background: #B38F5F; color: white; }
+.player-btn.text-btn { padding: 0 8px; height: 32px; font-size: 10px; font-weight: 700; min-width: 34px; letter-spacing: 0.5px; }
+.player-btn.close-action { border: none; font-size: 20px; line-height: 1; color: #666; width: auto; padding: 0 4px; margin-left: 5px; }
+.player-btn.close-action:hover { color: #E57373; background: transparent; }
 
-/* ==================== INFO SECTION ==================== */
-.player-info {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-  margin-right: 10px;
-}
-
-.player-meta-top {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 2px;
-}
-
-.speaker-name-small {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 9px;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: #B38F5F; /* Gold */
-  letter-spacing: 0.5px;
-}
-
-.pulse-dot-small {
-  width: 4px;
-  height: 4px;
-  background-color: #B38F5F;
-  border-radius: 50%;
-  opacity: 0.6;
-}
-.pulse-dot-small.active {
-  animation: radioPulse 1.5s infinite;
-}
-
-.time-display {
-    font-size: 9px;
-    color: #888;
-    font-family: monospace; /* Keeps numbers aligned */
-    letter-spacing: -0.5px;
-}
-
-.player-headline {
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
-  color: #EAEAEA;
-}
-
-/* ==================== CONTROLS SECTION ==================== */
-.player-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.player-btn {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #DDD;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.player-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.player-btn:active {
-    transform: scale(0.95);
-}
-
-/* Standard Icon Buttons */
-.player-btn.icon-only {
-  width: 32px;
-  height: 32px;
-  font-size: 12px;
-}
-
-/* The Play/Pause Button (Highlighted) */
-.player-btn.primary-play {
-    border-color: #B38F5F;
-    color: #B38F5F;
-    background: rgba(179, 143, 95, 0.1);
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
-}
-.player-btn.primary-play:hover {
-    background: #B38F5F;
-    color: white;
-}
-
-/* Speed Toggle (Text) */
-.player-btn.text-btn {
-    padding: 0 8px;
-    height: 32px;
-    font-size: 10px;
-    font-weight: 700;
-    min-width: 34px;
-    letter-spacing: 0.5px;
-}
-
-/* Close Button */
-.player-btn.close-action {
-  border: none;
-  font-size: 20px;
-  line-height: 1;
-  color: #666;
-  width: auto;
-  padding: 0 4px;
-  margin-left: 5px;
-}
-.player-btn.close-action:hover {
-  color: #E57373;
-  background: transparent;
-}
-
-/* ==================== UP NEXT MODE ==================== */
-.global-player-bar.up-next-mode {
-  padding: 12px 20px;
-  border-top-color: #B38F5F;
-}
+/* Up Next Mode */
+.global-player-bar.up-next-mode { padding: 12px 20px; border-top-color: #B38F5F; }
 .up-next-content { flex: 1; margin-right: 20px; }
 .up-next-label { font-size: 11px; font-weight: 700; color: #B38F5F; margin-bottom: 6px; display: block; }
 .up-next-loader-track { width: 100%; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
@@ -230,28 +85,21 @@
 .player-btn.primary { padding: 0 16px; font-size: 11px; font-weight: 600; background: #B38F5F; border-color: #B38F5F; color: white; height: 32px; }
 .player-btn.secondary { padding: 0 12px; font-size: 11px; background: transparent; border-color: #555; color: #aaa; height: 32px; }
 
-/* ==================== MOBILE RESPONSIVE ==================== */
-@media (max-width: 480px) {
+/* ==================== MOBILE ADJUSTMENTS ==================== */
+@media (max-width: 768px) {
+  /* --- KEY CHANGE: Move player bar UP to sit above BottomNav --- */
   .global-player-bar {
-    padding: 10px 15px 12px 15px; /* Less side padding */
-    bottom: 0;
+    bottom: 60px; /* Height of the Bottom Nav */
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Separator line */
   }
   
-  .player-headline {
-    font-size: 12px;
-    max-width: 140px; /* Force truncation sooner */
-  }
-  
-  .player-controls {
-    gap: 8px; /* Tighter buttons */
-  }
-  
-  /* Shrink buttons slightly on very small screens */
+  .player-headline { font-size: 12px; max-width: 140px; }
+  .player-controls { gap: 8px; }
   .player-btn.icon-only { width: 30px; height: 30px; font-size: 11px; }
   .player-btn.primary-play { width: 34px; height: 34px; }
   .player-btn.text-btn { font-size: 9px; min-width: 28px; padding: 0 6px; }
-  
-  .time-display { display: none; } /* Hide time text on mobile if space is tight? Or keep small? kept small above */
+  .time-display { display: none; }
 }
 
 @keyframes radioPulse {
@@ -260,11 +108,4 @@
   100% { opacity: 1; transform: scale(1); }
 }
 
-.spinner-small.white {
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(255,255,255,0.2);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
+.spinner-small.white { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; }

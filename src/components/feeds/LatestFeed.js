@@ -1,7 +1,7 @@
 // src/components/feeds/LatestFeed.js
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, forwardRef } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { Virtuoso } from 'react-virtuoso'; // <--- NEW: Virtualization Engine
+import { VirtuosoGrid } from 'react-virtuoso'; // <--- Using VirtuosoGrid for layout preservation
 import * as api from '../../services/api'; 
 import ArticleCard from '../ArticleCard';
 import SkeletonCard from '../ui/SkeletonCard';
@@ -17,7 +17,7 @@ function LatestFeed({
   savedArticleIds, 
   onToggleSave, 
   showTooltip,
-  scrollToTopRef // <--- We use this to attach virtualization to the main scrollbar
+  scrollToTopRef 
 }) {
   const { addToast } = useToast();
   const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
@@ -39,7 +39,6 @@ function LatestFeed({
     data,
     fetchNextPage,
     hasNextPage,
-    isFetching,
     isFetchingNextPage,
     status,
     error
@@ -97,10 +96,35 @@ function LatestFeed({
     }
   };
 
-  // --- Virtualized Components ---
+  // --- VIRTUOSO COMPONENTS (Grid Config) ---
   
-  // The Header scrolls *with* the list
-  const Header = () => (
+  // 1. The List Container (Acts as the CSS Grid)
+  // We pass 'articles-grid' class here so your CSS controls the columns (1 on mobile, 4 on desktop)
+  const GridList = useMemo(() => forwardRef(({ style, children, ...props }, ref) => (
+    <div
+      ref={ref}
+      {...props}
+      style={{ ...style }} // Virtuoso manages height/padding here
+      className="articles-grid" // YOUR CSS CLASS: Handles the grid layout
+    >
+      {children}
+    </div>
+  )), []);
+
+  // 2. The Item Container (Wraps each card)
+  const GridItem = useMemo(() => forwardRef(({ children, ...props }, ref) => (
+    <div 
+        {...props} 
+        ref={ref}
+        className="article-card-wrapper" // Preserves your card spacing/padding
+        style={{ margin: 0 }} // Reset margins so Grid gap handles spacing
+    >
+      {children}
+    </div>
+  )), []);
+
+  // 3. Header
+  const FeedHeader = () => (
     <div style={{ paddingBottom: '20px' }}>
         <CategoryPills 
           selectedCategory={filters.category} 
@@ -120,13 +144,13 @@ function LatestFeed({
     </div>
   );
 
-  // The Footer shows loading skeletons at the bottom
-  const Footer = () => {
-      if (!isFetchingNextPage) return <div style={{ height: '20px' }} />; // Small padding
+  // 4. Footer (Loading Skeletons)
+  const FeedFooter = () => {
+      if (!isFetchingNextPage) return <div style={{ height: '40px' }} />;
       return (
-        <div style={{ paddingBottom: '40px' }}>
-           {[...Array(3)].map((_, i) => ( 
-             <div className="article-card-wrapper" key={`skel-${i}`} style={{ marginBottom: '25px' }}>
+        <div className="articles-grid" style={{ marginTop: '20px', paddingBottom: '40px' }}>
+           {[...Array(4)].map((_, i) => ( 
+             <div className="article-card-wrapper" key={`skel-${i}`}>
                 <SkeletonCard />
              </div> 
            ))}
@@ -134,12 +158,12 @@ function LatestFeed({
       );
   };
 
-  // --- Initial Loading State (Before Virtualization) ---
+  // --- Initial Loading State ---
   if (status === 'pending') {
       return (
          <div className="articles-grid">
-           <Header />
-           {[...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) }
+           <div style={{gridColumn: '1 / -1'}}><FeedHeader /></div>
+           {[...Array(8)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) }
          </div>
       );
   }
@@ -148,7 +172,7 @@ function LatestFeed({
   if (status === 'success' && articles.length === 0) {
       return (
         <>
-          <Header />
+          <FeedHeader />
           <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
               <p>No articles found matching your current filters.</p>
           </div>
@@ -156,35 +180,34 @@ function LatestFeed({
       );
   }
 
-  // --- Main Virtual List ---
+  // --- MAIN RENDER: VIRTUOSO GRID ---
   return (
-    <Virtuoso
-      customScrollParent={scrollParent} // Hooks into your main .content div
+    <VirtuosoGrid
+      customScrollParent={scrollParent}
       data={articles}
       endReached={() => { if (hasNextPage) fetchNextPage(); }}
-      overscan={500} // Render 500px ahead of viewport for smoothness
-      rangeChanged={({ startIndex }) => setVisibleArticleIndex(startIndex)} // Updates Radio "Start From Here"
-      components={{ Header, Footer }}
+      overscan={600} // Render extra content for smooth scrolling
+      rangeChanged={({ startIndex }) => setVisibleArticleIndex(startIndex)}
+      components={{
+        Header: FeedHeader,
+        Footer: FeedFooter,
+        List: GridList,
+        Item: GridItem
+      }}
       itemContent={(index, article) => (
-        <div 
-            className="article-card-wrapper" 
-            style={{ paddingBottom: '25px' }} // Spacing between cards
-            data-index={index}
-        >
-          <ArticleCard
-            article={article}
-            onCompare={() => onCompare(article)}
-            onAnalyze={onAnalyze}
-            onShare={() => handleShare(article)}
-            onRead={() => handleReadClick(article)}
-            showTooltip={showTooltip}
-            isSaved={savedArticleIds.has(article._id)}
-            onToggleSave={() => onToggleSave(article)}
-            isPlaying={currentArticle && currentArticle._id === article._id}
-            onPlay={() => playSingle(article)}
-            onStop={stop}
-          />
-        </div>
+        <ArticleCard
+          article={article}
+          onCompare={() => onCompare(article)}
+          onAnalyze={onAnalyze}
+          onShare={() => handleShare(article)}
+          onRead={() => handleReadClick(article)}
+          showTooltip={showTooltip}
+          isSaved={savedArticleIds.has(article._id)}
+          onToggleSave={() => onToggleSave(article)}
+          isPlaying={currentArticle && currentArticle._id === article._id}
+          onPlay={() => playSingle(article)}
+          onStop={stop}
+        />
       )}
     />
   );

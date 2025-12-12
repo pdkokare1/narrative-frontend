@@ -1,7 +1,7 @@
 // In file: src/App.js
 import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
 import { Routes, Route, useLocation, Navigate, Link } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; // <--- NEW IMPORT
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; 
 
 // --- Styles ---
 import './App.css'; 
@@ -24,6 +24,7 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import NewsFeed from './components/NewsFeed'; 
 import GlobalPlayerBar from './components/GlobalPlayerBar'; 
+import BottomNav from './components/ui/BottomNav'; // <--- NEW IMPORT
 
 // --- UI Components ---
 import CustomTooltip from './components/ui/CustomTooltip';
@@ -43,21 +44,20 @@ const AccountSettings = lazy(() => import('./AccountSettings'));
 const SearchResults = lazy(() => import('./SearchResults')); 
 const EmergencyResources = lazy(() => import('./EmergencyResources'));
 
-// --- NEW: Initialize Query Client ---
+// --- Initialize Query Client ---
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // Data remains fresh for 5 minutes
-      gcTime: 1000 * 60 * 30,   // Keep unused data in memory for 30 minutes
-      retry: 1,                 // Retry failed requests once
-      refetchOnWindowFocus: false, // Don't refetch when switching tabs/windows
+      staleTime: 1000 * 60 * 5, 
+      gcTime: 1000 * 60 * 30,   
+      retry: 1,                 
+      refetchOnWindowFocus: false, 
     },
   },
 });
 
 function App() {
   return (
-    // --- NEW: Wrap App in QueryClientProvider ---
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ToastProvider>
@@ -121,18 +121,15 @@ function MainLayout({ profile }) {
   const [savedArticleIds, setSavedArticleIds] = useState(new Set(profile.savedArticles || []));
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
-  // --- Theme Management (System Detection) ---
+  // --- Theme Management ---
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
-    
     if (savedTheme) {
       setTheme(savedTheme);
       document.body.className = savedTheme + '-mode';
     } else {
-      // Auto-detect system preference
       const userPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       const initialTheme = userPrefersDark ? 'dark' : 'light';
-      
       setTheme(initialTheme);
       document.body.className = initialTheme + '-mode';
     }
@@ -145,7 +142,7 @@ function MainLayout({ profile }) {
     localStorage.setItem('theme', newTheme);
   };
 
-  // --- Layout Handlers ---
+  // --- Handlers ---
   const handleLogout = useCallback(() => { logout(); }, [logout]);
 
   const toggleSidebar = (e) => {
@@ -158,7 +155,6 @@ function MainLayout({ profile }) {
       if (isSidebarOpen) setIsSidebarOpen(false);
   };
 
-  // --- Tooltip Handler (Mobile) ---
   const showTooltip = (text, e) => {
     if (!isMobileView || !text) return; 
     e.stopPropagation();
@@ -203,7 +199,6 @@ function MainLayout({ profile }) {
     } catch (error) {
       console.error('Save failed:', error);
       addToast('Failed to save article', 'error');
-      // Revert on failure
       setSavedArticleIds(prev => {
         const reverted = new Set(prev);
         if (isSaving) reverted.delete(articleId);
@@ -213,7 +208,6 @@ function MainLayout({ profile }) {
     }
   }, [savedArticleIds, addToast]);
 
-  // --- Render ---
   return (
     <div className="app">
       <Header 
@@ -226,7 +220,6 @@ function MainLayout({ profile }) {
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
 
       <div className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''}`}>
-        {/* Mobile Overlay */}
         <div 
           className={`sidebar-mobile-overlay ${isSidebarOpen ? 'open' : ''}`} 
           onClick={() => setIsSidebarOpen(false)}
@@ -282,7 +275,6 @@ function MainLayout({ profile }) {
         </Routes>
       </div>
 
-      {/* Global Modals */}
       {compareModal.open && (
         <CompareCoverageModal 
           clusterId={compareModal.clusterId} 
@@ -301,12 +293,15 @@ function MainLayout({ profile }) {
         />
       )}
 
+      {/* NEW: Bottom Navigation (Mobile Only) */}
+      <BottomNav />
+
+      {/* Global Player (Now adjusts to sit above Nav) */}
       <GlobalPlayerBar />
     </div>
   );
 }
 
-// --- 404 Page ---
 function PageNotFound() {
   return (
     <main className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 60px)' }}>

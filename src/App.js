@@ -1,5 +1,5 @@
 // In file: src/App.js
-import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useCallback, useRef } from 'react'; // Added useRef
 import { Routes, Route, useLocation, Navigate, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; 
 
@@ -63,7 +63,6 @@ function App() {
       <AuthProvider>
         <ToastProvider>
           <RadioProvider> 
-            {/* --- Safety Shield --- */}
             <ErrorBoundary>
                <AppRoutes />
             </ErrorBoundary>
@@ -81,7 +80,6 @@ function AppRoutes() {
   if (loading) return <PageLoader />;
   if (!user) return <Login />;
   
-  // Force profile creation if authenticated but no profile exists
   if (!profile) {
      return <CreateProfile />;
   }
@@ -96,17 +94,15 @@ function AppRoutes() {
   );
 }
 
-// --- Main Layout (Header + Sidebar + Content) ---
+// --- Main Layout ---
 function MainLayout({ profile }) {
   const { logout } = useAuth();
   const { addToast } = useToast();
-  
-  // Responsive Hook
   const isMobileView = useIsMobile();
 
   // --- Global State ---
   const [theme, setTheme] = useState('dark');
-  const [fontSize, setFontSize] = useState('medium'); // New State: medium, large, xl
+  const [fontSize, setFontSize] = useState('medium'); 
 
   const [filters, setFilters] = useState({
     category: 'All Categories',
@@ -123,13 +119,15 @@ function MainLayout({ profile }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
   
-  // Tracks saved articles locally for instant UI updates
+  // Tracks saved articles locally
   const [savedArticleIds, setSavedArticleIds] = useState(new Set(profile.savedArticles || []));
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
+  // --- NEW: Pending Deletes Ref (Stores timeouts) ---
+  const pendingDeletesRef = useRef(new Map());
+
   // --- Theme & Font Management ---
   useEffect(() => {
-    // Load Theme
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
       setTheme(savedTheme);
@@ -141,17 +139,14 @@ function MainLayout({ profile }) {
       document.body.className = `${initialTheme}-mode font-${fontSize}`;
     }
 
-    // Load Font Size
     const savedFont = localStorage.getItem('fontSize');
     if (savedFont) {
         setFontSize(savedFont);
-        // We need to re-apply the class if it changed from default
         document.body.classList.remove('font-medium', 'font-large', 'font-xl');
         document.body.classList.add(`font-${savedFont}`);
     }
   }, []);
 
-  // Update Body Class when Font Size Changes
   useEffect(() => {
       document.body.classList.remove('font-medium', 'font-large', 'font-xl');
       document.body.classList.add(`font-${fontSize}`);
@@ -161,7 +156,6 @@ function MainLayout({ profile }) {
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-    // Preserve font class
     document.body.className = `${newTheme}-mode font-${fontSize}`;
     localStorage.setItem('theme', newTheme);
   };
@@ -192,7 +186,6 @@ function MainLayout({ profile }) {
     }
   };
 
-  // --- Action Handlers ---
   const handleAnalyzeClick = useCallback((article) => {
     setAnalysisModal({ open: true, article });
     api.logView(article._id).catch(err => console.error("Log View Error:", err));
@@ -208,27 +201,71 @@ function MainLayout({ profile }) {
     api.logCompare(article._id).catch(err => console.error("Log Compare Error:", err));
   }, []);
   
+  // --- UPDATED: Save Handler with Undo Logic ---
   const handleToggleSave = useCallback(async (article) => {
     const articleId = article._id;
-    const newSavedArticleIds = new Set(savedArticleIds);
-    const isSaving = !newSavedArticleIds.has(articleId);
-    
-    if (isSaving) newSavedArticleIds.add(articleId);
-    else newSavedArticleIds.delete(articleId);
-    setSavedArticleIds(newSavedArticleIds);
+    const isCurrentlySaved = savedArticleIds.has(articleId);
 
-    try {
-      await api.saveArticle(articleId);
-      addToast(isSaving ? 'Article saved' : 'Article removed', 'success');
-    } catch (error) {
-      console.error('Save failed:', error);
-      addToast('Failed to save article', 'error');
-      setSavedArticleIds(prev => {
-        const reverted = new Set(prev);
-        if (isSaving) reverted.delete(articleId);
-        else reverted.add(articleId);
-        return reverted;
-      });
+    if (isCurrentlySaved) {
+        // --- UNSAVE ACTION (With Delay) ---
+        
+        // 1. Optimistic UI: Remove immediately
+        setSavedArticleIds(prev => {
+            const next = new Set(prev);
+            next.delete(articleId);
+            return next;
+        });
+
+        // 2. Set Delayed Server Call
+        const timeoutId = setTimeout(async () => {
+            try {
+                await api.saveArticle(articleId);
+                pendingDeletesRef.current.delete(articleId);
+            } catch (error) {
+                console.error('Unsave failed:', error);
+                // Revert UI on error
+                setSavedArticleIds(prev => new Set(prev).add(articleId));
+            }
+        }, 3500); // 3.5 seconds delay
+
+        pendingDeletesRef.current.set(articleId, timeoutId);
+
+        // 3. Show Undo Toast
+        addToast('Article removed', 'info', {
+            label: 'UNDO',
+            onClick: () => {
+                // User clicked UNDO
+                clearTimeout(timeoutId);
+                pendingDeletesRef.current.delete(articleId);
+                
+                // Add back to UI immediately
+                setSavedArticleIds(prev => new Set(prev).add(articleId));
+            }
+        });
+
+    } else {
+        // --- SAVE ACTION (Immediate) ---
+        
+        // Check if there was a pending delete for this item and cancel it
+        if (pendingDeletesRef.current.has(articleId)) {
+            clearTimeout(pendingDeletesRef.current.get(articleId));
+            pendingDeletesRef.current.delete(articleId);
+        }
+
+        setSavedArticleIds(prev => new Set(prev).add(articleId));
+
+        try {
+            await api.saveArticle(articleId);
+            addToast('Article saved', 'success');
+        } catch (error) {
+            console.error('Save failed:', error);
+            setSavedArticleIds(prev => {
+                const next = new Set(prev);
+                next.delete(articleId);
+                return next;
+            });
+            addToast('Failed to save article', 'error');
+        }
     }
   }, [savedArticleIds, addToast]);
 
@@ -295,7 +332,6 @@ function MainLayout({ profile }) {
 
           <Route path="/emergency-resources" element={<EmergencyResources />} />
           
-          {/* UPDATED ROUTE: Pass Font Size Props */}
           <Route path="/account-settings" element={
             <AccountSettings 
                 currentFontSize={fontSize} 
@@ -325,10 +361,7 @@ function MainLayout({ profile }) {
         />
       )}
 
-      {/* Bottom Navigation (Mobile Only) */}
       <BottomNav />
-
-      {/* Global Player (Now adjusts to sit above Nav) */}
       <GlobalPlayerBar />
     </div>
   );

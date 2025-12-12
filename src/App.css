@@ -77,16 +77,36 @@ a:hover {
   text-decoration: underline;
 }
 
-/* ==================== ACCESSIBILITY: DYNAMIC FONTS ==================== */
-body.font-large .article-headline { font-size: 15px !important; line-height: 1.5; }
-body.font-large .article-summary { font-size: 13px !important; }
-body.font-large .article-content p, body.font-large .modal-content p { font-size: 14px !important; }
-body.font-large .article-meta-v2, body.font-large .quality-grade-text { font-size: 11px !important; }
+/* ==================== GRID SYSTEM (FIXED) ==================== */
+.articles-grid {
+  display: grid;
+  gap: 25px;
+  width: 100%;
+  align-items: stretch;
+  /* Default: Mobile (1 Column) */
+  grid-template-columns: 1fr;
+}
 
-body.font-xl .article-headline { font-size: 17px !important; line-height: 1.5; }
-body.font-xl .article-summary { font-size: 15px !important; line-height: 1.6; }
-body.font-xl .article-content p, body.font-xl .modal-content p { font-size: 16px !important; }
-body.font-xl .article-meta-v2, body.font-xl .quality-grade-text { font-size: 12px !important; }
+/* Small Tablet / Large Phone: 2 Columns */
+@media (min-width: 600px) {
+  .articles-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Standard Laptop/Desktop: 3 Columns */
+@media (min-width: 1024px) {
+  .articles-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Large Desktop: 4 Columns (Requested) */
+@media (min-width: 1440px) {
+  .articles-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
 
 /* ==================== LAYOUT & CONTAINERS ==================== */
 .app {
@@ -364,7 +384,7 @@ button:disabled {
     flex-direction: column; padding-top: 60px; max-width: 100%; overflow-y: hidden; height: 100vh;
   }
   
-  .main-container.desktop-sidebar-hidden .sidebar { margin-left: 0; } /* Reset sidebar shift on mobile */
+  .main-container.desktop-sidebar-hidden .sidebar { margin-left: 0; } 
 
   .content {
     padding: 0; 

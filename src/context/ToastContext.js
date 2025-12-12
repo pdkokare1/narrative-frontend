@@ -1,3 +1,4 @@
+// src/context/ToastContext.js
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import Toast from '../components/ui/Toast';
 
@@ -10,14 +11,15 @@ export function useToast() {
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
-  const addToast = useCallback((message, type = 'info') => {
+  // --- UPDATED: Accepts optional 'action' object { label, onClick } ---
+  const addToast = useCallback((message, type = 'info', action = null) => {
     const id = Date.now();
-    setToasts((prev) => [...prev, { id, message, type }]);
+    setToasts((prev) => [...prev, { id, message, type, action }]);
     
-    // Auto remove after 3 seconds
+    // Auto remove after 4 seconds (slightly longer to allow Undo)
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3000);
+    }, 4000);
   }, []);
 
   const removeToast = (id) => {
@@ -33,6 +35,7 @@ export function ToastProvider({ children }) {
             key={toast.id} 
             message={toast.message} 
             type={toast.type} 
+            action={toast.action}
             onClose={() => removeToast(toast.id)} 
           />
         ))}

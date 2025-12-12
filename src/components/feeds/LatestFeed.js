@@ -1,5 +1,5 @@
 // src/components/feeds/LatestFeed.js
-import React, { useState, useEffect, useMemo, useRef, forwardRef } from 'react';
+import React, { useState, useEffect, useMemo, forwardRef } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { VirtuosoGrid } from 'react-virtuoso'; 
 import * as api from '../../services/api'; 
@@ -8,10 +8,9 @@ import SkeletonCard from '../ui/SkeletonCard';
 import CategoryPills from '../ui/CategoryPills';
 import { useToast } from '../../context/ToastContext';
 import { useRadio } from '../../context/RadioContext';
+import useIsMobile from '../../hooks/useIsMobile'; 
 
 // --- GLOBAL STATE CACHE ---
-// This lives outside the component lifecycle to persist scroll position
-// even when you navigate away to an article and come back.
 let feedStateCache = null;
 
 function LatestFeed({ 
@@ -26,6 +25,7 @@ function LatestFeed({
 }) {
   const { addToast } = useToast();
   const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
+  const isMobile = useIsMobile(); 
   
   // Track visibility for "Smart Start" Radio
   const [visibleArticleIndex, setVisibleArticleIndex] = useState(0);
@@ -68,7 +68,6 @@ function LatestFeed({
   }, [data]);
 
   // --- SCROLL RESTORATION LOGIC ---
-  // 1. Save state when unmounting (leaving the page)
   useEffect(() => {
     return () => {
       if (virtuosoRef.current) {
@@ -77,8 +76,6 @@ function LatestFeed({
     };
   }, []);
 
-  // 2. Reset scroll to top ONLY if filters change (Category/Sort)
-  // We clear the cache so the user starts fresh on a new category.
   useEffect(() => {
     feedStateCache = null; 
     if (scrollToTopRef?.current) {
@@ -100,7 +97,6 @@ function LatestFeed({
   };
 
   const handleReadClick = (article) => {
-    // Save scroll state before navigating away
     if (virtuosoRef.current) {
         feedStateCache = virtuosoRef.current.getState();
     }
@@ -137,7 +133,7 @@ function LatestFeed({
         {...props} 
         ref={ref}
         className="article-card-wrapper" 
-        style={{ margin: 0, minHeight: '300px' }} // FIX: Enforce min-height to reduce layout shift
+        style={{ margin: 0, minHeight: '300px' }} 
     >
       {children}
     </div>
@@ -201,13 +197,16 @@ function LatestFeed({
   // --- MAIN RENDER ---
   return (
     <VirtuosoGrid
+      // --- KEY FIX: Force re-render when switching between Mobile/Desktop layouts ---
+      key={isMobile ? 'mobile-view' : 'desktop-view'}
+      
       ref={virtuosoRef}
-      restoreStateFrom={feedStateCache} // <--- FIX: Restores scroll position on back
+      restoreStateFrom={feedStateCache} 
       customScrollParent={scrollParent}
       data={articles}
-      initialItemCount={12} // FIX: Ensures Desktop fills up immediately
+      initialItemCount={12} 
       endReached={() => { if (hasNextPage) fetchNextPage(); }}
-      overscan={1000} // FIX: Increased overscan to prevent white flashes on fast scroll
+      overscan={1000} 
       rangeChanged={({ startIndex }) => setVisibleArticleIndex(startIndex)}
       components={{
         Header: FeedHeader,

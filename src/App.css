@@ -64,6 +64,7 @@ body {
   transition: background 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none; /* Prevent rubber-banding on Mac/iOS */
 }
 
 .app {
@@ -98,24 +99,21 @@ a:hover {
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes cardSnapIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
+/* Refined Shimmer Effect */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
 
 .skeleton-pulse {
+  /* Using a softer gradient for a more premium feel */
   background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--border-light) 50%, var(--bg-elevated) 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+  animation: shimmer 2s infinite ease-in-out; /* Slower animation */
   border-radius: 4px; 
 }
 
@@ -156,7 +154,6 @@ a:hover {
   min-width: 0;
   position: relative;
 }
-.content-scroll-wrapper { position: relative; }
 
 /* ==================== LOADING ==================== */
 .loading-container {
@@ -189,20 +186,6 @@ a:hover {
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-right: 12px;
-}
-.pull-to-refresh-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 16px;
-  color: var(--accent-primary);
-  font-size: 12px;
-  font-weight: 500;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1;
 }
 
 /* ==================== GLOBAL BUTTONS ==================== */
@@ -588,7 +571,7 @@ button:disabled, button:disabled:hover {
     flex-direction: column; padding-top: 60px; max-width: 100%; overflow-y: hidden; height: 100vh;
   }
   
-  /* --- KEY FIX: Add padding-bottom to allow scrolling past the Bottom Nav --- */
+  /* Key fix: Add padding-bottom for mobile scrolling */
   .content {
     padding: 0; 
     height: calc(100vh - 60px); 
@@ -600,7 +583,7 @@ button:disabled, button:disabled:hover {
     overscroll-behavior-y: contain; 
     -ms-overflow-style: none; 
     scrollbar-width: none;
-    padding-bottom: 90px; /* Space for Bottom Nav */
+    padding-bottom: 90px; 
   }
   .content::-webkit-scrollbar { display: none; }
   .pull-to-refresh-container { position: absolute; top: 0; left: 0; right: 0; z-index: 1; }

@@ -78,31 +78,25 @@ a:hover {
 }
 
 /* ==================== GRID SYSTEM (FIXED) ==================== */
+/* We use auto-fill as a fallback, but enforce columns on larger screens */
 .articles-grid {
   display: grid;
+  /* Minimum card width 280px, auto-fill the rest */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 25px;
   width: 100%;
-  align-items: stretch;
-  /* Default: Mobile (1 Column) */
-  grid-template-columns: 1fr;
+  align-items: start;
 }
 
-/* Small Tablet / Large Phone: 2 Columns */
-@media (min-width: 600px) {
-  .articles-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* Standard Laptop/Desktop: 3 Columns */
-@media (min-width: 1024px) {
+/* Force 3 columns on standard desktop */
+@media (min-width: 1025px) {
   .articles-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
-/* Large Desktop: 4 Columns (Requested) */
-@media (min-width: 1440px) {
+/* Force 4 columns on large screens */
+@media (min-width: 1441px) {
   .articles-grid {
     grid-template-columns: repeat(4, 1fr);
   }
@@ -123,13 +117,26 @@ a:hover {
   padding-top: 60px;
   min-height: 100vh;
   transition: all 0.3s ease-in-out;
+  position: relative;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+/* SIDEBAR HIDING LOGIC (Desktop) */
+.main-container .sidebar {
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0; /* Prevent sidebar from squishing */
+}
+
+/* When hidden, pull sidebar to the left */
+.main-container.desktop-sidebar-hidden .sidebar {
+  margin-left: -200px !important; 
 }
 
 .content {
   flex: 1;
   padding: 30px 40px;
-  transition: all 0.3s ease-in-out;
-  min-width: 0;
+  transition: padding 0.3s ease-in-out;
+  min-width: 0; /* Critical for grid to shrink correctly */
   position: relative;
 }
 
@@ -384,7 +391,7 @@ button:disabled {
     flex-direction: column; padding-top: 60px; max-width: 100%; overflow-y: hidden; height: 100vh;
   }
   
-  .main-container.desktop-sidebar-hidden .sidebar { margin-left: 0; } 
+  .main-container.desktop-sidebar-hidden .sidebar { margin-left: 0 !important; } 
 
   .content {
     padding: 0; 
@@ -397,6 +404,12 @@ button:disabled {
     padding-bottom: 90px; 
   }
   .content::-webkit-scrollbar { display: none; }
+  
+  /* Reset Grid for Mobile */
+  .articles-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
 
   /* Mobile Modals (Bottom Sheet) */
   .modal-overlay { align-items: flex-end; padding: 0; }

@@ -1,0 +1,75 @@
+/* src/components/ui/BottomNav.css */
+
+.bottom-nav {
+  display: none; /* Hidden on Desktop */
+}
+
+/* Mobile Styling */
+@media (max-width: 768px) {
+  .bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(18, 18, 18, 0.95); /* Matches App Dark Theme */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border-color);
+    z-index: 1500; /* Above content, below Modals (2000) */
+    padding-bottom: env(safe-area-inset-bottom); /* iPhone X+ Safety */
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+  }
+
+  /* Light Mode Override */
+  :global(.light-mode) .bottom-nav {
+    background: rgba(255, 255, 255, 0.95);
+    border-top: 1px solid #EAEAEA;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--text-tertiary);
+    flex: 1;
+    height: 100%;
+    transition: all 0.2s ease;
+    padding-top: 5px;
+  }
+
+  .nav-icon {
+    margin-bottom: 2px;
+    transition: transform 0.2s ease;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  /* Active State */
+  .nav-item.active {
+    color: var(--accent-primary);
+  }
+
+  .nav-item.active .nav-icon {
+    transform: translateY(-2px);
+  }
+  
+  .nav-item.active svg {
+    stroke-width: 2.5px;
+  }
+
+  /* Touch Feedback */
+  .nav-item:active {
+    transform: scale(0.95);
+    background-color: var(--bg-elevated);
+  }
+}

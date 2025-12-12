@@ -1,5 +1,5 @@
 // src/components/feeds/LatestFeed.js
-import React, { useState, useEffect, useMemo, forwardRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, forwardRef } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { VirtuosoGrid } from 'react-virtuoso'; 
 import * as api from '../../services/api'; 
@@ -8,6 +8,11 @@ import SkeletonCard from '../ui/SkeletonCard';
 import CategoryPills from '../ui/CategoryPills';
 import { useToast } from '../../context/ToastContext';
 import { useRadio } from '../../context/RadioContext';
+
+// --- GLOBAL STATE CACHE ---
+// This lives outside the component lifecycle to persist scroll position
+// even when you navigate away to an article and come back.
+let feedStateCache = null;
 
 function LatestFeed({ 
   filters, 
@@ -25,9 +30,11 @@ function LatestFeed({
   // Track visibility for "Smart Start" Radio
   const [visibleArticleIndex, setVisibleArticleIndex] = useState(0);
   
-  // Capture the scroll container for Virtuoso
+  // Refs
+  const virtuosoRef = useRef(null);
   const [scrollParent, setScrollParent] = useState(undefined);
 
+  // Attach to main window scroll if ref is provided
   useEffect(() => {
     if (scrollToTopRef?.current) {
         setScrollParent(scrollToTopRef.current);
@@ -45,7 +52,6 @@ function LatestFeed({
   } = useInfiniteQuery({
     queryKey: ['latestFeed', filters],
     queryFn: async ({ pageParam = 0 }) => {
-      // Fetch 12 articles per page (perfect for 1, 2, 3, or 4 column layouts)
       const { data } = await api.fetchArticles({ ...filters, limit: 12, offset: pageParam });
       return data;
     },
@@ -61,14 +67,26 @@ function LatestFeed({
     return data?.pages.flatMap(page => page.articles) || [];
   }, [data]);
 
-  // --- 1. Scroll to Top on Filter Change ---
+  // --- SCROLL RESTORATION LOGIC ---
+  // 1. Save state when unmounting (leaving the page)
   useEffect(() => {
+    return () => {
+      if (virtuosoRef.current) {
+        feedStateCache = virtuosoRef.current.getState();
+      }
+    };
+  }, []);
+
+  // 2. Reset scroll to top ONLY if filters change (Category/Sort)
+  // We clear the cache so the user starts fresh on a new category.
+  useEffect(() => {
+    feedStateCache = null; 
     if (scrollToTopRef?.current) {
         scrollToTopRef.current.scrollTop = 0;
     }
   }, [filters, scrollToTopRef]);
 
-  // --- 2. Error Handling ---
+  // --- ERROR HANDLING ---
   useEffect(() => {
     if (status === 'error') {
         console.error("Feed Error:", error);
@@ -76,12 +94,16 @@ function LatestFeed({
     }
   }, [status, error, addToast]);
 
-  // --- Handlers ---
+  // --- HANDLERS ---
   const handleCategorySelect = (category) => {
     onFilterChange({ ...filters, category });
   };
 
   const handleReadClick = (article) => {
+    // Save scroll state before navigating away
+    if (virtuosoRef.current) {
+        feedStateCache = virtuosoRef.current.getState();
+    }
     api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
     window.open(article.url, '_blank', 'noopener,noreferrer');
   };
@@ -99,7 +121,6 @@ function LatestFeed({
 
   // --- VIRTUOSO COMPONENTS (Grid Config) ---
   
-  // 1. The List Container (Acts as the CSS Grid)
   const GridList = useMemo(() => forwardRef(({ style, children, ...props }, ref) => (
     <div
       ref={ref}
@@ -111,19 +132,17 @@ function LatestFeed({
     </div>
   )), []);
 
-  // 2. The Item Container (Wraps each card)
   const GridItem = useMemo(() => forwardRef(({ children, ...props }, ref) => (
     <div 
         {...props} 
         ref={ref}
         className="article-card-wrapper" 
-        style={{ margin: 0 }} 
+        style={{ margin: 0, minHeight: '300px' }} // FIX: Enforce min-height to reduce layout shift
     >
       {children}
     </div>
   )), []);
 
-  // 3. Header
   const FeedHeader = () => (
     <div style={{ paddingBottom: '20px' }}>
         <CategoryPills 
@@ -144,7 +163,6 @@ function LatestFeed({
     </div>
   );
 
-  // 4. Footer (Loading Skeletons)
   const FeedFooter = () => {
       if (!isFetchingNextPage) return <div style={{ height: '40px' }} />;
       return (
@@ -158,7 +176,7 @@ function LatestFeed({
       );
   };
 
-  // --- Initial Loading State ---
+  // --- LOADING STATE ---
   if (status === 'pending') {
       return (
          <div className="articles-grid">
@@ -168,7 +186,7 @@ function LatestFeed({
       );
   }
 
-  // --- Empty State ---
+  // --- EMPTY STATE ---
   if (status === 'success' && articles.length === 0) {
       return (
         <>
@@ -180,15 +198,16 @@ function LatestFeed({
       );
   }
 
-  // --- MAIN RENDER: VIRTUOSO GRID ---
+  // --- MAIN RENDER ---
   return (
     <VirtuosoGrid
+      ref={virtuosoRef}
+      restoreStateFrom={feedStateCache} // <--- FIX: Restores scroll position on back
       customScrollParent={scrollParent}
       data={articles}
-      // --- FIX: Force rendering initial items to fill desktop grid immediately ---
-      initialItemCount={12} 
+      initialItemCount={12} // FIX: Ensures Desktop fills up immediately
       endReached={() => { if (hasNextPage) fetchNextPage(); }}
-      overscan={600} 
+      overscan={1000} // FIX: Increased overscan to prevent white flashes on fast scroll
       rangeChanged={({ startIndex }) => setVisibleArticleIndex(startIndex)}
       components={{
         Header: FeedHeader,

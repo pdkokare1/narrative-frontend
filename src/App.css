@@ -103,6 +103,11 @@ a:hover {
   to { transform: rotate(360deg); }
 }
 
+@keyframes modalSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
 /* Refined Shimmer Effect */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
@@ -110,10 +115,9 @@ a:hover {
 }
 
 .skeleton-pulse {
-  /* Using a softer gradient for a more premium feel */
   background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--border-light) 50%, var(--bg-elevated) 75%);
   background-size: 200% 100%;
-  animation: shimmer 2s infinite ease-in-out; /* Slower animation */
+  animation: shimmer 2s infinite ease-in-out; 
   border-radius: 4px; 
 }
 
@@ -571,7 +575,6 @@ button:disabled, button:disabled:hover {
     flex-direction: column; padding-top: 60px; max-width: 100%; overflow-y: hidden; height: 100vh;
   }
   
-  /* Key fix: Add padding-bottom for mobile scrolling */
   .content {
     padding: 0; 
     height: calc(100vh - 60px); 
@@ -610,13 +613,47 @@ button:disabled, button:disabled:hover {
   .article-image { height: 160px; }
   .article-content { padding: 16px; }
 
-  .modal-overlay { padding: 10px;} .compare-modal, .analysis-modal { max-height: 95vh; }
-  .modal-header { padding: 15px 20px; }
+  /* --- MOBILE MODAL TRANSFORMATION (BOTTOM SHEET) --- */
+  .modal-overlay {
+    align-items: flex-end; /* Align to bottom */
+    padding: 0; 
+  }
+
+  .compare-modal, .analysis-modal {
+    border-radius: 16px 16px 0 0; /* Rounded top only */
+    max-height: 85vh; /* Max height 85% of screen */
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); /* Slide up animation */
+    padding-bottom: env(safe-area-inset-bottom); /* iPhone Safety */
+  }
+
+  /* Handle Bar for the Sheet */
+  .modal-header::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: var(--border-color);
+    border-radius: 2px;
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  .modal-header {
+    padding: 20px 20px 15px 20px; /* More top padding for handle */
+    position: relative;
+  }
+
   .modal-header h2 { font-size: 16px; }
   .close-btn { transform: none; }
   .close-btn:hover { background: var(--accent-primary); color: white; transform: none; }
+  
   .modal-tabs button { font-size: 11px; padding: 10px 12px; }
-  .modal-body, .modal-content { padding: 40px 20px; }
+  .modal-body, .modal-content { padding: 30px 20px; }
   .overview-grid { grid-template-columns: 1fr 1fr; gap: 15px;} .score-value { font-size: 24px;} .score-label { font-size: 10px;}
   .component-section-header { flex-direction: column; align-items: flex-start; }
   .toggle-zero-scores { margin-top: 10px; width: 100%; justify-content: flex-start; }

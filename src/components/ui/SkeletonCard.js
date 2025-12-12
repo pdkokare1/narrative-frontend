@@ -1,8 +1,20 @@
-// In file: src/components/ui/SkeletonCard.js
-import React from 'react';
-import '../../App.css'; // Imports the 'skeleton-pulse' animation class
+// src/components/ui/SkeletonCard.js
+import React, { useMemo } from 'react';
+import '../../App.css'; 
 
 function SkeletonCard() {
+  // We use useMemo to generate random widths ONCE when the component mounts.
+  // If we didn't use useMemo, the lines would "jitter" and change length every millisecond.
+  const lineWidths = useMemo(() => {
+    return {
+      title1: `${Math.floor(Math.random() * (95 - 85) + 85)}%`, // 85-95%
+      title2: `${Math.floor(Math.random() * (75 - 60) + 60)}%`, // 60-75%
+      summary1: `${Math.floor(Math.random() * (98 - 92) + 92)}%`, // 92-98%
+      summary2: `${Math.floor(Math.random() * (95 - 85) + 85)}%`, // 85-95%
+      summary3: `${Math.floor(Math.random() * (80 - 60) + 60)}%`, // 60-80%
+    };
+  }, []);
+
   return (
     <div className="article-card" style={{ pointerEvents: 'none', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Image Placeholder with Shimmer */}
@@ -18,14 +30,14 @@ function SkeletonCard() {
         {/* Category Pill Ghost */}
         <div className="skeleton-pulse" style={{ height: '16px', width: '60px', marginBottom: '12px', borderRadius: '4px' }}></div>
 
-        {/* Headline Lines */}
-        <div className="skeleton-pulse" style={{ height: '20px', width: '95%', marginBottom: '8px', borderRadius: '4px' }}></div>
-        <div className="skeleton-pulse" style={{ height: '20px', width: '75%', marginBottom: '20px', borderRadius: '4px' }}></div>
+        {/* Headline Lines (Organic Widths) */}
+        <div className="skeleton-pulse" style={{ height: '20px', width: lineWidths.title1, marginBottom: '8px', borderRadius: '4px' }}></div>
+        <div className="skeleton-pulse" style={{ height: '20px', width: lineWidths.title2, marginBottom: '20px', borderRadius: '4px' }}></div>
         
-        {/* Summary Lines */}
-        <div className="skeleton-pulse" style={{ height: '12px', width: '100%', marginBottom: '8px', borderRadius: '3px' }}></div>
-        <div className="skeleton-pulse" style={{ height: '12px', width: '92%', marginBottom: '8px', borderRadius: '3px' }}></div>
-        <div className="skeleton-pulse" style={{ height: '12px', width: '96%', marginBottom: 'auto', borderRadius: '3px' }}></div>
+        {/* Summary Lines (Organic Widths) */}
+        <div className="skeleton-pulse" style={{ height: '12px', width: lineWidths.summary1, marginBottom: '8px', borderRadius: '3px' }}></div>
+        <div className="skeleton-pulse" style={{ height: '12px', width: lineWidths.summary2, marginBottom: '8px', borderRadius: '3px' }}></div>
+        <div className="skeleton-pulse" style={{ height: '12px', width: lineWidths.summary3, marginBottom: 'auto', borderRadius: '3px' }}></div>
 
         {/* Meta & Actions Area (Bottom) */}
         <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid var(--border-light)' }}>

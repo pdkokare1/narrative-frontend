@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { auth, appCheck } from '../firebaseConfig';
 import { getToken } from "firebase/app-check";
-import offlineStorage from './offlineStorage'; // <--- NEW IMPORT
+import offlineStorage from './offlineStorage'; 
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -59,11 +59,7 @@ api.interceptors.response.use(
 // 1. Fetch Articles (With Offline Support)
 export const fetchArticles = async (params) => {
   try {
-    // Try Network First
     const response = await api.get('/articles', { params });
-    
-    // If this is the FIRST page (offset 0) and NO filters are active, cache it!
-    // We only cache the "Default" view to keep it simple.
     const isDefaultFeed = params.offset === 0 && 
                           (!params.category || params.category === 'All Categories') &&
                           (!params.lean || params.lean === 'All Leans');
@@ -71,21 +67,17 @@ export const fetchArticles = async (params) => {
     if (isDefaultFeed) {
       offlineStorage.save('latest-feed-default', response.data);
     }
-
     return response;
-
   } catch (error) {
-    // Network Failed? Check Cache.
     const isDefaultFeed = params.offset === 0;
     if (isDefaultFeed) {
       const cachedData = await offlineStorage.get('latest-feed-default');
       if (cachedData) {
         console.log("⚠️ Network failed. Serving offline feed.");
-        // Return cached data wrapped in an Axios-like object
         return { data: cachedData }; 
       }
     }
-    throw error; // If no cache, throw real error
+    throw error; 
   }
 };
 
@@ -105,7 +97,7 @@ export const fetchForYouArticles = async () => {
   }
 };
 
-// --- Standard Methods (No Offline needed or simple passthrough) ---
+// --- Standard Methods ---
 export const searchArticles = (query, params) => api.get('/search', { params: { q: query, ...params } });
 export const fetchSavedArticles = () => api.get('/articles/saved');
 export const saveArticle = (id) => api.post(`/articles/${id}/save`);
@@ -118,6 +110,9 @@ export const getProfile = () => api.get('/profile/me');
 export const getStats = () => api.get('/profile/stats');
 export const getWeeklyDigest = () => api.get('/profile/weekly-digest');
 export const createProfile = (data) => api.post('/profile', data);
+
+// --- NEW: Save Notification Token ---
+export const saveNotificationToken = (token) => api.post('/profile/save-token', { token });
 
 // Activity Logs
 export const logView = (id) => api.post('/activity/log-view', { articleId: id });
@@ -136,7 +131,6 @@ export const getAudio = async (text, voiceId, articleId) => {
     return api.post('/tts/get-audio', { text, voiceId, articleId });
 };
 
-// Audio Pre-fetching
 export const prefetchAudio = (text, voiceId, articleId) => {
     api.post('/tts/get-audio', { text, voiceId, articleId }).catch(err => 
       console.log(`Prefetch skipped for ${articleId}:`, err.message)

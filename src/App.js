@@ -25,7 +25,7 @@ import Sidebar from './components/Sidebar';
 import NewsFeed from './components/NewsFeed'; 
 import GlobalPlayerBar from './components/GlobalPlayerBar'; 
 import BottomNav from './components/ui/BottomNav';
-import ErrorBoundary from './components/ErrorBoundary'; // <--- NEW IMPORT
+import ErrorBoundary from './components/ErrorBoundary';
 
 // --- UI Components ---
 import CustomTooltip from './components/ui/CustomTooltip';
@@ -63,7 +63,7 @@ function App() {
       <AuthProvider>
         <ToastProvider>
           <RadioProvider> 
-            {/* --- NEW: Safety Shield --- */}
+            {/* --- Safety Shield --- */}
             <ErrorBoundary>
                <AppRoutes />
             </ErrorBoundary>
@@ -106,6 +106,8 @@ function MainLayout({ profile }) {
 
   // --- Global State ---
   const [theme, setTheme] = useState('dark');
+  const [fontSize, setFontSize] = useState('medium'); // New State: medium, large, xl
+
   const [filters, setFilters] = useState({
     category: 'All Categories',
     lean: 'All Leans',
@@ -125,24 +127,42 @@ function MainLayout({ profile }) {
   const [savedArticleIds, setSavedArticleIds] = useState(new Set(profile.savedArticles || []));
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
-  // --- Theme Management ---
+  // --- Theme & Font Management ---
   useEffect(() => {
+    // Load Theme
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
       setTheme(savedTheme);
-      document.body.className = savedTheme + '-mode';
+      document.body.className = `${savedTheme}-mode font-${fontSize}`;
     } else {
       const userPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       const initialTheme = userPrefersDark ? 'dark' : 'light';
       setTheme(initialTheme);
-      document.body.className = initialTheme + '-mode';
+      document.body.className = `${initialTheme}-mode font-${fontSize}`;
+    }
+
+    // Load Font Size
+    const savedFont = localStorage.getItem('fontSize');
+    if (savedFont) {
+        setFontSize(savedFont);
+        // We need to re-apply the class if it changed from default
+        document.body.classList.remove('font-medium', 'font-large', 'font-xl');
+        document.body.classList.add(`font-${savedFont}`);
     }
   }, []);
+
+  // Update Body Class when Font Size Changes
+  useEffect(() => {
+      document.body.classList.remove('font-medium', 'font-large', 'font-xl');
+      document.body.classList.add(`font-${fontSize}`);
+      localStorage.setItem('fontSize', fontSize);
+  }, [fontSize]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-    document.body.className = newTheme + '-mode';
+    // Preserve font class
+    document.body.className = `${newTheme}-mode font-${fontSize}`;
     localStorage.setItem('theme', newTheme);
   };
 
@@ -274,7 +294,15 @@ function MainLayout({ profile }) {
           } />
 
           <Route path="/emergency-resources" element={<EmergencyResources />} />
-          <Route path="/account-settings" element={<AccountSettings />} />
+          
+          {/* UPDATED ROUTE: Pass Font Size Props */}
+          <Route path="/account-settings" element={
+            <AccountSettings 
+                currentFontSize={fontSize} 
+                onSetFontSize={setFontSize} 
+            />
+          } />
+          
           <Route path="*" element={<PageNotFound />} /> 
         </Routes>
       </div>
@@ -297,7 +325,7 @@ function MainLayout({ profile }) {
         />
       )}
 
-      {/* NEW: Bottom Navigation (Mobile Only) */}
+      {/* Bottom Navigation (Mobile Only) */}
       <BottomNav />
 
       {/* Global Player (Now adjusts to sit above Nav) */}

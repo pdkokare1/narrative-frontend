@@ -1,5 +1,6 @@
 // src/components/feeds/ForYouFeed.js
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query'; // <--- NEW
 import * as api from '../../services/api'; 
 import ArticleCard from '../ArticleCard';
 import SkeletonCard from '../ui/SkeletonCard';
@@ -13,29 +14,45 @@ function ForYouFeed({
   onToggleSave, 
   showTooltip 
 }) {
-  const [articles, setArticles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [forYouMeta, setForYouMeta] = useState(null);
-  
   const { addToast } = useToast();
   const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
 
-  useEffect(() => {
-    const loadForYou = async () => {
-      setLoading(true);
-      try {
-        const { data } = await api.fetchForYouArticles();
-        setArticles(data.articles || []);
-        setForYouMeta(data.meta);
-      } catch (error) {
-        console.error('For You Fetch Error:', error);
-        addToast('Failed to load your personalized feed.', 'error');
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadForYou();
-  }, [addToast]);
+  // --- QUERY: Personalized Feed ---
+  const { 
+    data, 
+    isLoading, 
+    error 
+  } = useQuery({
+    queryKey: ['forYouFeed'],
+    queryFn: async () => {
+      const { data } = await api.fetchForYouArticles();
+      return data;
+    },
+    staleTime: 1000 * 60 * 15, // Keep personalized feed fresh for 15 mins
+    refetchOnWindowFocus: false, 
+  });
+
+  const articles = data?.articles || [];
+  const forYouMeta = data?.meta;
+
+  // --- Error Handling ---
+  if (error) {
+      console.error('For You Fetch Error:', error);
+      // We don't use addToast here inside render to avoid loops, 
+      // instead we render a friendly error state.
+      return (
+        <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
+            <p>Could not load your personalized feed.</p>
+            <button 
+                onClick={() => window.location.reload()} 
+                className="btn-secondary" 
+                style={{ marginTop: '10px' }}
+            >
+                Retry
+            </button>
+        </div>
+      );
+  }
 
   // --- Handlers ---
   const handleReadClick = (article) => {
@@ -56,7 +73,7 @@ function ForYouFeed({
   return (
     <>
       {/* Meta Header */}
-      {forYouMeta && !loading && (
+      {forYouMeta && !isLoading && (
         <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
           <p>
             Based on your interest in <strong>{forYouMeta.basedOnCategory}</strong>. 
@@ -80,7 +97,7 @@ function ForYouFeed({
 
       {/* Articles Grid */}
       <div className="articles-grid">
-        {loading ? (
+        {isLoading ? (
            [...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> ))
         ) : (
            articles.map((article) => (
@@ -104,7 +121,7 @@ function ForYouFeed({
       </div>
 
       {/* Empty State */}
-      {!loading && articles.length === 0 && (
+      {!isLoading && articles.length === 0 && (
         <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
             <p>Read more articles to unlock your personalized feed!</p>
         </div>

@@ -1,174 +1,148 @@
 // src/components/GlobalPlayerBar.js
 import React, { useState, useEffect } from 'react';
 import { useRadio } from '../context/RadioContext';
-import './GlobalPlayerBar.css';
+import { useLocation } from 'react-router-dom';
 
-function GlobalPlayerBar() {
-  const { 
-    currentArticle, 
-    currentSpeaker, 
-    isPlaying, 
-    isPaused, 
-    isLoading,
-    isVisible,
-    stop, 
-    pause, 
-    resume, 
-    playNext,
-    playPrevious, // <--- NEW
-    isWaitingForNext,
-    autoplayTimer,
-    cancelAutoplay,
-    // --- NEW PROPS ---
-    currentTime,
+const GlobalPlayerBar = () => {
+  const {
+    isPlaying,
+    isPaused,
+    currentArticle,
+    queue,
+    currentIndex,
+    progress,
     duration,
-    seekTo,
-    playbackRate,
-    changeSpeed
+    togglePlayPause,
+    playNext,
+    playPrevious,
+    stop
   } = useRadio();
 
-  // Local state for smooth scrubbing (prevents jitter while dragging)
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragTime, setDragTime] = useState(0);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const location = useLocation();
 
-  // Sync local drag time with actual time (only when NOT dragging)
+  // Reset to maximized if the user manually starts a new track from the feed
   useEffect(() => {
-    if (!isDragging) {
-      setDragTime(currentTime);
+    if (currentArticle) {
+        // Optional: Auto-maximize on new track? 
+        // setIsMinimized(false); 
     }
-  }, [currentTime, isDragging]);
+  }, [currentArticle]);
 
-  if (!isVisible) return null;
+  // If nothing is playing/loaded, hide the player entirely
+  if (!currentArticle) return null;
 
-  // --- UP NEXT MODE (Unchanged) ---
-  if (isWaitingForNext) {
+  // --- VIEW 1: MINIMIZED BUBBLE ---
+  if (isMinimized) {
     return (
-      <div className="global-player-bar up-next-mode">
-        <div className="up-next-content">
-          <span className="up-next-label">Up Next in {autoplayTimer}s...</span>
-          <div className="up-next-loader-track">
-             <div className="up-next-loader-fill" style={{ width: `${(autoplayTimer/5)*100}%` }}></div>
-          </div>
-        </div>
-        <div className="player-controls">
-            <button onClick={playNext} className="player-btn primary">Play Now</button>
-            <button onClick={cancelAutoplay} className="player-btn secondary">Cancel</button>
+      <div 
+        className="mini-player-bubble" 
+        onClick={() => setIsMinimized(false)}
+        title="Expand Player"
+      >
+        {/* Thumbnail or Icon */}
+        {currentArticle.imageUrl ? (
+            <img src={currentArticle.imageUrl} alt="Cover" className="mini-player-thumb" />
+        ) : (
+            <div className="mini-player-icon">🎧</div>
+        )}
+
+        {/* Overlay Icon (Play/Pause status) */}
+        <div className="mini-player-overlay">
+            {isPaused ? (
+                <span style={{ marginLeft: '2px' }}>▶</span> 
+            ) : (
+                <div className="mini-equalizer">
+                    <div className="bar"></div>
+                    <div className="bar"></div>
+                    <div className="bar"></div>
+                </div>
+            )}
         </div>
       </div>
     );
   }
 
-  // --- HELPER: Time Formatter (mm:ss) ---
-  const formatTime = (time) => {
-    if (!time || isNaN(time)) return "0:00";
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-  };
-
-  // --- HELPER: Speed Cycler ---
-  const handleSpeedClick = () => {
-    const speeds = [1.0, 1.25, 1.5, 0.5, 0.75];
-    const currentIndex = speeds.indexOf(playbackRate);
-    // Find next speed, default to 1.0 if not found
-    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % speeds.length;
-    changeSpeed(speeds[nextIndex]);
-  };
-
-  // --- HANDLERS ---
-  const handleSeekChange = (e) => {
-    setDragTime(Number(e.target.value));
-  };
-
-  const handleSeekStart = () => setIsDragging(true);
-
-  const handleSeekEnd = (e) => {
-    setIsDragging(false);
-    seekTo(Number(e.target.value));
-  };
-
-  // --- ACTIVE PLAYING MODE ---
+  // --- VIEW 2: MAXIMIZED BAR ---
   return (
     <div className="global-player-bar">
-      
-      {/* 1. Scrubber (Top Edge) */}
-      <div className="scrubber-container">
-        <input 
-            type="range" 
-            min="0" 
-            max={duration || 100} 
-            value={dragTime}
-            onChange={handleSeekChange}
-            onMouseDown={handleSeekStart}
-            onTouchStart={handleSeekStart}
-            onMouseUp={handleSeekEnd}
-            onTouchEnd={handleSeekEnd}
-            className="scrubber-range"
-            style={{ 
-                // Dynamic gradient for filled vs empty part
-                backgroundSize: `${(dragTime / (duration || 1)) * 100}% 100%` 
-            }}
+      {/* Top Progress Line */}
+      <div className="player-progress-container">
+        <div
+          className="player-progress-fill"
+          style={{ width: `${(progress / duration) * 100}%` }}
         />
       </div>
 
-      <div className="player-main-row">
-        
-        {/* 2. Info Section */}
-        <div className="player-info">
-            <div className="player-meta-top">
-                {currentSpeaker && (
-                    <span className="speaker-name-small">
-                        <span className={`pulse-dot-small ${isPlaying ? 'active' : ''}`}></span>
-                        {currentSpeaker.name}
-                    </span>
-                )}
-                <span className="time-display">
-                    {formatTime(dragTime)} / {formatTime(duration)}
-                </span>
-            </div>
-            <div className="player-text-content">
-                <span className="player-headline">
-                    {isLoading ? "Buffering..." : currentArticle?.headline}
-                </span>
-            </div>
+      <div className="player-content">
+        {/* Left: Article Info */}
+        <div className="player-info" onClick={() => setIsMinimized(true)} style={{cursor: 'pointer'}}>
+           <div className="player-thumb">
+              {currentArticle.imageUrl ? (
+                  <img src={currentArticle.imageUrl} alt="" />
+              ) : (
+                  <div style={{ width: '100%', height: '100%', background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📰</div>
+              )}
+           </div>
+           <div className="player-text">
+             <h4 className="player-headline">{currentArticle.headline}</h4>
+             <span className="player-sub">
+               {currentIndex + 1}/{queue.length} • {currentArticle.source || 'Narrative News'}
+             </span>
+           </div>
         </div>
 
-        {/* 3. Controls Section */}
+        {/* Center: Controls */}
         <div className="player-controls">
-            {isLoading ? (
-                <div className="spinner-small white"></div>
-            ) : (
-                <>
-                   {/* Speed Toggle */}
-                   <button onClick={handleSpeedClick} className="player-btn text-btn" title="Playback Speed">
-                       {playbackRate}x
-                   </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); playPrevious(); }} 
+            disabled={currentIndex === 0} 
+            className="ctrl-btn skip-btn"
+          >
+            ⏮
+          </button>
+          
+          <button 
+            onClick={(e) => { e.stopPropagation(); togglePlayPause(); }} 
+            className="ctrl-btn play-btn"
+          >
+            {isPaused ? '▶' : 'II'}
+          </button>
+          
+          <button 
+            onClick={(e) => { e.stopPropagation(); playNext(); }} 
+            disabled={currentIndex === queue.length - 1} 
+            className="ctrl-btn skip-btn"
+          >
+            ⏭
+          </button>
+        </div>
 
-                   {/* Previous */}
-                   <button onClick={playPrevious} className="player-btn icon-only" title="Previous / Replay">
-                       ⏮
-                   </button>
-
-                   {/* Play/Pause */}
-                   {isPaused ? (
-                     <button onClick={resume} className="player-btn icon-only primary-play" title="Resume">▶</button>
-                   ) : (
-                     <button onClick={pause} className="player-btn icon-only primary-play" title="Pause">⏸</button>
-                   )}
-                   
-                   {/* Next */}
-                   <button onClick={playNext} className="player-btn icon-only" title="Next Story">
-                       ⏭
-                   </button>
-                   
-                   {/* Stop */}
-                   <button onClick={stop} className="player-btn close-action" title="Stop Radio">×</button>
-                </>
-            )}
+        {/* Right: Actions */}
+        <div className="player-actions">
+           {/* Minimize Button */}
+           <button 
+             onClick={(e) => { e.stopPropagation(); setIsMinimized(true); }} 
+             className="ctrl-btn icon-only" 
+             title="Minimize"
+             style={{ fontSize: '20px', fontWeight: 'bold', paddingBottom: '10px' }}
+           >
+             −
+           </button>
+           
+           {/* Stop/Close Button */}
+           <button 
+             onClick={(e) => { e.stopPropagation(); stop(); }} 
+             className="ctrl-btn icon-only" 
+             title="Stop & Close"
+             style={{ fontSize: '18px' }}
+           >
+             ✕
+           </button>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default GlobalPlayerBar;

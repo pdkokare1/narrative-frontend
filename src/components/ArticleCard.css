@@ -116,10 +116,6 @@
 
 /* ==================== MOBILE RESPONSIVE OVERRIDES ==================== */
 @media (max-width: 768px) {
-  .articles-grid {
-    display: block; gap: 0; padding: 0;
-  }
-
   /* Snap Scrolling Wrapper */
   .article-card-wrapper {
     scroll-snap-align: start;
@@ -144,7 +140,7 @@
     flex-shrink: 0;
     max-height: 100%;
     overflow-y: auto;
-    border-radius: 12px; /* Slightly more rounded on mobile */
+    border-radius: 12px;
   }
   
   /* Hide scrollbar inside card */

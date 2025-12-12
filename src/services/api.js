@@ -2,6 +2,7 @@
 import axios from 'axios';
 import { auth, appCheck } from '../firebaseConfig';
 import { getToken } from "firebase/app-check";
+import offlineStorage from './offlineStorage'; // <--- NEW IMPORT
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -12,7 +13,7 @@ const api = axios.create({
   },
 });
 
-// --- REQUEST INTERCEPTOR: Automatically adds Tokens ---
+// --- REQUEST INTERCEPTOR ---
 api.interceptors.request.use(
   async (config) => {
     const user = auth.currentUser;
@@ -21,7 +22,7 @@ api.interceptors.request.use(
       const token = await user.getIdToken();
       config.headers.Authorization = `Bearer ${token}`;
       
-      // 2. Add App Check Token (Security)
+      // 2. Add App Check Token
       if (appCheck) {
         try {
           const appCheckTokenResponse = await getToken(appCheck, false);
@@ -36,19 +37,15 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// --- RESPONSE INTERCEPTOR: Centralized Error Formatting ---
+// --- RESPONSE INTERCEPTOR ---
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // 1. Extract the actual error message from the backend response
     const message = error.response?.data?.message || error.response?.data?.error || error.message;
-    
-    // 2. Create a clean error object to pass back to the component
     const cleanError = new Error(message);
     cleanError.status = error.response?.status;
     cleanError.original = error;
 
-    // 3. Log 401/403 errors (Optional: You could trigger a global logout here later)
     if (error.response?.status === 401) {
       console.warn("Session expired or unauthorized.");
     }
@@ -59,9 +56,56 @@ api.interceptors.response.use(
 
 // --- API Methods ---
 
-// Articles
-export const fetchArticles = (params) => api.get('/articles', { params });
-export const fetchForYouArticles = () => api.get('/articles/for-you');
+// 1. Fetch Articles (With Offline Support)
+export const fetchArticles = async (params) => {
+  try {
+    // Try Network First
+    const response = await api.get('/articles', { params });
+    
+    // If this is the FIRST page (offset 0) and NO filters are active, cache it!
+    // We only cache the "Default" view to keep it simple.
+    const isDefaultFeed = params.offset === 0 && 
+                          (!params.category || params.category === 'All Categories') &&
+                          (!params.lean || params.lean === 'All Leans');
+
+    if (isDefaultFeed) {
+      offlineStorage.save('latest-feed-default', response.data);
+    }
+
+    return response;
+
+  } catch (error) {
+    // Network Failed? Check Cache.
+    const isDefaultFeed = params.offset === 0;
+    if (isDefaultFeed) {
+      const cachedData = await offlineStorage.get('latest-feed-default');
+      if (cachedData) {
+        console.log("⚠️ Network failed. Serving offline feed.");
+        // Return cached data wrapped in an Axios-like object
+        return { data: cachedData }; 
+      }
+    }
+    throw error; // If no cache, throw real error
+  }
+};
+
+// 2. Fetch For You (With Offline Support)
+export const fetchForYouArticles = async () => {
+  try {
+    const response = await api.get('/articles/for-you');
+    offlineStorage.save('for-you-feed', response.data);
+    return response;
+  } catch (error) {
+    const cachedData = await offlineStorage.get('for-you-feed');
+    if (cachedData) {
+      console.log("⚠️ Network failed. Serving offline 'For You' feed.");
+      return { data: cachedData };
+    }
+    throw error;
+  }
+};
+
+// --- Standard Methods (No Offline needed or simple passthrough) ---
 export const searchArticles = (query, params) => api.get('/search', { params: { q: query, ...params } });
 export const fetchSavedArticles = () => api.get('/articles/saved');
 export const saveArticle = (id) => api.post(`/articles/${id}/save`);
@@ -92,11 +136,8 @@ export const getAudio = async (text, voiceId, articleId) => {
     return api.post('/tts/get-audio', { text, voiceId, articleId });
 };
 
-// --- NEW: Audio Pre-fetching ---
-// This tells the backend to generate the audio in the background, but doesn't wait for the file.
+// Audio Pre-fetching
 export const prefetchAudio = (text, voiceId, articleId) => {
-    // We use 'catch' to suppress errors because prefetching is a background task.
-    // We don't want to alert the user if a prefetch fails.
     api.post('/tts/get-audio', { text, voiceId, articleId }).catch(err => 
       console.log(`Prefetch skipped for ${articleId}:`, err.message)
     );

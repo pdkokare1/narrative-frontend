@@ -1,6 +1,8 @@
 // In file: src/AccountSettings.js
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom'; 
+import { getToken } from "firebase/messaging";
+import { messaging } from './firebaseConfig';
 import * as api from './services/api'; 
 import './App.css'; 
 import './AccountSettings.css'; 
@@ -9,6 +11,7 @@ function AccountSettings({ currentFontSize, onSetFontSize }) {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notifStatus, setNotifStatus] = useState('default'); // default, granted, denied, loading
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -17,6 +20,13 @@ function AccountSettings({ currentFontSize, onSetFontSize }) {
       try {
         const { data } = await api.getProfile(); 
         setProfileData(data);
+        
+        // Check current notification permission
+        if (data.notificationsEnabled && Notification.permission === 'granted') {
+            setNotifStatus('granted');
+        } else if (Notification.permission === 'denied') {
+            setNotifStatus('denied');
+        }
       } catch (err) {
         console.error('Error fetching profile:', err);
         setError('Could not load your profile data. Please try again later.');
@@ -27,6 +37,41 @@ function AccountSettings({ currentFontSize, onSetFontSize }) {
 
     fetchProfile();
   }, []);
+
+  // --- HANDLER: Enable Notifications ---
+  const handleEnableNotifications = async () => {
+      if (!messaging) {
+          alert("Notifications are not supported on this browser.");
+          return;
+      }
+
+      setNotifStatus('loading');
+
+      try {
+          const permission = await Notification.requestPermission();
+          
+          if (permission === 'granted') {
+              const token = await getToken(messaging, {
+                  vapidKey: process.env.REACT_APP_VAPID_KEY 
+              });
+              
+              if (token) {
+                  await api.saveNotificationToken(token);
+                  setNotifStatus('granted');
+                  alert("Success! You will now receive daily briefings.");
+              } else {
+                  console.warn("No registration token available.");
+                  setNotifStatus('default');
+              }
+          } else {
+              setNotifStatus('denied');
+              alert("Permission denied. You can enable them in your browser settings.");
+          }
+      } catch (err) {
+          console.error("Notification Error:", err);
+          setNotifStatus('default');
+      }
+  };
 
   // --- RENDER HELPERS ---
   const renderSizeBtn = (size, label) => {
@@ -103,7 +148,7 @@ function AccountSettings({ currentFontSize, onSetFontSize }) {
                 </div>
             </div>
 
-            {/* --- NEW: Appearance Section --- */}
+            {/* --- Appearance Section --- */}
             <div className="settings-card" style={{ marginTop: '20px' }}>
                 <h2 className="settings-section-title">Appearance</h2>
                 
@@ -114,6 +159,38 @@ function AccountSettings({ currentFontSize, onSetFontSize }) {
                         {renderSizeBtn('large', 'Large')}
                         {renderSizeBtn('xl', 'Extra')}
                     </div>
+                </div>
+            </div>
+
+            {/* --- Notifications Section --- */}
+            <div className="settings-card" style={{ marginTop: '20px' }}>
+                <h2 className="settings-section-title">Notifications</h2>
+                <div className="settings-field">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <span className="settings-label">Daily Briefing</span>
+                            <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                Get a morning summary of key stories.
+                            </p>
+                        </div>
+                        
+                        {notifStatus === 'granted' ? (
+                            <button className="btn-secondary" disabled style={{ color: '#4CAF50', borderColor: '#4CAF50' }}>
+                                Enabled ✓
+                            </button>
+                        ) : notifStatus === 'loading' ? (
+                            <button className="btn-secondary" disabled>Wait...</button>
+                        ) : (
+                            <button onClick={handleEnableNotifications} className="btn-primary">
+                                Enable
+                            </button>
+                        )}
+                    </div>
+                    {notifStatus === 'denied' && (
+                        <p style={{ fontSize: '11px', color: '#E57373', marginTop: '10px' }}>
+                            * Notifications are blocked in your browser settings.
+                        </p>
+                    )}
                 </div>
             </div>
           </>

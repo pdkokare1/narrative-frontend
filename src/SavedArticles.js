@@ -1,47 +1,47 @@
 // In file: src/SavedArticles.js
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query'; // <--- NEW IMPORTS
 import * as api from './services/api'; 
 import { useToast } from './context/ToastContext'; 
 import ArticleCard from './components/ArticleCard'; 
+import SkeletonCard from './components/ui/SkeletonCard'; // <--- NEW IMPORT
 import useIsMobile from './hooks/useIsMobile';
 import './App.css'; 
-import './SavedArticles.css'; // <--- NEW: Modular styles
+import './SavedArticles.css'; 
 
 function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, showTooltip }) {
-  const [savedArticles, setSavedArticles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  
   const isMobileView = useIsMobile();
   const { addToast } = useToast(); 
+  const queryClient = useQueryClient(); // Access the cache
 
-  useEffect(() => {
-    const loadSavedArticles = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const { data } = await api.fetchSavedArticles();
-        setSavedArticles(data.articles || []);
-      } catch (err) {
-        console.error('Fetch error:', err);
-        setError('Could not load your saved articles.');
-        addToast('Failed to load saved articles', 'error');
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadSavedArticles();
-  }, [addToast]);
+  // --- QUERY: Saved Articles ---
+  const { 
+    data: savedArticles = [], 
+    isLoading, 
+    error 
+  } = useQuery({
+    queryKey: ['savedArticles'],
+    queryFn: async () => {
+      const { data } = await api.fetchSavedArticles();
+      return data.articles || [];
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
-  const handleLocalToggleSave = async (article) => {
-    // Optimistic Update: Remove immediately from UI
-    setSavedArticles(prev => prev.filter(a => a._id !== article._id));
+  // --- Handler: Optimistic Removal ---
+  const handleLocalToggleSave = (article) => {
+    // 1. Trigger the global save logic (App.js)
     onToggleSave(article);
+
+    // 2. Instantly remove from THIS list (Optimistic UI)
+    queryClient.setQueryData(['savedArticles'], (oldData) => {
+      if (!oldData) return [];
+      return oldData.filter(a => a._id !== article._id);
+    });
   };
 
   // --- Render Helpers ---
-  
   const renderHeader = () => (
     <div className="saved-header">
       <h1>Saved Articles</h1>
@@ -62,26 +62,30 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
   const renderError = () => (
     <div className="saved-placeholder">
       <h2 className="error-text">Error</h2>
-      <p>{error}</p>
-      <Link to="/" className="btn-secondary" style={{ marginTop: '20px', textDecoration: 'none' }}>
-        Back to Home
-      </Link>
+      <p>Could not load your library.</p>
+      <button onClick={() => window.location.reload()} className="btn-secondary" style={{ marginTop: '20px' }}>
+        Retry
+      </button>
     </div>
   );
 
-  const renderLoading = () => (
-    <div className="loading-container">
-      <div className="spinner"></div>
-      <p>Loading your library...</p>
+  // --- NEW: Skeleton Grid ---
+  const renderSkeletons = () => (
+    <div className="articles-grid">
+       {[...Array(6)].map((_, i) => ( 
+         <div className="article-card-wrapper" key={i}>
+           <SkeletonCard />
+         </div> 
+       ))}
     </div>
   );
 
-  // --- Mobile View (Snap Scrolling) ---
+  // --- Mobile View ---
   if (isMobileView) {
     return (
       <main className="content">
-        {loading ? (
-           <div className="article-card-wrapper">{renderLoading()}</div>
+        {isLoading ? (
+           <div className="article-card-wrapper"><SkeletonCard /></div>
         ) : error ? (
            <div className="article-card-wrapper">{renderError()}</div>
         ) : savedArticles.length === 0 ? (
@@ -109,11 +113,11 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
     );
   }
 
-  // --- Desktop View (Standard Grid) ---
+  // --- Desktop View ---
   return (
     <div className="content saved-articles-container">
-      {loading ? (
-        renderLoading()
+      {isLoading ? (
+        renderSkeletons()
       ) : error ? (
         renderError()
       ) : (

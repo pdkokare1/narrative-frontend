@@ -1,5 +1,5 @@
 // src/components/ArticleCard.js
-import React, { useState, useEffect, memo } from 'react'; // Added 'memo' for performance
+import React, { useState, useEffect, memo } from 'react'; 
 import './ArticleCard.css'; 
 import { getSentimentInfo, isOpinion, getOptimizedImageUrl } from '../utils/helpers'; 
 import { getFallbackImage } from '../utils/constants'; 
@@ -70,8 +70,7 @@ const ArticleCard = memo(function ArticleCard({
       return (
         <button 
           onClick={(e) => { stopMobileClick(e); onStop(); }} 
-          className="btn-secondary"
-          style={{ color: '#E57373', borderColor: '#E57373', fontWeight: '700' }}
+          className="btn-secondary stop-btn"
         >
           Stop
         </button>
@@ -90,31 +89,18 @@ const ArticleCard = memo(function ArticleCard({
   // --- BADGES ---
   const renderTopBadges = () => {
     return (
-      <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '5px', zIndex: 2 }}>
+      <div className="card-badges">
         
         {/* Suggestion Badge (Comfort/Challenge) */}
         {article.suggestionType && (
-            <div style={{
-              background: article.suggestionType === 'Challenge' ? 'var(--accent-primary)' : 'var(--bg-elevated)',
-              color: article.suggestionType === 'Challenge' ? 'white' : 'var(--text-secondary)',
-              border: article.suggestionType === 'Challenge' ? 'none' : '1px solid var(--border-color)',
-              padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: '600',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
-            }}>
+            <div className={`badge ${article.suggestionType === 'Challenge' ? 'challenge' : 'comfort'}`}>
               {article.suggestionType === 'Challenge' ? 'Perspective Widener' : 'Comfort Read'}
             </div>
         )}
 
         {/* OPINION Badge */}
         {isOpEd && (
-           <div style={{
-              background: '#FFB300', // Amber/Yellow
-              color: '#000',
-              border: 'none',
-              padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: '700',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
-              letterSpacing: '0.5px'
-           }}>
+           <div className="badge opinion">
               OPINION
            </div>
         )}
@@ -127,8 +113,8 @@ const ArticleCard = memo(function ArticleCard({
       <div className={`article-card ${isPlaying ? 'now-playing' : ''}`}>
         {renderTopBadges()}
         
-        {/* --- UPDATED IMAGE SECTION --- */}
-        <div className="article-image" style={{ position: 'relative', background: 'var(--bg-secondary)' }}>
+        {/* --- IMAGE SECTION --- */}
+        <div className="article-image">
           {/* Skeleton Loader behind the image */}
           {!imageLoaded && (
              <div className="skeleton-pulse" style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
@@ -151,13 +137,8 @@ const ArticleCard = memo(function ArticleCard({
         
         <div className="article-content">
           <div className="article-content-top">
-             <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ 
-                    fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px', 
-                    fontWeight: '700', color: 'var(--accent-primary)',
-                    background: 'var(--bg-elevated)', padding: '2px 6px', borderRadius: '4px',
-                    border: '1px solid var(--border-color)'
-                }}>
+             <div className="category-row">
+                <span className="category-tag">
                     {article.category || 'News'}
                 </span>
              </div>
@@ -187,7 +168,7 @@ const ArticleCard = memo(function ArticleCard({
                 {/* Soft News / Opinion: Show Argument & Sentiment */}
                 {!isHardNews ? (
                     <>
-                        <span className="quality-grade-text" style={{ color: 'var(--text-secondary)' }}>
+                        <span className="quality-grade-text info">
                             <span style={{ fontSize: '12px', marginRight: '4px' }}>{isOpEd ? '🗣️' : '⚡'}</span> 
                             {isOpEd ? 'Core Argument' : 'Quick Summary'}
                         </span>
@@ -213,7 +194,7 @@ const ArticleCard = memo(function ArticleCard({
               {isHardNews && (
                 <>
                   <div className="article-actions-top">
-                    <button onClick={(e) => { stopMobileClick(e); setShowBriefing(true); }} className="btn-primary" style={{ background: 'var(--bg-elevated)', color: 'var(--accent-primary)', border: '1px solid var(--accent-primary)' }}>Brief</button>
+                    <button onClick={(e) => { stopMobileClick(e); setShowBriefing(true); }} className="btn-primary brief-btn">Brief</button>
                     <ListenButton />
                     <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary">Share</button>
                     <SaveButton /> 

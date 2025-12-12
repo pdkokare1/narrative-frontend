@@ -47,6 +47,22 @@
   --gradient-header: linear-gradient(to right, var(--bg-secondary), #FDFDFD);
 }
 
+/* ==================== ACCESSIBILITY: DYNAMIC FONT SIZES ==================== */
+/* These rules use high specificity to override component defaults */
+
+/* LARGE TEXT MODE */
+body.font-large .article-headline { font-size: 15px !important; line-height: 1.5; }
+body.font-large .article-summary { font-size: 13px !important; }
+body.font-large .article-content p, body.font-large .modal-content p { font-size: 14px !important; }
+body.font-large .article-meta-v2, body.font-large .quality-grade-text { font-size: 11px !important; }
+
+/* EXTRA LARGE TEXT MODE */
+body.font-xl .article-headline { font-size: 17px !important; line-height: 1.5; }
+body.font-xl .article-summary { font-size: 15px !important; line-height: 1.6; }
+body.font-xl .article-content p, body.font-xl .modal-content p { font-size: 16px !important; }
+body.font-xl .article-meta-v2, body.font-xl .quality-grade-text { font-size: 12px !important; }
+
+
 /* ==================== GLOBAL STYLES ==================== */
 * {
   margin: 0;

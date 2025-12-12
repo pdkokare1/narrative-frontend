@@ -1,12 +1,13 @@
-// In file: src/components/ArticleCard.js
-import React, { useState, useEffect } from 'react';
+// src/components/ArticleCard.js
+import React, { useState, useEffect, memo } from 'react'; // Added 'memo' for performance
 import './ArticleCard.css'; 
-import { getSentimentInfo, isOpinion, getOptimizedImageUrl } from '../utils/helpers'; // <--- NEW IMPORT
+import { getSentimentInfo, isOpinion, getOptimizedImageUrl } from '../utils/helpers'; 
 import { getFallbackImage } from '../utils/constants'; 
 import SmartBriefingModal from './modals/SmartBriefingModal';
 import useIsMobile from '../hooks/useIsMobile';
 
-function ArticleCard({ 
+// Wrapped in memo() to prevent unnecessary re-renders during scroll
+const ArticleCard = memo(function ArticleCard({ 
   article, 
   onCompare, 
   onAnalyze, 
@@ -21,6 +22,7 @@ function ArticleCard({
   onStop 
 }) {
   const [showBriefing, setShowBriefing] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false); // New state for fade-in effect
   const isMobileView = useIsMobile();
 
   // Logic Types
@@ -31,8 +33,7 @@ function ArticleCard({
   // Sentiment Data
   const sentimentInfo = getSentimentInfo(article.sentiment);
 
-  // --- NEW: Image Handling State with Optimization ---
-  // We wrap the URL in getOptimizedImageUrl to resize it via Cloudinary
+  // --- Image Handling State with Optimization ---
   const optimizedUrl = getOptimizedImageUrl(article.imageUrl);
   
   const [imgSrc, setImgSrc] = useState(optimizedUrl || getFallbackImage(article.category));
@@ -41,6 +42,7 @@ function ArticleCard({
   useEffect(() => {
       const newUrl = getOptimizedImageUrl(article.imageUrl);
       setImgSrc(newUrl || getFallbackImage(article.category));
+      setImageLoaded(false); // Reset fade-in state when card is recycled
   }, [article.imageUrl, article.category]);
 
   const handleImageError = () => {
@@ -126,12 +128,24 @@ function ArticleCard({
         {renderTopBadges()}
         
         {/* --- UPDATED IMAGE SECTION --- */}
-        <div className="article-image">
+        <div className="article-image" style={{ position: 'relative', background: 'var(--bg-secondary)' }}>
+          {/* Skeleton Loader behind the image */}
+          {!imageLoaded && (
+             <div className="skeleton-pulse" style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
+          )}
+          
           <img 
             src={imgSrc} 
             alt={article.headline} 
             onError={handleImageError} 
+            onLoad={() => setImageLoaded(true)} // Trigger fade-in
             loading="lazy" 
+            style={{ 
+                opacity: imageLoaded ? 1 : 0, 
+                transition: 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative', 
+                zIndex: 1 
+            }}
           />
         </div>
         
@@ -242,6 +256,6 @@ function ArticleCard({
       )}
     </>
   );
-}
+});
 
 export default ArticleCard;

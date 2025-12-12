@@ -1,5 +1,5 @@
 // src/components/feeds/LatestFeed.js
-import React, { useState, useEffect, useMemo, forwardRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, forwardRef } from 'react'; // <--- Fixed: Added useRef
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { VirtuosoGrid } from 'react-virtuoso'; 
 import * as api from '../../services/api'; 

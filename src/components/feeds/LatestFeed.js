@@ -1,6 +1,7 @@
 // src/components/feeds/LatestFeed.js
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query'; // <--- NEW
+import React, { useState, useEffect, useMemo } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { Virtuoso } from 'react-virtuoso'; // <--- NEW: Virtualization Engine
 import * as api from '../../services/api'; 
 import ArticleCard from '../ArticleCard';
 import SkeletonCard from '../ui/SkeletonCard';
@@ -16,15 +17,22 @@ function LatestFeed({
   savedArticleIds, 
   onToggleSave, 
   showTooltip,
-  scrollToTopRef 
+  scrollToTopRef // <--- We use this to attach virtualization to the main scrollbar
 }) {
   const { addToast } = useToast();
   const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
   
-  // Refs for "Smart Start" Radio
+  // Track visibility for "Smart Start" Radio
   const [visibleArticleIndex, setVisibleArticleIndex] = useState(0);
-  const articleRefs = useRef([]);
-  const bottomSentinelRef = useRef(null);
+  
+  // Capture the scroll container for Virtuoso
+  const [scrollParent, setScrollParent] = useState(undefined);
+
+  useEffect(() => {
+    if (scrollToTopRef?.current) {
+        setScrollParent(scrollToTopRef.current);
+    }
+  }, [scrollToTopRef]);
 
   // --- QUERY: Infinite Feed ---
   const {
@@ -36,23 +44,19 @@ function LatestFeed({
     status,
     error
   } = useInfiniteQuery({
-    queryKey: ['latestFeed', filters], // Filters in key = Auto-refetch on change
+    queryKey: ['latestFeed', filters],
     queryFn: async ({ pageParam = 0 }) => {
       const { data } = await api.fetchArticles({ ...filters, limit: 12, offset: pageParam });
       return data;
     },
     getNextPageParam: (lastPage, allPages) => {
-      // Calculate total articles loaded so far
       const loadedCount = allPages.reduce((acc, page) => acc + page.articles.length, 0);
       const totalAvailable = lastPage.pagination?.total || 0;
-      
-      // If we have more to load, return the next offset
       return loadedCount < totalAvailable ? loadedCount : undefined;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    staleTime: 1000 * 60 * 5, 
   });
 
-  // Flatten the pages into a single list of articles
   const articles = useMemo(() => {
     return data?.pages.flatMap(page => page.articles) || [];
   }, [data]);
@@ -71,45 +75,6 @@ function LatestFeed({
         addToast('Failed to load articles.', 'error');
     }
   }, [status, error, addToast]);
-
-  // --- 3. Infinite Scroll Observer ---
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // If bottom visible AND we have more pages AND we aren't already fetching
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
-        }
-      },
-      { threshold: 0.1, rootMargin: '400px' } // Pre-fetch before user hits absolute bottom
-    );
-    
-    const sentinel = bottomSentinelRef.current;
-    if (sentinel) observer.observe(sentinel);
-    return () => { if (sentinel) observer.unobserve(sentinel); };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  // --- 4. "Smart Start" Radio Observer ---
-  useEffect(() => {
-    if (isFetching && !isFetchingNextPage) return; // Don't track during initial load
-    if (articles.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const index = Number(entry.target.dataset.index);
-            if (!isNaN(index)) setVisibleArticleIndex(index);
-          }
-        });
-      },
-      { threshold: 0.6 }
-    );
-    
-    // Observe new refs
-    articleRefs.current.forEach(el => { if (el) observer.observe(el); });
-    return () => observer.disconnect();
-  }, [articles.length, isFetching, isFetchingNextPage]);
 
   // --- Handlers ---
   const handleCategorySelect = (category) => {
@@ -132,83 +97,96 @@ function LatestFeed({
     }
   };
 
-  // --- Render ---
-  return (
-    <>
-      {/* Category Pills */}
-      <div style={{ marginBottom: '20px' }}>
+  // --- Virtualized Components ---
+  
+  // The Header scrolls *with* the list
+  const Header = () => (
+    <div style={{ paddingBottom: '20px' }}>
         <CategoryPills 
           selectedCategory={filters.category} 
           onSelect={handleCategorySelect} 
         />
-      </div>
-
-      {/* Start Radio Button */}
-      {!isPlaying && articles.length > 0 && (
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px' }}>
-            <button 
-                onClick={() => startRadio(articles, visibleArticleIndex)}
-                className="btn-primary"
-                style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-                <span>▶</span> Start News Radio
-            </button>
-        </div>
-      )}
-
-      {/* Articles Grid */}
-      <div className="articles-grid">
-        {/* Initial Loading State */}
-        {status === 'pending' ? (
-           [...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> ))
-        ) : (
-           articles.map((article, index) => (
-            <div 
-                className="article-card-wrapper" 
-                key={article._id || index}
-                ref={el => articleRefs.current[index] = el}
-                data-index={index}
-            >
-              <ArticleCard
-                article={article}
-                onCompare={() => onCompare(article)}
-                onAnalyze={onAnalyze}
-                onShare={() => handleShare(article)}
-                onRead={() => handleReadClick(article)}
-                showTooltip={showTooltip}
-                isSaved={savedArticleIds.has(article._id)}
-                onToggleSave={() => onToggleSave(article)}
-                isPlaying={currentArticle && currentArticle._id === article._id}
-                onPlay={() => playSingle(article)}
-                onStop={stop}
-              />
+        {!isPlaying && articles.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px', marginTop: '10px' }}>
+                <button 
+                    onClick={() => startRadio(articles, visibleArticleIndex)}
+                    className="btn-primary"
+                    style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                    <span>▶</span> Start News Radio
+                </button>
             </div>
-          ))
         )}
-        
-        {/* Load More Skeletons */}
-        {isFetchingNextPage && (
-           [...Array(3)].map((_, i) => ( <div className="article-card-wrapper" key={`more-${i}`}><SkeletonCard /></div> ))
-        )}
-      </div>
+    </div>
+  );
 
-      {/* Empty State */}
-      {status === 'success' && articles.length === 0 && (
-        <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
-            <p>No articles found matching your current filters.</p>
+  // The Footer shows loading skeletons at the bottom
+  const Footer = () => {
+      if (!isFetchingNextPage) return <div style={{ height: '20px' }} />; // Small padding
+      return (
+        <div style={{ paddingBottom: '40px' }}>
+           {[...Array(3)].map((_, i) => ( 
+             <div className="article-card-wrapper" key={`skel-${i}`} style={{ marginBottom: '25px' }}>
+                <SkeletonCard />
+             </div> 
+           ))}
+        </div>
+      );
+  };
+
+  // --- Initial Loading State (Before Virtualization) ---
+  if (status === 'pending') {
+      return (
+         <div className="articles-grid">
+           <Header />
+           {[...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) }
+         </div>
+      );
+  }
+
+  // --- Empty State ---
+  if (status === 'success' && articles.length === 0) {
+      return (
+        <>
+          <Header />
+          <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
+              <p>No articles found matching your current filters.</p>
+          </div>
+        </>
+      );
+  }
+
+  // --- Main Virtual List ---
+  return (
+    <Virtuoso
+      customScrollParent={scrollParent} // Hooks into your main .content div
+      data={articles}
+      endReached={() => { if (hasNextPage) fetchNextPage(); }}
+      overscan={500} // Render 500px ahead of viewport for smoothness
+      rangeChanged={({ startIndex }) => setVisibleArticleIndex(startIndex)} // Updates Radio "Start From Here"
+      components={{ Header, Footer }}
+      itemContent={(index, article) => (
+        <div 
+            className="article-card-wrapper" 
+            style={{ paddingBottom: '25px' }} // Spacing between cards
+            data-index={index}
+        >
+          <ArticleCard
+            article={article}
+            onCompare={() => onCompare(article)}
+            onAnalyze={onAnalyze}
+            onShare={() => handleShare(article)}
+            onRead={() => handleReadClick(article)}
+            showTooltip={showTooltip}
+            isSaved={savedArticleIds.has(article._id)}
+            onToggleSave={() => onToggleSave(article)}
+            isPlaying={currentArticle && currentArticle._id === article._id}
+            onPlay={() => playSingle(article)}
+            onStop={stop}
+          />
         </div>
       )}
-
-      {/* Scroll Sentinel (Invisible line to trigger load more) */}
-      <div ref={bottomSentinelRef} style={{ height: '20px', marginBottom: '20px', marginTop: '20px' }} />
-      
-      {/* End of Feed Message */}
-      {!hasNextPage && status === 'success' && articles.length > 0 && (
-          <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-tertiary)', fontSize: '12px' }}>
-              <p>You've caught up with the latest news!</p>
-          </div>
-      )}
-    </>
+    />
   );
 }
 

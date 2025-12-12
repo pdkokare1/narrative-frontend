@@ -1,11 +1,12 @@
 // In file: src/SavedArticles.js
-import React from 'react';
+import React, { useEffect } from 'react'; // Added useEffect
 import { Link } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query'; // <--- NEW IMPORTS
+import { useQuery, useQueryClient } from '@tanstack/react-query'; 
 import * as api from './services/api'; 
+import offlineStorage from './services/offlineStorage'; // <--- NEW IMPORT
 import { useToast } from './context/ToastContext'; 
 import ArticleCard from './components/ArticleCard'; 
-import SkeletonCard from './components/ui/SkeletonCard'; // <--- NEW IMPORT
+import SkeletonCard from './components/ui/SkeletonCard'; 
 import useIsMobile from './hooks/useIsMobile';
 import './App.css'; 
 import './SavedArticles.css'; 
@@ -13,9 +14,9 @@ import './SavedArticles.css';
 function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, showTooltip }) {
   const isMobileView = useIsMobile();
   const { addToast } = useToast(); 
-  const queryClient = useQueryClient(); // Access the cache
+  const queryClient = useQueryClient(); 
 
-  // --- QUERY: Saved Articles ---
+  // --- QUERY: Saved Articles (With Offline Support) ---
   const { 
     data: savedArticles = [], 
     isLoading, 
@@ -23,8 +24,27 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
   } = useQuery({
     queryKey: ['savedArticles'],
     queryFn: async () => {
-      const { data } = await api.fetchSavedArticles();
-      return data.articles || [];
+      try {
+        // 1. Try Network
+        const { data } = await api.fetchSavedArticles();
+        const articles = data.articles || [];
+        
+        // 2. Save to Offline Storage (Background)
+        if (articles.length > 0) {
+            offlineStorage.save('saved-library', articles);
+        }
+        return articles;
+
+      } catch (err) {
+        // 3. Network Failed? Try Offline Storage
+        console.warn("Network failed, checking offline cache for library...");
+        const cachedLibrary = await offlineStorage.get('saved-library');
+        if (cachedLibrary) {
+            addToast('Offline mode: Showing cached library', 'info');
+            return cachedLibrary;
+        }
+        throw err; // Real error if both fail
+      }
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
@@ -37,7 +57,12 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
     // 2. Instantly remove from THIS list (Optimistic UI)
     queryClient.setQueryData(['savedArticles'], (oldData) => {
       if (!oldData) return [];
-      return oldData.filter(a => a._id !== article._id);
+      const newData = oldData.filter(a => a._id !== article._id);
+      
+      // Update offline cache immediately to reflect removal
+      offlineStorage.save('saved-library', newData);
+      
+      return newData;
     });
   };
 
@@ -61,15 +86,15 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
 
   const renderError = () => (
     <div className="saved-placeholder">
-      <h2 className="error-text">Error</h2>
-      <p>Could not load your library.</p>
+      <h2 className="error-text">Connection Error</h2>
+      <p>Could not load your library and no offline copy was found.</p>
       <button onClick={() => window.location.reload()} className="btn-secondary" style={{ marginTop: '20px' }}>
         Retry
       </button>
     </div>
   );
 
-  // --- NEW: Skeleton Grid ---
+  // --- Skeleton Grid ---
   const renderSkeletons = () => (
     <div className="articles-grid">
        {[...Array(6)].map((_, i) => ( 

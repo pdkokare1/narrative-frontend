@@ -82,7 +82,8 @@ export const getBreakdownTooltip = (label) => {
 /**
  * NEW: Generates a Cloudinary Fetch URL for optimized image delivery.
  * This proxies external images through Cloudinary to resize and compress them.
- * * @param {string} originalUrl - The source URL of the image.
+ * Added 'dpr_auto' for Retina display support.
+ * @param {string} originalUrl - The source URL of the image.
  * @param {number} width - The desired width (default 600px).
  * @returns {string} - The optimized URL or the original if config is missing.
  */
@@ -93,7 +94,6 @@ export const getOptimizedImageUrl = (originalUrl, width = 600) => {
   if (originalUrl.includes('cloudinary.com')) return originalUrl;
 
   // 2. Get Cloud Name from Environment Variables
-  // You need to add REACT_APP_CLOUDINARY_CLOUD_NAME to your Vercel/Env variables.
   const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
 
   // 3. Fallback: If no cloud name is set, return the original URL so the app doesn't break.
@@ -105,5 +105,6 @@ export const getOptimizedImageUrl = (originalUrl, width = 600) => {
   // w_{width} = Resize to width
   // f_auto = Auto format (WebP/AVIF)
   // q_auto = Auto quality (compression)
-  return `https://res.cloudinary.com/${cloudName}/image/fetch/w_${width},f_auto,q_auto/${originalUrl}`;
+  // dpr_auto = Auto Device Pixel Ratio (Retina support)
+  return `https://res.cloudinary.com/${cloudName}/image/fetch/w_${width},f_auto,q_auto,dpr_auto/${originalUrl}`;
 };

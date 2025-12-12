@@ -24,7 +24,8 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import NewsFeed from './components/NewsFeed'; 
 import GlobalPlayerBar from './components/GlobalPlayerBar'; 
-import BottomNav from './components/ui/BottomNav'; // <--- NEW IMPORT
+import BottomNav from './components/ui/BottomNav';
+import ErrorBoundary from './components/ErrorBoundary'; // <--- NEW IMPORT
 
 // --- UI Components ---
 import CustomTooltip from './components/ui/CustomTooltip';
@@ -62,7 +63,10 @@ function App() {
       <AuthProvider>
         <ToastProvider>
           <RadioProvider> 
-             <AppRoutes />
+            {/* --- NEW: Safety Shield --- */}
+            <ErrorBoundary>
+               <AppRoutes />
+            </ErrorBoundary>
           </RadioProvider>
         </ToastProvider>
       </AuthProvider>

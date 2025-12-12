@@ -1,7 +1,7 @@
 // src/components/feeds/LatestFeed.js
 import React, { useState, useEffect, useMemo, forwardRef } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { VirtuosoGrid } from 'react-virtuoso'; // <--- Using VirtuosoGrid for layout preservation
+import { VirtuosoGrid } from 'react-virtuoso'; 
 import * as api from '../../services/api'; 
 import ArticleCard from '../ArticleCard';
 import SkeletonCard from '../ui/SkeletonCard';
@@ -45,6 +45,7 @@ function LatestFeed({
   } = useInfiniteQuery({
     queryKey: ['latestFeed', filters],
     queryFn: async ({ pageParam = 0 }) => {
+      // Fetch 12 articles per page (perfect for 1, 2, 3, or 4 column layouts)
       const { data } = await api.fetchArticles({ ...filters, limit: 12, offset: pageParam });
       return data;
     },
@@ -99,13 +100,12 @@ function LatestFeed({
   // --- VIRTUOSO COMPONENTS (Grid Config) ---
   
   // 1. The List Container (Acts as the CSS Grid)
-  // We pass 'articles-grid' class here so your CSS controls the columns (1 on mobile, 4 on desktop)
   const GridList = useMemo(() => forwardRef(({ style, children, ...props }, ref) => (
     <div
       ref={ref}
       {...props}
-      style={{ ...style }} // Virtuoso manages height/padding here
-      className="articles-grid" // YOUR CSS CLASS: Handles the grid layout
+      style={{ ...style }} 
+      className="articles-grid" // CSS Grid Layout handles columns (1 mobile, 4 desktop)
     >
       {children}
     </div>
@@ -116,8 +116,8 @@ function LatestFeed({
     <div 
         {...props} 
         ref={ref}
-        className="article-card-wrapper" // Preserves your card spacing/padding
-        style={{ margin: 0 }} // Reset margins so Grid gap handles spacing
+        className="article-card-wrapper" 
+        style={{ margin: 0 }} 
     >
       {children}
     </div>
@@ -185,8 +185,10 @@ function LatestFeed({
     <VirtuosoGrid
       customScrollParent={scrollParent}
       data={articles}
+      // --- FIX: Force rendering initial items to fill desktop grid immediately ---
+      initialItemCount={12} 
       endReached={() => { if (hasNextPage) fetchNextPage(); }}
-      overscan={600} // Render extra content for smooth scrolling
+      overscan={600} 
       rangeChanged={({ startIndex }) => setVisibleArticleIndex(startIndex)}
       components={{
         Header: FeedHeader,

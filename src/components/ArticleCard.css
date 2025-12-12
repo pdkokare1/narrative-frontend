@@ -1,6 +1,6 @@
 /* src/components/ArticleCard.css */
 
-/* ==================== BASE CARD (DESKTOP) ==================== */
+/* ==================== CARD CONTAINER ==================== */
 .article-card {
   background: var(--bg-card);
   border-radius: 8px;
@@ -11,9 +11,7 @@
   display: flex;
   flex-direction: column;
   box-shadow: none;
-  /* Key fix: fill grid cell, but don't force width */
-  width: 100%; 
-  min-width: 0; /* Prevents grid blowout */
+  min-width: 270px;
   height: 100%;
 }
 
@@ -23,137 +21,269 @@
   border-color: var(--border-color);
 }
 
+/* "Now Playing" Active State */
 .article-card.now-playing {
   border: 1px solid var(--accent-primary);
   box-shadow: 0 0 0 1px var(--accent-primary), 0 4px 12px rgba(0,0,0,0.1);
 }
 
-/* ==================== BADGES ==================== */
+/* ==================== BADGES (Top Right) ==================== */
 .card-badges {
-  position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; z-index: 2;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 5px;
+  z-index: 2;
 }
+
 .badge {
-  padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15); letter-spacing: 0.5px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  letter-spacing: 0.5px;
 }
-.badge.challenge { background: var(--accent-primary); color: white; }
-.badge.comfort { background: var(--bg-elevated); color: var(--text-secondary); border: 1px solid var(--border-color); }
-.badge.opinion { background: #FFB300; color: #000; font-weight: 700; }
+
+.badge.challenge {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+}
+
+.badge.comfort {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.badge.opinion {
+  background: #FFB300; /* Amber/Yellow */
+  color: #000;
+  border: none;
+  font-weight: 700;
+}
 
 /* ==================== IMAGE SECTION ==================== */
 .article-image {
-  width: 100%; height: 170px; background: var(--bg-secondary); position: relative;
-  overflow: hidden; border-bottom: 1px solid var(--border-light);
+  width: 100%;
+  height: 170px;
+  background: var(--bg-secondary);
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border-light);
 }
+
 .article-image img {
-  width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease, filter 0.3s ease;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.5s ease, filter 0.3s ease;
   filter: brightness(0.95);
 }
-.article-card:hover .article-image img { transform: scale(1.03); filter: brightness(1); }
+
+.article-card:hover .article-image img {
+  transform: scale(1.03);
+  filter: brightness(1);
+}
 
 /* ==================== CONTENT SECTION ==================== */
 .article-content {
-  padding: 20px; display: flex; flex-direction: column; flex: 1; overflow: hidden;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
 }
-.article-content-top { flex: 1; min-height: 0; overflow: hidden; }
-.article-content-bottom { flex-shrink: 0; }
 
-.category-row { margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.article-content-top {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.article-content-bottom {
+  flex-shrink: 0;
+}
+
+/* Category Tag */
+.category-row {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .category-tag {
-  font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;
-  color: var(--accent-primary); background: var(--bg-elevated); padding: 2px 6px;
-  border-radius: 4px; border: 1px solid var(--border-color);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  background: var(--bg-elevated);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
 }
 
+/* Headline & Summary */
 .article-headline {
-  font-size: 13px; font-weight: 600; line-height: 1.4; color: var(--text-primary);
-  margin-bottom: 10px; word-wrap: break-word;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  word-wrap: break-word;
 }
-.article-headline-link { text-decoration: none; color: inherit; cursor: pointer; }
-.article-headline-link:hover .article-headline { color: var(--accent-primary); }
+
+.article-headline-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.article-headline-link:hover .article-headline {
+  color: var(--accent-primary);
+}
 
 .article-summary {
-  font-size: 11px; line-height: 1.6; color: var(--text-secondary); margin-bottom: 20px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  word-wrap: break-word;
 }
 
 /* ==================== META DATA ==================== */
 .article-meta-v2 {
-  display: flex; align-items: center; margin-bottom: 15px; padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-light); gap: 8px; flex-wrap: nowrap; overflow: hidden;
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-light);
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
-.source {
-  font-size: 10px; color: var(--text-tertiary); font-weight: 600; text-transform: uppercase;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 1;
-}
-.meta-divider { color: var(--text-muted); font-size: 10px; }
-.bias-score-card, .political-lean-card { font-size: 10px; color: var(--text-tertiary); font-weight: 500; white-space: nowrap; }
 
+.source, .bias-score-card, .political-lean-card {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.source {
+  font-weight: 600;
+  text-transform: uppercase;
+  flex-shrink: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bias-score-card, .political-lean-card {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.meta-divider {
+  color: var(--text-muted);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+/* ==================== QUALITY & SENTIMENT ==================== */
 .quality-display-v2 {
-  display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 5px 10px;
 }
+
 .quality-grade-text, .sentiment-text {
-  font-size: 10px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
-.quality-grade-text.info { color: var(--text-secondary); }
-.sentiment-positive { color: #2E7D32; }
-.sentiment-negative { color: #C62828; }
+
+.quality-grade-text.info {
+  color: var(--text-secondary);
+}
+
+.quality-grade-text .icon {
+  font-size: 12px;
+  margin-right: 4px;
+}
+
+.sentiment-text {
+  font-weight: 500;
+  text-transform: none;
+}
+
+.sentiment-positive { color: #2E7D32; font-weight: 600; }
+.sentiment-negative { color: #C62828; font-weight: 600; }
+.sentiment-neutral { color: var(--text-tertiary); font-weight: 600; }
+
+/* Dark mode overrides */
 :global(.dark-mode) .sentiment-positive { color: #4CAF50; }
 :global(.dark-mode) .sentiment-negative { color: #E57373; }
 
-/* ==================== ACTIONS ==================== */
+/* ==================== ACTIONS LAYOUT ==================== */
 .article-actions {
-  display: flex; flex-direction: column; gap: 8px; padding-top: 15px; border-top: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-light);
 }
+
 .article-actions-top {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 8px;
 }
-.article-actions-top > a { display: block; text-decoration: none; }
-.article-actions-top > a > button, .article-actions-top > button { width: 100%; }
 
-.brief-btn { background: var(--bg-elevated); color: var(--accent-primary); border: 1px solid var(--accent-primary); }
-.stop-btn { color: #E57373; border-color: #E57373; font-weight: 700; }
-.stop-btn:hover { background: rgba(229, 115, 115, 0.1); }
+.article-actions-top > a {
+  display: block;
+  text-decoration: none;
+}
 
-.btn-full-width { width: 100%; }
+.article-actions-top > a > .btn-primary,
+.article-actions-top > a > .btn-secondary {
+  width: 100%;
+}
 
-/* ==================== MOBILE RESPONSIVE OVERRIDES ==================== */
-@media (max-width: 768px) {
-  /* Snap Scrolling Wrapper */
-  .article-card-wrapper {
-    scroll-snap-align: start;
-    height: calc(100vh - 60px);
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 35px 16px 90px 16px;
-    overflow: hidden;
-  }
+/* Specific Button Styles */
+.brief-btn {
+  background: var(--bg-elevated);
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+}
 
-  /* Mobile Card Style */
-  .article-card {
-    box-shadow: var(--shadow-md);
-    background: var(--bg-card-flat);
-    border-bottom: 1px solid var(--border-color);
-    width: 100%;
-    max-width: 500px;
-    margin: 0;
-    flex-shrink: 0;
-    max-height: 100%;
-    overflow-y: auto;
-    border-radius: 12px;
-  }
-  
-  /* Hide scrollbar inside card */
-  .article-card::-webkit-scrollbar { display: none; }
+.stop-btn {
+  color: #E57373;
+  border-color: #E57373;
+  font-weight: 700;
+}
 
-  /* Adjust sizing for mobile readability */
-  .article-image { height: 180px; }
-  .article-content { padding: 20px; }
-  .article-headline { font-size: 18px; line-height: 1.4; }
-  .article-summary { font-size: 14px; line-height: 1.6; }
-  
-  /* Buttons touch target size */
-  .btn-primary, .btn-secondary { padding-top: 12px; padding-bottom: 12px; }
+.stop-btn:hover {
+  background: rgba(229, 115, 115, 0.1);
+}
+
+/* Full width buttons inside actions */
+.article-actions > .btn-secondary.btn-full-width,
+.article-actions > .btn-primary.btn-full-width {
+  width: 100%;
+}
+
+.article-actions > .btn-secondary.btn-full-width:only-child {
+  margin-bottom: 0;
 }

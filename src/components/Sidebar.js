@@ -2,7 +2,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import CustomSelect from './ui/CustomSelect'; 
-// REMOVED: api and useState imports as we don't fetch trending here anymore
+import usePWAInstall from '../hooks/usePWAInstall'; // <--- NEW IMPORT
 import '../App.css'; 
 import './Sidebar.css'; 
 
@@ -16,7 +16,8 @@ import {
 } from '../utils/constants';
 
 function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout }) {
-  // REMOVED: Trending state logic
+  // --- NEW: PWA Install Hook ---
+  const { isInstallable, triggerInstall } = usePWAInstall();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -58,8 +59,6 @@ function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout }) {
            </SidebarNavLink>
         </div>
 
-        {/* REMOVED: Trending Section */}
-
         {/* Filters Section */}
         <div className="sidebar-section">
           <h3>Filters</h3>
@@ -77,6 +76,22 @@ function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout }) {
       </div>
 
       <div className="sidebar-footer">
+        {/* --- NEW: Install App Button (Only shows if installable) --- */}
+        {isInstallable && (
+          <button 
+            onClick={triggerInstall} 
+            className="sidebar-logout-btn" 
+            style={{ 
+              marginBottom: '10px', 
+              borderColor: 'var(--accent-primary)', 
+              color: 'var(--accent-primary)',
+              background: 'rgba(179, 143, 95, 0.1)' // Subtle gold tint
+            }}
+          >
+            Install App
+          </button>
+        )}
+
         <button onClick={onLogout} className="sidebar-logout-btn">
           Sign Out
         </button>

@@ -1,12 +1,16 @@
-// In file: src/utils/helpers.js
+// src/utils/helpers.ts
+import { IArticle } from '../types';
+
+interface ISentimentInfo {
+  label: string;
+  className: string;
+  icon: string;
+}
 
 /**
  * Returns display details for a sentiment value.
- * Maps backend "Positive/Negative" to frontend "Supportive/Critical".
- * @param {string} sentiment - 'Positive', 'Negative', or 'Neutral'
- * @returns {object} - { label: string, className: string, icon: string }
  */
-export const getSentimentInfo = (sentiment) => {
+export const getSentimentInfo = (sentiment: string | undefined): ISentimentInfo => {
   if (!sentiment) return { label: 'Neutral', className: 'sentiment-neutral', icon: '' };
   
   const lower = sentiment.toLowerCase();
@@ -21,16 +25,16 @@ export const getSentimentInfo = (sentiment) => {
 };
 
 /**
- * Returns the correct CSS class for a sentiment string (Legacy support).
+ * Returns the correct CSS class for a sentiment string.
  */
-export const getSentimentClass = (sentiment) => {
+export const getSentimentClass = (sentiment: string | undefined): string => {
   return getSentimentInfo(sentiment).className;
 };
 
 /**
  * Checks if an article is likely an Opinion/Op-Ed piece.
  */
-export const isOpinion = (article) => {
+export const isOpinion = (article: IArticle | null): boolean => {
   if (!article) return false;
   const cat = (article.category || '').toLowerCase();
   const headline = (article.headline || '').toLowerCase();
@@ -48,8 +52,8 @@ export const isOpinion = (article) => {
 /**
  * Returns the tooltip text for a given analysis breakdown label.
  */
-export const getBreakdownTooltip = (label) => {
-  const tooltips = {
+export const getBreakdownTooltip = (label: string): string => {
+  const tooltips: Record<string, string> = {
     "Sentiment Polarity": "Measures the overall positive, negative, or neutral leaning of the language used.",
     "Emotional Language": "Detects the prevalence of words intended to evoke strong emotional responses.",
     "Loaded Terms": "Identifies words or phrases with strong connotations beyond their literal meaning.",
@@ -80,15 +84,10 @@ export const getBreakdownTooltip = (label) => {
 };
 
 /**
- * NEW: Generates a Cloudinary Fetch URL for optimized image delivery.
- * This proxies external images through Cloudinary to resize and compress them.
- * Added 'dpr_auto' for Retina display support.
- * @param {string} originalUrl - The source URL of the image.
- * @param {number} width - The desired width (default 600px).
- * @returns {string} - The optimized URL or the original if config is missing.
+ * Generates a Cloudinary Fetch URL for optimized image delivery.
  */
-export const getOptimizedImageUrl = (originalUrl, width = 600) => {
-  if (!originalUrl) return null;
+export const getOptimizedImageUrl = (originalUrl: string | undefined, width: number = 600): string | undefined => {
+  if (!originalUrl) return undefined;
 
   // 1. If it's already a Cloudinary URL (e.g. our own assets), return as is.
   if (originalUrl.includes('cloudinary.com')) return originalUrl;
@@ -102,9 +101,5 @@ export const getOptimizedImageUrl = (originalUrl, width = 600) => {
   }
 
   // 4. Construct Fetch URL
-  // w_{width} = Resize to width
-  // f_auto = Auto format (WebP/AVIF)
-  // q_auto = Auto quality (compression)
-  // dpr_auto = Auto Device Pixel Ratio (Retina support)
   return `https://res.cloudinary.com/${cloudName}/image/fetch/w_${width},f_auto,q_auto,dpr_auto/${originalUrl}`;
 };

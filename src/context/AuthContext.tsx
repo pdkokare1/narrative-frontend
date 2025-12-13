@@ -1,17 +1,30 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import { getProfile } from '../services/api';
+import { IUserProfile } from '../types';
 
-const AuthContext = createContext();
-
-export function useAuth() {
-  return useContext(AuthContext);
+interface AuthContextType {
+  user: User | null;
+  profile: IUserProfile | null;
+  loading: boolean;
+  logout: () => void;
+  setProfile: (profile: IUserProfile | null) => void;
 }
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<IUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,12 +32,11 @@ export function AuthProvider({ children }) {
       if (firebaseUser) {
         setUser(firebaseUser);
         try {
-          // Fetch profile from our backend
           const { data } = await getProfile();
           setProfile(data);
         } catch (error) {
           console.error("Profile fetch failed:", error);
-          setProfile(null); // User might need to create profile
+          setProfile(null);
         }
       } else {
         setUser(null);
@@ -47,7 +59,7 @@ export function AuthProvider({ children }) {
     profile,
     loading,
     logout,
-    setProfile // Allow updating profile manually if needed
+    setProfile
   };
 
   return (

@@ -1,12 +1,10 @@
-// In file: src/firebaseConfig.js
+// src/firebaseConfig.ts
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
-import { initializeAppCheck, ReCaptchaV3Provider, onTokenChanged } from "firebase/app-check"; 
-// --- NEW: Import Messaging ---
-import { getMessaging } from "firebase/messaging"; 
+import { initializeAppCheck, ReCaptchaV3Provider, onTokenChanged } from "firebase/app-check";
+import { getMessaging } from "firebase/messaging";
 
-// Your web app's Firebase configuration using Environment Variables
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_API_KEY,
   authDomain: process.env.REACT_APP_AUTH_DOMAIN,
@@ -21,10 +19,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Initialize Analytics
-getAnalytics(app); 
+if (typeof window !== 'undefined') {
+  getAnalytics(app);
+}
 
-// --- Initialize Messaging ---
-let messaging;
+// Initialize Messaging
+let messaging: any;
 try {
   if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
     messaging = getMessaging(app);
@@ -34,8 +34,8 @@ try {
 }
 
 // App Check Logic
-let appCheck;
-const appCheckReady = new Promise((resolve) => {
+let appCheck: any;
+export const appCheckReady = new Promise<void>((resolve) => {
   if (typeof window !== 'undefined') {
     const siteKey = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
     if (siteKey) {
@@ -65,6 +65,5 @@ const appCheckReady = new Promise((resolve) => {
   }
 });
 
-// Export services
 export const auth = getAuth(app);
-export { appCheck, appCheckReady, messaging };
+export { appCheck, messaging };

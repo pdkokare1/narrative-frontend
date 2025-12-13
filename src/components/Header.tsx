@@ -1,28 +1,35 @@
-// In file: src/components/Header.js
+// src/components/Header.tsx
 import React, { useState, useEffect, useRef } from 'react'; 
 import { Link, useNavigate } from 'react-router-dom'; 
-import './Header.css'; // <--- UPDATED: Imports specific modular styles
+import './Header.css'; 
 
-function Header({ theme, toggleTheme, onToggleSidebar, username }) {
+interface HeaderProps {
+  theme: string;
+  toggleTheme: () => void;
+  onToggleSidebar: (e: React.MouseEvent) => void;
+  username: string;
+}
+
+const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, username }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false); 
   const [searchQuery, setSearchQuery] = useState('');
   
-  const dropdownRef = useRef(null); 
-  const searchRef = useRef(null); 
-  const inputRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null); 
+  const searchRef = useRef<HTMLDivElement>(null); 
+  const inputRef = useRef<HTMLInputElement>(null);
   
   const navigate = useNavigate();
 
   // Effect to close dropdowns when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: MouseEvent) => {
       // Close User Dropdown
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
       // Close Search Bar
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         // Only close if we aren't typing
         if (document.activeElement !== inputRef.current) {
              setIsSearchOpen(false);
@@ -42,12 +49,12 @@ function Header({ theme, toggleTheme, onToggleSidebar, username }) {
     }
   }, [isSearchOpen]);
 
-  const handleUsernameClick = (e) => {
+  const handleUsernameClick = (e: React.MouseEvent) => {
      e.stopPropagation(); 
      setIsDropdownOpen(prev => !prev); 
   };
 
-  const handleSearchSubmit = (e) => {
+  const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
@@ -155,6 +162,6 @@ function Header({ theme, toggleTheme, onToggleSidebar, username }) {
       </div>
     </header>
   );
-}
+};
 
 export default Header;

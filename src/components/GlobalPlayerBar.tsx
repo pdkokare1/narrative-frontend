@@ -1,9 +1,9 @@
-// src/components/GlobalPlayerBar.js
+// src/components/GlobalPlayerBar.tsx
 import React, { useState, useEffect } from 'react';
 import { useRadio } from '../context/RadioContext';
 import './GlobalPlayerBar.css';
 
-function GlobalPlayerBar() {
+const GlobalPlayerBar: React.FC = () => {
   const { 
     currentArticle, 
     currentSpeaker, 
@@ -15,11 +15,10 @@ function GlobalPlayerBar() {
     pause, 
     resume, 
     playNext,
-    playPrevious, // <--- NEW
+    playPrevious, 
     isWaitingForNext,
     autoplayTimer,
     cancelAutoplay,
-    // --- NEW PROPS ---
     currentTime,
     duration,
     seekTo,
@@ -40,14 +39,14 @@ function GlobalPlayerBar() {
 
   if (!isVisible) return null;
 
-  // --- UP NEXT MODE (Unchanged) ---
+  // --- UP NEXT MODE ---
   if (isWaitingForNext) {
     return (
       <div className="global-player-bar up-next-mode">
         <div className="up-next-content">
           <span className="up-next-label">Up Next in {autoplayTimer}s...</span>
           <div className="up-next-loader-track">
-             <div className="up-next-loader-fill" style={{ width: `${(autoplayTimer/5)*100}%` }}></div>
+             <div className="up-next-loader-fill" style={{ width: `${((autoplayTimer || 0)/5)*100}%` }}></div>
           </div>
         </div>
         <div className="player-controls">
@@ -59,7 +58,7 @@ function GlobalPlayerBar() {
   }
 
   // --- HELPER: Time Formatter (mm:ss) ---
-  const formatTime = (time) => {
+  const formatTime = (time: number) => {
     if (!time || isNaN(time)) return "0:00";
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
@@ -76,15 +75,16 @@ function GlobalPlayerBar() {
   };
 
   // --- HANDLERS ---
-  const handleSeekChange = (e) => {
+  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDragTime(Number(e.target.value));
   };
 
   const handleSeekStart = () => setIsDragging(true);
 
-  const handleSeekEnd = (e) => {
+  const handleSeekEnd = (e: React.MouseEvent<HTMLInputElement> | React.TouchEvent<HTMLInputElement>) => {
     setIsDragging(false);
-    seekTo(Number(e.target.value));
+    // @ts-ignore - Event target value access
+    seekTo(Number(e.currentTarget.value));
   };
 
   // --- ACTIVE PLAYING MODE ---
@@ -169,6 +169,6 @@ function GlobalPlayerBar() {
       </div>
     </div>
   );
-}
+};
 
 export default GlobalPlayerBar;

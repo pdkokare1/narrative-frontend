@@ -1,10 +1,16 @@
-// src/components/modals/ShareImageModal.js
+// src/components/modals/ShareImageModal.tsx
 import React, { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import '../../App.css'; 
+import { IArticle } from '../../types';
 
-function ShareImageModal({ article, onClose }) {
-  const cardRef = useRef(null);
+interface ShareImageModalProps {
+  article: IArticle | null;
+  onClose: () => void;
+}
+
+const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
   const [generating, setGenerating] = useState(false);
 
   if (!article) return null;
@@ -18,12 +24,17 @@ function ShareImageModal({ article, onClose }) {
       const canvas = await html2canvas(cardRef.current, {
         scale: 2, // High resolution (Retina)
         backgroundColor: '#1E1E1E', // Force dark background
-        useCORS: true, // Allow loading external images (if configured correctly)
+        useCORS: true, 
         logging: false
       });
 
       // 2. Convert to Blob for sharing/downloading
       canvas.toBlob(async (blob) => {
+        if (!blob) {
+            setGenerating(false);
+            return;
+        }
+        
         const file = new File([blob], 'the-gamut-share.png', { type: 'image/png' });
 
         // A. Try Native Mobile Share (Instagram/WhatsApp)
@@ -58,7 +69,7 @@ function ShareImageModal({ article, onClose }) {
     }
   };
 
-  const leanColor = (lean) => {
+  const leanColor = (lean: string) => {
       if (lean === 'Left') return '#dc2626';
       if (lean === 'Right') return '#2563eb';
       return '#B38F5F'; // Gold for Center/Default
@@ -154,6 +165,6 @@ function ShareImageModal({ article, onClose }) {
       </div>
     </div>
   );
-}
+};
 
 export default ShareImageModal;

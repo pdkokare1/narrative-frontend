@@ -1,12 +1,23 @@
-// In file: src/components/NewsFeed.js
+// src/components/NewsFeed.tsx
 import React, { useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import LatestFeed from './feeds/LatestFeed';
 import ForYouFeed from './feeds/ForYouFeed';
-import InFocusBar from './InFocusBar'; // <--- NEW IMPORT
+import InFocusBar from './InFocusBar'; 
 import '../App.css'; 
+import { IArticle, IFilters } from '../types';
 
-function NewsFeed({ 
+interface NewsFeedProps {
+  filters: IFilters;
+  onFilterChange: (filters: IFilters) => void;
+  onAnalyze: (article: IArticle) => void;
+  onCompare: (article: IArticle) => void;
+  savedArticleIds: Set<string>;
+  onToggleSave: (article: IArticle) => void;
+  showTooltip: (text: string, e: React.MouseEvent) => void;
+}
+
+const NewsFeed: React.FC<NewsFeedProps> = ({ 
   filters, 
   onFilterChange, 
   onAnalyze, 
@@ -14,9 +25,9 @@ function NewsFeed({
   savedArticleIds, 
   onToggleSave, 
   showTooltip 
-}) {
-  const [mode, setMode] = useState('latest'); 
-  const contentRef = useRef(null); 
+}) => {
+  const [mode, setMode] = useState<'latest' | 'foryou'>('latest'); 
+  const contentRef = useRef<HTMLDivElement>(null); 
 
   const getPageTitle = () => {
     if (mode === 'foryou') return 'Balanced For You | The Gamut';
@@ -65,7 +76,7 @@ function NewsFeed({
         <title>{getPageTitle()}</title>
       </Helmet>
 
-      {/* --- NEW: In Focus Bar --- */}
+      {/* --- In Focus Bar --- */}
       <InFocusBar />
 
       {renderToggle()}
@@ -92,6 +103,6 @@ function NewsFeed({
       )}
     </main>
   );
-}
+};
 
 export default NewsFeed;

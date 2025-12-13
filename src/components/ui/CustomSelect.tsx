@@ -1,25 +1,43 @@
-// In file: src/components/ui/CustomSelect.js
+// src/components/ui/CustomSelect.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import '../../App.css'; // For .custom-select styles
+import '../../App.css'; 
 
-function CustomSelect({ name, value, options, onChange }) {
+// Option can be a simple string or an object
+export type SelectOption = string | { value: string; label: string };
+
+interface CustomSelectProps {
+  name: string;
+  value: string;
+  options: SelectOption[];
+  onChange: (e: { target: { name: string; value: string } }) => void;
+}
+
+const CustomSelect: React.FC<CustomSelectProps> = ({ name, value, options, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const selectRef = useRef(null);
+  const selectRef = useRef<HTMLDivElement>(null);
 
-  const selectedOption = options.find(option => (option.value || option) === value);
-  const displayLabel = selectedOption?.label || selectedOption || value;
+  // Helper to normalize options
+  const selectedOption = options.find(option => {
+    const val = typeof option === 'string' ? option : option.value;
+    return val === value;
+  });
+
+  const displayLabel = selectedOption 
+    ? (typeof selectedOption === 'string' ? selectedOption : selectedOption.label)
+    : value;
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (selectRef.current && !selectRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [selectRef]);
+  }, []);
 
-  const handleSelectOption = (optionValue) => {
+  const handleSelectOption = (optionValue: string) => {
+    // Mimic event object for compatibility with parent handlers
     onChange({ target: { name, value: optionValue } });
     setIsOpen(false);
   };
@@ -42,8 +60,8 @@ function CustomSelect({ name, value, options, onChange }) {
       {isOpen && (
         <ul className="custom-select-options" role="listbox">
           {options.map((option, index) => {
-            const optionValue = option.value || option;
-            const optionLabel = option.label || option;
+            const optionValue = typeof option === 'string' ? option : option.value;
+            const optionLabel = typeof option === 'string' ? option : option.label;
             const isSelected = optionValue === value;
 
             return (
@@ -62,6 +80,6 @@ function CustomSelect({ name, value, options, onChange }) {
       )}
     </div>
   );
-}
+};
 
 export default CustomSelect;

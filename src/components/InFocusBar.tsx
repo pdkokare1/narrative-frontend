@@ -1,13 +1,19 @@
-// src/components/InFocusBar.js
+// src/components/InFocusBar.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as api from '../services/api';
 import './InFocusBar.css';
 
-function InFocusBar() {
-  const [topics, setTopics] = useState([]);
+interface Topic {
+  topic: string;
+  count?: number;
+  score?: number;
+}
+
+const InFocusBar: React.FC = () => {
+  const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
-  const scrollRef = useRef(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,12 +30,12 @@ function InFocusBar() {
     fetchTopics();
   }, []);
 
-  const handleTopicClick = (topic) => {
+  const handleTopicClick = (topic: string) => {
     navigate(`/search?q=${encodeURIComponent(topic)}`);
   };
 
   // Enable mouse wheel scrolling for desktop
-  const handleWheel = (e) => {
+  const handleWheel = (e: React.WheelEvent) => {
     if (scrollRef.current) {
       scrollRef.current.scrollLeft += e.deltaY;
     }
@@ -62,6 +68,6 @@ function InFocusBar() {
       </div>
     </div>
   );
-}
+};
 
 export default InFocusBar;

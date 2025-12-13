@@ -1,8 +1,15 @@
-// src/utils/VoiceAssets.js
+// src/utils/VoiceAssets.ts
 
 const CLOUD_BASE = "https://res.cloudinary.com/dphvvutwj/video/upload/the-gamut-audio";
 
-export const VOICE_ASSETS = {
+interface IVoiceAssets {
+  OPENERS: Record<string, Record<string, string[]>>;
+  SEGUES: Record<string, string[]>;
+  HANDOVERS: Record<string, string[]>;
+  WELCOME_BACK: Record<string, string[]>;
+}
+
+export const VOICE_ASSETS: IVoiceAssets = {
   // --- SESSION OPENERS ---
   OPENERS: {
     MIRA: {
@@ -62,7 +69,7 @@ export const VOICE_ASSETS = {
     ]
   },
 
-  // --- HANDOVERS (Placeholders for next batch) ---
+  // --- HANDOVERS (Placeholders) ---
   HANDOVERS: {
     MIRA_TO_RAJAT: [], MIRA_TO_SHUBHI: [],
     RAJAT_TO_MIRA: [], RAJAT_TO_SHUBHI: [],

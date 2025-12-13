@@ -2,26 +2,26 @@
 importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
 
-// Initialize the Firebase app in the service worker by passing in the messagingSenderId.
+// Initialize the Firebase app in the service worker
+// You must hardcode your config here because process.env doesn't exist in the browser Service Worker scope
 firebase.initializeApp({
-  apiKey: "YOUR_API_KEY_PLACEHOLDER", // Not strictly needed for SW, but good practice
+  apiKey: "YOUR_API_KEY_PLACEHOLDER", // Replace with your actual Firebase API Key if needed for background handling
   authDomain: "the-gamut-v2.firebaseapp.com",
   projectId: "the-gamut-v2",
   storageBucket: "the-gamut-v2.appspot.com",
-  messagingSenderId: "336894099757", // Needed for background messages
+  messagingSenderId: "336894099757",
   appId: "1:336894099757:web:fb0c37f0775530722c8872",
 });
 
-// Retrieve an instance of Firebase Messaging so that it can handle background messages.
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  // Customize notification here
+  
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: '/logo192.png' // Ensure you have this icon in public folder
+    icon: '/logo192.png' // Ensure this image exists in your public folder
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);

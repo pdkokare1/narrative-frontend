@@ -1,6 +1,7 @@
 // src/context/RadioContext.tsx
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback, ReactNode } from 'react';
-import api from '../services/api';
+// FIX: Import ONLY the named exports (functions) needed, instead of the default axios instance.
+import { getAudio, fetchArticles as fetchArticlesApi } from '../services/api'; 
 import { VOICE_ASSETS } from '../utils/VoiceAssets'; 
 import { useAuth } from './AuthContext'; 
 import { IArticle } from '../types';
@@ -54,7 +55,7 @@ export const RadioProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth(); 
 
   // --- STATE ---
-  const [playlist, setPlaylist] = useState<any[]>([]); // Using 'any' for playlist items because they can be "System Audio" objects too
+  const [playlist, setPlaylist] = useState<any[]>([]); 
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [currentArticle, setCurrentArticle] = useState<IArticle | null>(null);
   
@@ -72,10 +73,8 @@ export const RadioProvider = ({ children }: { children: ReactNode }) => {
   // Refs
   const audioRef = useRef(new Audio());
   
-  // NEW: Track exactly which IDs we have already requested to avoid duplicates
   const prefetchedIdsRef = useRef(new Set<string>());
   
-  // Store downloaded audio BLOBS
   const preloadedBlobsRef = useRef<Record<string, string>>({}); 
 
   // --- HELPER: Cloudinary Optimization (64kbps) ---
@@ -212,7 +211,8 @@ export const RadioProvider = ({ children }: { children: ReactNode }) => {
               audio.src = optimizeUrl(article.audioUrl) || "";
           } else {
               const textToSpeak = prepareAudioText(article.headline, article.summary);
-              const response = await api.getAudio(textToSpeak, persona.id, article._id);
+              // FIX: Call the correctly named and imported function
+              const response = await getAudio(textToSpeak, persona.id, article._id);
               if (response.data && response.data.audioUrl) {
                   audio.src = optimizeUrl(response.data.audioUrl) || "";
               } else {
@@ -226,7 +226,7 @@ export const RadioProvider = ({ children }: { children: ReactNode }) => {
           await audio.play();
 
           if ('mediaSession' in navigator) {
-              // @ts-ignore - MediaMetadata types might not be fully available
+              // @ts-ignore 
               navigator.mediaSession.metadata = new MediaMetadata({
                   title: article.headline,
                   artist: `The Gamut • ${persona.name}`,
@@ -335,7 +335,7 @@ export const RadioProvider = ({ children }: { children: ReactNode }) => {
       }
   }, [currentSpeaker]);
 
-  const startRadio = useCallback((articles: IArticle[], startIndex = 0) => {
+  const startRadio = useCallback(async (articles: IArticle[], startIndex = 0) => {
       if (!articles || articles.length === 0) return;
       const userQueue = articles.slice(startIndex);
       const connectedQueue = injectSegues(userQueue);
@@ -344,7 +344,7 @@ export const RadioProvider = ({ children }: { children: ReactNode }) => {
       let finalPlaylist = greetingTrack ? [greetingTrack, ...connectedQueue] : connectedQueue;
       setPlaylist(finalPlaylist);
       setCurrentIndex(0); 
-  }, [getPersonaForCategory, injectSegues]);
+  }, [getPersonaForCategory, injectSegues, getGreetingTrack]);
 
   const playSingle = useCallback((article: IArticle) => {
       setPlaylist([article]);
@@ -380,10 +380,11 @@ export const RadioProvider = ({ children }: { children: ReactNode }) => {
                   if (targetIndex >= playlist.length) break;
 
                   const targetItem = playlist[targetIndex];
+                  const targetId = targetItem._id;
 
                   // Only download if not already requested
-                  if (!prefetchedIdsRef.current.has(targetItem._id)) {
-                      prefetchedIdsRef.current.add(targetItem._id);
+                  if (!prefetchedIdsRef.current.has(targetId)) {
+                      prefetchedIdsRef.current.add(targetId);
                       
                       // Run in background (don't await)
                       (async () => {
@@ -395,7 +396,7 @@ export const RadioProvider = ({ children }: { children: ReactNode }) => {
                                   console.log(`🎧 Pre-generating: ${targetItem.headline}`);
                                   const nextPersona = getPersonaForCategory(targetItem.category);
                                   const nextText = prepareAudioText(targetItem.headline, targetItem.summary);
-                                  const res = await api.getAudio(nextText, nextPersona.id, targetItem._id);
+                                  const res = await getAudio(nextText, nextPersona.id, targetId);
                                   if (res.data && res.data.audioUrl) {
                                       urlToFetch = res.data.audioUrl;
                                   }
@@ -409,12 +410,12 @@ export const RadioProvider = ({ children }: { children: ReactNode }) => {
                                   const fetchRes = await fetch(optimizedUrl);
                                   const blob = await fetchRes.blob();
                                   const blobUrl = URL.createObjectURL(blob);
-                                  preloadedBlobsRef.current[targetItem._id] = blobUrl;
+                                  preloadedBlobsRef.current[targetId] = blobUrl;
                                   console.log(`✅ Cached in Memory: ${targetItem.headline}`);
                               }
                           } catch (err) {
                               console.warn(`Buffer failed for ${targetItem.headline}:`, err);
-                              prefetchedIdsRef.current.delete(targetItem._id); // Retry later if failed
+                              prefetchedIdsRef.current.delete(targetId); // Retry later if failed
                           }
                       })();
                   }
@@ -448,7 +449,7 @@ export const RadioProvider = ({ children }: { children: ReactNode }) => {
           audio.removeEventListener('playing', handlePlaying);
           audio.removeEventListener('ended', handleEnded);
       };
-  }, [resume, pause, playNext, playPrevious, playlist, currentIndex, getPersonaForCategory]);
+  }, [resume, pause, playNext, playPrevious, playlist, currentIndex, getPersonaForCategory, getGreetingTrack]);
 
   return (
       <RadioContext.Provider value={{

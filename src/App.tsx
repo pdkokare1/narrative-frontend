@@ -1,24 +1,18 @@
-// In file: src/App.js
-import React, { useState, useEffect, Suspense, lazy, useCallback, useRef } from 'react'; // Added useRef
-import { Routes, Route, useLocation, Navigate, Link } from 'react-router-dom';
+// src/App.tsx
+import React, { useState, useEffect, Suspense, lazy, useCallback, useRef } from 'react'; 
+import { Routes, Route, Navigate, Link } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; 
 
-// --- Styles ---
 import './App.css'; 
 import './DashboardPages.css'; 
 
-// --- Context Providers ---
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider, useToast } from './context/ToastContext';
 import { RadioProvider } from './context/RadioContext'; 
 
-// --- Custom Hooks ---
 import useIsMobile from './hooks/useIsMobile';
-
-// --- API Service ---
 import * as api from './services/api'; 
 
-// --- Core Components ---
 import PageLoader from './components/PageLoader';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -26,26 +20,21 @@ import NewsFeed from './components/NewsFeed';
 import GlobalPlayerBar from './components/GlobalPlayerBar'; 
 import BottomNav from './components/ui/BottomNav';
 import ErrorBoundary from './components/ErrorBoundary';
-
-// --- UI Components ---
 import CustomTooltip from './components/ui/CustomTooltip';
 
-// --- Modals ---
 import CompareCoverageModal from './components/modals/CompareCoverageModal';
 import DetailedAnalysisModal from './components/modals/DetailedAnalysisModal';
 
-// --- Auth Components ---
 import Login from './Login';
 import CreateProfile from './CreateProfile';
+import { IFilters, IArticle, IUserProfile } from './types';
 
-// --- Lazy Loaded Pages (Performance) ---
 const MyDashboard = lazy(() => import('./MyDashboard'));
 const SavedArticles = lazy(() => import('./SavedArticles'));
 const AccountSettings = lazy(() => import('./AccountSettings'));
 const SearchResults = lazy(() => import('./SearchResults')); 
 const EmergencyResources = lazy(() => import('./EmergencyResources'));
 
-// --- Initialize Query Client ---
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -73,7 +62,6 @@ function App() {
   );
 }
 
-// --- Routing Logic ---
 function AppRoutes() {
   const { user, profile, loading } = useAuth();
   
@@ -94,17 +82,19 @@ function AppRoutes() {
   );
 }
 
-// --- Main Layout ---
-function MainLayout({ profile }) {
+interface MainLayoutProps {
+  profile: IUserProfile;
+}
+
+function MainLayout({ profile }: MainLayoutProps) {
   const { logout } = useAuth();
   const { addToast } = useToast();
   const isMobileView = useIsMobile();
 
-  // --- Global State ---
   const [theme, setTheme] = useState('dark');
   const [fontSize, setFontSize] = useState('medium'); 
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<IFilters>({
     category: 'All Categories',
     lean: 'All Leans',
     quality: 'All Quality Levels',
@@ -113,20 +103,16 @@ function MainLayout({ profile }) {
     articleType: 'All Types'
   });
   
-  // --- UI State ---
-  const [compareModal, setCompareModal] = useState({ open: false, clusterId: null, articleTitle: '', articleId: null });
-  const [analysisModal, setAnalysisModal] = useState({ open: false, article: null });
+  const [compareModal, setCompareModal] = useState<{ open: boolean; clusterId: number | null; articleTitle: string; articleId: string | null }>({ open: false, clusterId: null, articleTitle: '', articleId: null });
+  const [analysisModal, setAnalysisModal] = useState<{ open: boolean; article: IArticle | null }>({ open: false, article: null });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
   
-  // Tracks saved articles locally
-  const [savedArticleIds, setSavedArticleIds] = useState(new Set(profile.savedArticles || []));
+  const [savedArticleIds, setSavedArticleIds] = useState<Set<string>>(new Set(profile.savedArticles || []));
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
-  // --- NEW: Pending Deletes Ref (Stores timeouts) ---
-  const pendingDeletesRef = useRef(new Map());
+  const pendingDeletesRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
-  // --- Theme & Font Management ---
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
@@ -145,7 +131,7 @@ function MainLayout({ profile }) {
         document.body.classList.remove('font-medium', 'font-large', 'font-xl');
         document.body.classList.add(`font-${savedFont}`);
     }
-  }, []);
+  }, [fontSize]); // Added dependency to re-run if needed, though init is primary
 
   useEffect(() => {
       document.body.classList.remove('font-medium', 'font-large', 'font-xl');
@@ -160,23 +146,24 @@ function MainLayout({ profile }) {
     localStorage.setItem('theme', newTheme);
   };
 
-  // --- Handlers ---
   const handleLogout = useCallback(() => { logout(); }, [logout]);
 
-  const toggleSidebar = (e) => {
+  const toggleSidebar = (e: React.MouseEvent) => {
     if (e) e.stopPropagation(); 
     isMobileView ? setIsSidebarOpen(!isSidebarOpen) : setIsDesktopSidebarVisible(!isDesktopSidebarVisible);
   };
 
-  const handleFilterChange = (newFilters) => {
+  const handleFilterChange = (newFilters: IFilters) => {
       setFilters(newFilters);
       if (isSidebarOpen) setIsSidebarOpen(false);
   };
 
-  const showTooltip = (text, e) => {
+  const showTooltip = (text: string, e: React.MouseEvent) => {
     if (!isMobileView || !text) return; 
     e.stopPropagation();
+    // @ts-ignore - Touch event compatibility
     const x = e.clientX || (e.touches && e.touches[0].clientX);
+    // @ts-ignore
     const y = e.clientY || (e.touches && e.touches[0].clientY);
     
     if (tooltip.visible && tooltip.text === text) {
@@ -186,67 +173,54 @@ function MainLayout({ profile }) {
     }
   };
 
-  const handleAnalyzeClick = useCallback((article) => {
+  const handleAnalyzeClick = useCallback((article: IArticle) => {
     setAnalysisModal({ open: true, article });
     api.logView(article._id).catch(err => console.error("Log View Error:", err));
   }, []);
 
-  const handleCompareClick = useCallback((article) => {
+  const handleCompareClick = useCallback((article: IArticle) => {
     setCompareModal({ 
       open: true, 
-      clusterId: article.clusterId, 
+      clusterId: article.clusterId || null, 
       articleTitle: article.headline, 
       articleId: article._id 
     });
     api.logCompare(article._id).catch(err => console.error("Log Compare Error:", err));
   }, []);
   
-  // --- UPDATED: Save Handler with Undo Logic ---
-  const handleToggleSave = useCallback(async (article) => {
+  const handleToggleSave = useCallback(async (article: IArticle) => {
     const articleId = article._id;
     const isCurrentlySaved = savedArticleIds.has(articleId);
 
     if (isCurrentlySaved) {
-        // --- UNSAVE ACTION (With Delay) ---
-        
-        // 1. Optimistic UI: Remove immediately
         setSavedArticleIds(prev => {
             const next = new Set(prev);
             next.delete(articleId);
             return next;
         });
 
-        // 2. Set Delayed Server Call
         const timeoutId = setTimeout(async () => {
             try {
                 await api.saveArticle(articleId);
                 pendingDeletesRef.current.delete(articleId);
             } catch (error) {
                 console.error('Unsave failed:', error);
-                // Revert UI on error
                 setSavedArticleIds(prev => new Set(prev).add(articleId));
             }
-        }, 3500); // 3.5 seconds delay
+        }, 3500);
 
         pendingDeletesRef.current.set(articleId, timeoutId);
 
-        // 3. Show Undo Toast
         addToast('Article removed', 'info', {
             label: 'UNDO',
             onClick: () => {
-                // User clicked UNDO
                 clearTimeout(timeoutId);
                 pendingDeletesRef.current.delete(articleId);
-                
-                // Add back to UI immediately
                 setSavedArticleIds(prev => new Set(prev).add(articleId));
             }
         });
 
     } else {
-        // --- SAVE ACTION (Immediate) ---
-        
-        // Check if there was a pending delete for this item and cancel it
         if (pendingDeletesRef.current.has(articleId)) {
             clearTimeout(pendingDeletesRef.current.get(articleId));
             pendingDeletesRef.current.delete(articleId);

@@ -1,19 +1,28 @@
-// src/components/feeds/ForYouFeed.js
+// src/components/feeds/ForYouFeed.tsx
 import React from 'react';
-import { useQuery } from '@tanstack/react-query'; // <--- NEW
+import { useQuery } from '@tanstack/react-query'; 
 import * as api from '../../services/api'; 
 import ArticleCard from '../ArticleCard';
 import SkeletonCard from '../ui/SkeletonCard';
 import { useToast } from '../../context/ToastContext';
 import { useRadio } from '../../context/RadioContext';
+import { IArticle } from '../../types';
 
-function ForYouFeed({ 
+interface ForYouFeedProps {
+  onAnalyze: (article: IArticle) => void;
+  onCompare: (article: IArticle) => void;
+  savedArticleIds: Set<string>;
+  onToggleSave: (article: IArticle) => void;
+  showTooltip: (text: string, e: React.MouseEvent) => void;
+}
+
+const ForYouFeed: React.FC<ForYouFeedProps> = ({ 
   onAnalyze, 
   onCompare, 
   savedArticleIds, 
   onToggleSave, 
   showTooltip 
-}) {
+}) => {
   const { addToast } = useToast();
   const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
 
@@ -28,18 +37,16 @@ function ForYouFeed({
       const { data } = await api.fetchForYouArticles();
       return data;
     },
-    staleTime: 1000 * 60 * 15, // Keep personalized feed fresh for 15 mins
+    staleTime: 1000 * 60 * 15, 
     refetchOnWindowFocus: false, 
   });
 
-  const articles = data?.articles || [];
+  const articles: IArticle[] = data?.articles || [];
   const forYouMeta = data?.meta;
 
   // --- Error Handling ---
   if (error) {
       console.error('For You Fetch Error:', error);
-      // We don't use addToast here inside render to avoid loops, 
-      // instead we render a friendly error state.
       return (
         <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
             <p>Could not load your personalized feed.</p>
@@ -55,16 +62,17 @@ function ForYouFeed({
   }
 
   // --- Handlers ---
-  const handleReadClick = (article) => {
+  const handleReadClick = (article: IArticle) => {
     api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
     window.open(article.url, '_blank', 'noopener,noreferrer');
   };
 
-  const handleShare = (article) => {
+  const handleShare = (article: IArticle) => {
     api.logShare(article._id).catch(err => console.error("Log Share Error:", err));
     const shareUrl = `${window.location.origin}?article=${article._id}`;
     if (navigator.share) {
-      navigator.share({ title: article.headline, text: `Check this out: ${article.headline}`, url: shareUrl });
+      navigator.share({ title: article.headline, text: `Check this out: ${article.headline}`, url: shareUrl })
+        .catch(err => console.log('Share failed', err));
     } else {
       navigator.clipboard.writeText(shareUrl).then(() => addToast('Link copied!', 'success'));
     }
@@ -86,7 +94,7 @@ function ForYouFeed({
       {!isPlaying && articles.length > 0 && (
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px' }}>
             <button 
-                onClick={() => startRadio(articles, 0)} // Start from beginning for curated feed
+                onClick={() => startRadio(articles, 0)} 
                 className="btn-primary"
                 style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}
             >
@@ -111,7 +119,7 @@ function ForYouFeed({
                 showTooltip={showTooltip}
                 isSaved={savedArticleIds.has(article._id)}
                 onToggleSave={() => onToggleSave(article)}
-                isPlaying={currentArticle && currentArticle._id === article._id}
+                isPlaying={currentArticle?._id === article._id}
                 onPlay={() => playSingle(article)}
                 onStop={stop}
               />
@@ -128,6 +136,6 @@ function ForYouFeed({
       )}
     </>
   );
-}
+};
 
 export default ForYouFeed;

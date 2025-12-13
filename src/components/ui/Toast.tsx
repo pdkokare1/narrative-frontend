@@ -1,9 +1,21 @@
-// src/components/ui/Toast.js
+// src/components/ui/Toast.tsx
 import React from 'react';
 import '../../App.css'; 
 
-function Toast({ message, type, onClose, action }) {
-  const bgColors = {
+interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
+interface ToastProps {
+  message: string;
+  type: 'info' | 'success' | 'error';
+  onClose: () => void;
+  action?: ToastAction | null;
+}
+
+const Toast: React.FC<ToastProps> = ({ message, type, onClose, action }) => {
+  const bgColors: Record<string, string> = {
     success: '#4CAF50',
     error: '#E57373',
     info: '#2E4E6B'
@@ -27,13 +39,12 @@ function Toast({ message, type, onClose, action }) {
       <span style={{ fontSize: '13px', fontWeight: '500', flex: 1 }}>{message}</span>
       
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        {/* --- NEW: Action Button (e.g. Undo) --- */}
         {action && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               action.onClick();
-              onClose(); // Close toast after action
+              onClose();
             }}
             style={{
               background: 'rgba(255,255,255,0.2)',
@@ -68,6 +79,6 @@ function Toast({ message, type, onClose, action }) {
       </div>
     </div>
   );
-}
+};
 
 export default Toast;

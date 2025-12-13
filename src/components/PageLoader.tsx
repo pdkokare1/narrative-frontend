@@ -1,12 +1,8 @@
-// In file: src/components/PageLoader.js
+// src/components/PageLoader.tsx
 import React from 'react';
-import '../App.css'; // We will add the .page-loader-container style here
+import '../App.css';
 
-/**
- * A simple component to show a full-page spinner.
- * This is used by React.Suspense for lazy-loading routes.
- */
-function PageLoader() {
+const PageLoader: React.FC = () => {
   return (
     <div className="page-loader-container">
       <div className="spinner"></div>
@@ -15,6 +11,6 @@ function PageLoader() {
       </p>
     </div>
   );
-}
+};
 
 export default PageLoader;

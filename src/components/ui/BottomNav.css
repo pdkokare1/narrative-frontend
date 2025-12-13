@@ -8,13 +8,13 @@
 @media (max-width: 768px) {
   .bottom-nav {
     display: flex;
-    justify-content: space-between; /* Changed from space-around for 5 items */
+    justify-content: space-between;
     align-items: center;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 65px; /* Slightly taller for the center button */
+    height: 65px;
     background: rgba(18, 18, 18, 0.98); 
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -29,7 +29,7 @@
   /* Light Mode Override */
   :global(.light-mode) .bottom-nav {
     background: rgba(255, 255, 255, 0.98);
-    border-top: 1px solid #EAEAEA;
+    border-top: 1px solid var(--border-color);
   }
 
   .nav-item {
@@ -81,7 +81,7 @@
   }
 
   .nav-item.radio-action .nav-icon {
-    background: var(--accent-primary);
+    background: var(--accent-gold); /* Using explicit Gold variable */
     width: 42px;
     height: 42px;
     border-radius: 50%;
@@ -91,14 +91,14 @@
   }
 
   .nav-item.radio-action.playing .nav-icon {
-    box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent-gold);
     animation: pulseGlow 2s infinite;
   }
 
   @keyframes pulseGlow {
-    0% { box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent-primary); }
-    50% { box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent-primary), 0 0 15px var(--accent-primary); }
-    100% { box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent-primary); }
+    0% { box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent-gold); }
+    50% { box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent-gold), 0 0 15px var(--accent-gold); }
+    100% { box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--accent-gold); }
   }
 
   /* Touch Feedback */

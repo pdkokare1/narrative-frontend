@@ -1,7 +1,7 @@
-// src/components/feeds/LatestFeed.js
-import React, { useState, useEffect, useMemo, useRef, forwardRef } from 'react'; // <--- Fixed: Added useRef
+// src/components/feeds/LatestFeed.tsx
+import React, { useState, useEffect, useMemo, useRef, forwardRef } from 'react'; 
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { VirtuosoGrid } from 'react-virtuoso'; 
+import { VirtuosoGrid, VirtuosoGridHandle, GridItemContent } from 'react-virtuoso'; 
 import * as api from '../../services/api'; 
 import ArticleCard from '../ArticleCard';
 import SkeletonCard from '../ui/SkeletonCard';
@@ -9,11 +9,23 @@ import CategoryPills from '../ui/CategoryPills';
 import { useToast } from '../../context/ToastContext';
 import { useRadio } from '../../context/RadioContext';
 import useIsMobile from '../../hooks/useIsMobile'; 
+import { IArticle, IFilters } from '../../types';
 
 // --- GLOBAL STATE CACHE ---
-let feedStateCache = null;
+let feedStateCache: any = null;
 
-function LatestFeed({ 
+interface LatestFeedProps {
+  filters: IFilters;
+  onFilterChange: (filters: IFilters) => void;
+  onAnalyze: (article: IArticle) => void;
+  onCompare: (article: IArticle) => void;
+  savedArticleIds: Set<string>;
+  onToggleSave: (article: IArticle) => void;
+  showTooltip: (text: string, e: React.MouseEvent) => void;
+  scrollToTopRef: React.RefObject<HTMLDivElement>;
+}
+
+const LatestFeed: React.FC<LatestFeedProps> = ({ 
   filters, 
   onFilterChange, 
   onAnalyze, 
@@ -22,7 +34,7 @@ function LatestFeed({
   onToggleSave, 
   showTooltip,
   scrollToTopRef 
-}) {
+}) => {
   const { addToast } = useToast();
   const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
   const isMobile = useIsMobile(); 
@@ -31,8 +43,8 @@ function LatestFeed({
   const [visibleArticleIndex, setVisibleArticleIndex] = useState(0);
   
   // Refs
-  const virtuosoRef = useRef(null);
-  const [scrollParent, setScrollParent] = useState(undefined);
+  const virtuosoRef = useRef<VirtuosoGridHandle>(null);
+  const [scrollParent, setScrollParent] = useState<HTMLElement | undefined>(undefined);
 
   // Attach to main window scroll if ref is provided
   useEffect(() => {
@@ -52,9 +64,10 @@ function LatestFeed({
   } = useInfiniteQuery({
     queryKey: ['latestFeed', filters],
     queryFn: async ({ pageParam = 0 }) => {
-      const { data } = await api.fetchArticles({ ...filters, limit: 12, offset: pageParam });
+      const { data } = await api.fetchArticles({ ...filters, limit: 12, offset: pageParam as number });
       return data;
     },
+    initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       const loadedCount = allPages.reduce((acc, page) => acc + page.articles.length, 0);
       const totalAvailable = lastPage.pagination?.total || 0;
@@ -71,6 +84,7 @@ function LatestFeed({
   useEffect(() => {
     return () => {
       if (virtuosoRef.current) {
+        // @ts-ignore - getState exists on VirtuosoGridHandle but types might be strict
         feedStateCache = virtuosoRef.current.getState();
       }
     };
@@ -92,19 +106,20 @@ function LatestFeed({
   }, [status, error, addToast]);
 
   // --- HANDLERS ---
-  const handleCategorySelect = (category) => {
+  const handleCategorySelect = (category: string) => {
     onFilterChange({ ...filters, category });
   };
 
-  const handleReadClick = (article) => {
+  const handleReadClick = (article: IArticle) => {
     if (virtuosoRef.current) {
+        // @ts-ignore
         feedStateCache = virtuosoRef.current.getState();
     }
     api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
     window.open(article.url, '_blank', 'noopener,noreferrer');
   };
 
-  const handleShare = (article) => {
+  const handleShare = (article: IArticle) => {
     api.logShare(article._id).catch(err => console.error("Log Share Error:", err));
     const shareUrl = `${window.location.origin}?article=${article._id}`;
     if (navigator.share) {
@@ -117,18 +132,18 @@ function LatestFeed({
 
   // --- VIRTUOSO COMPONENTS (Grid Config) ---
   
-  const GridList = useMemo(() => forwardRef(({ style, children, ...props }, ref) => (
+  const GridList = useMemo(() => forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ style, children, ...props }, ref) => (
     <div
       ref={ref}
       {...props}
       style={{ ...style }} 
-      className="articles-grid" // CSS Grid Layout handles columns (1 mobile, 4 desktop)
+      className="articles-grid" 
     >
       {children}
     </div>
   )), []);
 
-  const GridItem = useMemo(() => forwardRef(({ children, ...props }, ref) => (
+  const GridItem = useMemo(() => forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ children, ...props }, ref) => (
     <div 
         {...props} 
         ref={ref}
@@ -142,7 +157,7 @@ function LatestFeed({
   const FeedHeader = () => (
     <div style={{ paddingBottom: '20px' }}>
         <CategoryPills 
-          selectedCategory={filters.category} 
+          selectedCategory={filters.category || 'All Categories'} 
           onSelect={handleCategorySelect} 
         />
         {!isPlaying && articles.length > 0 && (
@@ -172,6 +187,22 @@ function LatestFeed({
       );
   };
 
+  const itemContent: GridItemContent<IArticle, unknown> = (index, article) => (
+    <ArticleCard
+      article={article}
+      onCompare={() => onCompare(article)}
+      onAnalyze={onAnalyze}
+      onShare={() => handleShare(article)}
+      onRead={() => handleReadClick(article)}
+      showTooltip={showTooltip}
+      isSaved={savedArticleIds.has(article._id)}
+      onToggleSave={() => onToggleSave(article)}
+      isPlaying={currentArticle && currentArticle._id === article._id}
+      onPlay={() => playSingle(article)}
+      onStop={stop}
+    />
+  );
+
   // --- LOADING STATE ---
   if (status === 'pending') {
       return (
@@ -197,7 +228,7 @@ function LatestFeed({
   // --- MAIN RENDER ---
   return (
     <VirtuosoGrid
-      // --- KEY FIX: Force re-render when switching between Mobile/Desktop layouts ---
+      // Force re-render when switching between Mobile/Desktop layouts
       key={isMobile ? 'mobile-view' : 'desktop-view'}
       
       ref={virtuosoRef}
@@ -214,23 +245,9 @@ function LatestFeed({
         List: GridList,
         Item: GridItem
       }}
-      itemContent={(index, article) => (
-        <ArticleCard
-          article={article}
-          onCompare={() => onCompare(article)}
-          onAnalyze={onAnalyze}
-          onShare={() => handleShare(article)}
-          onRead={() => handleReadClick(article)}
-          showTooltip={showTooltip}
-          isSaved={savedArticleIds.has(article._id)}
-          onToggleSave={() => onToggleSave(article)}
-          isPlaying={currentArticle && currentArticle._id === article._id}
-          onPlay={() => playSingle(article)}
-          onStop={stop}
-        />
-      )}
+      itemContent={itemContent}
     />
   );
-}
+};
 
 export default LatestFeed;

@@ -1,4 +1,4 @@
-// In file: src/Login.js
+// src/Login.tsx
 import React, { useEffect, useRef } from 'react';
 import { GoogleAuthProvider } from "firebase/auth";
 import { auth } from './firebaseConfig';
@@ -9,7 +9,6 @@ import './Login.css';
 // Configure FirebaseUI.
 const uiConfig = {
   signInFlow: 'popup',
-  // Force "thegamut.in" domain to prevent credential mismatch
   credentialHelper: firebaseui.auth.CredentialHelper.GOOGLE_YOLO,
   credentialHelperUrl: `https://${process.env.REACT_APP_AUTH_DOMAIN}`,
   signInOptions: [
@@ -21,8 +20,8 @@ const uiConfig = {
   },
 };
 
-function Login() {
-  const elementRef = useRef(null); 
+const Login: React.FC = () => {
+  const elementRef = useRef<HTMLDivElement>(null); 
 
   useEffect(() => {
     const ui = firebaseui.auth.AuthUI.getInstance() || new firebaseui.auth.AuthUI(auth);
@@ -37,17 +36,14 @@ function Login() {
   return (
     <div className="login-page-wrapper">
       <div className="login-container">
-        {/* Main Form Panel */}
         <div className="login-form-panel">
           <h1>The Gamut</h1> 
           <p>Please sign in to analyze the full spectrum</p>
-
-          {/* FirebaseUI renders here */}
           <div ref={elementRef} id="firebaseui-auth-container"></div>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default Login;

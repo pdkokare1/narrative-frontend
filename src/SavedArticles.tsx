@@ -1,17 +1,34 @@
-// In file: src/SavedArticles.js
-import React, { useEffect } from 'react'; // Added useEffect
+// src/SavedArticles.tsx
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query'; 
 import * as api from './services/api'; 
-import offlineStorage from './services/offlineStorage'; // <--- NEW IMPORT
+import offlineStorage from './services/offlineStorage'; 
 import { useToast } from './context/ToastContext'; 
 import ArticleCard from './components/ArticleCard'; 
 import SkeletonCard from './components/ui/SkeletonCard'; 
 import useIsMobile from './hooks/useIsMobile';
 import './App.css'; 
 import './SavedArticles.css'; 
+import { IArticle } from './types';
 
-function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, showTooltip }) {
+interface SavedArticlesProps {
+  onToggleSave: (article: IArticle) => void;
+  onCompare: (article: IArticle) => void;
+  onAnalyze: (article: IArticle) => void;
+  onShare: (article: IArticle) => void;
+  onRead: (article: IArticle) => void;
+  showTooltip: (text: string, e: React.MouseEvent) => void;
+}
+
+const SavedArticles: React.FC<SavedArticlesProps> = ({ 
+  onToggleSave, 
+  onCompare, 
+  onAnalyze, 
+  onShare, 
+  onRead, 
+  showTooltip 
+}) => {
   const isMobileView = useIsMobile();
   const { addToast } = useToast(); 
   const queryClient = useQueryClient(); 
@@ -50,12 +67,12 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
   });
 
   // --- Handler: Optimistic Removal ---
-  const handleLocalToggleSave = (article) => {
+  const handleLocalToggleSave = (article: IArticle) => {
     // 1. Trigger the global save logic (App.js)
     onToggleSave(article);
 
     // 2. Instantly remove from THIS list (Optimistic UI)
-    queryClient.setQueryData(['savedArticles'], (oldData) => {
+    queryClient.setQueryData(['savedArticles'], (oldData: IArticle[] | undefined) => {
       if (!oldData) return [];
       const newData = oldData.filter(a => a._id !== article._id);
       
@@ -118,7 +135,7 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
         ) : (
           <>
             {renderHeader()}
-            {savedArticles.map((article) => (
+            {savedArticles.map((article: IArticle) => (
               <div className="article-card-wrapper" key={article._id}>
                 <ArticleCard
                   article={article}
@@ -152,7 +169,7 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
             renderEmptyState()
           ) : (
             <div className="articles-grid">
-              {savedArticles.map((article) => (
+              {savedArticles.map((article: IArticle) => (
                 <ArticleCard
                   key={article._id}
                   article={article}
@@ -171,6 +188,6 @@ function SavedArticles({ onToggleSave, onCompare, onAnalyze, onShare, onRead, sh
       )}
     </div>
   );
-}
+};
 
 export default SavedArticles;

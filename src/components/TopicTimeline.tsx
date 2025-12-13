@@ -1,8 +1,20 @@
-// src/components/TopicTimeline.js
+// src/components/TopicTimeline.tsx
 import React from 'react';
 import '../App.css'; 
+import { IArticle } from '../types';
 
-function TopicTimeline({ clusterData }) {
+interface ClusterData {
+  left: IArticle[];
+  center: IArticle[];
+  right: IArticle[];
+  reviews: IArticle[];
+}
+
+interface TopicTimelineProps {
+  clusterData: ClusterData | null;
+}
+
+const TopicTimeline: React.FC<TopicTimelineProps> = ({ clusterData }) => {
   if (!clusterData) return null;
 
   // 1. Merge all articles into a single array
@@ -19,12 +31,12 @@ function TopicTimeline({ clusterData }) {
 
   // 2. Sort by Date (Newest first)
   const sortedArticles = allArticles.sort((a, b) => 
-    new Date(b.publishedAt) - new Date(a.publishedAt)
+    new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
 
   // 3. Format Date Helper
-  const formatDate = (dateString) => {
-    const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+  const formatDate = (dateString: string | Date) => {
+    const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(dateString).toLocaleDateString('en-US', options);
   };
 
@@ -52,6 +64,6 @@ function TopicTimeline({ clusterData }) {
       ))}
     </div>
   );
-}
+};
 
 export default TopicTimeline;

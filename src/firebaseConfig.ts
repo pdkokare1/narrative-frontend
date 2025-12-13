@@ -45,7 +45,8 @@ export const appCheckReady = new Promise<void>((resolve) => {
           isTokenAutoRefreshEnabled: true 
         });
         
-        const unsubscribe = onTokenChanged(appCheck, (token) => {
+        // FIX: Added type 'any' to token
+        const unsubscribe = onTokenChanged(appCheck, (token: any) => {
           if (token) {
             console.log("App Check token received.");
             resolve(); 

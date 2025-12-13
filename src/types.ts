@@ -15,16 +15,26 @@ export interface IArticle {
   analysisType: 'Full' | 'SentimentOnly';
   sentiment: 'Positive' | 'Negative' | 'Neutral';
   
+  // Scores
   biasScore?: number;
+  biasComponents?: any; // Added to fix build error
+
   credibilityScore?: number;
-  reliabilityScore?: number;
-  trustScore?: number;
   credibilityGrade?: string;
+  credibilityComponents?: any; // Added to fix build error
+
+  reliabilityScore?: number;
+  reliabilityGrade?: string;
+  reliabilityComponents?: any; // Added to fix build error
+
+  trustScore?: number;
   
+  // Clustering
   clusterId?: number;
   clusterCount?: number;
   clusterTopic?: string;
   
+  // Content
   keyFindings?: string[];
   recommendations?: string[];
   suggestionType?: 'Comfort' | 'Challenge';

@@ -1,23 +1,21 @@
-// src/hooks/useIsMobile.js
+// src/hooks/useIsMobile.ts
 import { useState, useEffect } from 'react';
 
 // This hook tracks the window size and returns true if the device is mobile.
-// UPDATED: Added debounce to prevent rapid-fire re-renders during resize.
-const useIsMobile = (breakpoint = 768) => {
+const useIsMobile = (breakpoint: number = 768): boolean => {
   // Initialize state with current window width
-  const [isMobile, setIsMobile] = useState(
+  const [isMobile, setIsMobile] = useState<boolean>(
     typeof window !== 'undefined' ? window.innerWidth <= breakpoint : false
   );
 
   useEffect(() => {
-    let timeoutId;
+    let timeoutId: NodeJS.Timeout;
 
     const handleResize = () => {
       // Clear existing timeout if resize is still happening
       if (timeoutId) clearTimeout(timeoutId);
 
-      // Set a new timeout. We wait 150ms after the user STOPS resizing 
-      // before we actually update the state. This prevents glitching.
+      // Set a new timeout (debounce)
       timeoutId = setTimeout(() => {
         setIsMobile(window.innerWidth <= breakpoint);
       }, 150);

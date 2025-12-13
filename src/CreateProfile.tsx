@@ -1,14 +1,14 @@
-// In file: src/CreateProfile.js
+// src/CreateProfile.tsx
 import React, { useState } from 'react';
 import * as api from './services/api'; 
 import './Login.css'; 
 
-function CreateProfile() {
+const CreateProfile: React.FC = () => {
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -20,21 +20,15 @@ function CreateProfile() {
     setLoading(true);
 
     try {
-      // Send the new username to our backend
       await api.createProfile({ username: username.trim() }); 
-
-      // Success! Reload to trigger AuthContext update
       window.location.href = '/'; 
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Profile Creation Error:", err);
       
-      // --- FIX: Correctly read the error message from api.js interceptor ---
-      // The interceptor puts the real backend message into 'err.message'
       if (err.message) {
         setError(err.message);
       } else if (err.original && err.original.response && err.original.response.data) {
-        // Fallback to raw response if available
         setError(err.original.response.data.message || err.original.response.data.error || 'Server error occurred.');
       } else {
         setError('Failed to create profile. Please check your connection.');
@@ -88,6 +82,6 @@ function CreateProfile() {
       </div>
     </div>
   );
-}
+};
 
 export default CreateProfile;

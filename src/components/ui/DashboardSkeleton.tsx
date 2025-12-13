@@ -1,9 +1,9 @@
-// src/components/ui/DashboardSkeleton.js
+// src/components/ui/DashboardSkeleton.tsx
 import React from 'react';
-import '../../App.css'; // For .skeleton-pulse
-import '../../MyDashboard.css'; // For grid layouts
+import '../../App.css'; 
+import '../../MyDashboard.css'; 
 
-function DashboardSkeleton() {
+const DashboardSkeleton: React.FC = () => {
   return (
     <div className="dashboard-page">
       <div className="dashboard-content-wrapper">
@@ -11,13 +11,11 @@ function DashboardSkeleton() {
         {/* --- LEFT COLUMN SKELETON --- */}
         <div className="dashboard-left-column">
             
-            {/* Header Ghost */}
             <div className="section-title-header" style={{ borderBottom: 'none', marginBottom: '20px' }}>
               <div className="skeleton-pulse" style={{ width: '120px', height: '24px' }}></div>
               <div className="skeleton-pulse" style={{ width: '80px', height: '28px', borderRadius: '6px' }}></div>
             </div>
 
-            {/* Stat Boxes Ghost */}
             <div className="dashboard-card card-tight">
               <div className="stat-box-grid">
                 {[...Array(4)].map((_, i) => (
@@ -30,7 +28,6 @@ function DashboardSkeleton() {
               </div>
             </div>
 
-            {/* Bias Bar Ghost */}
             <div className="skeleton-pulse" style={{ width: '100px', height: '20px', marginTop: '20px', marginBottom: '15px' }}></div>
             <div className="dashboard-card">
                 <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '15px' }}>
@@ -53,7 +50,6 @@ function DashboardSkeleton() {
               <div className="skeleton-pulse" style={{ width: '80px', height: '24px', borderRadius: '12px' }}></div>
           </div>
 
-          {/* Weekly Pulse Ghost */}
           <div className="dashboard-card" style={{ height: '140px', display: 'flex', gap: '20px', alignItems: 'center' }}>
              <div style={{ flex: 1 }}>
                  <div className="skeleton-pulse" style={{ width: '60%', height: '20px', marginBottom: '15px' }}></div>
@@ -63,13 +59,11 @@ function DashboardSkeleton() {
              <div className="skeleton-pulse" style={{ width: '280px', height: '100px', borderRadius: '8px', flexShrink: 0 }}></div>
           </div>
 
-          {/* Line Chart Ghost */}
           <div className="dashboard-card full-width-card">
               <div className="skeleton-pulse" style={{ width: '180px', height: '16px', marginBottom: '20px' }}></div>
               <div className="skeleton-pulse" style={{ width: '100%', height: '200px', borderRadius: '4px' }}></div>
           </div>
 
-          {/* Chart Grid Ghost */}
           <div className="dashboard-grid">
              {[...Array(4)].map((_, i) => (
                  <div key={i} className={`dashboard-card ${i === 0 ? 'full-width-card' : ''}`}>
@@ -83,6 +77,6 @@ function DashboardSkeleton() {
       </div>
     </div>
   );
-}
+};
 
 export default DashboardSkeleton;

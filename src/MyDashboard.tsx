@@ -1,13 +1,14 @@
-// In file: src/MyDashboard.js
+// src/MyDashboard.tsx
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom'; 
-import { useQuery } from '@tanstack/react-query'; // <--- NEW: Import hook
+import { useQuery } from '@tanstack/react-query'; 
 import * as api from './services/api'; 
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
 import { useAuth } from './context/AuthContext'; 
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement,
-  BarElement, ArcElement, Title, Tooltip, Legend, TimeScale
+  BarElement, ArcElement, Title, Tooltip, Legend, TimeScale,
+  ChartData
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import './App.css';
@@ -33,12 +34,16 @@ ChartJS.register(
 );
 
 // --- Helpers ---
-const getActionCount = (totals, action) => {
+const getActionCount = (totals: any[], action: string) => {
   const item = (totals || []).find(t => t.action === action);
   return item ? item.count : 0;
 };
 
-function MyDashboard({ theme }) {
+interface MyDashboardProps {
+  theme: string;
+}
+
+const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
   const { user } = useAuth(); 
   const themeColors = useMemo(() => getChartTheme(theme), [theme]);
 
@@ -53,7 +58,7 @@ function MyDashboard({ theme }) {
       const { data } = await api.getStats();
       return data;
     },
-    enabled: !!user, // Only fetch if user is logged in
+    enabled: !!user, 
   });
 
   // --- QUERY 2: Weekly Digest ---
@@ -70,7 +75,7 @@ function MyDashboard({ theme }) {
   });
 
   // --- Data Preparation Logic ---
-  const prepareCategoryData = (rawData) => {
+  const prepareCategoryData = (rawData: any[]): ChartData<'bar'> => {
     const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10).reverse();
     return {
       labels: sortedData.map(d => d.category),
@@ -84,7 +89,7 @@ function MyDashboard({ theme }) {
     };
   };
 
-  const prepareTopSourcesData = (rawData) => {
+  const prepareTopSourcesData = (rawData: any[]): ChartData<'bar'> => {
     const sortedData = (rawData || []).sort((a, b) => b.count - a.count).slice(0, 10).reverse();
     return {
       labels: sortedData.map(d => d.source),
@@ -98,17 +103,24 @@ function MyDashboard({ theme }) {
     };
   };
 
-  const prepareSentimentData = (rawData) => {
-    const counts = (rawData || []).reduce((acc, item) => { acc[item.sentiment] = item.count; return acc; }, {});
+  const prepareSentimentData = (rawData: any[]): ChartData<'doughnut'> => {
+    const counts = (rawData || []).reduce((acc: any, item: any) => { acc[item.sentiment] = item.count; return acc; }, {});
     const labels = ['Positive', 'Neutral', 'Negative'];
     const data = labels.map(label => counts[label] || 0);
     const backgroundColors = labels.map(label => sentimentColors[label]);
-    const filteredLabels = labels.filter((_, index) => data[index] > 0);
-    const filteredData = data.filter(count => count > 0);
-    const filteredColors = backgroundColors.filter((_, index) => data[index] > 0);
+    
+    // Filter out zero values for cleaner chart
+    const filteredIndices = data.map((val, i) => val > 0 ? i : -1).filter(i => i !== -1);
+    
     return {
-      labels: filteredLabels,
-      datasets: [{ label: 'Articles', data: filteredData, backgroundColor: filteredColors, borderColor: themeColors.borderColor, borderWidth: 1 }]
+      labels: filteredIndices.map(i => labels[i]),
+      datasets: [{ 
+        label: 'Articles', 
+        data: filteredIndices.map(i => data[i]), 
+        backgroundColor: filteredIndices.map(i => backgroundColors[i]), 
+        borderColor: themeColors.borderColor, 
+        borderWidth: 1 
+      }]
     };
   };
 
@@ -129,15 +141,16 @@ function MyDashboard({ theme }) {
   }
 
   // --- Normal Render (Data is Ready) ---
-  const storiesReadData = {
-    labels: statsData?.dailyCounts?.map(item => item.date) || [],
+  const storiesReadData: ChartData<'line'> = {
+    labels: statsData?.dailyCounts?.map((item: any) => item.date) || [],
     datasets: [{
       label: 'Stories Analyzed',
-      data: statsData?.dailyCounts?.map(item => item.count) || [],
+      data: statsData?.dailyCounts?.map((item: any) => item.count) || [],
       fill: false,
       tension: 0.1,
+      // @ts-ignore - segment prop is valid in Chart.js but Types might miss it
       segment: { 
-          borderColor: ctx => {
+          borderColor: (ctx: any) => {
               const y1 = ctx.p0.parsed.y;
               const y2 = ctx.p1.parsed.y;
               if (y2 > y1) return themeColors.trendUp;
@@ -150,9 +163,9 @@ function MyDashboard({ theme }) {
     }],
   };
 
-  const qualityCounts = (statsData?.qualityDistribution_read || []).reduce((acc, item) => { acc[item.grade] = item.count; return acc; }, {});
+  const qualityCounts = (statsData?.qualityDistribution_read || []).reduce((acc: any, item: any) => { acc[item.grade] = item.count; return acc; }, {});
   const qualityLabels = Object.keys(qualityColors);
-  const qualityDataMap = {
+  const qualityDataMap: Record<string, number> = {
       'A+ Excellent (90-100)': qualityCounts['A+'] || 0,
       'A High (80-89)': (qualityCounts['A'] || 0) + (qualityCounts['A-'] || 0),
       'B Professional (70-79)': (qualityCounts['B+'] || 0) + (qualityCounts['B'] || 0) + (qualityCounts['B-'] || 0),
@@ -161,9 +174,16 @@ function MyDashboard({ theme }) {
       'N/A (Review/Opinion)': qualityCounts[null] || 0
   };
   const filteredQLabels = qualityLabels.filter(label => qualityDataMap[label] > 0);
-  const qualityReadData = { 
+  
+  const qualityReadData: ChartData<'doughnut'> = { 
       labels: filteredQLabels, 
-      datasets: [{ label: 'Articles Read', data: filteredQLabels.map(l => qualityDataMap[l]), backgroundColor: filteredQLabels.map(l => qualityColors[l]), borderColor: themeColors.borderColor, borderWidth: 1 }] 
+      datasets: [{ 
+        label: 'Articles Read', 
+        data: filteredQLabels.map(l => qualityDataMap[l]), 
+        backgroundColor: filteredQLabels.map(l => qualityColors[l]), 
+        borderColor: themeColors.borderColor, 
+        borderWidth: 1 
+      }] 
   };
 
   const categoryReadData = prepareCategoryData(statsData?.categoryDistribution_read);
@@ -176,10 +196,10 @@ function MyDashboard({ theme }) {
   const totalCompared = getActionCount(totals, 'view_comparison');
   const totalRead = getActionCount(totals, 'read_external');
 
-  const leanReadCounts = (statsData?.leanDistribution_read || []).reduce((acc, item) => { acc[item.lean] = item.count; return acc; }, {});
+  const leanReadCounts = (statsData?.leanDistribution_read || []).reduce((acc: any, item: any) => { acc[item.lean] = item.count; return acc; }, {});
   const totalApplicableLeanArticles = (leanReadCounts['Left'] || 0) + (leanReadCounts['Left-Leaning'] || 0) + (leanReadCounts['Center'] || 0) + (leanReadCounts['Right-Leaning'] || 0) + (leanReadCounts['Right'] || 0);
 
-  const calculateBarPercentage = (leanTypes) => {
+  const calculateBarPercentage = (leanTypes: string[]) => {
     if (totalApplicableLeanArticles === 0) return 0;
     const count = leanTypes.reduce((sum, type) => sum + (leanReadCounts[type] || 0), 0);
     return Math.round((count / totalApplicableLeanArticles) * 100);
@@ -298,7 +318,7 @@ function MyDashboard({ theme }) {
           <div className="dashboard-card full-width-card">
               <h3>Stories Read Over Time</h3>
               <div className="chart-container">
-                 {statsData?.dailyCounts?.length > 0 ? ( 
+                 {(statsData?.dailyCounts?.length || 0) > 0 ? ( 
                     <Line options={getLineChartOptions(theme)} data={storiesReadData} /> 
                  ) : ( <p className="no-data-msg">No data available.</p> )}
               </div>
@@ -309,7 +329,7 @@ function MyDashboard({ theme }) {
              <div className="dashboard-card full-width-card">
                <h3>Bias vs. Trust Map</h3>
                <div className="chart-container-large">
-                   {statsData?.allArticles?.length > 0 ? (
+                   {(statsData?.allArticles?.length || 0) > 0 ? (
                       <BiasMap articles={statsData.allArticles} theme={theme} />
                    ) : ( <p className="no-data-msg">Read more to populate map.</p> )}
                </div>
@@ -318,7 +338,7 @@ function MyDashboard({ theme }) {
              <div className="dashboard-card">
                <h3>Top Categories</h3>
                <div className="chart-container">
-                   {totalAnalyzed > 0 && categoryReadData.labels.length > 0 ? ( 
+                   {totalAnalyzed > 0 && (categoryReadData.labels?.length || 0) > 0 ? ( 
                       <Bar options={getBarChartOptions('', 'Articles', theme)} data={categoryReadData} /> 
                    ) : ( <p className="no-data-msg">No data.</p> )}
                </div>
@@ -327,7 +347,7 @@ function MyDashboard({ theme }) {
              <div className="dashboard-card">
                <h3>Top Sources</h3>
                <div className="chart-container">
-                   {totalAnalyzed > 0 && topSourcesData.labels.length > 0 ? ( 
+                   {totalAnalyzed > 0 && (topSourcesData.labels?.length || 0) > 0 ? ( 
                       <Bar options={getBarChartOptions('', 'Articles', theme)} data={topSourcesData} /> 
                    ) : ( <p className="no-data-msg">No data.</p> )}
                </div>
@@ -336,7 +356,7 @@ function MyDashboard({ theme }) {
              <div className="dashboard-card">
                <h3>Sentiment</h3>
                <div className="chart-container">
-                   {totalAnalyzed > 0 && sentimentReadData.labels.length > 0 ? ( 
+                   {totalAnalyzed > 0 && (sentimentReadData.labels?.length || 0) > 0 ? ( 
                       <Doughnut options={getDoughnutChartOptions('', theme)} data={sentimentReadData} /> 
                    ) : ( <p className="no-data-msg">No data.</p> )}
                </div>
@@ -345,7 +365,7 @@ function MyDashboard({ theme }) {
              <div className="dashboard-card">
                <h3>Quality Grade</h3>
                <div className="chart-container">
-                   {totalAnalyzed > 0 && qualityReadData.labels.length > 0 ? ( 
+                   {totalAnalyzed > 0 && (qualityReadData.labels?.length || 0) > 0 ? ( 
                       <Doughnut options={getDoughnutChartOptions('', theme)} data={qualityReadData} /> 
                    ) : ( <p className="no-data-msg">No data.</p> )}
                </div>
@@ -360,6 +380,6 @@ function MyDashboard({ theme }) {
       </div>
     </div>
   );
-}
+};
 
 export default MyDashboard;

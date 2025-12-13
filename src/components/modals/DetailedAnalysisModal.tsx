@@ -1,15 +1,22 @@
-// In file: src/components/modals/DetailedAnalysisModal.js
+// src/components/modals/DetailedAnalysisModal.tsx
 import React, { useState } from 'react';
 import '../../App.css'; 
 import { getBreakdownTooltip, getSentimentClass } from '../../utils/helpers'; 
+import { IArticle } from '../../types';
+
+interface AnalysisModalProps {
+  article: IArticle | null;
+  onClose: () => void;
+  showTooltip: (text: string, e: React.MouseEvent) => void;
+}
 
 // --- Detailed Analysis Modal ---
-function DetailedAnalysisModal({ article, onClose, showTooltip }) {
-  const [activeTab, setActiveTab] = useState('overview');
+const DetailedAnalysisModal: React.FC<AnalysisModalProps> = ({ article, onClose, showTooltip }) => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'breakdown'>('overview');
 
   if (!article) return null;
 
-  const handleOverlayClick = (e) => { 
+  const handleOverlayClick = (e: React.MouseEvent) => { 
     if (e.target === e.currentTarget) onClose(); 
   };
   
@@ -47,11 +54,11 @@ function DetailedAnalysisModal({ article, onClose, showTooltip }) {
       </div>
     </div>
   );
-}
+};
 
 // --- Analysis Tab Components ---
 
-function ReviewOverviewTab({ article, showTooltip }) {
+const ReviewOverviewTab: React.FC<{ article: IArticle; showTooltip: any }> = ({ article, showTooltip }) => {
   return ( 
     <div className="tab-content review-tab-content"> 
       <h3 className="review-type-label"> Opinion / Review Analysis </h3> 
@@ -68,9 +75,9 @@ function ReviewOverviewTab({ article, showTooltip }) {
       </div> 
     </div> 
   );
-}
+};
 
-function OverviewTab({ article, showTooltip }) {
+const OverviewTab: React.FC<{ article: IArticle; showTooltip: any }> = ({ article, showTooltip }) => {
   const hasFindings = article.keyFindings && article.keyFindings.length > 0;
   const hasRecs = article.recommendations && article.recommendations.length > 0;
 
@@ -86,14 +93,14 @@ function OverviewTab({ article, showTooltip }) {
       {hasFindings && ( 
         <div className="recommendations"> 
           <h4>Key Findings</h4> 
-          <ul> {article.keyFindings.map((finding, i) => <li key={`kf-${i}`}>{finding}</li>)} </ul> 
+          <ul> {article.keyFindings!.map((finding, i) => <li key={`kf-${i}`}>{finding}</li>)} </ul> 
         </div> 
       )} 
       
       {hasRecs && ( 
         <div className="recommendations"> 
           <h4>Recommendations</h4> 
-          <ul> {article.recommendations.map((rec, i) => <li key={`rec-${i}`}>{rec}</li>)} </ul> 
+          <ul> {article.recommendations!.map((rec, i) => <li key={`rec-${i}`}>{rec}</li>)} </ul> 
         </div> 
       )} 
       
@@ -102,27 +109,21 @@ function OverviewTab({ article, showTooltip }) {
       )} 
     </div> 
   );
-}
+};
 
-function OverviewBreakdownTab({ article, showTooltip }) {
+const OverviewBreakdownTab: React.FC<{ article: IArticle; showTooltip: any }> = ({ article, showTooltip }) => {
   const [showZeroScores, setShowZeroScores] = useState(false);
   const biasComps = article.biasComponents || {};
   const credComps = article.credibilityComponents || {};
   const relComps = article.reliabilityComponents || {};
 
-  // Helper to normalize data
-  const mapComps = (source, labels) => labels.map(label => ({
-    label, value: Number(source[labelToKey(label)]) || 0
-  }));
-
-  // Simple label-to-key mapper (or manual mapping if keys differ)
-  // Since keys in DB match camelCase of labels, we can map manually for precision:
+  // Simple label-to-key mapper
   const biasList = [
     { l: "Sentiment Polarity", k: "sentimentPolarity" },
     { l: "Emotional Language", k: "emotionalLanguage" },
     { l: "Loaded Terms", k: "loadedTerms" },
     { l: "Complexity Bias", k: "complexityBias" },
-    { l: "Source Diversity", k: "sourceDiversity" }, // in sourceSelection
+    { l: "Source Diversity", k: "sourceDiversity" },
     { l: "Expert Balance", k: "expertBalance" },
     { l: "Attribution Transparency", k: "attributionTransparency" },
     { l: "Gender Balance", k: "genderBalance" },
@@ -186,20 +187,16 @@ function OverviewBreakdownTab({ article, showTooltip }) {
       </div> 
     </div> 
   );
-}
+};
 
 // --- Helpers ---
-function camelToTitle(str) {
+function camelToTitle(str: string) {
   const result = str.replace(/([A-Z])/g, " $1");
   return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
-function labelToKey(label) {
-    return label.replace(/\s(.)/g, (match) => match.toUpperCase().trim()).replace(/\s/g, '').replace(/^(.)/, (c) => c.toLowerCase());
-}
-
 // --- Reusable UI Components ---
-function ScoreBox({ label, value, showTooltip }) { 
+const ScoreBox: React.FC<{ label: string; value: number | undefined; showTooltip: any }> = ({ label, value, showTooltip }) => { 
   let tooltip = ''; 
   switch(label) { 
     case 'Trust Score': tooltip = 'Overall Trust Score (0-100). Higher is better.'; break; 
@@ -214,16 +211,15 @@ function ScoreBox({ label, value, showTooltip }) {
       <div className="score-label">{label}</div> 
     </div> 
   ); 
-}
+};
 
-function CircularProgressBar({ label, value, tooltip, showTooltip }) { 
+const CircularProgressBar: React.FC<{ label: string; value: number; tooltip?: string; showTooltip: any }> = ({ label, value, tooltip, showTooltip }) => { 
   const numericValue = Math.max(0, Math.min(100, Number(value) || 0)); 
   const strokeWidth = 8; 
   const radius = 40; 
   const circumference = 2 * Math.PI * radius; 
   const offset = circumference - (numericValue / 100) * circumference; 
   
-  // Use CSS variable for color to support themes automatically
   const strokeColor = 'var(--accent-primary)'; 
   const finalTooltip = tooltip || `${label}: ${numericValue}/100`; 
 
@@ -253,6 +249,6 @@ function CircularProgressBar({ label, value, tooltip, showTooltip }) {
       <div className="circle-progress-label">{label}</div> 
     </div> 
   ); 
-}
+};
 
 export default DetailedAnalysisModal;

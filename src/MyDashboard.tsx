@@ -1,10 +1,11 @@
 // src/MyDashboard.tsx
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom'; 
 import { useQuery } from '@tanstack/react-query'; 
 import * as api from './services/api'; 
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
 import { useAuth } from './context/AuthContext'; 
+import useIsMobile from './hooks/useIsMobile';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement,
   BarElement, ArcElement, Title, Tooltip, Legend, TimeScale,
@@ -45,7 +46,11 @@ interface MyDashboardProps {
 
 const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
   const { user } = useAuth(); 
+  const isMobile = useIsMobile();
   const themeColors = useMemo(() => getChartTheme(theme), [theme]);
+  
+  // Mobile Tabs State
+  const [activeTab, setActiveTab] = useState<'overview' | 'bias' | 'interests' | 'quality'>('overview');
 
   // --- QUERY 1: User Statistics ---
   const { 
@@ -123,10 +128,7 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
     };
   };
 
-  // --- Early Return ---
-  if (statsLoading || digestLoading) {
-      return <DashboardSkeleton />;
-  }
+  if (statsLoading || digestLoading) return <DashboardSkeleton />;
 
   if (statsError) {
       return (
@@ -138,7 +140,7 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
       );
   }
 
-  // --- Normal Render ---
+  // --- Data Calculations ---
   const storiesReadData: ChartData<'line'> = {
     labels: statsData?.dailyCounts?.map((item: any) => item.date) || [],
     datasets: [{
@@ -163,8 +165,6 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
 
   const qualityCounts = (statsData?.qualityDistribution_read || []).reduce((acc: any, item: any) => { acc[item.grade] = item.count; return acc; }, {});
   const qualityLabels = Object.keys(qualityColors);
-  
-  // FIX: Access null key as string 'null'
   const qualityDataMap: Record<string, number> = {
       'A+ Excellent (90-100)': qualityCounts['A+'] || 0,
       'A High (80-89)': (qualityCounts['A'] || 0) + (qualityCounts['A-'] || 0),
@@ -174,7 +174,6 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
       'N/A (Review/Opinion)': qualityCounts['null'] || 0 
   };
   const filteredQLabels = qualityLabels.filter(label => qualityDataMap[label] > 0);
-  
   const qualityReadData: ChartData<'doughnut'> = { 
       labels: filteredQLabels, 
       datasets: [{ 
@@ -216,7 +215,6 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
     { key: 'compared', title: 'Comparisons', value: totalCompared, desc: "Coverage comparisons." }
   ];
 
-  // --- Render Pulse ---
   const renderWeeklyPulse = () => {
     if (!digestData || digestData.status === 'Insufficient Data') return null;
     const isBubble = digestData.status.includes('Bubble');
@@ -250,13 +248,22 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
     );
   };
 
+  // --- MOBILE TAB RENDERER ---
+  const renderMobileTabs = () => (
+    <div className="dashboard-tabs">
+        <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>Overview</button>
+        <button className={activeTab === 'bias' ? 'active' : ''} onClick={() => setActiveTab('bias')}>Bias Map</button>
+        <button className={activeTab === 'interests' ? 'active' : ''} onClick={() => setActiveTab('interests')}>Interests</button>
+        <button className={activeTab === 'quality' ? 'active' : ''} onClick={() => setActiveTab('quality')}>Quality</button>
+    </div>
+  );
+
   return (
     <div className="dashboard-page">
       <div className="dashboard-content-wrapper">
         
         {/* --- LEFT COLUMN --- */}
         <div className="dashboard-left-column">
-            
             <div className="section-title-header">
               <h2 className="section-title">Your Activity</h2>
               <div className="header-actions">
@@ -315,61 +322,133 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
 
           {renderWeeklyPulse()}
 
-          <div className="dashboard-card full-width-card">
-              <h3>Stories Read Over Time</h3>
-              <div className="chart-container">
-                 {(statsData?.dailyCounts?.length || 0) > 0 ? ( 
-                    <Line options={getLineChartOptions(theme)} data={storiesReadData} /> 
-                 ) : ( <p className="no-data-msg">No data available.</p> )}
-              </div>
-          </div>
+          {/* MOBILE: Tabs | DESKTOP: Grid */}
+          {isMobile ? (
+              <>
+                {renderMobileTabs()}
+                <div className="dashboard-mobile-content">
+                    {activeTab === 'overview' && (
+                        <div className="dashboard-card full-width-card">
+                            <h3>Stories Read Over Time</h3>
+                            <div className="chart-container">
+                                {(statsData?.dailyCounts?.length || 0) > 0 ? ( 
+                                    <Line options={getLineChartOptions(theme)} data={storiesReadData} /> 
+                                ) : ( <p className="no-data-msg">No data available.</p> )}
+                            </div>
+                        </div>
+                    )}
+                    {activeTab === 'bias' && (
+                        <div className="dashboard-card full-width-card">
+                            <h3>Bias vs. Trust Map</h3>
+                            <div className="chart-container-large">
+                                {(statsData?.allArticles?.length || 0) > 0 ? (
+                                    <BiasMap articles={statsData.allArticles} theme={theme} />
+                                ) : ( <p className="no-data-msg">Read more to populate map.</p> )}
+                            </div>
+                        </div>
+                    )}
+                    {activeTab === 'interests' && (
+                        <>
+                            <div className="dashboard-card">
+                                <h3>Top Categories</h3>
+                                <div className="chart-container">
+                                    {totalAnalyzed > 0 && (categoryReadData.labels?.length || 0) > 0 ? ( 
+                                        <Bar options={getBarChartOptions('', 'Articles', theme)} data={categoryReadData} /> 
+                                    ) : ( <p className="no-data-msg">No data.</p> )}
+                                </div>
+                            </div>
+                            <div className="dashboard-card">
+                                <h3>Top Sources</h3>
+                                <div className="chart-container">
+                                    {totalAnalyzed > 0 && (topSourcesData.labels?.length || 0) > 0 ? ( 
+                                        <Bar options={getBarChartOptions('', 'Articles', theme)} data={topSourcesData} /> 
+                                    ) : ( <p className="no-data-msg">No data.</p> )}
+                                </div>
+                            </div>
+                        </>
+                    )}
+                    {activeTab === 'quality' && (
+                        <>
+                            <div className="dashboard-card">
+                                <h3>Sentiment</h3>
+                                <div className="chart-container">
+                                    {totalAnalyzed > 0 && (sentimentReadData.labels?.length || 0) > 0 ? ( 
+                                        <Doughnut options={getDoughnutChartOptions('', theme)} data={sentimentReadData} /> 
+                                    ) : ( <p className="no-data-msg">No data.</p> )}
+                                </div>
+                            </div>
+                            <div className="dashboard-card">
+                                <h3>Quality Grade</h3>
+                                <div className="chart-container">
+                                    {totalAnalyzed > 0 && (qualityReadData.labels?.length || 0) > 0 ? ( 
+                                        <Doughnut options={getDoughnutChartOptions('', theme)} data={qualityReadData} /> 
+                                    ) : ( <p className="no-data-msg">No data.</p> )}
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+              </>
+          ) : (
+              /* DESKTOP GRID LAYOUT (Unchanged) */
+              <>
+                <div className="dashboard-card full-width-card">
+                    <h3>Stories Read Over Time</h3>
+                    <div className="chart-container">
+                        {(statsData?.dailyCounts?.length || 0) > 0 ? ( 
+                            <Line options={getLineChartOptions(theme)} data={storiesReadData} /> 
+                        ) : ( <p className="no-data-msg">No data available.</p> )}
+                    </div>
+                </div>
 
-          <div className="dashboard-grid">
-             <div className="dashboard-card full-width-card">
-               <h3>Bias vs. Trust Map</h3>
-               <div className="chart-container-large">
-                   {(statsData?.allArticles?.length || 0) > 0 ? (
-                      <BiasMap articles={statsData.allArticles} theme={theme} />
-                   ) : ( <p className="no-data-msg">Read more to populate map.</p> )}
-               </div>
-             </div>
+                <div className="dashboard-grid">
+                    <div className="dashboard-card full-width-card">
+                        <h3>Bias vs. Trust Map</h3>
+                        <div className="chart-container-large">
+                            {(statsData?.allArticles?.length || 0) > 0 ? (
+                                <BiasMap articles={statsData.allArticles} theme={theme} />
+                            ) : ( <p className="no-data-msg">Read more to populate map.</p> )}
+                        </div>
+                    </div>
 
-             <div className="dashboard-card">
-               <h3>Top Categories</h3>
-               <div className="chart-container">
-                   {totalAnalyzed > 0 && (categoryReadData.labels?.length || 0) > 0 ? ( 
-                      <Bar options={getBarChartOptions('', 'Articles', theme)} data={categoryReadData} /> 
-                   ) : ( <p className="no-data-msg">No data.</p> )}
-               </div>
-             </div>
+                    <div className="dashboard-card">
+                        <h3>Top Categories</h3>
+                        <div className="chart-container">
+                            {totalAnalyzed > 0 && (categoryReadData.labels?.length || 0) > 0 ? ( 
+                                <Bar options={getBarChartOptions('', 'Articles', theme)} data={categoryReadData} /> 
+                            ) : ( <p className="no-data-msg">No data.</p> )}
+                        </div>
+                    </div>
 
-             <div className="dashboard-card">
-               <h3>Top Sources</h3>
-               <div className="chart-container">
-                   {totalAnalyzed > 0 && (topSourcesData.labels?.length || 0) > 0 ? ( 
-                      <Bar options={getBarChartOptions('', 'Articles', theme)} data={topSourcesData} /> 
-                   ) : ( <p className="no-data-msg">No data.</p> )}
-               </div>
-             </div>
+                    <div className="dashboard-card">
+                        <h3>Top Sources</h3>
+                        <div className="chart-container">
+                            {totalAnalyzed > 0 && (topSourcesData.labels?.length || 0) > 0 ? ( 
+                                <Bar options={getBarChartOptions('', 'Articles', theme)} data={topSourcesData} /> 
+                            ) : ( <p className="no-data-msg">No data.</p> )}
+                        </div>
+                    </div>
 
-             <div className="dashboard-card">
-               <h3>Sentiment</h3>
-               <div className="chart-container">
-                   {totalAnalyzed > 0 && (sentimentReadData.labels?.length || 0) > 0 ? ( 
-                      <Doughnut options={getDoughnutChartOptions('', theme)} data={sentimentReadData} /> 
-                   ) : ( <p className="no-data-msg">No data.</p> )}
-               </div>
-             </div>
+                    <div className="dashboard-card">
+                        <h3>Sentiment</h3>
+                        <div className="chart-container">
+                            {totalAnalyzed > 0 && (sentimentReadData.labels?.length || 0) > 0 ? ( 
+                                <Doughnut options={getDoughnutChartOptions('', theme)} data={sentimentReadData} /> 
+                            ) : ( <p className="no-data-msg">No data.</p> )}
+                        </div>
+                    </div>
 
-             <div className="dashboard-card">
-               <h3>Quality Grade</h3>
-               <div className="chart-container">
-                   {totalAnalyzed > 0 && (qualityReadData.labels?.length || 0) > 0 ? ( 
-                      <Doughnut options={getDoughnutChartOptions('', theme)} data={qualityReadData} /> 
-                   ) : ( <p className="no-data-msg">No data.</p> )}
-               </div>
-             </div>
-          </div>
+                    <div className="dashboard-card">
+                        <h3>Quality Grade</h3>
+                        <div className="chart-container">
+                            {totalAnalyzed > 0 && (qualityReadData.labels?.length || 0) > 0 ? ( 
+                                <Doughnut options={getDoughnutChartOptions('', theme)} data={qualityReadData} /> 
+                            ) : ( <p className="no-data-msg">No data.</p> )}
+                        </div>
+                    </div>
+                </div>
+              </>
+          )}
 
           <div className="mobile-only-footer">
             <Link to="/account-settings" className="btn-secondary btn-full">Account Settings</Link>

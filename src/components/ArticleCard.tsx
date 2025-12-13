@@ -1,10 +1,25 @@
-// src/components/ArticleCard.js
+// src/components/ArticleCard.tsx
 import React, { useState, useEffect, memo } from 'react'; 
 import './ArticleCard.css'; 
 import { getSentimentInfo, isOpinion, getOptimizedImageUrl } from '../utils/helpers'; 
 import { getFallbackImage } from '../utils/constants'; 
 import SmartBriefingModal from './modals/SmartBriefingModal';
 import useIsMobile from '../hooks/useIsMobile';
+import { IArticle } from '../types';
+
+interface ArticleCardProps {
+  article: IArticle;
+  onCompare: (article: IArticle) => void;
+  onAnalyze: (article: IArticle) => void;
+  onShare: (article: IArticle) => void;
+  onRead: (article: IArticle) => void;
+  showTooltip: (text: string, e: React.MouseEvent) => void;
+  isSaved?: boolean;
+  onToggleSave: (article: IArticle) => void;
+  isPlaying?: boolean;
+  onPlay?: () => void;
+  onStop?: () => void;
+}
 
 // Wrapped in memo() to prevent unnecessary re-renders during scroll
 const ArticleCard = memo(function ArticleCard({ 
@@ -16,19 +31,18 @@ const ArticleCard = memo(function ArticleCard({
   showTooltip, 
   isSaved,      
   onToggleSave,
-  // --- AUDIO PROPS ---
   isPlaying, 
   onPlay, 
   onStop 
-}) {
+}: ArticleCardProps) {
   const [showBriefing, setShowBriefing] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false); // New state for fade-in effect
+  const [imageLoaded, setImageLoaded] = useState(false); 
   const isMobileView = useIsMobile();
 
   // Logic Types
   const isHardNews = article.analysisType === 'Full';
   const isOpEd = isOpinion(article);
-  const showCompareOnSoft = !isHardNews && (article.clusterCount > 1);
+  const showCompareOnSoft = !isHardNews && ((article.clusterCount || 0) > 1);
 
   // Sentiment Data
   const sentimentInfo = getSentimentInfo(article.sentiment);
@@ -38,22 +52,20 @@ const ArticleCard = memo(function ArticleCard({
   
   const [imgSrc, setImgSrc] = useState(optimizedUrl || getFallbackImage(article.category));
 
-  // Reset image if the article prop changes (e.g. during scrolling/recycling)
   useEffect(() => {
       const newUrl = getOptimizedImageUrl(article.imageUrl);
       setImgSrc(newUrl || getFallbackImage(article.category));
-      setImageLoaded(false); // Reset fade-in state when card is recycled
+      setImageLoaded(false); 
   }, [article.imageUrl, article.category]);
 
   const handleImageError = () => {
-      // If the optimized image fails, swap to the category fallback
       const fallback = getFallbackImage(article.category);
       if (imgSrc !== fallback) {
           setImgSrc(fallback);
       }
   };
 
-  const stopMobileClick = (e) => { if (isMobileView) { e.stopPropagation(); } };
+  const stopMobileClick = (e: React.MouseEvent) => { if (isMobileView) { e.stopPropagation(); } };
 
   const SaveButton = () => (
     <button 
@@ -66,7 +78,7 @@ const ArticleCard = memo(function ArticleCard({
   );
 
   const ListenButton = () => {
-    if (isPlaying) {
+    if (isPlaying && onStop) {
       return (
         <button 
           onClick={(e) => { stopMobileClick(e); onStop(); }} 
@@ -76,29 +88,28 @@ const ArticleCard = memo(function ArticleCard({
         </button>
       );
     }
-    return (
-      <button 
-        onClick={(e) => { stopMobileClick(e); onPlay(); }} 
-        className="btn-secondary"
-      >
-        Listen
-      </button>
-    );
+    if (onPlay) {
+      return (
+        <button 
+          onClick={(e) => { stopMobileClick(e); onPlay(); }} 
+          className="btn-secondary"
+        >
+          Listen
+        </button>
+      );
+    }
+    return null;
   };
 
-  // --- BADGES ---
   const renderTopBadges = () => {
     return (
       <div className="card-badges">
-        
-        {/* Suggestion Badge (Comfort/Challenge) */}
         {article.suggestionType && (
             <div className={`badge ${article.suggestionType === 'Challenge' ? 'challenge' : 'comfort'}`}>
               {article.suggestionType === 'Challenge' ? 'Perspective Widener' : 'Comfort Read'}
             </div>
         )}
 
-        {/* OPINION Badge */}
         {isOpEd && (
            <div className="badge opinion">
               OPINION
@@ -113,9 +124,7 @@ const ArticleCard = memo(function ArticleCard({
       <div className={`article-card ${isPlaying ? 'now-playing' : ''}`}>
         {renderTopBadges()}
         
-        {/* --- IMAGE SECTION --- */}
         <div className="article-image">
-          {/* Skeleton Loader behind the image */}
           {!imageLoaded && (
              <div className="skeleton-pulse" style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
           )}
@@ -124,7 +133,7 @@ const ArticleCard = memo(function ArticleCard({
             src={imgSrc} 
             alt={article.headline} 
             onError={handleImageError} 
-            onLoad={() => setImageLoaded(true)} // Trigger fade-in
+            onLoad={() => setImageLoaded(true)} 
             loading="lazy" 
             style={{ 
                 opacity: imageLoaded ? 1 : 0, 
@@ -153,7 +162,6 @@ const ArticleCard = memo(function ArticleCard({
             <div className="article-meta-v2">
               <span className="source" title={article.source}>{article.source}</span>
               
-              {/* Show Scores ONLY for Hard News */}
               {isHardNews && (
                 <>
                   <span className="meta-divider">|</span>
@@ -165,7 +173,6 @@ const ArticleCard = memo(function ArticleCard({
             </div>
             
             <div className="quality-display-v2">
-                {/* Soft News / Opinion: Show Argument & Sentiment */}
                 {!isHardNews ? (
                     <>
                         <span className="quality-grade-text info">
@@ -177,7 +184,6 @@ const ArticleCard = memo(function ArticleCard({
                         </span>
                     </>
                 ) : (
-                    /* Hard News: Show Grade & Sentiment */
                     <>
                         <span className="quality-grade-text" onClick={(e) => showTooltip("Grade based on credibility.", e)}>
                             Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}
@@ -190,7 +196,6 @@ const ArticleCard = memo(function ArticleCard({
             </div>
             
             <div className="article-actions">
-              {/* Hard News Actions */}
               {isHardNews && (
                 <>
                   <div className="article-actions-top">
@@ -200,12 +205,11 @@ const ArticleCard = memo(function ArticleCard({
                     <SaveButton /> 
                   </div>
                   <button onClick={(e) => { stopMobileClick(e); onCompare(article); }} className="btn-primary btn-full-width">
-                      {article.clusterCount > 1 ? `Compare Coverage (${article.clusterCount})` : "Compare Coverage"}
+                      {(article.clusterCount || 0) > 1 ? `Compare Coverage (${article.clusterCount})` : "Compare Coverage"}
                   </button>
                 </>
               )}
               
-              {/* Soft News / Opinion Actions */}
               {!isHardNews && (
                 <>
                   <div className="article-actions-top">

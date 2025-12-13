@@ -13,9 +13,18 @@
   --text-muted: #505050;
   --border-color: #333333;
   --border-light: #2A2A2A;
-  --accent-primary: #B38F5F;
+  
+  /* Brand Colors */
+  --accent-primary: #B38F5F; /* The Gamut Gold */
+  --accent-gold: #B38F5F;
   --accent-secondary: #9C7C50;
   --accent-hover: #CCA573;
+  
+  /* Functional Colors */
+  --color-success: #4CAF50;
+  --color-error: #E57373;
+  --color-info: #2E4E6B;
+  
   --shadow-color: rgba(0, 0, 0, 0.5);
   --shadow-sm: 0 3px 6px var(--shadow-color);
   --shadow-md: 0 5px 12px var(--shadow-color);
@@ -36,9 +45,18 @@
   --text-muted: #AAAAAA;
   --border-color: #EAEAEA;
   --border-light: #F5F5F5;
-  --accent-primary: #2E4E6B;
+  
+  /* Brand Colors */
+  --accent-primary: #2E4E6B; /* Navy for Light Mode */
+  --accent-gold: #B38F5F;    /* Keep gold available */
   --accent-secondary: #243E56;
   --accent-hover: #3E6A8E;
+  
+  /* Functional Colors */
+  --color-success: #2E7D32;
+  --color-error: #C62828;
+  --color-info: #2E4E6B;
+
   --shadow-color: rgba(46, 78, 107, 0.18);
   --shadow-sm: 0 3px 6px var(--shadow-color);
   --shadow-md: 0 5px 12px var(--shadow-color);
@@ -47,6 +65,7 @@
   --gradient-header: linear-gradient(to right, var(--bg-secondary), #FDFDFD);
 }
 
+/* ... (Keep the rest of your App.css below unchanged) ... */
 /* ==================== ACCESSIBILITY: DYNAMIC FONT SIZES ==================== */
 /* These rules use high specificity to override component defaults */
 

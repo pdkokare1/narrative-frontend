@@ -1,12 +1,47 @@
-// src/context/RadioContext.js
-import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
-import * as api from '../services/api';
+// src/context/RadioContext.tsx
+import React, { createContext, useContext, useState, useRef, useEffect, useCallback, ReactNode } from 'react';
+import api from '../services/api';
 import { VOICE_ASSETS } from '../utils/VoiceAssets'; 
 import { useAuth } from './AuthContext'; 
+import { IArticle } from '../types';
 
-const RadioContext = createContext();
+interface Speaker {
+  id: string;
+  name: string;
+  role: string;
+}
 
-export const useRadio = () => useContext(RadioContext);
+interface IRadioContext {
+  currentArticle: IArticle | null;
+  currentSpeaker: Speaker | null;
+  isPlaying: boolean;
+  isPaused: boolean;
+  isLoading: boolean;
+  isVisible: boolean;
+  currentTime: number;
+  duration: number;
+  playbackRate: number;
+  startRadio: (articles: IArticle[], startIndex?: number) => void;
+  playSingle: (article: IArticle) => void;
+  stop: () => void;
+  pause: () => void;
+  resume: () => void;
+  playNext: () => void;
+  playPrevious: () => void;
+  seekTo: (time: number) => void;
+  changeSpeed: (speed: number) => void;
+  cancelAutoplay: () => void;
+  isWaitingForNext?: boolean;
+  autoplayTimer?: number;
+}
+
+const RadioContext = createContext<IRadioContext | undefined>(undefined);
+
+export const useRadio = () => {
+  const context = useContext(RadioContext);
+  if (!context) throw new Error("useRadio must be used within RadioProvider");
+  return context;
+};
 
 // --- PERSONAS ---
 const VOICES = {
@@ -15,13 +50,13 @@ const VOICES = {
   CURATOR: { id: '2n8AzqIsQUPMvb1OgO72', name: 'Shubhi', role: 'The Curator' }
 };
 
-export const RadioProvider = ({ children }) => {
+export const RadioProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth(); 
 
   // --- STATE ---
-  const [playlist, setPlaylist] = useState([]);
+  const [playlist, setPlaylist] = useState<any[]>([]); // Using 'any' for playlist items because they can be "System Audio" objects too
   const [currentIndex, setCurrentIndex] = useState(-1);
-  const [currentArticle, setCurrentArticle] = useState(null);
+  const [currentArticle, setCurrentArticle] = useState<IArticle | null>(null);
   
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -31,26 +66,26 @@ export const RadioProvider = ({ children }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1.0);
   
-  const [currentSpeaker, setCurrentSpeaker] = useState(null);
+  const [currentSpeaker, setCurrentSpeaker] = useState<Speaker | null>(null);
   const [isVisible, setIsVisible] = useState(false); 
 
   // Refs
   const audioRef = useRef(new Audio());
   
   // NEW: Track exactly which IDs we have already requested to avoid duplicates
-  const prefetchedIdsRef = useRef(new Set());
+  const prefetchedIdsRef = useRef(new Set<string>());
   
   // Store downloaded audio BLOBS
-  const preloadedBlobsRef = useRef({}); 
+  const preloadedBlobsRef = useRef<Record<string, string>>({}); 
 
   // --- HELPER: Cloudinary Optimization (64kbps) ---
-  const optimizeUrl = (url) => {
+  const optimizeUrl = (url?: string | null) => {
       if (!url || !url.includes('cloudinary')) return url;
       return url.replace('/upload/', '/upload/br_64k/');
   };
 
   // --- HELPER: Select Persona ---
-  const getPersonaForCategory = useCallback((category) => {
+  const getPersonaForCategory = useCallback((category?: string) => {
       if (!category) return VOICES.ANCHOR;
       const cat = category.toLowerCase();
       if (cat.includes('economy') || cat.includes('business') || cat.includes('tech') || cat.includes('science') || cat.includes('finance') || cat.includes('crypto')) return VOICES.ANALYST;
@@ -59,7 +94,7 @@ export const RadioProvider = ({ children }) => {
   }, []);
 
   // --- HELPER: Get Base Speed per Host ---
-  const getBaseSpeed = (personaName) => {
+  const getBaseSpeed = (personaName: string) => {
       if (!personaName) return 0.9;
       switch (personaName) {
           case 'Rajat': return 1.0; 
@@ -70,20 +105,21 @@ export const RadioProvider = ({ children }) => {
   };
 
   // --- HELPER: Format Text for Audio ---
-  const prepareAudioText = (headline, summary) => {
+  const prepareAudioText = (headline: string, summary: string) => {
       const cleanHeadline = headline.replace(/[.]+$/, '');
       return `${cleanHeadline}. . . . . . ${summary}`;
   };
 
   // --- HELPER: Select Greeting ---
-  const getGreetingTrack = (firstArticle) => {
+  const getGreetingTrack = (firstArticle: IArticle) => {
       const userId = user?.uid || 'guest';
       const storageKey = `lastRadioSession_${userId}`;
-      const lastSession = localStorage.getItem(storageKey);
+      const lastSessionStr = localStorage.getItem(storageKey);
+      const lastSession = lastSessionStr ? parseInt(lastSessionStr) : 0;
       const now = Date.now();
       const THIRTY_MINS = 30 * 60 * 1000;
 
-      localStorage.setItem(storageKey, now);
+      localStorage.setItem(storageKey, now.toString());
 
       if (lastSession && (now - lastSession < THIRTY_MINS)) return null; 
 
@@ -94,6 +130,7 @@ export const RadioProvider = ({ children }) => {
       if (hour >= 12 && hour < 17) timeKey = 'AFTERNOON';
       if (hour >= 17 || hour < 5) timeKey = 'EVENING';
 
+      // @ts-ignore - Indexing VOICE_ASSETS dynamically
       const clips = VOICE_ASSETS.OPENERS[hostKey]?.[timeKey];
       if (!clips || clips.length === 0) return null;
 
@@ -105,18 +142,21 @@ export const RadioProvider = ({ children }) => {
           summary: "Session Opener",
           isSystemAudio: true, 
           audioUrl: randomClip, 
-          speaker: persona
+          speaker: persona,
+          category: 'System'
       };
   };
 
   // --- HELPER: Inject Segues ---
-  const injectSegues = useCallback((rawArticles) => {
-      const processed = [];
+  const injectSegues = useCallback((rawArticles: IArticle[]) => {
+      const processed: any[] = [];
       for (let i = 0; i < rawArticles.length; i++) {
           processed.push(rawArticles[i]);
           if (i < rawArticles.length - 1) {
               const currentItem = rawArticles[i];
               const nextItem = rawArticles[i+1];
+              
+              // @ts-ignore - Checking for custom property
               if (currentItem.isSystemAudio || nextItem.isSystemAudio) continue;
 
               const currentHost = getPersonaForCategory(currentItem.category);
@@ -124,6 +164,7 @@ export const RadioProvider = ({ children }) => {
 
               if (currentHost.name === nextHost.name) {
                   const hostKey = currentHost.name.toUpperCase();
+                  // @ts-ignore
                   const segues = VOICE_ASSETS.SEGUES?.[hostKey];
                   if (segues && segues.length > 0) {
                       const randomSegue = segues[Math.floor(Math.random() * segues.length)];
@@ -144,7 +185,7 @@ export const RadioProvider = ({ children }) => {
   }, [getPersonaForCategory]);
 
   // --- CORE: Play Audio ---
-  const playArticle = useCallback(async (article) => {
+  const playArticle = useCallback(async (article: any) => {
       if (!article) return;
 
       setIsLoading(true);
@@ -168,12 +209,12 @@ export const RadioProvider = ({ children }) => {
           } 
           // Network Fallback with Optimization
           else if (article.isSystemAudio && article.audioUrl) {
-              audio.src = optimizeUrl(article.audioUrl);
+              audio.src = optimizeUrl(article.audioUrl) || "";
           } else {
               const textToSpeak = prepareAudioText(article.headline, article.summary);
               const response = await api.getAudio(textToSpeak, persona.id, article._id);
               if (response.data && response.data.audioUrl) {
-                  audio.src = optimizeUrl(response.data.audioUrl);
+                  audio.src = optimizeUrl(response.data.audioUrl) || "";
               } else {
                   throw new Error("No audio URL");
               }
@@ -185,6 +226,7 @@ export const RadioProvider = ({ children }) => {
           await audio.play();
 
           if ('mediaSession' in navigator) {
+              // @ts-ignore - MediaMetadata types might not be fully available
               navigator.mediaSession.metadata = new MediaMetadata({
                   title: article.headline,
                   artist: `The Gamut • ${persona.name}`,
@@ -278,14 +320,14 @@ export const RadioProvider = ({ children }) => {
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "playing";
   }, []);
 
-  const seekTo = useCallback((time) => {
+  const seekTo = useCallback((time: number) => {
       if (audioRef.current) {
           audioRef.current.currentTime = time;
           setCurrentTime(time);
       }
   }, []);
 
-  const changeSpeed = useCallback((newSpeed) => {
+  const changeSpeed = useCallback((newSpeed: number) => {
       setPlaybackRate(newSpeed);
       if (audioRef.current && currentSpeaker) {
           const baseSpeed = getBaseSpeed(currentSpeaker.name);
@@ -293,7 +335,7 @@ export const RadioProvider = ({ children }) => {
       }
   }, [currentSpeaker]);
 
-  const startRadio = useCallback((articles, startIndex = 0) => {
+  const startRadio = useCallback((articles: IArticle[], startIndex = 0) => {
       if (!articles || articles.length === 0) return;
       const userQueue = articles.slice(startIndex);
       const connectedQueue = injectSegues(userQueue);
@@ -304,7 +346,7 @@ export const RadioProvider = ({ children }) => {
       setCurrentIndex(0); 
   }, [getPersonaForCategory, injectSegues]);
 
-  const playSingle = useCallback((article) => {
+  const playSingle = useCallback((article: IArticle) => {
       setPlaylist([article]);
       setCurrentIndex(0);
   }, []);
@@ -346,7 +388,7 @@ export const RadioProvider = ({ children }) => {
                       // Run in background (don't await)
                       (async () => {
                           try {
-                              let urlToFetch = null;
+                              let urlToFetch: string | null = null;
                               if (targetItem.isSystemAudio && targetItem.audioUrl) {
                                   urlToFetch = targetItem.audioUrl;
                               } else {
@@ -361,7 +403,7 @@ export const RadioProvider = ({ children }) => {
 
                               if (urlToFetch) {
                                   // Optimize before downloading
-                                  const optimizedUrl = optimizeUrl(urlToFetch);
+                                  const optimizedUrl = optimizeUrl(urlToFetch) || "";
                                   console.log(`⬇️ Downloading Blob: ${targetItem.headline}`);
                                   
                                   const fetchRes = await fetch(optimizedUrl);

@@ -1,4 +1,4 @@
-// In file: src/SearchResults.js
+// src/SearchResults.tsx
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import * as api from './services/api'; 
@@ -6,12 +6,27 @@ import ArticleCard from './components/ArticleCard';
 import SkeletonCard from './components/ui/SkeletonCard';
 import { useToast } from './context/ToastContext';
 import './App.css'; 
+import { IArticle } from './types';
 
-function SearchResults({ onAnalyze, onCompare, savedArticleIds, onToggleSave, showTooltip }) {
+interface SearchResultsProps {
+  onAnalyze: (article: IArticle) => void;
+  onCompare: (article: IArticle) => void;
+  savedArticleIds: Set<string>;
+  onToggleSave: (article: IArticle) => void;
+  showTooltip: (text: string, e: React.MouseEvent) => void;
+}
+
+const SearchResults: React.FC<SearchResultsProps> = ({ 
+  onAnalyze, 
+  onCompare, 
+  savedArticleIds, 
+  onToggleSave, 
+  showTooltip 
+}) => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q');
   
-  const [articles, setArticles] = useState([]);
+  const [articles, setArticles] = useState<IArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const { addToast } = useToast();
@@ -36,12 +51,12 @@ function SearchResults({ onAnalyze, onCompare, savedArticleIds, onToggleSave, sh
     performSearch();
   }, [query, addToast]);
 
-  const handleReadClick = (article) => {
+  const handleReadClick = (article: IArticle) => {
     api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
     window.open(article.url, '_blank', 'noopener,noreferrer');
   };
 
-  const handleShare = (article) => {
+  const handleShare = (article: IArticle) => {
     api.logShare(article._id).catch(err => console.error("Log Share Error:", err));
     const shareUrl = `${window.location.origin}?article=${article._id}`;
     if (navigator.share) {
@@ -99,6 +114,6 @@ function SearchResults({ onAnalyze, onCompare, savedArticleIds, onToggleSave, sh
       )}
     </div>
   );
-}
+};
 
 export default SearchResults;

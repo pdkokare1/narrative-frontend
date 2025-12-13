@@ -8,6 +8,7 @@ import { useToast } from './context/ToastContext';
 import ArticleCard from './components/ArticleCard'; 
 import SkeletonCard from './components/ui/SkeletonCard'; 
 import useIsMobile from './hooks/useIsMobile';
+import useShare from './hooks/useShare'; // NEW IMPORT
 import './App.css'; 
 import './SavedArticles.css'; 
 import { IArticle } from './types';
@@ -16,7 +17,7 @@ interface SavedArticlesProps {
   onToggleSave: (article: IArticle) => void;
   onCompare: (article: IArticle) => void;
   onAnalyze: (article: IArticle) => void;
-  onShare: (article: IArticle) => void;
+  onShare?: (article: IArticle) => void; // Made optional, we use hook instead
   onRead: (article: IArticle) => void;
   showTooltip: (text: string, e: React.MouseEvent) => void;
 }
@@ -25,12 +26,12 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
   onToggleSave, 
   onCompare, 
   onAnalyze, 
-  onShare, 
   onRead, 
   showTooltip 
 }) => {
   const isMobileView = useIsMobile();
   const { addToast } = useToast(); 
+  const { handleShare } = useShare(); // NEW HOOK
   const queryClient = useQueryClient(); 
 
   // --- QUERY: Saved Articles (With Offline Support) ---
@@ -42,48 +43,33 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
     queryKey: ['savedArticles'],
     queryFn: async () => {
       try {
-        // 1. Try Network
         const { data } = await api.fetchSavedArticles();
         const articles = data.articles || [];
-        
-        // 2. Save to Offline Storage (Background)
-        if (articles.length > 0) {
-            offlineStorage.save('saved-library', articles);
-        }
+        if (articles.length > 0) offlineStorage.save('saved-library', articles);
         return articles;
-
       } catch (err) {
-        // 3. Network Failed? Try Offline Storage
         console.warn("Network failed, checking offline cache for library...");
         const cachedLibrary = await offlineStorage.get('saved-library');
         if (cachedLibrary) {
             addToast('Offline mode: Showing cached library', 'info');
             return cachedLibrary;
         }
-        throw err; // Real error if both fail
+        throw err; 
       }
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5, 
   });
 
-  // --- Handler: Optimistic Removal ---
   const handleLocalToggleSave = (article: IArticle) => {
-    // 1. Trigger the global save logic (App.js)
     onToggleSave(article);
-
-    // 2. Instantly remove from THIS list (Optimistic UI)
     queryClient.setQueryData(['savedArticles'], (oldData: IArticle[] | undefined) => {
       if (!oldData) return [];
       const newData = oldData.filter(a => a._id !== article._id);
-      
-      // Update offline cache immediately to reflect removal
       offlineStorage.save('saved-library', newData);
-      
       return newData;
     });
   };
 
-  // --- Render Helpers ---
   const renderHeader = () => (
     <div className="saved-header">
       <h1>Saved Articles</h1>
@@ -111,28 +97,19 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
     </div>
   );
 
-  // --- Skeleton Grid ---
   const renderSkeletons = () => (
     <div className="articles-grid">
-       {[...Array(6)].map((_, i) => ( 
-         <div className="article-card-wrapper" key={i}>
-           <SkeletonCard />
-         </div> 
-       ))}
+       {[...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> ))}
     </div>
   );
 
-  // --- Mobile View ---
   if (isMobileView) {
     return (
       <main className="content">
-        {isLoading ? (
-           <div className="article-card-wrapper"><SkeletonCard /></div>
-        ) : error ? (
-           <div className="article-card-wrapper">{renderError()}</div>
-        ) : savedArticles.length === 0 ? (
-           <div className="article-card-wrapper">{renderEmptyState()}</div>
-        ) : (
+        {isLoading ? ( <div className="article-card-wrapper"><SkeletonCard /></div> ) 
+        : error ? ( <div className="article-card-wrapper">{renderError()}</div> ) 
+        : savedArticles.length === 0 ? ( <div className="article-card-wrapper">{renderEmptyState()}</div> ) 
+        : (
           <>
             {renderHeader()}
             {savedArticles.map((article: IArticle) => (
@@ -141,7 +118,7 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
                   article={article}
                   onCompare={() => onCompare(article)}
                   onAnalyze={onAnalyze}
-                  onShare={onShare}
+                  onShare={() => handleShare(article)} 
                   onRead={onRead}
                   showTooltip={showTooltip}
                   isSaved={true}
@@ -155,19 +132,14 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
     );
   }
 
-  // --- Desktop View ---
   return (
     <div className="content saved-articles-container">
-      {isLoading ? (
-        renderSkeletons()
-      ) : error ? (
-        renderError()
-      ) : (
+      {isLoading ? renderSkeletons() 
+      : error ? renderError() 
+      : (
         <>
           {renderHeader()}
-          {savedArticles.length === 0 ? (
-            renderEmptyState()
-          ) : (
+          {savedArticles.length === 0 ? renderEmptyState() : (
             <div className="articles-grid">
               {savedArticles.map((article: IArticle) => (
                 <ArticleCard
@@ -175,7 +147,7 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
                   article={article}
                   onCompare={() => onCompare(article)}
                   onAnalyze={onAnalyze}
-                  onShare={onShare}
+                  onShare={() => handleShare(article)} 
                   onRead={onRead}
                   showTooltip={showTooltip}
                   isSaved={true}

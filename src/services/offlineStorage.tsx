@@ -1,5 +1,15 @@
-// src/services/offlineStorage.js
-import { openDB } from 'idb';
+// src/services/offlineStorage.ts
+import { openDB, DBSchema } from 'idb';
+
+interface GamutDB extends DBSchema {
+  'feed-cache': {
+    key: string;
+    value: {
+      data: any;
+      timestamp: number;
+    };
+  };
+}
 
 const DB_NAME = 'the-gamut-db';
 const STORE_NAME = 'feed-cache';
@@ -7,7 +17,7 @@ const VERSION = 1;
 
 // Initialize the Database
 const initDB = async () => {
-  return openDB(DB_NAME, VERSION, {
+  return openDB<GamutDB>(DB_NAME, VERSION, {
     upgrade(db) {
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME);
@@ -18,10 +28,9 @@ const initDB = async () => {
 
 const offlineStorage = {
   // Save data to the phone
-  save: async (key, data) => {
+  save: async (key: string, data: any): Promise<void> => {
     try {
       const db = await initDB();
-      // Add a timestamp so we know how old this data is
       const record = {
         data,
         timestamp: Date.now()
@@ -34,7 +43,7 @@ const offlineStorage = {
   },
 
   // Get data from the phone
-  get: async (key) => {
+  get: async (key: string): Promise<any | null> => {
     try {
       const db = await initDB();
       const record = await db.get(STORE_NAME, key);
@@ -48,8 +57,8 @@ const offlineStorage = {
     }
   },
 
-  // Clear specific data (e.g. on logout)
-  clear: async (key) => {
+  // Clear specific data
+  clear: async (key: string): Promise<void> => {
     try {
       const db = await initDB();
       await db.delete(STORE_NAME, key);

@@ -1,4 +1,4 @@
-// src/components/BiasMap.js
+// src/components/BiasMap.tsx
 import React, { useMemo } from 'react';
 import { Scatter } from 'react-chartjs-2';
 import {
@@ -7,17 +7,25 @@ import {
   PointElement,
   LineElement,
   Tooltip,
-  Legend
+  Legend,
+  ChartData,
+  ChartOptions
 } from 'chart.js';
 import { getScatterChartOptions, leanColors } from '../utils/ChartConfig';
+import { IArticle } from '../types';
 
 // Register necessary Chart.js components
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
 
-function BiasMap({ articles, theme }) {
+interface BiasMapProps {
+  articles: IArticle[];
+  theme: string;
+}
+
+const BiasMap: React.FC<BiasMapProps> = ({ articles, theme }) => {
   
   // --- Data Transformation Logic ---
-  const chartData = useMemo(() => {
+  const chartData: ChartData<'scatter'> = useMemo(() => {
     // 1. Filter out articles without scores
     const validArticles = (articles || []).filter(a => 
       a.politicalLean && 
@@ -26,7 +34,7 @@ function BiasMap({ articles, theme }) {
     );
 
     // 2. Map Leans to X-Axis Numbers
-    const getLeanValue = (lean) => {
+    const getLeanValue = (lean: string) => {
       switch(lean) {
         case 'Left': return -10;
         case 'Left-Leaning': return -5;
@@ -40,7 +48,7 @@ function BiasMap({ articles, theme }) {
     // 3. Create Data Points
     const points = validArticles.map(article => ({
       x: getLeanValue(article.politicalLean),
-      y: article.trustScore,
+      y: article.trustScore || 0,
       headline: article.headline // Attached for tooltip
     }));
 
@@ -62,7 +70,7 @@ function BiasMap({ articles, theme }) {
     };
   }, [articles, theme]);
 
-  const options = getScatterChartOptions(theme);
+  const options: ChartOptions<'scatter'> = getScatterChartOptions(theme);
 
   // --- Render ---
   return (
@@ -83,6 +91,6 @@ function BiasMap({ articles, theme }) {
       )}
     </div>
   );
-}
+};
 
 export default BiasMap;

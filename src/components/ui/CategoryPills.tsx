@@ -1,12 +1,17 @@
-// In file: src/components/ui/CategoryPills.js
+// src/components/ui/CategoryPills.tsx
 import React, { useRef } from 'react';
-import { CATEGORIES } from '../../utils/constants'; // <--- NEW IMPORT
+import { CATEGORIES } from '../../utils/constants'; 
 import '../../App.css'; 
 
-function CategoryPills({ selectedCategory, onSelect }) {
-  const scrollRef = useRef(null);
+interface CategoryPillsProps {
+  selectedCategory: string;
+  onSelect: (category: string) => void;
+}
 
-  const handleWheel = (e) => {
+const CategoryPills: React.FC<CategoryPillsProps> = ({ selectedCategory, onSelect }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleWheel = (e: React.WheelEvent) => {
     if (scrollRef.current) {
       scrollRef.current.scrollLeft += e.deltaY;
     }
@@ -15,7 +20,6 @@ function CategoryPills({ selectedCategory, onSelect }) {
   return (
     <div className="category-pills-container" onWheel={handleWheel} ref={scrollRef}>
       {CATEGORIES.map((cat) => {
-        // Handle "All Categories" logic
         const isActive = selectedCategory === cat || (cat === 'All Categories' && !selectedCategory);
         
         return (
@@ -30,6 +34,6 @@ function CategoryPills({ selectedCategory, onSelect }) {
       })}
     </div>
   );
-}
+};
 
 export default CategoryPills;

@@ -1,7 +1,8 @@
-// In file: src/utils/ChartConfig.js
+// src/utils/ChartConfig.ts
+import { ChartOptions } from 'chart.js';
 
 // --- Color Palettes ---
-export const leanColors = {
+export const leanColors: Record<string, string> = {
     'Left': '#dc2626', 
     'Left-Leaning': '#f87171', 
     'Center': '#4CAF50',
@@ -10,13 +11,13 @@ export const leanColors = {
     'Not Applicable': '#a1a1aa'
 };
 
-export const sentimentColors = { 
+export const sentimentColors: Record<string, string> = { 
     'Positive': '#2563eb', 
     'Negative': '#dc2626', 
     'Neutral': '#6b7280' 
 };
 
-export const qualityColors = {
+export const qualityColors: Record<string, string> = {
     'A+ Excellent (90-100)': '#2563eb',
     'A High (80-89)': '#60a5fa',
     'B Professional (70-79)': '#4CAF50',
@@ -28,8 +29,20 @@ export const qualityColors = {
 const categoryColorsDark = ['#B38F5F', '#CCA573', '#D9B98A', '#E6CB9F', '#9C7C50', '#8F6B4D', '#C19A6B', '#AE8A53', '#D0B48F', '#B8860B'];
 const categoryColorsLight = ['#2E4E6B', '#3E6A8E', '#5085B2', '#63A0D6', '#243E56', '#1A2D3E', '#4B77A3', '#395D7D', '#5D92C1', '#004E8A'];
 
+interface ThemeColors {
+    textPrimary: string;
+    textSecondary: string;
+    textTertiary: string;
+    borderColor: string;
+    tooltipBg: string;
+    categoryPalette: string[];
+    accentPrimary: string;
+    trendUp: string;
+    trendDown: string;
+}
+
 // --- Helper to get Theme Variables ---
-export const getChartTheme = (theme) => {
+export const getChartTheme = (theme: string): ThemeColors => {
     const isDark = theme === 'dark';
     return {
         textPrimary: isDark ? '#EAEAEA' : '#2C2C2C',
@@ -46,7 +59,7 @@ export const getChartTheme = (theme) => {
 
 // --- Options Generators ---
 
-export const getDoughnutChartOptions = (title, theme) => {
+export const getDoughnutChartOptions = (title: string, theme: string): ChartOptions<'doughnut'> => {
     const colors = getChartTheme(theme);
     return {
         responsive: true,
@@ -73,7 +86,7 @@ export const getDoughnutChartOptions = (title, theme) => {
     };
 };
 
-export const getBarChartOptions = (title, axisLabel, theme) => {
+export const getBarChartOptions = (title: string, axisLabel: string, theme: string): ChartOptions<'bar'> => {
     const colors = getChartTheme(theme);
     return {
         responsive: true,
@@ -108,7 +121,7 @@ export const getBarChartOptions = (title, axisLabel, theme) => {
     };
 };
 
-export const getLineChartOptions = (theme) => {
+export const getLineChartOptions = (theme: string): ChartOptions<'line'> => {
     const colors = getChartTheme(theme);
     return {
         responsive: true,
@@ -145,8 +158,7 @@ export const getLineChartOptions = (theme) => {
     };
 };
 
-// --- NEW: Scatter Plot Options (For Bias Map) ---
-export const getScatterChartOptions = (theme) => {
+export const getScatterChartOptions = (theme: string): ChartOptions<'scatter'> => {
     const colors = getChartTheme(theme);
     return {
         responsive: true,
@@ -184,8 +196,7 @@ export const getScatterChartOptions = (theme) => {
                 bodyColor: colors.textSecondary,
                 padding: 10,
                 callbacks: {
-                    label: (context) => {
-                        // Custom tooltip to show the headline
+                    label: (context: any) => {
                         const point = context.raw;
                         return point.headline ? `${point.headline} (Score: ${point.y})` : `Score: ${point.y}`;
                     }

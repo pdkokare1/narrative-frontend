@@ -3,8 +3,8 @@
 /* ==================== LAYOUT CONTAINERS ==================== */
 .dashboard-page {
   width: 100%;
-  height: calc(100vh - 60px); /* Fill height below header */
-  overflow: hidden; /* Prevent double scrollbars */
+  height: calc(100vh - 60px); 
+  overflow: hidden; 
   display: flex;
   background-color: var(--bg-primary);
 }
@@ -21,20 +21,19 @@
 
 /* ==================== LEFT COLUMN (Stats & Bio) ==================== */
 .dashboard-left-column {
-  flex: 0 0 320px; /* Fixed width */
+  flex: 0 0 320px; 
   min-width: 0;
   display: flex;
   flex-direction: column;
   position: sticky;
   top: 0;
   height: 100%;
-  overflow-y: auto; /* Allow internal scrolling */
+  overflow-y: auto; 
   padding-right: 5px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-
-/* Hide scrollbar for cleaner look */
 .dashboard-left-column::-webkit-scrollbar { display: none; }
-.dashboard-left-column { -ms-overflow-style: none; scrollbar-width: none; }
 
 .dashboard-left-footer {
   margin-top: auto;
@@ -49,9 +48,10 @@
   height: 100%;
   padding-right: 5px;
   padding-bottom: 40px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-primary) var(--bg-secondary);
 }
 
-/* Custom Scrollbar for Right Column */
 .dashboard-right-column::-webkit-scrollbar { width: 6px; }
 .dashboard-right-column::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
 .dashboard-right-column::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 3px; }
@@ -123,7 +123,7 @@
   letter-spacing: 0.5px;
 }
 
-/* ==================== WEEKLY PULSE (New) ==================== */
+/* ==================== WEEKLY PULSE ==================== */
 .pulse-card {
   margin-top: 0;
   border-left-width: 4px;
@@ -157,9 +157,7 @@
   color: var(--text-secondary);
 }
 
-.pulse-status {
-  font-weight: 700;
-}
+.pulse-status { font-weight: 700; }
 .pulse-status.bubble { color: #E57373; }
 .pulse-status.balanced { color: #4CAF50; }
 
@@ -170,7 +168,6 @@
   line-height: 1.5;
 }
 
-/* Pulse Recommendation Box */
 .pulse-rec-box {
   background: var(--bg-elevated);
   padding: 12px;
@@ -209,7 +206,7 @@
   font-weight: 500;
 }
 
-/* ==================== STAT BOXES (Grid) ==================== */
+/* ==================== STAT BOXES ==================== */
 .stat-box-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -244,7 +241,7 @@
   margin-top: 4px;
 }
 
-/* ==================== CHART GRID ==================== */
+/* ==================== CHARTS & GRID ==================== */
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -267,7 +264,7 @@
   grid-column: 1 / -1;
 }
 
-/* ==================== BIAS BAR (Lean) ==================== */
+/* ==================== BIAS BAR ==================== */
 .lean-legend {
   display: flex;
   justify-content: space-around;
@@ -276,150 +273,98 @@
   color: var(--text-secondary);
 }
 
-.legend-item {
-  display: flex;
-  align-items: center;
-}
-
+.legend-item { display: flex; align-items: center; }
 .legend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-  margin-right: 5px;
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block; margin-right: 5px;
 }
 
 .lean-bar-container {
-  display: flex;
-  height: 16px;
-  border-radius: 8px;
-  overflow: hidden;
-  background: var(--bg-primary);
-  margin-bottom: 15px;
+  display: flex; height: 16px; border-radius: 8px;
+  overflow: hidden; background: var(--bg-primary); margin-bottom: 15px;
 }
 
 .lean-segment {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 9px;
-  font-weight: 700;
-  color: white;
-  transition: width 0.6s ease;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; color: white; transition: width 0.6s ease;
 }
 
 .lean-details li {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-  list-style: none;
+  font-size: 12px; color: var(--text-secondary);
+  margin-bottom: 6px; list-style: none;
 }
 
 .lean-details span {
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-right: 8px;
+  font-weight: 700; color: var(--text-primary); margin-right: 8px;
 }
 
-/* ==================== HELPERS & PLACEHOLDERS ==================== */
+/* ==================== HELPERS ==================== */
 .no-data-msg {
-  text-align: center;
-  padding: 40px;
-  font-size: 12px;
-  color: var(--text-tertiary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
+  text-align: center; padding: 40px; font-size: 12px;
+  color: var(--text-tertiary); display: flex;
+  align-items: center; justify-content: center; height: 100%;
 }
+.no-data-msg.small { padding: 10px; }
 
-.no-data-msg.small {
-  padding: 10px;
-}
-
-.btn-mini {
-  font-size: 11px;
-  padding: 4px 10px;
-  text-decoration: none;
-}
-
-.btn-small {
-  padding: 4px 10px;
-  font-size: 10px;
-  text-decoration: none;
-}
-
-.btn-full {
-  width: 100%;
-  display: block;
-  text-align: center;
-  text-decoration: none;
-}
-
+.btn-mini { font-size: 11px; padding: 4px 10px; text-decoration: none; }
+.btn-full { width: 100%; display: block; text-align: center; text-decoration: none; }
 
 /* ==================== MOBILE RESPONSIVE ==================== */
+.mobile-only-footer { display: none; }
+.dashboard-tabs { display: none; }
+
 @media (max-width: 1024px) {
-  .dashboard-content-wrapper {
-    flex-direction: column;
-    padding: 10px;
-    gap: 15px;
-  }
-
-  .dashboard-page {
-    height: auto;
-    overflow-y: auto;
-    display: block;
-  }
-
-  .dashboard-left-column {
-    position: relative;
-    width: 100%;
-    height: auto;
-    overflow: visible;
-    margin-bottom: 10px;
-  }
-
-  .dashboard-right-column {
-    height: auto;
-    overflow: visible;
-    padding-bottom: 80px; /* Space for bottom nav or just clearance */
-  }
-
-  /* Stack charts on tablet/mobile */
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
+  .dashboard-content-wrapper { flex-direction: column; padding: 10px; gap: 15px; }
+  .dashboard-page { height: auto; overflow-y: auto; display: block; }
+  .dashboard-left-column { position: relative; width: 100%; height: auto; overflow: visible; margin-bottom: 10px; }
+  .dashboard-right-column { height: auto; overflow: visible; padding-bottom: 80px; }
+  .dashboard-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {
   .section-title { font-size: 16px; }
+  .dashboard-card { padding: 15px; margin-bottom: 15px; }
+  .stat-box-grid { gap: 10px; }
+  .stat-number { font-size: 20px; }
+  .chart-container { height: 220px; }
   
-  .dashboard-card { 
-    padding: 15px; 
-    margin-bottom: 15px;
+  .mobile-only-footer { display: block; margin-top: 20px; margin-bottom: 40px; text-align: center; }
+  .pulse-rec-box { max-width: 100%; margin-top: 10px; }
+
+  /* --- NEW: MOBILE TABS STYLE --- */
+  .dashboard-tabs {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    scrollbar-width: none; /* Hide scrollbar */
+  }
+  .dashboard-tabs::-webkit-scrollbar { display: none; }
+
+  .dashboard-tabs button {
+    flex: 1;
+    white-space: nowrap;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-elevated);
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
   }
 
-  /* Make stat boxes smaller/tighter on mobile */
-  .stat-box-grid {
-    gap: 10px;
+  .dashboard-tabs button.active {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   }
-  
-  .stat-number { font-size: 20px; }
-  
-  .chart-container {
-    height: 220px; /* Slightly shorter for mobile */
-  }
-  
-  /* Mobile Footer Button */
-  .mobile-only-footer {
-    margin-top: 20px;
-    margin-bottom: 40px;
-    text-align: center;
-  }
-  
-  /* Pulse Mobile Adjustments */
-  .pulse-rec-box {
-      max-width: 100%;
-      margin-top: 10px;
+
+  /* Smooth fade in for tab content */
+  .dashboard-mobile-content {
+    animation: fadeIn 0.3s ease-in-out;
   }
 }

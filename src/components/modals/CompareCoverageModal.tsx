@@ -1,16 +1,33 @@
-// In file: src/components/modals/CompareCoverageModal.js
+// src/components/modals/CompareCoverageModal.tsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import TopicTimeline from '../TopicTimeline'; 
 import '../../App.css'; 
-import { getSentimentClass, getOptimizedImageUrl } from '../../utils/helpers'; // <--- UPDATED IMPORT
+import { getSentimentClass, getOptimizedImageUrl } from '../../utils/helpers';
+import { IArticle } from '../../types';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
-function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, showTooltip }) {
-  const [clusterData, setClusterData] = useState({ left: [], center: [], right: [], reviews: [], stats: {} });
+interface CompareModalProps {
+  clusterId: number | null;
+  articleTitle: string;
+  onClose: () => void;
+  onAnalyze: (article: IArticle) => void;
+  showTooltip: (text: string, e: React.MouseEvent) => void;
+}
+
+interface ClusterData {
+  left: IArticle[];
+  center: IArticle[];
+  right: IArticle[];
+  reviews: IArticle[];
+  stats: any;
+}
+
+const CompareCoverageModal: React.FC<CompareModalProps> = ({ clusterId, articleTitle, onClose, onAnalyze, showTooltip }) => {
+  const [clusterData, setClusterData] = useState<ClusterData>({ left: [], center: [], right: [], reviews: [], stats: {} });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('timeline'); 
+  const [activeTab, setActiveTab] = useState<'timeline' | 'left' | 'center' | 'right' | 'reviews'>('timeline'); 
 
   useEffect(() => {
     const fetchCluster = async () => {
@@ -39,7 +56,7 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
   }, [clusterId]);
 
    const totalArticles = (clusterData.left?.length || 0) + (clusterData.center?.length || 0) + (clusterData.right?.length || 0) + (clusterData.reviews?.length || 0);
-   const handleOverlayClick = (e) => { if (e.target === e.currentTarget) { onClose(); } };
+   const handleOverlayClick = (e: React.MouseEvent) => { if (e.target === e.currentTarget) { onClose(); } };
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
@@ -79,7 +96,7 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
               {activeTab === 'right' && renderArticleGroup(clusterData.right, 'Right', onAnalyze, showTooltip)}
               {activeTab === 'reviews' && renderArticleGroup(clusterData.reviews, 'Opinions', onAnalyze, showTooltip)}
               
-              {activeTab !== 'timeline' && clusterData[activeTab]?.length === 0 && ( 
+              {activeTab !== 'timeline' && (clusterData[activeTab] as IArticle[])?.length === 0 && ( 
                   <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}>
                       <p>No articles found for the '{activeTab}' perspective.</p>
                   </div> 
@@ -90,10 +107,10 @@ function CompareCoverageModal({ clusterId, articleTitle, onClose, onAnalyze, sho
       </div>
     </div>
   );
-}
+};
 
 // --- Helper to render article lists ---
-function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
+function renderArticleGroup(articleList: IArticle[], perspective: string, onAnalyze: (a: IArticle) => void, showTooltip: (t: string, e: React.MouseEvent) => void) {
   if (!articleList || articleList.length === 0) return null;
   
   return (
@@ -101,8 +118,7 @@ function renderArticleGroup(articleList, perspective, onAnalyze, showTooltip) {
       <h3 className={`perspective-title ${perspective.toLowerCase()}`}>{perspective} Perspective</h3>
       {articleList.map(article => {
         const isReview = article.analysisType === 'SentimentOnly';
-        // --- NEW: Optimize the image URL ---
-        const optimizedImg = getOptimizedImageUrl(article.imageUrl, 150); // Small size for lists
+        const optimizedImg = getOptimizedImageUrl(article.imageUrl, 150);
 
         return (
           <div key={article._id || article.url} className="coverage-article">

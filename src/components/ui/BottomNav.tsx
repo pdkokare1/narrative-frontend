@@ -1,4 +1,4 @@
-// src/components/ui/BottomNav.js
+// src/components/ui/BottomNav.tsx
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useRadio } from '../../context/RadioContext';
@@ -6,12 +6,12 @@ import * as api from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import './BottomNav.css';
 
-function BottomNav() {
+const BottomNav: React.FC = () => {
   const { isPlaying, isPaused, startRadio, resume, pause, currentArticle } = useRadio();
   const { addToast } = useToast();
   const [loading, setLoading] = useState(false);
 
-  const handleRadioClick = async (e) => {
+  const handleRadioClick = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation
     if (loading) return;
 
@@ -98,6 +98,6 @@ function BottomNav() {
       </NavLink>
     </nav>
   );
-}
+};
 
 export default BottomNav;

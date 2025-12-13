@@ -197,7 +197,8 @@ const LatestFeed: React.FC<LatestFeedProps> = ({
       showTooltip={showTooltip}
       isSaved={savedArticleIds.has(article._id)}
       onToggleSave={() => onToggleSave(article)}
-      isPlaying={currentArticle && currentArticle._id === article._id}
+      // FIX: Use optional chaining to ensure boolean result (undefined !== string -> false)
+      isPlaying={currentArticle?._id === article._id}
       onPlay={() => playSingle(article)}
       onStop={stop}
     />

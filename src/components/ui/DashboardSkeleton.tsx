@@ -2,6 +2,7 @@
 import React from 'react';
 import '../../App.css'; 
 import '../../MyDashboard.css'; 
+import './DashboardSkeleton.css';
 
 const DashboardSkeleton: React.FC = () => {
   return (
@@ -11,64 +12,64 @@ const DashboardSkeleton: React.FC = () => {
         {/* --- LEFT COLUMN SKELETON --- */}
         <div className="dashboard-left-column">
             
-            <div className="section-title-header" style={{ borderBottom: 'none', marginBottom: '20px' }}>
-              <div className="skeleton-pulse" style={{ width: '120px', height: '24px' }}></div>
-              <div className="skeleton-pulse" style={{ width: '80px', height: '28px', borderRadius: '6px' }}></div>
+            <div className="section-title-header skel-header">
+              <div className="skeleton-pulse skel-w-120 skel-h-24"></div>
+              <div className="skeleton-pulse skel-w-80p skel-h-28 skel-block"></div>
             </div>
 
             <div className="dashboard-card card-tight">
               <div className="stat-box-grid">
                 {[...Array(4)].map((_, i) => (
                   <div key={i} className="stat-box">
-                    <div className="skeleton-pulse" style={{ width: '60%', height: '10px', marginBottom: '10px', margin: '0 auto' }}></div>
-                    <div className="skeleton-pulse" style={{ width: '40%', height: '24px', marginBottom: '8px', margin: '0 auto' }}></div>
-                    <div className="skeleton-pulse" style={{ width: '80%', height: '8px', margin: '0 auto' }}></div>
+                    <div className="skeleton-pulse skel-w-60p skel-h-10 skel-mb-10 skel-center"></div>
+                    <div className="skeleton-pulse skel-w-40p skel-h-24 skel-mb-8 skel-center"></div>
+                    <div className="skeleton-pulse skel-w-80p skel-h-8 skel-center"></div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="skeleton-pulse" style={{ width: '100px', height: '20px', marginTop: '20px', marginBottom: '15px' }}></div>
+            <div className="skeleton-pulse skel-w-150 skel-h-20 skel-mb-15" style={{ marginTop: '20px' }}></div>
             <div className="dashboard-card">
-                <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '15px' }}>
-                    <div className="skeleton-pulse" style={{ width: '40px', height: '10px' }}></div>
-                    <div className="skeleton-pulse" style={{ width: '40px', height: '10px' }}></div>
-                    <div className="skeleton-pulse" style={{ width: '40px', height: '10px' }}></div>
+                <div className="skel-legend-row">
+                    <div className="skeleton-pulse skel-legend-item"></div>
+                    <div className="skeleton-pulse skel-legend-item"></div>
+                    <div className="skeleton-pulse skel-legend-item"></div>
                 </div>
-                <div className="skeleton-pulse" style={{ width: '100%', height: '16px', borderRadius: '8px', marginBottom: '15px' }}></div>
-                <div className="skeleton-pulse" style={{ width: '80%', height: '10px', marginBottom: '8px' }}></div>
-                <div className="skeleton-pulse" style={{ width: '70%', height: '10px', marginBottom: '8px' }}></div>
-                <div className="skeleton-pulse" style={{ width: '75%', height: '10px' }}></div>
+                <div className="skeleton-pulse skel-w-full skel-h-16 skel-mb-15 skel-block"></div>
+                <div className="skeleton-pulse skel-w-80p skel-h-10 skel-mb-8"></div>
+                <div className="skeleton-pulse skel-w-60p skel-h-10 skel-mb-8"></div>
+                <div className="skeleton-pulse skel-w-40p skel-h-10"></div>
             </div>
         </div>
 
         {/* --- RIGHT COLUMN SKELETON --- */}
         <div className="dashboard-right-column">
           
-          <div className="section-title-header" style={{ borderBottom: 'none', marginBottom: '20px' }}>
-              <div className="skeleton-pulse" style={{ width: '150px', height: '24px' }}></div>
-              <div className="skeleton-pulse" style={{ width: '80px', height: '24px', borderRadius: '12px' }}></div>
+          <div className="section-title-header skel-header">
+              <div className="skeleton-pulse skel-w-150 skel-h-24"></div>
+              <div className="skeleton-pulse skel-w-80p skel-h-24 skel-block"></div>
           </div>
 
-          <div className="dashboard-card" style={{ height: '140px', display: 'flex', gap: '20px', alignItems: 'center' }}>
-             <div style={{ flex: 1 }}>
-                 <div className="skeleton-pulse" style={{ width: '60%', height: '20px', marginBottom: '15px' }}></div>
-                 <div className="skeleton-pulse" style={{ width: '90%', height: '12px', marginBottom: '8px' }}></div>
-                 <div className="skeleton-pulse" style={{ width: '80%', height: '12px' }}></div>
+          <div className="dashboard-card skel-flex-row">
+             <div className="skel-flex-1">
+                 <div className="skeleton-pulse skel-w-60p skel-h-20 skel-mb-15"></div>
+                 <div className="skeleton-pulse skel-w-80p skel-h-12 skel-mb-8"></div>
+                 <div className="skeleton-pulse skel-w-60p skel-h-12"></div>
              </div>
-             <div className="skeleton-pulse" style={{ width: '280px', height: '100px', borderRadius: '8px', flexShrink: 0 }}></div>
+             <div className="skeleton-pulse skel-w-180 skel-h-100 skel-block skel-shrink-0"></div>
           </div>
 
           <div className="dashboard-card full-width-card">
-              <div className="skeleton-pulse" style={{ width: '180px', height: '16px', marginBottom: '20px' }}></div>
-              <div className="skeleton-pulse" style={{ width: '100%', height: '200px', borderRadius: '4px' }}></div>
+              <div className="skeleton-pulse skel-w-180 skel-h-16 skel-mb-20"></div>
+              <div className="skeleton-pulse skel-w-full skel-h-200 skel-block"></div>
           </div>
 
           <div className="dashboard-grid">
              {[...Array(4)].map((_, i) => (
                  <div key={i} className={`dashboard-card ${i === 0 ? 'full-width-card' : ''}`}>
-                    <div className="skeleton-pulse" style={{ width: '120px', height: '16px', marginBottom: '20px' }}></div>
-                    <div className="skeleton-pulse" style={{ width: '100%', height: i === 0 ? '280px' : '200px', borderRadius: '100%' }}></div>
+                    <div className="skeleton-pulse skel-w-120 skel-h-16 skel-mb-20"></div>
+                    <div className={`skeleton-pulse skel-w-full skel-block ${i === 0 ? 'skel-h-200' : 'skel-h-200 skel-circle-chart'}`}></div>
                  </div>
              ))}
           </div>

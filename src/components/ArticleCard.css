@@ -59,7 +59,7 @@
 }
 
 .badge.opinion {
-  background: #FFB300; /* Amber/Yellow */
+  background: #FFB300; /* Amber/Yellow specific for opinion */
   color: #000;
   border: none;
   font-weight: 700;
@@ -228,13 +228,9 @@
   text-transform: none;
 }
 
-.sentiment-positive { color: #2E7D32; font-weight: 600; }
-.sentiment-negative { color: #C62828; font-weight: 600; }
+.sentiment-positive { color: var(--color-success); font-weight: 600; }
+.sentiment-negative { color: var(--color-error); font-weight: 600; }
 .sentiment-neutral { color: var(--text-tertiary); font-weight: 600; }
-
-/* Dark mode overrides */
-:global(.dark-mode) .sentiment-positive { color: #4CAF50; }
-:global(.dark-mode) .sentiment-negative { color: #E57373; }
 
 /* ==================== ACTIONS LAYOUT ==================== */
 .article-actions {
@@ -269,8 +265,8 @@
 }
 
 .stop-btn {
-  color: #E57373;
-  border-color: #E57373;
+  color: var(--color-error);
+  border-color: var(--color-error);
   font-weight: 700;
 }
 

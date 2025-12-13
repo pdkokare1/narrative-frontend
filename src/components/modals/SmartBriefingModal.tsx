@@ -1,11 +1,19 @@
-// In file: src/components/modals/SmartBriefingModal.js
+// src/components/modals/SmartBriefingModal.tsx
 import React from 'react';
-import '../../App.css'; // Uses existing modal styles
+import '../../App.css'; 
+import { IArticle } from '../../types';
 
-function SmartBriefingModal({ article, onClose, onCompare, showTooltip }) {
+interface SmartBriefingModalProps {
+  article: IArticle | null;
+  onClose: () => void;
+  onCompare: (article: IArticle) => void;
+  showTooltip: (text: string, e: React.MouseEvent) => void;
+}
+
+const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({ article, onClose, onCompare, showTooltip }) => {
   if (!article) return null;
 
-  const handleOverlayClick = (e) => {
+  const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose();
   };
 
@@ -113,6 +121,6 @@ function SmartBriefingModal({ article, onClose, onCompare, showTooltip }) {
       </div>
     </div>
   );
-}
+};
 
 export default SmartBriefingModal;

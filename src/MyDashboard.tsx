@@ -109,7 +109,6 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
     const data = labels.map(label => counts[label] || 0);
     const backgroundColors = labels.map(label => sentimentColors[label]);
     
-    // Filter out zero values for cleaner chart
     const filteredIndices = data.map((val, i) => val > 0 ? i : -1).filter(i => i !== -1);
     
     return {
@@ -124,12 +123,11 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
     };
   };
 
-  // --- Early Return: Show Skeleton while loading ---
+  // --- Early Return ---
   if (statsLoading || digestLoading) {
       return <DashboardSkeleton />;
   }
 
-  // --- Error State ---
   if (statsError) {
       return (
         <div className="dashboard-page">
@@ -140,7 +138,7 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
       );
   }
 
-  // --- Normal Render (Data is Ready) ---
+  // --- Normal Render ---
   const storiesReadData: ChartData<'line'> = {
     labels: statsData?.dailyCounts?.map((item: any) => item.date) || [],
     datasets: [{
@@ -148,7 +146,7 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
       data: statsData?.dailyCounts?.map((item: any) => item.count) || [],
       fill: false,
       tension: 0.1,
-      // @ts-ignore - segment prop is valid in Chart.js but Types might miss it
+      // @ts-ignore
       segment: { 
           borderColor: (ctx: any) => {
               const y1 = ctx.p0.parsed.y;
@@ -165,13 +163,15 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
 
   const qualityCounts = (statsData?.qualityDistribution_read || []).reduce((acc: any, item: any) => { acc[item.grade] = item.count; return acc; }, {});
   const qualityLabels = Object.keys(qualityColors);
+  
+  // FIX: Access null key as string 'null'
   const qualityDataMap: Record<string, number> = {
       'A+ Excellent (90-100)': qualityCounts['A+'] || 0,
       'A High (80-89)': (qualityCounts['A'] || 0) + (qualityCounts['A-'] || 0),
       'B Professional (70-79)': (qualityCounts['B+'] || 0) + (qualityCounts['B'] || 0) + (qualityCounts['B-'] || 0),
       'C Acceptable (60-69)': (qualityCounts['C+'] || 0) + (qualityCounts['C'] || 0) + (qualityCounts['C-'] || 0),
       'D-F Poor (0-59)': (qualityCounts['D+'] || 0) + (qualityCounts['D'] || 0) + (qualityCounts['D-'] || 0) + (qualityCounts['F'] || 0) + (qualityCounts['D-F'] || 0),
-      'N/A (Review/Opinion)': qualityCounts[null] || 0
+      'N/A (Review/Opinion)': qualityCounts['null'] || 0 
   };
   const filteredQLabels = qualityLabels.filter(label => qualityDataMap[label] > 0);
   
@@ -325,7 +325,6 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
           </div>
 
           <div className="dashboard-grid">
-             {/* Bias Map */}
              <div className="dashboard-card full-width-card">
                <h3>Bias vs. Trust Map</h3>
                <div className="chart-container-large">

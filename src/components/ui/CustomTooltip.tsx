@@ -1,11 +1,18 @@
-// In file: src/components/ui/CustomTooltip.js
+// src/components/ui/CustomTooltip.tsx
 import React from 'react';
-import '../../App.css'; // For .tooltip-custom styles
+import '../../App.css';
 
-function CustomTooltip({ visible, text, x, y }) {
+interface CustomTooltipProps {
+  visible: boolean;
+  text: string;
+  x: number;
+  y: number;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ visible, text, x, y }) => {
   if (!visible) return null;
 
-  const style = {
+  const style: React.CSSProperties = {
     position: 'fixed',
     left: `${x}px`,
     top: `${y}px`,
@@ -22,6 +29,6 @@ function CustomTooltip({ visible, text, x, y }) {
       {text}
     </div>
   );
-}
+};
 
 export default CustomTooltip;

@@ -5,6 +5,7 @@ import * as api from './services/api';
 import ArticleCard from './components/ArticleCard'; 
 import SkeletonCard from './components/ui/SkeletonCard';
 import { useToast } from './context/ToastContext';
+import useShare from './hooks/useShare'; // NEW IMPORT
 import './App.css'; 
 import { IArticle } from './types';
 
@@ -30,11 +31,11 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const { addToast } = useToast();
+  const { handleShare } = useShare(); // NEW HOOK
 
   useEffect(() => {
     const performSearch = async () => {
       if (!query) return;
-      
       setLoading(true);
       try {
         const { data } = await api.searchArticles(query);
@@ -47,24 +48,12 @@ const SearchResults: React.FC<SearchResultsProps> = ({
         setLoading(false);
       }
     };
-
     performSearch();
   }, [query, addToast]);
 
   const handleReadClick = (article: IArticle) => {
     api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
     window.open(article.url, '_blank', 'noopener,noreferrer');
-  };
-
-  const handleShare = (article: IArticle) => {
-    api.logShare(article._id).catch(err => console.error("Log Share Error:", err));
-    const shareUrl = `${window.location.origin}?article=${article._id}`;
-    if (navigator.share) {
-      navigator.share({ title: article.headline, text: `Check this out: ${article.headline}`, url: shareUrl })
-        .catch(() => navigator.clipboard.writeText(shareUrl).then(() => addToast('Link copied!', 'success')));
-    } else {
-      navigator.clipboard.writeText(shareUrl).then(() => addToast('Link copied!', 'success'));
-    }
   };
 
   return (
@@ -92,7 +81,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                     article={article}
                     onCompare={() => onCompare(article)}
                     onAnalyze={onAnalyze}
-                    onShare={() => handleShare(article)}
+                    onShare={() => handleShare(article)} 
                     onRead={() => handleReadClick(article)}
                     showTooltip={showTooltip}
                     isSaved={savedArticleIds.has(article._id)}
@@ -105,9 +94,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
              <div className="placeholder-page">
               <h2>No results found</h2>
               <p>We couldn't find any articles matching "{query}".</p>
-              <Link to="/" className="btn-secondary">
-                Back to Feed
-              </Link>
+              <Link to="/" className="btn-secondary">Back to Feed</Link>
             </div>
           )}
         </>

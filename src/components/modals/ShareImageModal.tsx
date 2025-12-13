@@ -2,6 +2,7 @@
 import React, { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import '../../App.css'; 
+import './ShareImageModal.css'; // Import new CSS
 import { IArticle } from '../../types';
 
 interface ShareImageModalProps {
@@ -28,7 +29,7 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
         logging: false
       });
 
-      // 2. Convert to Blob for sharing/downloading
+      // 2. Convert to Blob
       canvas.toBlob(async (blob) => {
         if (!blob) {
             setGenerating(false);
@@ -37,7 +38,7 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
         
         const file = new File([blob], 'the-gamut-share.png', { type: 'image/png' });
 
-        // A. Try Native Mobile Share (Instagram/WhatsApp)
+        // A. Try Native Mobile Share
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
@@ -53,7 +54,7 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
           }
         }
 
-        // B. Fallback: Direct Download (Desktop)
+        // B. Fallback: Direct Download
         const link = document.createElement('a');
         link.download = `the-gamut-${article._id}.png`;
         link.href = canvas.toDataURL('image/png');
@@ -77,86 +78,66 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="analysis-modal" style={{ maxWidth: '500px', background: 'transparent', boxShadow: 'none', border: 'none' }} onClick={e => e.stopPropagation()}>
+      <div className="analysis-modal share-modal-base" onClick={e => e.stopPropagation()}>
         
-        {/* --- THE CAPTURE CARD (Visible to user) --- */}
-        <div 
-            ref={cardRef}
-            style={{
-                background: 'linear-gradient(145deg, #1E1E1E, #252525)',
-                padding: '30px',
-                borderRadius: '16px',
-                border: '1px solid #333',
-                color: '#EAEAEA',
-                position: 'relative',
-                marginBottom: '20px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
-            }}
-        >
+        {/* --- THE CAPTURE CARD --- */}
+        <div ref={cardRef} className="share-capture-card">
+            
             {/* Header / Logo */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '2px', color: '#B38F5F', fontWeight: '800' }}>
-                    THE GAMUT
-                </span>
-                <span style={{ fontSize: '10px', color: '#777', fontWeight: '600' }}>
-                    AI ANALYSIS
-                </span>
+            <div className="share-card-header">
+                <span className="share-logo-text">THE GAMUT</span>
+                <span className="share-sub-text">AI ANALYSIS</span>
             </div>
 
             {/* Headline */}
-            <h2 style={{ 
-                fontSize: '22px', lineHeight: '1.3', fontWeight: '700', marginBottom: '15px',
-                fontFamily: 'serif' 
-            }}>
-                {article.headline}
-            </h2>
+            <h2 className="share-headline">{article.headline}</h2>
 
-            {/* Summary */}
-            <p style={{ 
-                fontSize: '14px', lineHeight: '1.6', color: '#B0B0B0', marginBottom: '25px',
-                borderLeft: `3px solid ${leanColor(article.politicalLean)}`, paddingLeft: '15px' 
-            }}>
+            {/* Summary - Dynamic Border Color kept inline */}
+            <p className="share-summary" style={{ borderLeftColor: leanColor(article.politicalLean) }}>
                 {article.summary}
             </p>
 
             {/* Metrics Grid */}
             {article.analysisType === 'Full' && (
-                <div style={{ display: 'flex', gap: '15px', borderTop: '1px solid #333', paddingTop: '15px' }}>
-                    <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '9px', textTransform: 'uppercase', color: '#777', marginBottom: '4px' }}>Bias Score</div>
-                        <div style={{ fontSize: '16px', fontWeight: '700' }}>{article.biasScore}<span style={{fontSize:'10px', color:'#555'}}>/100</span></div>
+                <div className="share-metrics-grid">
+                    <div className="share-metric-col">
+                        <div className="share-metric-label">Bias Score</div>
+                        <div className="share-metric-value">{article.biasScore}<span className="share-metric-sub">/100</span></div>
                     </div>
-                    <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '9px', textTransform: 'uppercase', color: '#777', marginBottom: '4px' }}>Reliability</div>
-                        <div style={{ fontSize: '16px', fontWeight: '700' }}>{article.reliabilityGrade || 'N/A'}</div>
+                    <div className="share-metric-col">
+                        <div className="share-metric-label">Reliability</div>
+                        <div className="share-metric-value">{article.reliabilityGrade || 'N/A'}</div>
                     </div>
-                    <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '9px', textTransform: 'uppercase', color: '#777', marginBottom: '4px' }}>Lean</div>
-                        <div style={{ fontSize: '11px', fontWeight: '600', color: leanColor(article.politicalLean), marginTop: '3px' }}>{article.politicalLean}</div>
+                    <div className="share-metric-col">
+                        <div className="share-metric-label">Lean</div>
+                        <div 
+                            className="share-metric-value" 
+                            style={{ color: leanColor(article.politicalLean), fontSize: '11px', marginTop: '3px' }}
+                        >
+                            {article.politicalLean}
+                        </div>
                     </div>
                 </div>
             )}
             
             {/* Footer */}
-            <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '10px', color: '#555' }}>
+            <div className="share-footer">
                 Read the full spectrum at <strong>thegamut.in</strong>
             </div>
         </div>
 
         {/* --- CONTROLS --- */}
-        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+        <div className="share-controls">
             <button 
                 onClick={onClose}
-                className="btn-secondary"
-                style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid #555', color: '#FFF' }}
+                className="btn-secondary btn-cancel-share"
             >
                 Cancel
             </button>
             <button 
                 onClick={handleDownload}
-                className="btn-primary"
+                className="btn-primary btn-download-share"
                 disabled={generating}
-                style={{ minWidth: '160px' }}
             >
                 {generating ? 'Generating...' : 'Share / Download'}
             </button>

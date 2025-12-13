@@ -1,10 +1,11 @@
-// In file: src/components/Sidebar.js
+// src/components/Sidebar.tsx
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import CustomSelect from './ui/CustomSelect'; 
-import usePWAInstall from '../hooks/usePWAInstall'; // <--- NEW IMPORT
+import usePWAInstall from '../hooks/usePWAInstall'; 
 import '../App.css'; 
 import './Sidebar.css'; 
+import { IFilters } from '../types';
 
 import { 
   CATEGORIES, 
@@ -15,16 +16,23 @@ import {
   SORT_OPTIONS 
 } from '../utils/constants';
 
-function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout }) {
-  // --- NEW: PWA Install Hook ---
+interface SidebarProps {
+  filters: IFilters;
+  onFilterChange: (filters: IFilters) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  onLogout: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ filters, onFilterChange, isOpen, onClose, onLogout }) => {
   const { isInstallable, triggerInstall } = usePWAInstall();
 
-  const handleChange = (e) => {
+  const handleChange = (e: { target: { name: string; value: string } }) => {
     const { name, value } = e.target;
     onFilterChange({ ...filters, [name]: value });
   };
 
-  const SidebarNavLink = ({ to, children, className }) => (
+  const SidebarNavLink = ({ to, children, className }: { to: string; children: React.ReactNode; className?: string }) => (
     <NavLink
       to={to}
       className={({ isActive }) => `sidebar-nav-link ${isActive ? "active-link" : ""} ${className || ""}`}
@@ -62,16 +70,16 @@ function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout }) {
         {/* Filters Section */}
         <div className="sidebar-section">
           <h3>Filters</h3>
-          <div className="filter-group"><CustomSelect name="region" value={filters.region} options={REGIONS} onChange={handleChange} /></div>
-          <div className="filter-group"><CustomSelect name="articleType" value={filters.articleType} options={ARTICLE_TYPES} onChange={handleChange} /></div>
-          <div className="filter-group"><CustomSelect name="category" value={filters.category} options={CATEGORIES} onChange={handleChange} /></div>
-          <div className="filter-group"><CustomSelect name="lean" value={filters.lean} options={LEANS} onChange={handleChange} /></div>
-          <div className="filter-group"><CustomSelect name="quality" value={filters.quality} options={QUALITY_LEVELS} onChange={handleChange} /></div>
+          <div className="filter-group"><CustomSelect name="region" value={filters.region || 'Global'} options={REGIONS} onChange={handleChange} /></div>
+          <div className="filter-group"><CustomSelect name="articleType" value={filters.articleType || 'All Types'} options={ARTICLE_TYPES} onChange={handleChange} /></div>
+          <div className="filter-group"><CustomSelect name="category" value={filters.category || 'All Categories'} options={CATEGORIES} onChange={handleChange} /></div>
+          <div className="filter-group"><CustomSelect name="lean" value={filters.lean || 'All Leans'} options={LEANS} onChange={handleChange} /></div>
+          <div className="filter-group"><CustomSelect name="quality" value={filters.quality || 'All Quality Levels'} options={QUALITY_LEVELS} onChange={handleChange} /></div>
         </div>
 
         <div className="sidebar-section">
           <h3>Sort By</h3>
-          <CustomSelect name="sort" value={filters.sort} options={SORT_OPTIONS} onChange={handleChange} />
+          <CustomSelect name="sort" value={filters.sort || 'Latest First'} options={SORT_OPTIONS} onChange={handleChange} />
         </div>
       </div>
 
@@ -98,6 +106,6 @@ function Sidebar({ filters = {}, onFilterChange, isOpen, onClose, onLogout }) {
       </div>
     </aside>
   );
-}
+};
 
 export default Sidebar;

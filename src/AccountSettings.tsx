@@ -1,4 +1,4 @@
-// In file: src/AccountSettings.js
+// src/AccountSettings.tsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom'; 
 import { getToken } from "firebase/messaging";
@@ -6,12 +6,18 @@ import { messaging } from './firebaseConfig';
 import * as api from './services/api'; 
 import './App.css'; 
 import './AccountSettings.css'; 
+import { IUserProfile } from './types';
 
-function AccountSettings({ currentFontSize, onSetFontSize }) {
-  const [profileData, setProfileData] = useState(null);
+interface AccountSettingsProps {
+  currentFontSize: string;
+  onSetFontSize: (size: string) => void;
+}
+
+const AccountSettings: React.FC<AccountSettingsProps> = ({ currentFontSize, onSetFontSize }) => {
+  const [profileData, setProfileData] = useState<IUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [notifStatus, setNotifStatus] = useState('default'); // default, granted, denied, loading
+  const [notifStatus, setNotifStatus] = useState<'default' | 'granted' | 'denied' | 'loading'>('default');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -74,7 +80,7 @@ function AccountSettings({ currentFontSize, onSetFontSize }) {
   };
 
   // --- RENDER HELPERS ---
-  const renderSizeBtn = (size, label) => {
+  const renderSizeBtn = (size: string, label: string) => {
       const isActive = currentFontSize === size;
       return (
           <button 
@@ -204,6 +210,6 @@ function AccountSettings({ currentFontSize, onSetFontSize }) {
       </div>
     </div>
   );
-}
+};
 
 export default AccountSettings;

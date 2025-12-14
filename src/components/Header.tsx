@@ -146,8 +146,9 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
   return (
     <header className="header">
       <div className="header-left">
+         {/* Hamburger - Thinner Stroke (1.5) */}
          <button className="hamburger-btn" onClick={(e) => onToggleSidebar(e)} title="Open Menu">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="3" y1="12" x2="21" y2="12"></line>
               <line x1="3" y1="6" x2="21" y2="6"></line>
               <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -157,14 +158,15 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
         <div className="logo-container">
           <Link to="/" style={{ textDecoration: 'none' }}>
             <h1 className="logo-text">The Gamut</h1>
-            <p className="tagline">Analyse The Full Spectrum</p>
+            {/* Tagline removed for cleaner look on mobile, kept in code just in case */}
+            {/* <p className="tagline">Analyse The Full Spectrum</p> */}
           </Link>
         </div>
       </div>
 
       <div className="header-right">
         
-        {/* --- RADIO BUTTON (Moved from Bottom Nav) --- */}
+        {/* --- RADIO BUTTON --- */}
         <button 
             onClick={handleRadioClick}
             className={`radio-header-btn ${isPlaying ? 'playing' : ''}`}
@@ -173,22 +175,22 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
             {radioLoading ? (
                 <div className="spinner-small" style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'var(--accent-primary)', margin: 0 }}></div>
             ) : isPlaying ? (
-                /* Pulse Animation for Playing */
+                /* Pulse Animation */
                 <span className="radio-pulse">
                     <span className="bar b1"></span>
                     <span className="bar b2"></span>
                     <span className="bar b3"></span>
                 </span>
             ) : (
-                /* Headphones Icon */
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                /* Headphones Icon - Thinner Stroke */
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
                     <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
                 </svg>
             )}
         </button>
 
-        {/* --- Responsive Search Bar --- */}
+        {/* --- SEARCH --- */}
         <div ref={searchRef} className="search-bar-wrapper">
           <form 
             onSubmit={handleSearchSubmit} 
@@ -210,7 +212,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
             className="search-toggle-btn"
             title="Search Articles"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               {isSearchOpen ? (
                 <>
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -225,6 +227,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
             </svg>
           </button>
 
+          {/* Live Search Dropdown - Glass Effect Applied via CSS */}
           {suggestions.length > 0 && isSearchOpen && (
               <div className="live-search-dropdown">
                   <div className="live-search-label">TOP MATCHES</div>
@@ -248,7 +251,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
           )}
         </div>
 
-        {/* --- Desktop User Menu --- */}
+        {/* --- USER MENU --- */}
         <div className="header-user-desktop" ref={dropdownRef}> 
           <Link to="/my-dashboard" className="header-dashboard-link" title="View your dashboard">
             Dashboard
@@ -270,6 +273,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
           )}
         </div>
 
+        {/* --- THEME TOGGLE (Sun/Moon) --- */}
         <button className="theme-toggle" onClick={toggleTheme}>
           {theme === 'dark' ? '🌙' : '☀️'}
         </button>

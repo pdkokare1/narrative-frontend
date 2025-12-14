@@ -29,7 +29,8 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
     if (reset) setLoading(true);
     try {
       const offset = reset ? 0 : page * 12;
-      const data = await api.getArticles({ ...filters, offset, limit: 12 });
+      // FIX: Changed api.getArticles to api.fetchArticles to match api.ts export
+      const data = await api.fetchArticles({ ...filters, offset, limit: 12 });
       
       if (reset) {
         setArticles(data.articles);

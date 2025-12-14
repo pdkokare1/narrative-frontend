@@ -1,5 +1,5 @@
 // src/components/feeds/UnifiedFeed.tsx
-import React, { useState, useEffect, useMemo, forwardRef } from 'react'; 
+import React, { useState, useEffect, useMemo, useRef, forwardRef } from 'react'; 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { VirtuosoGrid, VirtuosoGridHandle, GridItemContent } from 'react-virtuoso'; 
 import * as api from '../../services/api'; 

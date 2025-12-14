@@ -14,7 +14,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 65px;
+    height: var(--bottom-nav-height);
     background: rgba(18, 18, 18, 0.98); 
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);

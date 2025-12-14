@@ -14,11 +14,10 @@
   --border-color: #333333;
   --border-light: #2A2A2A;
   
-  /* Brand Colors */
-  --accent-primary: #B38F5F; /* The Gamut Gold */
-  --accent-gold: #B38F5F;
+  /* Brand Colors - mapped to global vars */
+  --accent-primary: var(--accent-gold); 
   --accent-secondary: #9C7C50;
-  --accent-hover: #CCA573;
+  --accent-hover: var(--accent-gold-hover);
   
   /* Functional Colors */
   --color-success: #4CAF50;
@@ -48,7 +47,7 @@
   
   /* Brand Colors */
   --accent-primary: #2E4E6B; /* Navy for Light Mode */
-  --accent-gold: #B38F5F;    /* Keep gold available */
+  --accent-gold: var(--accent-gold);    /* Keep gold available */
   --accent-secondary: #243E56;
   --accent-hover: #3E6A8E;
   
@@ -211,7 +210,7 @@ a:hover {
   max-width: 1800px;
   width: 100%;
   margin: 0 auto;
-  padding-top: 60px;
+  padding-top: var(--header-height);
   min-height: 100vh;
   transition: all 0.3s ease-in-out;
 }
@@ -656,8 +655,16 @@ button:disabled, button:disabled:hover {
     overscroll-behavior-y: contain; 
     -ms-overflow-style: none; 
     scrollbar-width: none;
+    /* --- PADDING UPDATE FOR PLAYER OVERLAP --- */
     padding-bottom: 90px; 
+    transition: padding-bottom 0.3s ease;
   }
+  
+  /* --- KEY FIX: WHEN PLAYER IS ACTIVE, INCREASE PADDING --- */
+  .player-active .content {
+    padding-bottom: 160px !important;
+  }
+
   .content::-webkit-scrollbar { display: none; }
   .pull-to-refresh-container { position: absolute; top: 0; left: 0; right: 0; z-index: 1; }
   

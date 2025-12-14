@@ -1,5 +1,6 @@
 /* src/components/GlobalPlayerBar.css */
 
+/* --- BASE STYLES (Desktop / Default) --- */
 .global-player-bar {
   position: fixed;
   bottom: 0;
@@ -15,12 +16,43 @@
   box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
   color: white;
   animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  transition: bottom 0.3s ease, padding 0.3s ease; /* Added transition for bottom */
+  transition: all 0.3s ease;
 }
 
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* --- MOBILE BUBBLE MODE --- */
+@media (max-width: 768px) {
+  .global-player-bar.bubble-mode {
+    bottom: 80px; /* Float ABOVE the bottom nav (65px height + 15px gap) */
+    left: 10px;
+    right: 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    padding: 12px 15px;
+    animation: bubblePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes bubblePop {
+    from { transform: scale(0.9) translateY(20px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  /* Adjust internal layout for bubble */
+  .player-headline { 
+    font-size: 12px; 
+    max-width: 160px; /* Allow more text space */
+  }
+  
+  /* Hide the close button in bubble mode if needed, or style it as a 'minimize' arrow */
+  .player-btn.close-action { 
+    font-size: 18px; 
+    padding-top: 2px;
+  }
 }
 
 /* ==================== SCRUBBER ==================== */
@@ -33,6 +65,17 @@
   width: 100%;
   cursor: pointer;
   z-index: 2002;
+}
+
+/* Mobile Bubble Scrubber sits INSIDE at top, not on edge */
+@media (max-width: 768px) {
+  .global-player-bar.bubble-mode .scrubber-container {
+    top: 0;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    border-radius: 12px 12px 0 0;
+  }
 }
 
 .scrubber-range {
@@ -50,13 +93,9 @@
   transition: height 0.1s ease;
 }
 
-.scrubber-container:hover .scrubber-range, .scrubber-range:active { height: 6px; }
-.scrubber-range::-webkit-slider-thumb { -webkit-appearance: none; width: 0; height: 0; background: #fff; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5); transition: all 0.1s ease; }
-.scrubber-container:hover .scrubber-range::-webkit-slider-thumb, .scrubber-range:active::-webkit-slider-thumb { width: 12px; height: 12px; }
-
-/* ==================== MAIN LAYOUT ==================== */
-.player-main-row { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 15px; }
-.player-info { display: flex; flex-direction: column; flex: 1; min-width: 0; margin-right: 10px; }
+/* ==================== CONTROLS ==================== */
+.player-main-row { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px; }
+.player-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .player-meta-top { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
 
 .speaker-name-small { display: flex; align-items: center; gap: 5px; font-size: 9px; text-transform: uppercase; font-weight: 700; color: #B38F5F; letter-spacing: 0.5px; }
@@ -65,7 +104,7 @@
 .time-display { font-size: 9px; color: #888; font-family: monospace; letter-spacing: -0.5px; }
 .player-headline { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; color: #EAEAEA; }
 
-.player-controls { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.player-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .player-btn { background: transparent; border: 1px solid rgba(255, 255, 255, 0.15); color: #DDD; cursor: pointer; border-radius: 6px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
 .player-btn:hover { background: rgba(255, 255, 255, 0.1); color: white; border-color: rgba(255, 255, 255, 0.3); }
 .player-btn:active { transform: scale(0.95); }
@@ -74,7 +113,6 @@
 .player-btn.primary-play:hover { background: #B38F5F; color: white; }
 .player-btn.text-btn { padding: 0 8px; height: 32px; font-size: 10px; font-weight: 700; min-width: 34px; letter-spacing: 0.5px; }
 .player-btn.close-action { border: none; font-size: 20px; line-height: 1; color: #666; width: auto; padding: 0 4px; margin-left: 5px; }
-.player-btn.close-action:hover { color: #E57373; background: transparent; }
 
 /* Up Next Mode */
 .global-player-bar.up-next-mode { padding: 12px 20px; border-top-color: #B38F5F; }
@@ -84,23 +122,6 @@
 .up-next-loader-fill { height: 100%; background: #B38F5F; transition: width 1s linear; }
 .player-btn.primary { padding: 0 16px; font-size: 11px; font-weight: 600; background: #B38F5F; border-color: #B38F5F; color: white; height: 32px; }
 .player-btn.secondary { padding: 0 12px; font-size: 11px; background: transparent; border-color: #555; color: #aaa; height: 32px; }
-
-/* ==================== MOBILE ADJUSTMENTS ==================== */
-@media (max-width: 768px) {
-  /* --- KEY CHANGE: Move player bar UP to sit above BottomNav --- */
-  .global-player-bar {
-    bottom: 60px; /* Height of the Bottom Nav */
-    padding: 10px 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Separator line */
-  }
-  
-  .player-headline { font-size: 12px; max-width: 140px; }
-  .player-controls { gap: 8px; }
-  .player-btn.icon-only { width: 30px; height: 30px; font-size: 11px; }
-  .player-btn.primary-play { width: 34px; height: 34px; }
-  .player-btn.text-btn { font-size: 9px; min-width: 28px; padding: 0 6px; }
-  .time-display { display: none; }
-}
 
 @keyframes radioPulse {
   0% { opacity: 1; transform: scale(1); }

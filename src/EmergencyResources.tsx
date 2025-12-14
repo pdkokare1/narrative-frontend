@@ -4,7 +4,7 @@ import * as api from './services/api';
 import PageLoader from './components/PageLoader';
 import './EmergencyResources.css';
 
-// We import icons purely as standard React components
+// Icons
 import SearchIcon from '@mui/icons-material/Search';
 import PhoneIcon from '@mui/icons-material/Phone';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -13,6 +13,12 @@ import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 import CommuteIcon from '@mui/icons-material/Commute';
 import TrainIcon from '@mui/icons-material/Train';
+
+// --- NEW IMPORTS ---
+import Card from './components/ui/Card';
+import Input from './components/ui/Input';
+import SectionHeader from './components/ui/SectionHeader';
+import Button from './components/ui/Button';
 
 interface EmergencyContact {
   _id: string;
@@ -33,7 +39,6 @@ const EmergencyResources: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Hardcoded critical numbers for the top section
   const criticalContacts = [
     { name: 'Police Control Room', number: '100', icon: <LocalPoliceIcon /> },
     { name: 'Ambulance / Medical', number: '101', icon: <MedicalServicesIcon /> },
@@ -60,7 +65,6 @@ const EmergencyResources: React.FC = () => {
     }
   };
 
-  // Helper function to split clubbed phone numbers (e.g., "12345 / 67890" or "12345, 67890")
   const getSeparateNumbers = (phoneString: string) => {
     if (!phoneString) return [];
     return phoneString.split(/[\/,]+\s*/).map(s => s.trim()).filter(s => s.length > 0);
@@ -77,46 +81,49 @@ const EmergencyResources: React.FC = () => {
 
   return (
     <div className="content">
-      <div className="emergency-header-container">
-        <div>
-            <h1 className="emergency-page-title">Emergency Resource Directory</h1>
-            <p className="emergency-subtitle">Find helplines and support services quickly.</p>
-        </div>
-      </div>
+      
+      {/* 1. Header */}
+      <SectionHeader 
+        title="Emergency Resources" 
+        subtitle="National and Local Helplines" 
+      />
 
-      {/* Section for Critical Top-Level Contacts */}
-      <div className="critical-section">
-        <h2 className="category-title" style={{ border: 'none', paddingLeft: 0 }}>National Critical Helplines</h2>
+      {/* 2. Critical Section (Cards) */}
+      <div className="critical-section" style={{ border: 'none', background: 'transparent', padding: 0 }}>
+        <h3 className="category-title" style={{ paddingLeft: 0, border: 'none', marginBottom: '15px' }}>National Critical Helplines</h3>
         <div className="critical-grid">
           {criticalContacts.map((item, index) => (
-            <a key={index} href={`tel:${item.number}`} className="critical-card-btn">
-              <div style={{ color: '#dc2626', marginBottom: '5px' }}>{item.icon}</div>
-              <span className="critical-name">{item.name}</span>
-              <span className="critical-number">{item.number}</span>
+            <a key={index} href={`tel:${item.number}`} style={{ textDecoration: 'none' }}>
+                <Card variant="glass" className="critical-card-btn" padding="sm">
+                    <div style={{ color: '#CF5C5C', marginBottom: '5px' }}>{item.icon}</div>
+                    <span className="critical-name">{item.name}</span>
+                    <span className="critical-number">{item.number}</span>
+                </Card>
             </a>
           ))}
         </div>
       </div>
 
-      <div className="emergency-controls" style={{ marginBottom: '30px' }}>
-        <input
-          type="text"
-          className="emergency-search"
-          placeholder="Search by agency name, city, state, or category..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+      {/* 3. Search Bar (New Input) */}
+      <div style={{ marginBottom: '30px', maxWidth: '500px' }}>
+        <Input 
+            icon={<SearchIcon style={{ fontSize: '18px' }} />}
+            placeholder="Search by agency, city, or category..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            fullWidth
         />
       </div>
 
-      {error && <div className="settings-card" style={{borderColor: '#E57373', color: '#E57373', padding: '15px'}}>{error}</div>}
+      {error && <div style={{ color: 'var(--color-error)' }}>{error}</div>}
 
+      {/* 4. List */}
       <div className="card-list">
         {filteredContacts.map(contact => {
-          // Split phone numbers beforehand
           const phoneNumbers = getSeparateNumbers(contact.number);
 
           return (
-            <div key={contact._id} className="emergency-card">
+            <Card key={contact._id} variant="glass" padding="md" className="emergency-card">
               <div className="emergency-info">
                 <h3>{contact.serviceName}</h3>
                 <p>{contact.description}</p>
@@ -132,32 +139,32 @@ const EmergencyResources: React.FC = () => {
                 {(contact.city || contact.state) && (
                   <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px', fontSize: '12px', color: 'var(--text-tertiary)' }}>
                     <LocationOnIcon style={{ fontSize: '14px', marginRight: '4px' }} />
-                    <span>
-                      {contact.city && `${contact.city}, `}{contact.state}
-                    </span>
+                    <span>{contact.city && `${contact.city}, `}{contact.state}</span>
                   </div>
                 )}
               </div>
 
-              {/* Call Actions */}
+              {/* Call Buttons */}
               <div className="call-actions-col">
                 {phoneNumbers.length > 0 ? (
                     phoneNumbers.map((num, idx) => (
-                      <a key={idx} href={`tel:${num}`} className="call-btn-small">
-                        <PhoneIcon style={{ fontSize: '12px', marginRight: '5px' }} />
-                        {num}
+                      <a key={idx} href={`tel:${num}`} style={{ textDecoration: 'none' }}>
+                          <Button variant="primary" className="call-btn-small" style={{ width: '100%', fontSize: '10px', padding: '6px 12px' }}>
+                            <PhoneIcon style={{ fontSize: '12px', marginRight: '5px' }} />
+                            {num}
+                          </Button>
                       </a>
                     ))
                 ) : (
                   <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Number not available</p>
                 )}
               </div>
-            </div>
+            </Card>
           );
         })}
 
         {!loading && filteredContacts.length === 0 && (
-          <p style={{ textAlign: 'center', color: 'var(--text-tertiary)', marginTop: '20px' }}>No contacts found matching your search.</p>
+          <p style={{ textAlign: 'center', color: 'var(--text-tertiary)', marginTop: '20px' }}>No contacts found.</p>
         )}
       </div>
     </div>

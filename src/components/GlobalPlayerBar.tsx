@@ -1,6 +1,7 @@
 // src/components/GlobalPlayerBar.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useRadio } from '../context/RadioContext';
+import useHaptic from '../hooks/useHaptic'; // NEW
 import './GlobalPlayerBar.css';
 
 const GlobalPlayerBar: React.FC = () => {
@@ -10,8 +11,8 @@ const GlobalPlayerBar: React.FC = () => {
     isPlaying, 
     isPaused, 
     isLoading,
-    isVisible, // Audio exists
-    playerOpen, // UI should show
+    isVisible, 
+    playerOpen, 
     closePlayer,
     stop, 
     pause, 
@@ -28,6 +29,7 @@ const GlobalPlayerBar: React.FC = () => {
     changeSpeed
   } = useRadio();
 
+  const vibrate = useHaptic(); // NEW
   const [isDragging, setIsDragging] = useState(false);
   const [dragTime, setDragTime] = useState(0);
   const autoHideRef = useRef<NodeJS.Timeout | null>(null);
@@ -35,10 +37,10 @@ const GlobalPlayerBar: React.FC = () => {
   // --- AUTO-HIDE LOGIC ---
   const resetAutoHide = () => {
     if (autoHideRef.current) clearTimeout(autoHideRef.current);
-    if (isPlaying && playerOpen) { // Only auto-hide if actively playing
+    if (isPlaying && playerOpen) { 
         autoHideRef.current = setTimeout(() => {
             closePlayer();
-        }, 7000); // 7 Seconds
+        }, 7000); 
     }
   };
 
@@ -49,20 +51,20 @@ const GlobalPlayerBar: React.FC = () => {
         if (autoHideRef.current) clearTimeout(autoHideRef.current);
     }
     return () => { if (autoHideRef.current) clearTimeout(autoHideRef.current); };
-  }, [playerOpen, isPlaying]); // Reset when play state changes or bubble opens
+  }, [playerOpen, isPlaying]);
 
-  // Sync seek bar
   useEffect(() => {
-    if (!isDragging) {
-      setDragTime(currentTime);
-    }
+    if (!isDragging) setDragTime(currentTime);
   }, [currentTime, isDragging]);
 
-  // If no audio loaded or manually closed, don't render
   if (!isVisible || !playerOpen) return null;
 
-  // --- HANDLERS (All reset the timer) ---
-  const withReset = (fn: () => void) => () => { fn(); resetAutoHide(); };
+  // --- HANDLERS (Combine Haptic + Logic + Timer Reset) ---
+  const handleControl = (fn: () => void) => () => { 
+      vibrate(); 
+      fn(); 
+      resetAutoHide(); 
+  };
 
   const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDragTime(Number(e.target.value));
@@ -84,6 +86,7 @@ const GlobalPlayerBar: React.FC = () => {
   };
 
   const handleSpeedClick = () => {
+    vibrate();
     const speeds = [1.0, 1.25, 1.5, 0.5, 0.75];
     const nextIndex = (speeds.indexOf(playbackRate) + 1) % speeds.length;
     changeSpeed(speeds[nextIndex]);
@@ -101,8 +104,8 @@ const GlobalPlayerBar: React.FC = () => {
           </div>
         </div>
         <div className="player-controls">
-            <button onClick={withReset(playNext)} className="player-btn primary">Play Now</button>
-            <button onClick={withReset(cancelAutoplay)} className="player-btn secondary">Cancel</button>
+            <button onClick={handleControl(playNext)} className="player-btn primary">Play Now</button>
+            <button onClick={handleControl(cancelAutoplay)} className="player-btn secondary">Cancel</button>
         </div>
       </div>
     );
@@ -153,15 +156,14 @@ const GlobalPlayerBar: React.FC = () => {
             ) : (
                 <>
                    <button onClick={handleSpeedClick} className="player-btn text-btn">{playbackRate}x</button>
-                   <button onClick={withReset(playPrevious)} className="player-btn icon-only">⏮</button>
+                   <button onClick={handleControl(playPrevious)} className="player-btn icon-only">⏮</button>
                    {isPaused ? (
-                     <button onClick={withReset(resume)} className="player-btn icon-only primary-play">▶</button>
+                     <button onClick={handleControl(resume)} className="player-btn icon-only primary-play">▶</button>
                    ) : (
-                     <button onClick={withReset(pause)} className="player-btn icon-only primary-play">⏸</button>
+                     <button onClick={handleControl(pause)} className="player-btn icon-only primary-play">⏸</button>
                    )}
-                   <button onClick={withReset(playNext)} className="player-btn icon-only">⏭</button>
-                   {/* Close Button manually hides bubble */}
-                   <button onClick={closePlayer} className="player-btn close-action" title="Hide Player">⌄</button>
+                   <button onClick={handleControl(playNext)} className="player-btn icon-only">⏭</button>
+                   <button onClick={() => { vibrate(); closePlayer(); }} className="player-btn close-action" title="Hide Player">⌄</button>
                 </>
             )}
         </div>

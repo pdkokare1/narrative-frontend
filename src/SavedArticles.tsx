@@ -8,16 +8,20 @@ import { useToast } from './context/ToastContext';
 import ArticleCard from './components/ArticleCard'; 
 import SkeletonCard from './components/ui/SkeletonCard'; 
 import useIsMobile from './hooks/useIsMobile';
-import useShare from './hooks/useShare'; // NEW IMPORT
+import useShare from './hooks/useShare'; 
 import './App.css'; 
 import './SavedArticles.css'; 
 import { IArticle } from './types';
+
+// --- NEW IMPORTS ---
+import SectionHeader from './components/ui/SectionHeader';
+import Button from './components/ui/Button';
 
 interface SavedArticlesProps {
   onToggleSave: (article: IArticle) => void;
   onCompare: (article: IArticle) => void;
   onAnalyze: (article: IArticle) => void;
-  onShare?: (article: IArticle) => void; // Made optional, we use hook instead
+  onShare?: (article: IArticle) => void; 
   onRead: (article: IArticle) => void;
   showTooltip: (text: string, e: React.MouseEvent) => void;
 }
@@ -31,10 +35,9 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
 }) => {
   const isMobileView = useIsMobile();
   const { addToast } = useToast(); 
-  const { handleShare } = useShare(); // NEW HOOK
+  const { handleShare } = useShare(); 
   const queryClient = useQueryClient(); 
 
-  // --- QUERY: Saved Articles (With Offline Support) ---
   const { 
     data: savedArticles = [], 
     isLoading, 
@@ -48,7 +51,6 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
         if (articles.length > 0) offlineStorage.save('saved-library', articles);
         return articles;
       } catch (err) {
-        console.warn("Network failed, checking offline cache for library...");
         const cachedLibrary = await offlineStorage.get('saved-library');
         if (cachedLibrary) {
             addToast('Offline mode: Showing cached library', 'info');
@@ -70,19 +72,12 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
     });
   };
 
-  const renderHeader = () => (
-    <div className="saved-header">
-      <h1>Saved Articles</h1>
-      <span className="saved-count-badge">{savedArticles.length} Items</span>
-    </div>
-  );
-
   const renderEmptyState = () => (
     <div className="saved-placeholder">
       <h2>No Saved Articles</h2>
       <p>Articles you save will appear here for quick access.</p>
-      <Link to="/" className="btn-secondary" style={{ marginTop: '20px', textDecoration: 'none' }}>
-        Browse Articles
+      <Link to="/" style={{ marginTop: '20px', textDecoration: 'none' }}>
+        <Button variant="secondary">Browse Articles</Button>
       </Link>
     </div>
   );
@@ -91,9 +86,9 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
     <div className="saved-placeholder">
       <h2 className="error-text">Connection Error</h2>
       <p>Could not load your library and no offline copy was found.</p>
-      <button onClick={() => window.location.reload()} className="btn-secondary" style={{ marginTop: '20px' }}>
+      <Button onClick={() => window.location.reload()} variant="primary" style={{ marginTop: '20px' }}>
         Retry
-      </button>
+      </Button>
     </div>
   );
 
@@ -106,12 +101,16 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
   if (isMobileView) {
     return (
       <main className="content">
+        <SectionHeader 
+            title="Saved Articles" 
+            subtitle={`${savedArticles.length} Items`} 
+        />
+        
         {isLoading ? ( <div className="article-card-wrapper"><SkeletonCard /></div> ) 
         : error ? ( <div className="article-card-wrapper">{renderError()}</div> ) 
         : savedArticles.length === 0 ? ( <div className="article-card-wrapper">{renderEmptyState()}</div> ) 
         : (
           <>
-            {renderHeader()}
             {savedArticles.map((article: IArticle) => (
               <div className="article-card-wrapper" key={article._id}>
                 <ArticleCard
@@ -138,7 +137,11 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
       : error ? renderError() 
       : (
         <>
-          {renderHeader()}
+          <SectionHeader 
+            title="Saved Library" 
+            subtitle={`${savedArticles.length} saved for later reading`} 
+          />
+          
           {savedArticles.length === 0 ? renderEmptyState() : (
             <div className="articles-grid">
               {savedArticles.map((article: IArticle) => (

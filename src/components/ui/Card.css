@@ -1,0 +1,50 @@
+/* src/components/ui/Card.css */
+
+.ui-card {
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* --- VARIANTS --- */
+
+/* 1. GLASS (Default Premium Look) */
+.card-glass {
+  background: var(--bg-card); /* Fallback */
+  /* If supported, use backdrop filter */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(20, 20, 20, 0.6); /* Semi-transparent for dark mode */
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Light Mode Override for Glass */
+:global(.light-mode) .card-glass {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.card-glass:hover {
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-md);
+}
+
+/* 2. SOLID (For high contrast areas) */
+.card-solid {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+}
+
+/* 3. FLAT (For internal grouping) */
+.card-flat {
+  background: transparent;
+  border: 1px dashed var(--border-color);
+  box-shadow: none;
+}
+
+/* --- PADDING UTILS --- */
+.pad-none { padding: 0; }
+.pad-sm   { padding: 15px; }
+.pad-md   { padding: 25px; }
+.pad-lg   { padding: 40px; }

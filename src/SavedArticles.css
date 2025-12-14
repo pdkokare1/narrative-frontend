@@ -2,15 +2,15 @@
 
 /* Desktop Container */
 .saved-articles-container {
-  padding: 30px 40px;
+  padding: 40px;
   height: 100%;
   overflow-y: auto;
 }
 
 /* Header Styling */
 .saved-header {
-  margin-bottom: 25px;
-  padding-bottom: 15px;
+  margin-bottom: 35px;
+  padding-bottom: 20px;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
@@ -18,46 +18,57 @@
 }
 
 .saved-header h1 {
-  font-size: 24px;
+  font-family: var(--font-heading);
+  font-size: 32px;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
+  letter-spacing: -0.5px;
 }
 
 .saved-count-badge {
-  font-size: 12px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-color);
-  padding: 4px 10px;
-  border-radius: 12px;
-  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid var(--accent-primary);
+  padding: 6px 14px;
+  border-radius: 20px;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-/* Empty State / Error State */
+/* Empty State */
 .saved-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  min-height: 400px;
+  min-height: 50vh;
   color: var(--text-tertiary);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
 }
 
 .saved-placeholder h2 {
-  font-size: 18px;
-  margin-bottom: 10px;
+  font-family: var(--font-heading);
+  font-size: 24px;
+  margin-bottom: 15px;
   color: var(--text-primary);
 }
 
-.error-text {
-  color: #E57373;
+.saved-placeholder p {
+  font-size: 14px;
+  max-width: 300px;
+  line-height: 1.6;
 }
 
-/* Mobile Responsive Overrides */
+.error-text { color: var(--color-error); }
+
+/* Mobile */
 @media (max-width: 768px) {
-  /* On mobile, we use the global .content class for scrolling, 
-     so we reset padding here to let the cards snap to edges */
   .saved-articles-container {
     padding: 0;
     height: auto;
@@ -65,22 +76,20 @@
   }
 
   .saved-header {
-    padding: 15px 20px;
-    background: var(--bg-primary);
+    padding: 20px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(12px);
     margin-bottom: 0;
     position: sticky;
-    top: 0;
+    top: 60px; /* Below main header */
     z-index: 10;
     border-bottom: 1px solid var(--border-color);
   }
 
-  .saved-header h1 {
-    font-size: 18px;
-  }
-
-  /* Empty state for mobile needs to fit within a snap card */
+  .saved-header h1 { font-size: 24px; }
+  
   .saved-placeholder {
+    border: none;
     min-height: 60vh;
-    padding: 20px;
   }
 }

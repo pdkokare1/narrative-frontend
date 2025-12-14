@@ -1,0 +1,53 @@
+/* src/components/ui/DashboardSkeleton.css */
+
+.skel-header {
+  border-bottom: none;
+  margin-bottom: 20px;
+}
+
+.skel-block {
+  background: var(--bg-elevated);
+  border-radius: 4px;
+}
+
+.skel-w-120 { width: 120px; }
+.skel-w-150 { width: 150px; }
+.skel-w-180 { width: 180px; }
+.skel-w-full { width: 100%; }
+.skel-w-80p { width: 80%; }
+.skel-w-60p { width: 60%; }
+.skel-w-40p { width: 40%; }
+
+.skel-h-10 { height: 10px; }
+.skel-h-12 { height: 12px; }
+.skel-h-16 { height: 16px; }
+.skel-h-20 { height: 20px; }
+.skel-h-24 { height: 24px; }
+.skel-h-28 { height: 28px; }
+.skel-h-100 { height: 100px; }
+.skel-h-200 { height: 200px; }
+
+.skel-mb-8 { margin-bottom: 8px; }
+.skel-mb-10 { margin-bottom: 10px; }
+.skel-mb-15 { margin-bottom: 15px; }
+.skel-mb-20 { margin-bottom: 20px; }
+
+.skel-center { margin: 0 auto; }
+.skel-flex-row { display: flex; gap: 20px; alignItems: center; height: 140px; }
+.skel-flex-1 { flex: 1; }
+.skel-shrink-0 { flex-shrink: 0; }
+
+.skel-circle-chart {
+  border-radius: 50%;
+}
+
+.skel-legend-row {
+  display: flex; 
+  justify-content: space-around; 
+  margin-bottom: 15px;
+}
+
+.skel-legend-item {
+  width: 40px; 
+  height: 10px;
+}

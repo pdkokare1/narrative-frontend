@@ -1,0 +1,38 @@
+/* src/components/feeds/UnifiedFeed.css */
+
+.new-content-pill {
+  position: fixed;
+  top: 130px; /* Below header + tabs */
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background-color: var(--accent-primary);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 999;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.new-content-pill.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.new-content-pill:hover {
+  transform: translateX(-50%) scale(1.05);
+  background-color: var(--accent-hover);
+}
+
+/* Mobile Adjustment */
+@media (max-width: 768px) {
+  .new-content-pill {
+    top: 160px; /* Account for InFocus bar */
+  }
+}

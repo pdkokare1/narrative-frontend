@@ -1,0 +1,448 @@
+/* src/components/Header.css */
+
+/* ... (Keep existing layout styles, just add the new radio button styles) ... */
+
+/* ==================== RADIO BUTTON (HEADER) ==================== */
+.radio-header-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  margin-right: 5px;
+}
+
+.radio-header-btn:hover {
+  color: var(--accent-gold);
+  background: var(--bg-elevated);
+}
+
+.radio-header-btn.playing {
+  color: var(--accent-gold);
+}
+
+/* Equalizer Animation */
+.radio-pulse {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  width: 18px;
+  height: 18px;
+}
+
+.radio-pulse .bar {
+  width: 3px;
+  background-color: var(--accent-gold);
+  animation: equalize 1s infinite alternate;
+}
+
+.radio-pulse .b1 { height: 60%; animation-delay: -0.4s; }
+.radio-pulse .b2 { height: 100%; animation-delay: -0.2s; }
+.radio-pulse .b3 { height: 70%; animation-delay: -0.6s; }
+
+@keyframes equalize {
+  0% { height: 30%; }
+  100% { height: 100%; }
+}
+
+/* ... (Rest of existing CSS for Search, Logo, etc.) ... */
+
+/* ==================== HEADER LAYOUT ==================== */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: var(--gradient-header);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 25px;
+  z-index: 1000;
+  transition: background 0.3s ease;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* ==================== LOGO ==================== */
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.logo-text {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1;
+}
+
+.tagline {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  margin-top: 2px;
+}
+
+/* ==================== HAMBURGER BUTTON ==================== */
+.hamburger-btn {
+  display: flex;
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1300;
+}
+
+.hamburger-btn:hover {
+  color: var(--accent-primary);
+  background: var(--bg-elevated);
+}
+
+/* ==================== SEARCH BAR ==================== */
+.search-bar-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-form {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--bg-elevated);
+  border-radius: 20px;
+  border: 1px solid transparent;
+  width: 0;
+  opacity: 0;
+  position: relative;
+}
+
+.search-form.open {
+  width: 220px;
+  opacity: 1;
+  border-color: var(--border-color);
+  margin-right: 10px;
+}
+
+.search-input {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  padding: 6px 15px;
+  padding-right: 30px; /* Space for spinner */
+  width: 100%;
+  font-size: 13px;
+  outline: none;
+}
+
+.search-spinner {
+  position: absolute;
+  right: 10px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--text-tertiary);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.search-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.search-toggle-btn:hover {
+  color: var(--accent-primary);
+  background: var(--bg-elevated);
+}
+
+/* --- Live Search Dropdown --- */
+.live-search-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 300px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  margin-top: 10px;
+  overflow: hidden;
+  z-index: 1200;
+  animation: fadeIn 0.1s ease-out;
+}
+
+.live-search-label {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 700;
+  padding: 10px 15px;
+  background: var(--bg-secondary);
+  letter-spacing: 0.5px;
+}
+
+.live-search-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-light);
+  transition: background 0.2s;
+}
+
+.live-search-item:hover {
+  background: var(--bg-primary);
+}
+
+.live-item-icon {
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+.live-item-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.live-item-headline {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.live-item-meta {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.live-search-footer {
+  padding: 10px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--accent-primary);
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--bg-secondary);
+}
+
+.live-search-footer:hover {
+  text-decoration: underline;
+}
+
+/* ==================== THEME TOGGLE ==================== */
+.theme-toggle {
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent-primary);
+  color: var(--text-tertiary);
+  font-size: 18px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-1px) scale(1.05);
+  border-color: var(--accent-hover);
+  color: var(--accent-primary);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* ==================== USER MENU (DESKTOP) ==================== */
+.header-user-desktop {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .header-user-desktop {
+    display: flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 6px 10px;
+    position: relative;
+  }
+
+  .header-dashboard-link {
+    color: var(--text-tertiary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: color 0.2s ease;
+  }
+
+  .header-dashboard-link:hover {
+    color: var(--accent-primary);
+    text-decoration: none;
+  }
+
+  .header-user-divider {
+    color: var(--border-color);
+    margin: 0 8px;
+  }
+
+  .header-user-clickable-area {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: -2px -4px;
+    transition: background-color 0.2s ease;
+  }
+
+  .header-user-clickable-area:hover {
+    background-color: var(--bg-primary);
+  }
+
+  .header-username-desktop {
+    color: var(--text-secondary);
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-user-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    min-width: 100%;
+    width: max-content;
+    min-width: 160px;
+    box-shadow: var(--shadow-md);
+    z-index: 1100;
+    padding: 5px;
+    margin-top: 8px;
+    animation: fadeIn 0.1s ease-out;
+  }
+
+  .header-user-dropdown ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .header-user-dropdown li a {
+    display: block;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .header-user-dropdown li a:hover {
+    background: var(--accent-primary);
+    color: white;
+    text-decoration: none;
+  }
+}
+
+/* ==================== MOBILE RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .header {
+    height: 60px;
+    padding: 0 15px;
+    position: fixed;
+  }
+
+  .header-left {
+    position: static;
+    width: auto;
+    justify-content: flex-start;
+    padding: 0;
+    gap: 10px;
+  }
+
+  .logo-container {
+    align-items: flex-start;
+  }
+
+  .header-right {
+    position: static;
+    margin-left: auto;
+  }
+
+  .theme-toggle {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  /* Mobile Search Expansion Logic */
+  .search-form.open {
+    position: absolute;
+    right: 55px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: calc(100vw - 150px);
+    z-index: 10;
+    box-shadow: var(--shadow-md);
+    background: var(--bg-elevated);
+    height: 40px;
+  }
+  
+  .live-search-dropdown {
+    width: calc(100vw - 40px);
+    right: -50px;
+    top: 55px;
+  }
+}

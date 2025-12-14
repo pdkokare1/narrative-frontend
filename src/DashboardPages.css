@@ -1,0 +1,616 @@
+/* In file: src/DashboardPages.css */
+/* --- FIX: Added .dashboard-left-scroll and .dashboard-left-footer for layout --- */
+/* --- FIX: Used repeat(2, minmax(0, 1fr)) to fix stat card overflow --- */
+/* --- FIX: Increased .dashboard-page padding-bottom to 90px (mobile) --- */
+/* --- FIX: Removed sticky-header-wrapper styles from right column --- */
+/* --- FIX (2025-11-15): Set explicit height/overflow on .dashboard-page to stop double scrollbar --- */
+/* --- FIX (2025-11-15): Added new desktop header layout styles --- */
+/* --- FIX (2025-11-15): Updated mobile header layout styles --- */
+/* --- FIX (2025-11-16): Removed left column scrollbar and added right column sticky header --- */
+/* --- FIX (2025-11-16 FINAL-FINAL): Corrected all sticky and padding values for alignment --- */
+/* --- *** THIS IS THE ALIGNMENT FIX *** --- */
+/* --- *** MOBILE FIX: Added styles for .dashboard-header-mobile and .mobile-only-footer *** --- */
+
+/* --- Page Wrapper --- */
+.dashboard-page {
+  margin: 0 auto;
+  padding: 0; /* Remove padding for full control */
+  color: var(--text-primary);
+  height: calc(100vh - 60px); /* <-- FIX: Set explicit height */
+  display: flex; /* Changed to flex */
+  overflow: hidden; /* <-- FIX: Hide overflow for the page itself */
+  width: 100%;
+}
+
+/* --- Main Content Flex Wrapper --- */
+.dashboard-content-wrapper {
+  display: flex;
+  flex-grow: 1;
+  gap: 20px; /* Space between columns */
+  width: 100%;
+  /* --- *** THIS IS THE FIX (1/3) *** --- */
+  /* This padding creates the 15px border around *both* columns */
+  padding: 15px;
+  /* --- *** END OF FIX *** --- */
+}
+
+/* --- Left Column Styles --- */
+.dashboard-left-column {
+  flex: 0 0 360px; /* Fixed width */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  /* --- *** THIS IS THE FIX (2/3) *** --- */
+  /* Remove internal padding, it's handled by the wrapper now */
+  padding-bottom: 0;
+  /* --- *** END OF FIX --- */
+  
+  /* --- Make left column sticky --- */
+  position: sticky;
+  /* --- *** THIS IS THE FIX (3/3) *** --- */
+  /* Stick 15px below the 60px header (60 + 15 = 75) */
+  top: 75px; 
+  /* --- *** END OF FIX --- */
+  height: fit-content; 
+  background-color: var(--bg-primary); 
+}
+
+/* --- Inner scroll container for left column --- */
+.dashboard-left-scroll {
+  /* Custom scrollbar for left column (HIDDEN) */
+  scrollbar-width: none; /* Firefox */
+}
+.dashboard-left-scroll::-webkit-scrollbar { 
+  display: none; /* Chrome, Safari */
+}
+
+/* --- Footer for Account Settings button --- */
+.dashboard-left-footer {
+  flex-shrink: 0; /* Prevent from shrinking */
+  padding-top: 15px; /* Space above button */
+  margin-top: auto; /* Pushes this to the bottom */
+}
+
+
+/* --- Right Column Styles --- */
+.dashboard-right-column {
+  flex: 1 1 auto; /* Grow to fill remaining space */
+  min-width: 0;
+  padding-right: 10px; /* Space for scrollbar */
+  padding-left: 5px; /* Slight padding */
+  /* --- Make this column scrollable and fix its height --- */
+  overflow-y: auto; /* Allow this column to scroll */
+  /* --- *** THIS IS THE FIX *** --- */
+  /* Remove internal padding-top */
+  padding-top: 0;
+  /* Height is 100vh - 60px (header) - 30px (top/bottom wrapper padding) */
+  height: calc(100vh - 90px); 
+  /* --- *** END OF FIX *** --- */
+  
+  /* Custom scrollbar for right column */
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-primary) var(--bg-secondary);
+}
+/* --- Apply scrollbar styles --- */
+.dashboard-right-column::-webkit-scrollbar { display: block; width: 6px; }
+.dashboard-right-column::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
+.dashboard-right-column::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 3px; }
+.dashboard-right-column::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
+
+
+/* --- Responsive Placeholder Page (Saved, Account) --- */
+.placeholder-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    flex-grow: 1; /* Make it fill the page */
+    min-height: 300px;
+    gap: 10px;
+    padding: 20px; /* Add padding */
+}
+.placeholder-page h1 { /* Style for page title */
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+}
+.placeholder-page h2 {
+    font-size: 18px;
+    color: var(--text-secondary);
+}
+.placeholder-page p {
+    color: var(--text-tertiary);
+    margin-bottom: 20px;
+}
+
+/* --- Section Title Header (Used inside columns) --- */
+.section-title-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; 
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+  padding-top: 10px;
+  width: 100%;
+  margin-bottom: 20px; 
+}
+.section-title-header.no-border-bottom {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 15px; 
+}
+/* Specific title styling *within* the header */
+.section-title-header .section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  flex-grow: 1; flex-shrink: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border-bottom: none; /* Ensure no double borders */
+  padding-bottom: 0;
+}
+.header-actions {
+  display: flex;
+  align-items: center; 
+  gap: 10px;
+  flex-shrink: 0;
+}
+.btn-small { /* Added for Back to Articles */
+  padding: 4px 10px !important;
+  font-size: 10px !important;
+  line-height: 1.4 !important;
+  flex-shrink: 0;
+}
+.date-range-selector span {
+  font-size: 11px; /* Smaller font */
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* --- Section Title (Standalone H2) --- */
+h2.section-title {
+   grid-column: 1 / -1; font-size: 18px; font-weight: 600;
+   color: var(--text-primary); margin: 0;
+   border-bottom: 1px solid var(--border-color);
+   padding-bottom: 8px; text-align: left;
+   width: 100%; flex-shrink: 0;
+   margin-bottom: 15px; /* --- ADDED: Manual spacing --- */
+}
+h2.section-title.reading-bias-title {
+  margin-top: 10px; 
+  margin-bottom: 10px; 
+}
+h2.section-title.no-border { border-bottom: none; padding-bottom: 0; margin-bottom: 0; } /* Remove bottom margin if no border */
+
+
+/* --- Stat Box Grid --- */
+.stat-box-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 columns in left pane */
+  gap: 15px;
+  flex-shrink: 0;
+  padding: 0; 
+}
+
+/* --- Dashboard Card Styling (Applied to wrappers) --- */
+.dashboard-card {
+  background: var(--bg-card-flat);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden; /* Prevent content overflow */
+  transition: border-color 0.2s ease-in-out;
+  margin-bottom: 20px; /* --- ADDED: Manual spacing --- */
+}
+.dashboard-card:hover { border-color: var(--accent-primary); }
+/* --- MODIFIED: no-padding now makes wrapper invisible --- */
+.dashboard-card.no-padding {
+  padding: 0;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+  margin-bottom: 10px; 
+}
+
+/* Card Header (Chart Titles) */
+.dashboard-card h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 15px 0; /* Adjusted margin */
+  padding-bottom: 10px; /* Add padding below title */
+  border-bottom: 1px solid var(--border-light); /* Separator line */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- *** THIS IS THE FIX (Stat Box Height) *** --- */
+.stat-box {
+  background: var(--bg-card-flat); /* CHANGED: Match chart cards */
+  text-align: left;
+  padding: 18px 15px; /* UPDATED: Increased top/bottom padding */
+  border-radius: 8px; /* CHANGED: Match chart cards */
+  border: 1px solid var(--border-color); /* CHANGED: Match chart cards */
+  box-shadow: var(--shadow-sm); /* ADDED: Match chart cards */
+  margin-bottom: 0; /* --- ADDED: Reset margin --- */
+}
+/* --- *** END OF FIX *** --- */
+.stat-box h3 {
+  font-size: 11px; /* Smaller */
+  margin-bottom: 4px; /* Reduced margin */
+  font-weight: 500; /* Lighter weight */
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: none; /* Remove border from stat title */
+  padding-bottom: 0;
+}
+.stat-number {
+  font-size: 26px; /* Slightly smaller */
+  margin-bottom: 8px; /* CHANGED: Was 4px, increased spacing */
+  font-weight: 600; /* Less bold */
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+.stat-description {
+  font-size: 10px; /* Smaller */
+  color: var(--text-tertiary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* --- Lean Summary Card --- */
+.lean-summary-card {
+  flex-shrink: 0; /* Prevent shrinking in left col */
+  min-height: auto; /* Let content define height */
+  justify-content: center;
+  /* padding: 20px; Already handled by .dashboard-card */
+  margin-bottom: 0; 
+}
+
+/* --- NEW: Lean Legend Styles --- */
+.lean-legend {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 5px;
+  border: 1px solid var(--border-color);
+}
+/* --- END NEW --- */
+
+.lean-bar { display: flex; height: 20px; border-radius: 4px; overflow: hidden; margin-bottom: 15px; background-color: var(--bg-primary); }
+.lean-segment { display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); transition: width 0.5s ease-in-out; overflow: hidden; white-space: nowrap; }
+.lean-segment.left { background-color: #dc2626; }
+/* --- UPDATED: Center color --- */
+.lean-segment.center { background-color: #4CAF50; } /* Was #6b7280 */
+/* --- END UPDATE --- */
+.lean-segment.right { background-color: #2563eb; }
+.lean-details { list-style: none; padding: 0; margin: 0; font-size: 11px; color: var(--text-secondary); }
+.lean-details li { margin-bottom: 5px; display: flex; align-items: baseline; padding-left: 5px; /* ADDED: Shift text right */ }
+.lean-details li:last-child { margin-bottom: 0; }
+.lean-details li span { font-weight: 600; color: var(--text-primary); margin-right: 6px; min-width: 25px; text-align: right; flex-shrink: 0; }
+
+/* --- UPDATED: Account Settings Button Margin --- */
+.account-settings-link {
+  /* margin-top: 5px; */ /* REMOVED - now handled by footer */
+}
+/* --- END UPDATE --- */
+
+
+/* --- *** THIS IS THE FINAL ALIGNMENT FIX *** --- */
+.sticky-header-wrapper {
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-primary); 
+  z-index: 10;
+  /* Fix padding bleed from parent */
+  margin-right: -10px; 
+  padding-right: 10px;
+  padding-top: 0; 
+  /* --- *** THIS IS THE FIX: Add padding below dividing line *** --- */
+  padding-bottom: 10px;
+}
+.sticky-header-wrapper .section-title-header {
+  /* --- *** THIS IS THE FIX: Set margin-bottom to 10px *** --- */
+  margin-bottom: 10px; /* WAS: 20px */
+  align-items: center; 
+  /* The base .section-title-header rule (padding-top: 10px) will now apply */
+}
+/* --- *** END OF FINAL FIX --- */
+
+
+/* --- Dashboard Chart Grid --- */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2x2 grid */
+  gap: 20px;
+  /* --- *** THIS IS THE FIX: REMOVED margin-top *** --- */
+}
+
+/* --- Chart Container Styles --- */
+.chart-container {
+  position: relative;
+  flex-grow: 1; /* Allow chart container to fill card */
+  min-height: 250px; /* Reduced min-height */
+}
+/* Specific heights for different charts */
+.stories-read-chart { height: 250px; min-height: 220px; } /* Slightly shorter */
+.article-bias-chart { height: 280px; min-height: 250px; } /* Slightly shorter */
+
+/* Stories Read Card (Full width) */
+.full-width-chart-card { grid-column: 1 / -1; }
+
+/* --- *** THIS IS THE FIX (Align Cards) *** --- */
+/* This only applies on desktop where columns are side-by-side */
+.dashboard-right-column > .stories-read-card {
+  /* --- REMOVED: margin-top: 35px; --- */
+}
+/* --- *** END OF FIX --- */
+
+
+/* --- Loading and No Data States --- */
+.loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 120px; }
+.loading-container .spinner { width: 22px; height: 22px; border-width: 3px; }
+.no-data-msg { text-align: center; color: var(--text-tertiary); font-size: 12px; margin: auto; height: 100%; display: flex; align-items: center; justify-content: center; padding: 15px; }
+.loading-container.simple { min-height: 40px; }
+.spinner.small { width: 16px; height: 16px; border-width: 2px; margin: auto; }
+.no-data-msg.small { font-size: 11px; padding: 8px; margin: auto; }
+
+
+/* --- *** MOBILE-ONLY FIXES (START) *** --- */
+
+/* --- NEW: Hide desktop button, show mobile button --- */
+.mobile-only-footer { 
+  display: none; /* Hide on desktop by default */
+}
+
+/* --- NEW: Hide desktop headers on mobile --- */
+.dashboard-header-mobile {
+  display: none; /* Hide on desktop */
+}
+
+
+/* --- Responsive Adjustments --- */
+/* --- *** THIS IS THE FIX (Dashboard Scroll) *** --- */
+@media (max-width: 1024px) { /* Tablet and below */
+  .dashboard-page {
+    /* height: auto; */ /* <-- REMOVED */
+    /* overflow: visible; */ /* <-- REMOVED */
+    /* min-height: 0; */ /* <-- REMOVED */
+    
+    /* --- NEW: Make this the scroll container --- */
+    height: calc(100vh - 60px); /* Fill page below header */
+    overflow-y: auto; /* Allow scrolling */
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+    overscroll-behavior-y: contain; /* Prevent bounce */
+    /* --- *** THIS IS THE FIX *** --- */
+    padding-bottom: 90px; /* Add space at the bottom (was 60px) */
+    /* --- *** END OF FIX *** --- */
+  }
+  /* --- *** END OF FIX --- */
+  .dashboard-content-wrapper {
+    flex-direction: column; /* Stack columns */
+    overflow: visible;
+    gap: 0; /* Remove gap, handled by margins */
+    padding: 15px; /* Add padding back */
+  }
+  .dashboard-left-column {
+    flex: 0 0 auto; /* Don't fix width */
+    width: 100%;
+    margin-bottom: 20px;
+    overflow: visible; /* Don't scroll */
+    padding-bottom: 0; /* Remove bottom padding */
+    /* --- NEW: Un-stick on mobile --- */
+    position: static;
+    height: auto;
+    background-color: transparent !important; /* --- ADDED: Remove bg on mobile --- */
+  }
+  .dashboard-right-column {
+    /* --- *** THIS IS THE FIX *** --- */
+    /* --- Undo the desktop scroll fix for mobile --- */
+    overflow-y: visible; 
+    height: auto; 
+    /* --- *** END OF FIX *** --- */
+    max-height: none;
+    padding: 0; /* Remove padding */
+  }
+  .sticky-header-wrapper {
+    position: static; /* Unstick header */
+    background: none; z-index: auto; padding: 0; margin: 0;
+  }
+  
+  /* --- *** THIS IS THE FIX (Align Cards) *** --- */
+  /* Remove the margin-top fix on tablet/mobile */
+  .dashboard-right-column > .stories-read-card {
+    margin-top: 0; 
+  }
+  /* --- *** END OF FIX --- */
+
+  .sticky-header-wrapper .section-title-header { margin-top: 0; margin-bottom: 15px; } /* Adjust margin */
+
+  .stat-box-grid { grid-template-columns: repeat(2, 1fr); } /* Keep 2 columns */
+  .dashboard-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+}
+
+
+/* --- *** THIS IS THE FIX (Request 1 & 2): DELETED DESKTOP HEADER RULES *** --- */
+/*
+.dashboard-header-desktop-layout { ... }
+.header-actions-row { ... }
+*/
+/* --- *** END OF FIX *** --- */
+
+
+@media (max-width: 768px) { /* Mobile */
+  .dashboard-content-wrapper { padding: 10px; } /* Reduce padding */
+  .dashboard-left-column { margin-bottom: 15px; gap: 0; } /* --- REMOVED GAP --- */
+  .dashboard-right-column { padding-bottom: 15px; }
+
+  /* --- *** THIS IS THE FIX: Hide desktop headers on mobile *** --- */
+  .dashboard-left-column .section-title-header,
+  .dashboard-right-column .sticky-header-wrapper {
+    display: none;
+  }
+
+  /* --- *** THIS IS THE FIX: Style the new mobile headers *** --- */
+  .dashboard-header-mobile {
+    display: block; /* Show this header on mobile */
+    margin-bottom: 15px;
+  }
+  .section-title-mobile {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 10px; /* Space between title and buttons */
+  }
+  /* --- *** THIS IS THE FIX (BUTTON ALIGNMENT) *** --- */
+  .header-actions-mobile {
+    display: grid; /* <-- CHANGED from 'flex' */
+    grid-template-columns: 1fr 1fr; /* <-- ADDED */
+    gap: 10px; /* Space between buttons */
+  }
+  .header-actions-mobile .btn-secondary,
+  .header-actions-mobile .date-range-selector {
+    /* REMOVED flex-grow, flex-basis, min-width */
+    width: 100%; /* <-- ADDED: Make them fill their grid cell */
+  }
+  /* --- *** END OF FIX *** --- */
+  .header-actions-mobile .date-range-selector span {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box; /* Ensure padding is included */
+    padding: 4px 10px !important;
+    font-size: 10px !important;
+    line-height: 1.4 !important;
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+    /* --- *** THIS IS THE FIX (BUTTON ALIGNMENT) *** --- */
+    height: 100%; /* <-- ADDED: Make span fill the height of the div */
+    /* --- *** END OF FIX *** --- */
+  }
+  /* --- *** END OF MOBILE HEADER FIX *** --- */
+  
+  /* --- Header for right column --- */
+  .dashboard-right-column .section-title-header {
+     margin-bottom: 15px; 
+     align-items: flex-start; 
+     flex-direction: column; 
+     gap: 8px;
+  }
+  .dashboard-right-column .header-actions {
+     width: 100%;
+     justify-content: space-between;
+  }
+
+  .date-range-selector span { margin-left: 0; }
+
+  /* --- *** THIS IS THE FIX *** --- */
+  .stat-box-grid { 
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* FIX for overflow */
+    gap: 10px; 
+    padding: 0; 
+  }
+  /* --- *** END OF FIX *** --- */
+  .stat-box {
+    padding: 10px;
+    /* --- NEW: Make stat boxes square and centered --- */
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .stat-number { font-size: 22px; }
+  .stat-description { font-size: 9px; }
+
+  .lean-summary-card { padding: 15px; margin-bottom: 10px; }
+  .lean-details { font-size: 11px; }
+
+  /* --- NEW: Mobile legend --- */
+  .lean-legend {
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap; /* Allow legend to wrap */
+  }
+  .legend-item { font-size: 10px; }
+  .legend-dot { width: 8px; height: 8px; }
+
+  .dashboard-grid { grid-template-columns: 1fr; gap: 15px; margin-top: 15px; } /* Stack charts */
+  .section-title-header .section-title,
+  h2.section-title { font-size: 16px; }
+
+  .chart-container { min-height: 240px; }
+  .stories-read-chart, .article-bias-chart { height: 240px; min-height: 200px; }
+  .dashboard-card { padding: 15px; margin-bottom: 15px; }
+  .dashboard-card.no-padding { margin-bottom: 15px; }
+  .dashboard-card h3 { font-size: 13px; margin-bottom: 10px; padding-bottom: 8px; }
+
+  /* --- *** THIS IS THE FIX (BUTTON MARGIN) *** --- */
+  .mobile-only-footer {
+    display: block; /* Show on mobile */
+    margin-top: 15px; /* Add space */
+    margin-bottom: 60px; /* <-- CHANGED from 30px to 60px */
+  }
+  /* --- *** END OF FIX *** --- */
+  .dashboard-left-column .dashboard-left-footer {
+    display: none; /* Hide desktop button on mobile */
+  }
+}
+
+/* Specific fix for stat box wrapper padding on mobile */
+@media (max-width: 480px) {
+  /* --- REMOVED this rule that forced 1-column layout --- */
+  /* .dashboard-left-column > .dashboard-card.no-padding .stat-box-grid { ... } */
+}
+
+/* --- *** THIS IS THE FIX: ADDED STYLE FOR NEW BUTTON *** --- */
+/* --- NEW: Account Settings Link on Dashboard --- */
+/* This styles the <Link> component to look like the sidebar buttons */
+.account-settings-link-dashboard {
+  display: block;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  /* margin-bottom: 8px; */ /* Not needed in footer */
+  text-align: center;
+}
+.account-settings-link-dashboard:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+  text-decoration: none;
+}
+/* --- *** END OF FIX *** --- */

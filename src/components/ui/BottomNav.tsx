@@ -14,16 +14,13 @@ const BottomNav: React.FC = () => {
     startRadio, 
     currentArticle, 
     togglePlayer,
-    playerOpen,
-    isVisible 
+    playerOpen
   } = useRadio();
   
   const { addToast } = useToast();
   const vibrate = useHaptic();
   const [loading, setLoading] = useState(false);
 
-  // --- FIXED: Do NOT hide nav when playing. Keeps user immersed. ---
-  
   const handleRadioClick = async (e: React.MouseEvent) => {
     e.preventDefault(); 
     vibrate(); 
@@ -52,6 +49,9 @@ const BottomNav: React.FC = () => {
     }
   };
 
+  // SVG PROPS: Thinner Stroke for Premium Look
+  const iconProps = { width: 22, height: 22, fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as "round", strokeLinejoin: "round" as "round" };
+
   return (
     <nav className="bottom-nav">
       <NavLink 
@@ -61,7 +61,7 @@ const BottomNav: React.FC = () => {
         onClick={vibrate}
       >
         <div className="nav-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <svg {...iconProps} viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
         </div>
         <span className="nav-label">Feed</span>
       </NavLink>
@@ -72,17 +72,17 @@ const BottomNav: React.FC = () => {
         onClick={vibrate}
       >
         <div className="nav-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <svg {...iconProps} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
         </div>
         <span className="nav-label">Search</span>
       </NavLink>
 
-      {/* --- CENTER: GAMUT RADIO --- */}
+      {/* --- CENTER: GAMUT RADIO (FLOATING GOLD) --- */}
       <div 
         className={`nav-item radio-action ${isPlaying ? 'playing' : ''} ${isPaused ? 'paused' : ''}`} 
         onClick={handleRadioClick}
       >
-        <div className="nav-icon">
+        <div className="radio-circle">
           {loading ? (
              <div className="spinner-small" style={{ width: '20px', height: '20px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#FFF', marginRight: 0 }}></div>
           ) : (isPlaying || isPaused) ? (
@@ -92,11 +92,11 @@ const BottomNav: React.FC = () => {
                   <div className="wave-bar"></div>
               </div>
           ) : (
-             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+             <svg {...iconProps} strokeWidth={2} viewBox="0 0 24 24" style={{marginLeft: '2px'}}><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           )}
         </div>
-        <span className="nav-label">
-            {loading ? 'Loading' : (isPlaying || isPaused) ? (playerOpen ? 'Close' : 'Player') : 'Radio'}
+        <span className="nav-label radio-label">
+            {loading ? '...' : (isPlaying || isPaused) ? 'Player' : 'Radio'}
         </span>
       </div>
 
@@ -106,7 +106,7 @@ const BottomNav: React.FC = () => {
         onClick={vibrate}
       >
         <div className="nav-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+          <svg {...iconProps} viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
         </div>
         <span className="nav-label">Stats</span>
       </NavLink>
@@ -117,7 +117,7 @@ const BottomNav: React.FC = () => {
         onClick={vibrate}
       >
         <div className="nav-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+          <svg {...iconProps} viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
         </div>
         <span className="nav-label">Saved</span>
       </NavLink>

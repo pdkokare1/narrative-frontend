@@ -1,33 +1,34 @@
 // src/utils/ChartConfig.ts
 import { ChartOptions } from 'chart.js';
 
-// --- Color Palettes ---
+// --- Premium Color Palettes ---
 export const leanColors: Record<string, string> = {
-    'Left': '#dc2626', 
-    'Left-Leaning': '#f87171', 
-    'Center': '#4CAF50',
-    'Right-Leaning': '#60a5fa', 
-    'Right': '#2563eb', 
-    'Not Applicable': '#a1a1aa'
+    'Left': '#CF5C5C',         // Muted Red
+    'Left-Leaning': '#E08D8D', // Soft Red
+    'Center': '#D4AF37',       // Gold (The Standard)
+    'Right-Leaning': '#8DABE0',// Soft Blue
+    'Right': '#5C8BCF',        // Muted Blue
+    'Not Applicable': '#666666'
 };
 
 export const sentimentColors: Record<string, string> = { 
-    'Positive': '#2563eb', 
-    'Negative': '#dc2626', 
-    'Neutral': '#6b7280' 
+    'Positive': '#4E9F54', // Elegant Green
+    'Negative': '#CF5C5C', // Elegant Red
+    'Neutral': '#888888'   // Grey
 };
 
 export const qualityColors: Record<string, string> = {
-    'A+ Excellent (90-100)': '#2563eb',
-    'A High (80-89)': '#60a5fa',
-    'B Professional (70-79)': '#4CAF50',
-    'C Acceptable (60-69)': '#F59E0B',
-    'D-F Poor (0-59)': '#dc2626',
-    'N/A (Review/Opinion)': '#a1a1aa'
+    'A+ Excellent (90-100)': '#D4AF37', // Gold
+    'A High (80-89)': '#C5A028',
+    'B Professional (70-79)': '#4E9F54', // Green
+    'C Acceptable (60-69)': '#8DABE0',   // Blue
+    'D-F Poor (0-59)': '#CF5C5C',        // Red
+    'N/A (Review/Opinion)': '#666666'
 };
 
-const categoryColorsDark = ['#B38F5F', '#CCA573', '#D9B98A', '#E6CB9F', '#9C7C50', '#8F6B4D', '#C19A6B', '#AE8A53', '#D0B48F', '#B8860B'];
-const categoryColorsLight = ['#2E4E6B', '#3E6A8E', '#5085B2', '#63A0D6', '#243E56', '#1A2D3E', '#4B77A3', '#395D7D', '#5D92C1', '#004E8A'];
+// Gold Spectrum for Charts
+const categoryColorsDark = ['#D4AF37', '#AA8C2C', '#F2D06B', '#8C7324', '#E6C657', '#997D26', '#D9B948', '#BF9E30', '#FFDE7D', '#735F1D'];
+const categoryColorsLight = ['#9C7C50', '#7A5F3A', '#B89668', '#5E492C', '#D6B485', '#4A3922', '#8F7249', '#A38253', '#E0C297', '#3D2F1C'];
 
 interface ThemeColors {
     textPrimary: string;
@@ -45,15 +46,15 @@ interface ThemeColors {
 export const getChartTheme = (theme: string): ThemeColors => {
     const isDark = theme === 'dark';
     return {
-        textPrimary: isDark ? '#EAEAEA' : '#2C2C2C',
-        textSecondary: isDark ? '#B0B0B0' : '#555555',
-        textTertiary: isDark ? '#757575' : '#888888',
-        borderColor: isDark ? '#333333' : '#EAEAEA',
-        tooltipBg: isDark ? '#2C2C2C' : '#FDFDFD',
+        textPrimary: isDark ? '#EAEAEA' : '#1A1A1A',
+        textSecondary: isDark ? '#999999' : '#5A5A5A',
+        textTertiary: isDark ? '#666666' : '#8C8C8C',
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+        tooltipBg: isDark ? '#1a1a1a' : '#FFFFFF',
         categoryPalette: isDark ? categoryColorsDark : categoryColorsLight,
-        accentPrimary: isDark ? '#B38F5F' : '#2E4E6B',
-        trendUp: isDark ? '#4CAF50' : '#2E7D32',
-        trendDown: isDark ? '#E57373' : '#C62828',
+        accentPrimary: isDark ? '#D4AF37' : '#9C7C50',
+        trendUp: '#4E9F54',
+        trendDown: '#CF5C5C',
     };
 };
 
@@ -67,21 +68,30 @@ export const getDoughnutChartOptions = (title: string, theme: string): ChartOpti
         plugins: {
             legend: { 
                 position: 'bottom', 
-                labels: { color: colors.textSecondary, boxWidth: 12, padding: 15 } 
+                labels: { 
+                    color: colors.textSecondary, 
+                    boxWidth: 8, 
+                    padding: 20,
+                    font: { family: "'Inter', sans-serif", size: 11 }
+                } 
             },
             tooltip: { 
                 backgroundColor: colors.tooltipBg, 
                 titleColor: colors.textPrimary, 
-                bodyColor: colors.textSecondary 
+                bodyColor: colors.textSecondary,
+                borderColor: colors.borderColor,
+                borderWidth: 1,
+                padding: 12,
+                titleFont: { family: "'Playfair Display', serif" }
             },
             title: { 
                 display: !!title, 
                 text: title, 
                 color: colors.textPrimary, 
-                font: { size: 14 } 
+                font: { size: 14, family: "'Playfair Display', serif" } 
             }
         },
-        cutout: '60%',
+        cutout: '70%',
         elements: { arc: { borderWidth: 0 } }
     };
 };
@@ -96,11 +106,11 @@ export const getBarChartOptions = (title: string, axisLabel: string, theme: stri
             x: {
                 beginAtZero: true,
                 title: { display: !!axisLabel, text: axisLabel, color: colors.textSecondary },
-                ticks: { color: colors.textTertiary, stepSize: 1 },
-                grid: { color: colors.borderColor }
+                ticks: { color: colors.textTertiary, font: { size: 10 } },
+                grid: { color: colors.borderColor, tickLength: 0 }
             },
             y: {
-                ticks: { color: colors.textSecondary },
+                ticks: { color: colors.textSecondary, font: { size: 11 } },
                 grid: { display: false }
             },
         },
@@ -109,15 +119,20 @@ export const getBarChartOptions = (title: string, axisLabel: string, theme: stri
             tooltip: { 
                 backgroundColor: colors.tooltipBg, 
                 titleColor: colors.textPrimary, 
-                bodyColor: colors.textSecondary 
+                bodyColor: colors.textSecondary,
+                borderColor: colors.borderColor,
+                borderWidth: 1
             },
             title: { 
                 display: !!title, 
                 text: title, 
                 color: colors.textPrimary, 
-                font: { size: 14 } 
+                font: { size: 14, family: "'Playfair Display', serif" } 
             }
         },
+        elements: {
+            bar: { borderRadius: 4 }
+        }
     };
 };
 
@@ -130,13 +145,11 @@ export const getLineChartOptions = (theme: string): ChartOptions<'line'> => {
             x: {
                 type: 'time',
                 time: { unit: 'day', tooltipFormat: 'MMM d, yyyy', displayFormats: { day: 'MMM d' }},
-                title: { display: true, text: 'Date', color: colors.textSecondary },
-                ticks: { color: colors.textTertiary },
+                ticks: { color: colors.textTertiary, font: { size: 10 } },
                 grid: { color: colors.borderColor }
             },
             y: {
                 beginAtZero: true,
-                title: { display: true, text: 'Stories Analyzed', color: colors.textSecondary },
                 ticks: { color: colors.textTertiary, stepSize: 1 },
                 grid: { color: colors.borderColor }
             },
@@ -146,13 +159,15 @@ export const getLineChartOptions = (theme: string): ChartOptions<'line'> => {
             tooltip: { 
                 backgroundColor: colors.tooltipBg, 
                 titleColor: colors.textPrimary, 
-                bodyColor: colors.textSecondary 
+                bodyColor: colors.textSecondary,
+                borderColor: colors.borderColor,
+                borderWidth: 1
             },
             title: {
                 display: true,
                 text: 'Stories Analyzed Over Time',
                 color: colors.textPrimary,
-                font: { size: 14 }
+                font: { size: 14, family: "'Playfair Display', serif" }
             }
         },
     };
@@ -167,23 +182,23 @@ export const getScatterChartOptions = (theme: string): ChartOptions<'scatter'> =
             x: {
                 min: -10,
                 max: 10,
-                title: { display: true, text: 'Political Lean (Left to Right)', color: colors.textSecondary, font: { size: 10 } },
+                title: { display: true, text: 'Lean (Left ↔ Right)', color: colors.textSecondary, font: { size: 10 } },
                 ticks: {
                     color: colors.textTertiary,
                     font: { size: 10 },
                     callback: (value) => {
-                        if (value === -10) return 'Left';
-                        if (value === 0) return 'Center';
-                        if (value === 10) return 'Right';
+                        if (value === -10) return 'L';
+                        if (value === 0) return 'C';
+                        if (value === 10) return 'R';
                         return '';
                     }
                 },
-                grid: { color: colors.borderColor, tickLength: 0 }
+                grid: { color: colors.borderColor }
             },
             y: {
                 min: 0,
                 max: 100,
-                title: { display: true, text: 'Trust Score (Quality)', color: colors.textSecondary, font: { size: 10 } },
+                title: { display: true, text: 'Reliability', color: colors.textSecondary, font: { size: 10 } },
                 ticks: { color: colors.textTertiary, font: { size: 10 } },
                 grid: { color: colors.borderColor }
             }
@@ -198,7 +213,7 @@ export const getScatterChartOptions = (theme: string): ChartOptions<'scatter'> =
                 callbacks: {
                     label: (context: any) => {
                         const point = context.raw;
-                        return point.headline ? `${point.headline} (Score: ${point.y})` : `Score: ${point.y}`;
+                        return point.headline ? `${point.headline}` : `Score: ${point.y}`;
                     }
                 }
             },
@@ -206,7 +221,7 @@ export const getScatterChartOptions = (theme: string): ChartOptions<'scatter'> =
                 display: true,
                 text: 'Bias vs. Reliability Map',
                 color: colors.textPrimary,
-                font: { size: 14 }
+                font: { size: 14, family: "'Playfair Display', serif" }
             }
         }
     };

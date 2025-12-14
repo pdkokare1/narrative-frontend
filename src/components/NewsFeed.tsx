@@ -6,6 +6,7 @@ import ArticleFilters from './ArticleFilters';
 import { IArticle, IFilters } from '../types';
 import './NewsFeed.css';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
+import useShare from '../hooks/useShare'; // <--- NEW IMPORT
 
 interface NewsFeedProps {
   filters: IFilters;
@@ -25,11 +26,21 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   
+  // --- Hooks ---
+  const { handleShare } = useShare(); // <--- Initialize Share Hook
+
+  // --- Handlers ---
+  const handleRead = (article: IArticle) => {
+    // Log the read action and open URL
+    api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
+    window.open(article.url, '_blank', 'noopener,noreferrer');
+  };
+  
   const fetchArticles = async (reset = false) => {
     if (reset) setLoading(true);
     try {
       const offset = reset ? 0 : page * 12;
-      // FIX: Destructure { data } so we get the actual payload, not the Axios object
+      // Destructure { data } to get the actual payload
       const { data } = await api.fetchArticles({ ...filters, offset, limit: 12 });
       
       if (reset) {
@@ -86,6 +97,8 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
             article={article}
             onAnalyze={onAnalyze}
             onCompare={onCompare}
+            onShare={() => handleShare(article)} // <--- Pass Share Handler
+            onRead={() => handleRead(article)}   // <--- Pass Read Handler
             isSaved={savedArticleIds.has(article._id || '')}
             onToggleSave={onToggleSave}
             showTooltip={showTooltip}

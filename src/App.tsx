@@ -22,7 +22,6 @@ import BottomNav from './components/ui/BottomNav';
 import ErrorBoundary from './components/ErrorBoundary';
 import CustomTooltip from './components/ui/CustomTooltip';
 import BadgePopup from './components/ui/BadgePopup';
-// --- NEW ---
 import OnboardingTour from './components/ui/OnboardingTour';
 
 import { IBadge } from './types'; 
@@ -121,6 +120,8 @@ function MainLayout({ profile }: MainLayoutProps) {
   const [savedArticleIds, setSavedArticleIds] = useState<Set<string>>(new Set(profile.savedArticles || []));
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
+  // SCROLL REF FOR VIRTUOSO
+  const contentRef = useRef<HTMLDivElement>(null);
   const pendingDeletesRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   useEffect(() => {
@@ -171,7 +172,7 @@ function MainLayout({ profile }: MainLayoutProps) {
   const showTooltip = (text: string, e: React.MouseEvent) => {
     if (!isMobileView || !text) return; 
     e.stopPropagation();
-    // @ts-ignore - Touch event compatibility
+    // @ts-ignore
     const x = e.clientX || (e.touches && e.touches[0].clientX);
     // @ts-ignore
     const y = e.clientY || (e.touches && e.touches[0].clientY);
@@ -274,7 +275,6 @@ function MainLayout({ profile }: MainLayoutProps) {
       
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
       
-      {/* --- NEW: Onboarding Tour --- */}
       <OnboardingTour />
       
       {earnedBadge && (
@@ -297,53 +297,56 @@ function MainLayout({ profile }: MainLayoutProps) {
           onLogout={handleLogout} 
         />
 
-        <Routes>
-          <Route path="/" element={
-            <NewsFeed
-              filters={filters}
-              onFilterChange={handleFilterChange} 
-              onAnalyze={handleAnalyzeClick}
-              onCompare={handleCompareClick}
-              savedArticleIds={savedArticleIds}
-              onToggleSave={handleToggleSave}
-              showTooltip={showTooltip}
-            />
-          } />
-          
-          <Route path="/search" element={ 
-            <SearchResults 
-              onAnalyze={handleAnalyzeClick}
-              onCompare={handleCompareClick}
-              savedArticleIds={savedArticleIds}
-              onToggleSave={handleToggleSave}
-              showTooltip={showTooltip}
-            /> 
-          } />
-
-          <Route path="/my-dashboard" element={<MyDashboard theme={theme} />} />
-          
-          <Route path="/saved-articles" element={ 
-              <SavedArticles 
-                onToggleSave={handleToggleSave}
-                onCompare={handleCompareClick}
+        {/* --- MAIN SCROLL AREA --- */}
+        <div className="content" ref={contentRef}>
+            <Routes>
+            <Route path="/" element={
+                <NewsFeed
+                filters={filters}
+                onFilterChange={handleFilterChange} 
                 onAnalyze={handleAnalyzeClick}
-                onShare={() => {}} 
-                onRead={() => {}} 
+                onCompare={handleCompareClick}
+                savedArticleIds={savedArticleIds}
+                onToggleSave={handleToggleSave}
                 showTooltip={showTooltip}
-              /> 
-          } />
+                scrollToTopRef={contentRef} // PASSING REF HERE
+                />
+            } />
+            
+            <Route path="/search" element={ 
+                <SearchResults 
+                onAnalyze={handleAnalyzeClick}
+                onCompare={handleCompareClick}
+                savedArticleIds={savedArticleIds}
+                onToggleSave={handleToggleSave}
+                showTooltip={showTooltip}
+                /> 
+            } />
 
-          <Route path="/emergency-resources" element={<EmergencyResources />} />
-          
-          <Route path="/account-settings" element={
-            <AccountSettings 
-                currentFontSize={fontSize} 
-                onSetFontSize={setFontSize} 
-            />
-          } />
-          
-          <Route path="*" element={<PageNotFound />} /> 
-        </Routes>
+            <Route path="/my-dashboard" element={<MyDashboard theme={theme} />} />
+            
+            <Route path="/saved-articles" element={ 
+                <SavedArticles 
+                    onToggleSave={handleToggleSave}
+                    onCompare={handleCompareClick}
+                    onAnalyze={handleAnalyzeClick}
+                    onRead={() => {}} 
+                    showTooltip={showTooltip}
+                /> 
+            } />
+
+            <Route path="/emergency-resources" element={<EmergencyResources />} />
+            
+            <Route path="/account-settings" element={
+                <AccountSettings 
+                    currentFontSize={fontSize} 
+                    onSetFontSize={setFontSize} 
+                />
+            } />
+            
+            <Route path="*" element={<PageNotFound />} /> 
+            </Routes>
+        </div>
       </div>
 
       <Suspense fallback={null}>
@@ -374,7 +377,7 @@ function MainLayout({ profile }: MainLayoutProps) {
 
 function PageNotFound() {
   return (
-    <main className="content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 60px)' }}>
+    <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
       <div style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}>
         <h2>404 - Page Not Found</h2>
         <Link to="/" className="btn-secondary" style={{ textDecoration: 'none', marginTop: '20px' }}>Back to Articles</Link>

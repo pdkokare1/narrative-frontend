@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react'; 
 import { Link, useNavigate } from 'react-router-dom'; 
 import * as api from '../services/api';
+import { useRadio } from '../context/RadioContext';
+import { useToast } from '../context/ToastContext';
 import './Header.css'; 
 import { IArticle } from '../types';
 
@@ -21,6 +23,11 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
   const [suggestions, setSuggestions] = useState<IArticle[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  // Radio State
+  const { isPlaying, isPaused, startRadio, resume, pause, currentArticle } = useRadio();
+  const { addToast } = useToast();
+  const [radioLoading, setRadioLoading] = useState(false);
+
   const dropdownRef = useRef<HTMLDivElement>(null); 
   const searchRef = useRef<HTMLDivElement>(null); 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -30,16 +37,14 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
   // Effect to close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Close User Dropdown
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
-      // Close Search Bar & Suggestions
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         if (document.activeElement !== inputRef.current) {
              setIsSearchOpen(false);
         }
-        setSuggestions([]); // Clear suggestions on close
+        setSuggestions([]); 
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -48,7 +53,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
     };
   }, []);
 
-  // Auto-focus input when search opens
   useEffect(() => {
     if (isSearchOpen && inputRef.current) {
       inputRef.current.focus();
@@ -71,7 +75,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
       } else {
         setSuggestions([]);
       }
-    }, 300); // Wait 300ms after user stops typing
+    }, 300);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
@@ -93,8 +97,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
   };
 
   const handleSuggestionClick = (articleId: string) => {
-      // Go directly to article (via home feed filter or dedicated page if you had one)
-      // For now, we'll go to search page with the specific headline to find it easily
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`); 
       setIsSearchOpen(false);
       setSuggestions([]);
@@ -107,6 +109,38 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
           setSuggestions([]);
           setSearchQuery('');
       }
+  };
+
+  // --- RADIO HANDLER ---
+  const handleRadioClick = async () => {
+    if (radioLoading) return;
+
+    if (isPlaying) {
+        pause();
+        return;
+    }
+
+    if (isPaused && currentArticle) {
+        resume();
+        return;
+    }
+
+    setRadioLoading(true);
+    addToast('Tuning into Gamut Radio...', 'info');
+    
+    try {
+        const { data } = await api.fetchArticles({ limit: 20, offset: 0 });
+        if (data.articles && data.articles.length > 0) {
+            startRadio(data.articles, 0);
+        } else {
+            addToast('No news available for radio.', 'error');
+        }
+    } catch (err) {
+        console.error("Radio start failed", err);
+        addToast('Could not start radio.', 'error');
+    } finally {
+        setRadioLoading(false);
+    }
   };
 
   return (
@@ -130,6 +164,30 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
 
       <div className="header-right">
         
+        {/* --- RADIO BUTTON (Moved from Bottom Nav) --- */}
+        <button 
+            onClick={handleRadioClick}
+            className={`radio-header-btn ${isPlaying ? 'playing' : ''}`}
+            title="Start Radio"
+        >
+            {radioLoading ? (
+                <div className="spinner-small" style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'var(--accent-primary)', margin: 0 }}></div>
+            ) : isPlaying ? (
+                /* Pulse Animation for Playing */
+                <span className="radio-pulse">
+                    <span className="bar b1"></span>
+                    <span className="bar b2"></span>
+                    <span className="bar b3"></span>
+                </span>
+            ) : (
+                /* Headphones Icon */
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
+                </svg>
+            )}
+        </button>
+
         {/* --- Responsive Search Bar --- */}
         <div ref={searchRef} className="search-bar-wrapper">
           <form 
@@ -167,7 +225,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
             </svg>
           </button>
 
-          {/* --- Live Suggestions Dropdown --- */}
           {suggestions.length > 0 && isSearchOpen && (
               <div className="live-search-dropdown">
                   <div className="live-search-label">TOP MATCHES</div>
@@ -184,10 +241,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
                           </div>
                       </div>
                   ))}
-                  <div 
-                    className="live-search-footer"
-                    onClick={handleSearchSubmit}
-                  >
+                  <div className="live-search-footer" onClick={handleSearchSubmit}>
                       See all results for "{searchQuery}" →
                   </div>
               </div>
@@ -200,16 +254,12 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
             Dashboard
           </Link>
           <span className="header-user-divider">|</span>
-          
           <div className="header-user-clickable-area" onClick={handleUsernameClick}>
-            <span className="header-username-desktop" title="Username">
-              {username}
-            </span>
+            <span className="header-username-desktop" title="Username">{username}</span>
             <svg className="custom-select-arrow" style={{ width: '16px', height: '16px', fill: 'var(--text-tertiary)', marginLeft: '4px' }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <path d="M7 10l5 5 5-5z"></path>
             </svg>
           </div>
-
           {isDropdownOpen && (
             <div className="header-user-dropdown">
               <ul>
@@ -220,7 +270,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
           )}
         </div>
 
-        <button className="theme-toggle" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+        <button className="theme-toggle" onClick={toggleTheme}>
           {theme === 'dark' ? '🌙' : '☀️'}
         </button>
 

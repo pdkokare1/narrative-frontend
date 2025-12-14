@@ -2,6 +2,9 @@
 import React, { useState } from 'react';
 import * as api from './services/api'; 
 import './Login.css'; 
+import Card from './components/ui/Card';
+import Input from './components/ui/Input';
+import Button from './components/ui/Button';
 
 const CreateProfile: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -41,44 +44,46 @@ const CreateProfile: React.FC = () => {
   return (
     <div className="login-page-wrapper">
       <div className="login-container">
-        <div className="login-form-panel">
-          <h1>Welcome to The Gamut</h1>
-          <p>Please choose a username to complete your registration.</p>
+        <Card variant="glass" padding="lg">
+          <div className="login-form-panel" style={{ padding: 0 }}>
+            <h1>Welcome to The Gamut</h1>
+            <p>Please choose a username to complete your registration.</p>
 
-          <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-            <input
-              type="text"
-              placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="username-input" 
-              required
-            />
+            <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <Input
+                label="Username"
+                type="text"
+                placeholder="Enter your username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                fullWidth
+              />
 
-            {error && (
-              <div style={{ 
-                color: '#E57373', 
-                fontSize: '13px', 
-                marginBottom: '15px', 
-                background: 'rgba(229, 115, 115, 0.1)', 
-                padding: '8px', 
-                borderRadius: '4px' 
-              }}>
-                {error}
-              </div>
-            )}
+              {error && (
+                <div style={{ 
+                  color: '#CF5C5C', 
+                  fontSize: '12px', 
+                  background: 'rgba(207, 92, 92, 0.1)', 
+                  padding: '10px', 
+                  borderRadius: '4px',
+                  textAlign: 'left'
+                }}>
+                  {error}
+                </div>
+              )}
 
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="btn-primary"
-              style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: '14px' }}
-            >
-              {loading ? 'Saving...' : 'Save Profile'}
-            </button>
-          </form>
-
-        </div>
+              <Button 
+                type="submit" 
+                variant="primary"
+                isLoading={loading}
+                className="btn-full-width"
+              >
+                Save Profile
+              </Button>
+            </form>
+          </div>
+        </Card>
       </div>
     </div>
   );

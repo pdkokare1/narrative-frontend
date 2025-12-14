@@ -1,9 +1,7 @@
 // src/components/NewsFeed.tsx
 import React, { useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
-import LatestFeed from './feeds/LatestFeed';
-import ForYouFeed from './feeds/ForYouFeed';
-import PersonalizedFeed from './feeds/PersonalizedFeed'; // Import new feed
+import UnifiedFeed from './feeds/UnifiedFeed';
 import InFocusBar from './InFocusBar'; 
 import '../App.css'; 
 import { IArticle, IFilters } from '../types';
@@ -43,39 +41,21 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
         display: 'flex', background: 'var(--bg-elevated)', borderRadius: '25px', 
         padding: '4px', border: '1px solid var(--border-color)', position: 'relative' 
       }}>
-        <button
-          onClick={() => setMode('latest')}
-          style={{
-            background: mode === 'latest' ? 'var(--accent-primary)' : 'transparent',
-            color: mode === 'latest' ? 'white' : 'var(--text-secondary)',
-            border: 'none', borderRadius: '20px', padding: '8px 16px',
-            fontSize: '11px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.3s ease',
-          }}
-        >
-          Latest
-        </button>
-        <button
-          onClick={() => setMode('foryou')}
-          style={{
-            background: mode === 'foryou' ? 'var(--accent-primary)' : 'transparent',
-            color: mode === 'foryou' ? 'white' : 'var(--text-secondary)',
-            border: 'none', borderRadius: '20px', padding: '8px 16px',
-            fontSize: '11px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.3s ease',
-          }}
-        >
-          Balanced
-        </button>
-        <button
-          onClick={() => setMode('personalized')}
-          style={{
-            background: mode === 'personalized' ? 'var(--accent-primary)' : 'transparent',
-            color: mode === 'personalized' ? 'white' : 'var(--text-secondary)',
-            border: 'none', borderRadius: '20px', padding: '8px 16px',
-            fontSize: '11px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.3s ease',
-          }}
-        >
-          For You
-        </button>
+        {['latest', 'foryou', 'personalized'].map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m as any)}
+              style={{
+                background: mode === m ? 'var(--accent-primary)' : 'transparent',
+                color: mode === m ? 'white' : 'var(--text-secondary)',
+                border: 'none', borderRadius: '20px', padding: '8px 16px',
+                fontSize: '11px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.3s ease',
+                textTransform: 'capitalize'
+              }}
+            >
+              {m === 'foryou' ? 'Balanced' : m === 'personalized' ? 'For You' : 'Latest'}
+            </button>
+        ))}
       </div>
     </div>
   );
@@ -91,8 +71,8 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
       {renderToggle()}
 
-      {mode === 'latest' ? (
-        <LatestFeed 
+      <UnifiedFeed 
+          mode={mode}
           filters={filters}
           onFilterChange={onFilterChange}
           onAnalyze={onAnalyze}
@@ -101,24 +81,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
           onToggleSave={onToggleSave}
           showTooltip={showTooltip}
           scrollToTopRef={contentRef}
-        />
-      ) : mode === 'foryou' ? (
-        <ForYouFeed 
-          onAnalyze={onAnalyze}
-          onCompare={onCompare}
-          savedArticleIds={savedArticleIds}
-          onToggleSave={onToggleSave}
-          showTooltip={showTooltip}
-        />
-      ) : (
-        <PersonalizedFeed 
-          onAnalyze={onAnalyze}
-          onCompare={onCompare}
-          savedArticleIds={savedArticleIds}
-          onToggleSave={onToggleSave}
-          showTooltip={showTooltip}
-        />
-      )}
+      />
     </main>
   );
 };

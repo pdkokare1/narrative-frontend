@@ -21,5 +21,22 @@
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#B38F5F",
-  "background_color": "#121212"
+  "background_color": "#121212",
+  "orientation": "portrait",
+  "shortcuts": [
+    {
+      "name": "Saved Articles",
+      "short_name": "Saved",
+      "description": "View your reading list",
+      "url": "/saved-articles",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Search News",
+      "short_name": "Search",
+      "description": "Find specific topics",
+      "url": "/search",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    }
+  ]
 }

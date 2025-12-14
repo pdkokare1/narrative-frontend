@@ -1,6 +1,6 @@
 // src/components/feeds/LatestFeed.tsx
 import React, { useState, useEffect, useMemo, useRef, forwardRef } from 'react'; 
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { VirtuosoGrid, VirtuosoGridHandle, GridItemContent } from 'react-virtuoso'; 
 import * as api from '../../services/api'; 
 import ArticleCard from '../ArticleCard';
@@ -8,7 +8,7 @@ import SkeletonCard from '../ui/SkeletonCard';
 import CategoryPills from '../ui/CategoryPills';
 import { useToast } from '../../context/ToastContext';
 import { useRadio } from '../../context/RadioContext';
-import useShare from '../../hooks/useShare'; // NEW IMPORT
+import useShare from '../../hooks/useShare'; 
 import useIsMobile from '../../hooks/useIsMobile'; 
 import { IArticle, IFilters } from '../../types';
 
@@ -38,12 +38,19 @@ const LatestFeed: React.FC<LatestFeedProps> = ({
 }) => {
   const { addToast } = useToast();
   const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
-  const { handleShare } = useShare(); // NEW HOOK
+  const { handleShare } = useShare(); 
   const isMobile = useIsMobile(); 
+  const queryClient = useQueryClient();
   
   const [visibleArticleIndex, setVisibleArticleIndex] = useState(0);
   const virtuosoRef = useRef<VirtuosoGridHandle>(null);
   const [scrollParent, setScrollParent] = useState<HTMLElement | undefined>(undefined);
+
+  // --- PULL TO REFRESH STATE ---
+  const [pullStartY, setPullStartY] = useState(0);
+  const [pullMoveY, setPullMoveY] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const PULL_THRESHOLD = 80;
 
   useEffect(() => {
     if (scrollToTopRef?.current) {
@@ -56,6 +63,7 @@ const LatestFeed: React.FC<LatestFeedProps> = ({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch,
     status,
     error
   } = useInfiniteQuery({
@@ -77,6 +85,7 @@ const LatestFeed: React.FC<LatestFeedProps> = ({
     return data?.pages.flatMap(page => page.articles) || [];
   }, [data]);
 
+  // --- RESTORE SCROLL ---
   useEffect(() => {
     return () => {
       if (virtuosoRef.current) {
@@ -99,6 +108,43 @@ const LatestFeed: React.FC<LatestFeedProps> = ({
         addToast('Failed to load articles.', 'error');
     }
   }, [status, error, addToast]);
+
+  // --- PULL TO REFRESH HANDLERS ---
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (scrollParent && scrollParent.scrollTop === 0) {
+      setPullStartY(e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (pullStartY > 0 && scrollParent && scrollParent.scrollTop === 0) {
+      const currentY = e.touches[0].clientY;
+      if (currentY > pullStartY) {
+        setPullMoveY(currentY - pullStartY);
+      }
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (pullMoveY > PULL_THRESHOLD) {
+      setIsRefreshing(true);
+      setPullMoveY(60); // Snap to loading height
+      try {
+        await queryClient.resetQueries({ queryKey: ['latestFeed', filters] });
+        await refetch();
+        addToast('Feed updated', 'success');
+      } catch (e) {
+        addToast('Refresh failed', 'error');
+      } finally {
+        setIsRefreshing(false);
+        setPullMoveY(0);
+        setPullStartY(0);
+      }
+    } else {
+      setPullMoveY(0);
+      setPullStartY(0);
+    }
+  };
 
   const handleCategorySelect = (category: string) => {
     onFilterChange({ ...filters, category });
@@ -191,19 +237,36 @@ const LatestFeed: React.FC<LatestFeedProps> = ({
   }
 
   return (
-    <VirtuosoGrid
-      key={isMobile ? 'mobile-view' : 'desktop-view'}
-      ref={virtuosoRef}
-      restoreStateFrom={feedStateCache} 
-      customScrollParent={scrollParent}
-      data={articles}
-      initialItemCount={12} 
-      endReached={() => { if (hasNextPage) fetchNextPage(); }}
-      overscan={1000} 
-      rangeChanged={({ startIndex }) => setVisibleArticleIndex(startIndex)}
-      components={{ Header: FeedHeader, Footer: FeedFooter, List: GridList, Item: GridItem }}
-      itemContent={itemContent}
-    />
+    <div 
+      style={{ position: 'relative' }} 
+      onTouchStart={handleTouchStart} 
+      onTouchMove={handleTouchMove} 
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* --- PULL TO REFRESH INDICATOR --- */}
+      <div 
+        className={`ptr-element ${isRefreshing ? 'refreshing' : ''}`}
+        style={{ marginTop: isRefreshing ? 0 : Math.min(pullMoveY, PULL_THRESHOLD) - 60 }}
+      >
+        <div className={`ptr-icon ${isRefreshing ? 'ptr-spinner' : ''} ${pullMoveY > PULL_THRESHOLD * 0.8 ? 'rotate' : ''}`}>
+           {isRefreshing ? '' : '↓'}
+        </div>
+      </div>
+
+      <VirtuosoGrid
+        key={isMobile ? 'mobile-view' : 'desktop-view'}
+        ref={virtuosoRef}
+        restoreStateFrom={feedStateCache} 
+        customScrollParent={scrollParent}
+        data={articles}
+        initialItemCount={12} 
+        endReached={() => { if (hasNextPage) fetchNextPage(); }}
+        overscan={1000} 
+        rangeChanged={({ startIndex }) => setVisibleArticleIndex(startIndex)}
+        components={{ Header: FeedHeader, Footer: FeedFooter, List: GridList, Item: GridItem }}
+        itemContent={itemContent}
+      />
+    </div>
   );
 };
 

@@ -7,32 +7,34 @@ import { useToast } from '../../context/ToastContext';
 import './BottomNav.css';
 
 const BottomNav: React.FC = () => {
-  const { isPlaying, isPaused, startRadio, resume, pause, currentArticle } = useRadio();
+  const { 
+    isPlaying, 
+    isPaused, 
+    startRadio, 
+    currentArticle, 
+    togglePlayer,
+    playerOpen 
+  } = useRadio();
+  
   const { addToast } = useToast();
   const [loading, setLoading] = useState(false);
 
+  // Interaction: Tap Headphone Icon
   const handleRadioClick = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation
+    e.preventDefault(); 
     if (loading) return;
 
-    // A. If Playing -> Pause
-    if (isPlaying) {
-        pause();
+    // 1. If Audio is Active (Playing OR Paused) -> Toggle the Bubble
+    if (isPlaying || (isPaused && currentArticle)) {
+        togglePlayer();
         return;
     }
 
-    // B. If Paused -> Resume
-    if (isPaused && currentArticle) {
-        resume();
-        return;
-    }
-
-    // C. If Stopped -> Start New Session
+    // 2. If Stopped -> Start Fresh
     setLoading(true);
     addToast('Tuning into Gamut Radio...', 'info');
     
     try {
-        // Fetch default latest articles to start the radio
         const { data } = await api.fetchArticles({ limit: 20, offset: 0 });
         if (data.articles && data.articles.length > 0) {
             startRadio(data.articles, 0);
@@ -45,6 +47,27 @@ const BottomNav: React.FC = () => {
     } finally {
         setLoading(false);
     }
+  };
+
+  const renderIcon = () => {
+      if (loading) {
+          return <div className="spinner-small" style={{ width: '20px', height: '20px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#FFF', marginRight: 0 }}></div>;
+      }
+      
+      if (isPlaying || isPaused) {
+          return (
+              <div className="wave-container">
+                  <div className="wave-bar"></div>
+                  <div className="wave-bar"></div>
+                  <div className="wave-bar"></div>
+              </div>
+          );
+      }
+
+      // Default Headphone Icon
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+      );
   };
 
   return (
@@ -65,22 +88,15 @@ const BottomNav: React.FC = () => {
 
       {/* --- CENTER: GAMUT RADIO --- */}
       <div 
-        className={`nav-item radio-action ${isPlaying ? 'playing' : ''}`} 
+        className={`nav-item radio-action ${isPlaying ? 'playing' : ''} ${isPaused ? 'paused' : ''}`} 
         onClick={handleRadioClick}
-        style={{ cursor: 'pointer' }}
       >
         <div className="nav-icon">
-          {loading ? (
-             <div className="spinner-small" style={{ width: '20px', height: '20px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#FFF', marginRight: 0 }}></div>
-          ) : isPlaying ? (
-             /* Pause Icon */
-             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-          ) : (
-             /* Headphones Icon */
-             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
-          )}
+          {renderIcon()}
         </div>
-        <span className="nav-label">{isPlaying ? 'On Air' : 'Radio'}</span>
+        <span className="nav-label">
+            {loading ? 'Loading' : (isPlaying || isPaused) ? (playerOpen ? 'Close' : 'Player') : 'Radio'}
+        </span>
       </div>
 
       <NavLink to="/my-dashboard" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>

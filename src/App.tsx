@@ -21,6 +21,9 @@ import GlobalPlayerBar from './components/GlobalPlayerBar';
 import BottomNav from './components/ui/BottomNav';
 import ErrorBoundary from './components/ErrorBoundary';
 import CustomTooltip from './components/ui/CustomTooltip';
+// --- NEW ---
+import BadgePopup from './components/ui/BadgePopup';
+import { IBadge } from './types'; // Ensure IBadge is imported
 
 import Login from './Login';
 import CreateProfile from './CreateProfile';
@@ -91,7 +94,6 @@ interface MainLayoutProps {
 function MainLayout({ profile }: MainLayoutProps) {
   const { logout } = useAuth();
   const { addToast } = useToast();
-  // --- NEW: Consume Radio Context to adjust layout ---
   const { playerOpen, isVisible } = useRadio();
   const isMobileView = useIsMobile();
 
@@ -109,6 +111,10 @@ function MainLayout({ profile }: MainLayoutProps) {
   
   const [compareModal, setCompareModal] = useState<{ open: boolean; clusterId: number | null; articleTitle: string; articleId: string | null }>({ open: false, clusterId: null, articleTitle: '', articleId: null });
   const [analysisModal, setAnalysisModal] = useState<{ open: boolean; article: IArticle | null }>({ open: false, article: null });
+  
+  // --- NEW: Badge State ---
+  const [earnedBadge, setEarnedBadge] = useState<IBadge | null>(null);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
   
@@ -177,9 +183,18 @@ function MainLayout({ profile }: MainLayoutProps) {
     }
   };
 
+  // --- REFACTORED: Check for Badges ---
+  const checkBadge = (res: any) => {
+      if (res && res.data && res.data.newBadge) {
+          setEarnedBadge(res.data.newBadge);
+      }
+  };
+
   const handleAnalyzeClick = useCallback((article: IArticle) => {
     setAnalysisModal({ open: true, article });
-    api.logView(article._id).catch(err => console.error("Log View Error:", err));
+    api.logView(article._id)
+       .then(checkBadge)
+       .catch(err => console.error("Log View Error:", err));
   }, []);
 
   const handleCompareClick = useCallback((article: IArticle) => {
@@ -189,7 +204,9 @@ function MainLayout({ profile }: MainLayoutProps) {
       articleTitle: article.headline, 
       articleId: article._id 
     });
-    api.logCompare(article._id).catch(err => console.error("Log Compare Error:", err));
+    api.logCompare(article._id)
+       .then(checkBadge)
+       .catch(err => console.error("Log Compare Error:", err));
   }, []);
   
   const handleToggleSave = useCallback(async (article: IArticle) => {
@@ -257,8 +274,12 @@ function MainLayout({ profile }: MainLayoutProps) {
       />
       
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
+      
+      {/* --- NEW: Badge Popup --- */}
+      {earnedBadge && (
+          <BadgePopup badge={earnedBadge} onClose={() => setEarnedBadge(null)} />
+      )}
 
-      {/* --- NEW: Dynamic Class for Player Awareness --- */}
       <div 
         className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''} ${playerOpen && isVisible ? 'player-active' : ''}`}
       >

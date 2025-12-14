@@ -2,21 +2,29 @@
 
 .new-content-pill {
   position: fixed;
-  top: 130px; /* Below header + tabs */
+  top: 90px; /* Below new header */
   left: 50%;
   transform: translateX(-50%) translateY(-20px);
-  background-color: var(--accent-primary);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  font-size: 12px;
-  font-weight: 600;
+  
+  /* Glass Pill */
+  background: rgba(15, 15, 15, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary);
+  
+  padding: 8px 20px;
+  border-radius: 30px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   z-index: 999;
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .new-content-pill.visible {
@@ -26,13 +34,14 @@
 }
 
 .new-content-pill:hover {
+  background: var(--accent-primary);
+  color: #000;
   transform: translateX(-50%) scale(1.05);
-  background-color: var(--accent-hover);
 }
 
 /* Mobile Adjustment */
 @media (max-width: 768px) {
   .new-content-pill {
-    top: 160px; /* Account for InFocus bar */
+    top: 130px; /* Account for InFocus bar + Mobile Header */
   }
 }

@@ -14,7 +14,6 @@ import useHaptic from '../../hooks/useHaptic';
 import { IArticle, IFilters } from '../../types';
 import './UnifiedFeed.css'; 
 
-// Global cache for scroll position
 let feedStateCache: any = null;
 
 interface UnifiedFeedProps {
@@ -26,7 +25,7 @@ interface UnifiedFeedProps {
   savedArticleIds: Set<string>;
   onToggleSave: (article: IArticle) => void;
   showTooltip: (text: string, e: React.MouseEvent) => void;
-  scrollToTopRef?: React.RefObject<HTMLDivElement>;
+  scrollToTopRef?: React.RefObject<HTMLDivElement>; // Using this as scroll parent
 }
 
 const UnifiedFeed: React.FC<UnifiedFeedProps> = ({ 
@@ -40,7 +39,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   showTooltip,
   scrollToTopRef 
 }) => {
-  const { addToast } = useToast();
   const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
   const { handleShare } = useShare(); 
   const isMobile = useIsMobile(); 
@@ -49,11 +47,9 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   
   const [visibleArticleIndex, setVisibleArticleIndex] = useState(0);
   const virtuosoRef = useRef<VirtuosoGridHandle>(null);
-  const [scrollParent, setScrollParent] = useState<HTMLElement | undefined>(undefined);
   const [showNewPill, setShowNewPill] = useState(false); 
 
-  // --- 1. DATA FETCHING LOGIC ---
-  
+  // --- QUERIES ---
   const latestQuery = useInfiniteQuery({
     queryKey: ['latestFeed', filters],
     queryFn: async ({ pageParam = 0 }) => {
@@ -72,7 +68,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   const forYouQuery = useQuery({
     queryKey: ['forYouFeed'],
-    queryFn: async () => {
+    queryFn: async ({ pageParam = 0 }) => {
       const { data } = await api.fetchForYouArticles();
       return data;
     },
@@ -90,41 +86,9 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     staleTime: 1000 * 60 * 10,
   });
 
-  // --- 2. LIVE UPDATES (POLLING) ---
-  useEffect(() => {
-      if (mode !== 'latest') return;
-
-      const checkForUpdates = async () => {
-          try {
-              const { data } = await api.fetchArticles({ ...filters, limit: 1, offset: 0 });
-              if (data.articles && data.articles.length > 0) {
-                  const latestRemote = new Date(data.articles[0].publishedAt).getTime();
-                  const currentTop = latestQuery.data?.pages[0]?.articles[0];
-                  
-                  if (currentTop && latestRemote > new Date(currentTop.publishedAt).getTime()) {
-                      setShowNewPill(true);
-                  }
-              }
-          } catch (e) { /* Ignore poll errors */ }
-      };
-
-      const interval = setInterval(checkForUpdates, 60000); 
-      return () => clearInterval(interval);
-  }, [mode, filters, latestQuery.data]);
-
-  const handleRefresh = () => {
-      vibrate();
-      setShowNewPill(false);
-      queryClient.resetQueries({ queryKey: ['latestFeed'] });
-      latestQuery.refetch();
-      if (virtuosoRef.current) {
-          virtuosoRef.current.scrollToIndex({ index: 0, align: 'start', behavior: 'smooth' });
-      }
-  };
-
-  // --- 3. MERGE DATA ---
+  // --- DATA MERGE ---
   const activeQuery = mode === 'latest' ? latestQuery : (mode === 'foryou' ? forYouQuery : personalizedQuery);
-  const { status, error } = activeQuery;
+  const { status } = activeQuery;
 
   const articles = useMemo(() => {
     if (mode === 'latest') {
@@ -136,17 +100,31 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   const metaData = mode !== 'latest' ? (activeQuery.data as any)?.meta : null;
 
-  // --- 4. SCROLL & RESTORE ---
   useEffect(() => {
-    if (scrollToTopRef?.current) setScrollParent(scrollToTopRef.current);
-  }, [scrollToTopRef]);
+    if (mode === 'latest') {
+        const interval = setInterval(async () => {
+            try {
+                const { data } = await api.fetchArticles({ ...filters, limit: 1, offset: 0 });
+                if (data.articles && data.articles.length > 0 && articles.length > 0) {
+                    if (new Date(data.articles[0].publishedAt) > new Date(articles[0].publishedAt)) {
+                        setShowNewPill(true);
+                    }
+                }
+            } catch(e) {}
+        }, 60000);
+        return () => clearInterval(interval);
+    }
+  }, [mode, filters, articles]);
 
-  useEffect(() => {
-    feedStateCache = null; 
-    if (scrollToTopRef?.current) scrollToTopRef.current.scrollTop = 0;
-  }, [mode, filters, scrollToTopRef]);
+  const handleRefresh = () => {
+      vibrate();
+      setShowNewPill(false);
+      queryClient.resetQueries({ queryKey: ['latestFeed'] });
+      latestQuery.refetch();
+      if (virtuosoRef.current) virtuosoRef.current.scrollToIndex({ index: 0, align: 'start' });
+  };
 
-  // --- 5. RENDERERS ---
+  // --- RENDERERS ---
   const GridList = useMemo(() => forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ style, children, ...props }, ref) => (
     <div ref={ref} {...props} style={{ ...style }} className="articles-grid">
       {children}
@@ -154,7 +132,8 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   )), []);
 
   const GridItem = useMemo(() => forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ children, ...props }, ref) => (
-    <div {...props} ref={ref} className="article-card-wrapper" style={{ margin: 0, minHeight: '300px' }}>
+    // REMOVED INLINE HEIGHT to allow CSS to control it
+    <div {...props} ref={ref} className="article-card-wrapper" style={{ margin: 0 }}>
       {children}
     </div>
   )), []);
@@ -167,18 +146,11 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
               onSelect={(cat) => { vibrate(); onFilterChange({ ...filters, category: cat }); }} 
             />
         )}
-        
-        {mode === 'foryou' && metaData && (
+        {(mode === 'foryou' || mode === 'personalized') && metaData && (
              <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
-                <p>Based on your interest in <strong>{metaData.basedOnCategory}</strong>. Including {metaData.usualLean} sources and opposing views.</p>
+                <p>Curated based on <strong>{metaData.basedOnCategory || metaData.topCategories?.join(', ')}</strong>.</p>
              </div>
         )}
-        {mode === 'personalized' && metaData && (
-             <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
-                <p>Curated for you based on <strong>{metaData.topCategories?.join(', ')}</strong>.</p>
-             </div>
-        )}
-
         {!isPlaying && articles.length > 0 && (
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px', marginTop: '10px' }}>
                 <button 
@@ -186,7 +158,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                     className="btn-primary"
                     style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}
                 >
-                    <span>▶</span> {mode === 'latest' ? 'Start News Radio' : 'Play Daily Mix'}
+                    <span>▶</span> Play News Radio
                 </button>
             </div>
         )}
@@ -209,11 +181,8 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       onAnalyze={onAnalyze}
       onShare={() => handleShare(article)} 
       onRead={() => {
-          // FIX: Explicitly cast to 'any' to bypass TS error on getState()
-          if (virtuosoRef.current) {
-              feedStateCache = (virtuosoRef.current as any).getState();
-          }
-          api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
+          if (virtuosoRef.current) feedStateCache = (virtuosoRef.current as any).getState();
+          api.logRead(article._id).catch(err => console.error(err));
           window.open(article.url, '_blank', 'noopener,noreferrer');
       }}
       showTooltip={showTooltip}
@@ -225,47 +194,22 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     />
   );
 
-  // --- 6. LOADING STATES ---
-  if (status === 'pending') {
-      return (
-         <div className="articles-grid">
-           <div style={{gridColumn: '1 / -1'}}><FeedHeader /></div>
-           {[...Array(8)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) }
-         </div>
-      );
-  }
-
-  if (status === 'error') {
-      return (
-        <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
-            <p>Unable to load feed.</p>
-            <button onClick={() => window.location.reload()} className="btn-secondary" style={{ marginTop: '10px' }}>Retry</button>
-        </div>
-      );
-  }
-
-  if (articles.length === 0) {
-      return (
-        <>
-          <FeedHeader />
-          <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
-              <p>No articles found.</p>
-          </div>
-        </>
-      );
-  }
+  if (status === 'pending') return <div className="articles-grid">{[...Array(8)].map((_,i) => <div className="article-card-wrapper" key={i}><SkeletonCard/></div>)}</div>;
+  if (status === 'error') return <div style={{textAlign:'center', marginTop:'50px'}}>Unable to load feed.</div>;
+  if (articles.length === 0) return <div style={{textAlign:'center', marginTop:'50px'}}>No articles found.</div>;
 
   return (
     <>
         <div className={`new-content-pill ${showNewPill ? 'visible' : ''}`} onClick={handleRefresh}>
-            <span>↑ New Articles Available</span>
+            <span>↑ New Articles</span>
         </div>
 
         <VirtuosoGrid
           key={`${mode}-${isMobile ? 'mobile' : 'desktop'}`}
           ref={virtuosoRef}
           restoreStateFrom={feedStateCache} 
-          customScrollParent={scrollParent}
+          // IMPORTANT: Pass the scroll container ref from App.tsx
+          customScrollParent={scrollToTopRef?.current || undefined}
           data={articles}
           initialItemCount={12} 
           endReached={() => { 

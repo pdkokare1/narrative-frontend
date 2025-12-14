@@ -5,9 +5,13 @@ import * as api from './services/api';
 import ArticleCard from './components/ArticleCard'; 
 import SkeletonCard from './components/ui/SkeletonCard';
 import { useToast } from './context/ToastContext';
-import useShare from './hooks/useShare'; // NEW IMPORT
+import useShare from './hooks/useShare'; 
 import './App.css'; 
 import { IArticle } from './types';
+
+// --- NEW IMPORTS ---
+import SectionHeader from './components/ui/SectionHeader';
+import Button from './components/ui/Button';
 
 interface SearchResultsProps {
   onAnalyze: (article: IArticle) => void;
@@ -31,7 +35,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const { addToast } = useToast();
-  const { handleShare } = useShare(); // NEW HOOK
+  const { handleShare } = useShare(); 
 
   useEffect(() => {
     const performSearch = async () => {
@@ -58,14 +62,12 @@ const SearchResults: React.FC<SearchResultsProps> = ({
 
   return (
     <div className="content">
-      <div style={{ marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: '700', color: 'var(--text-primary)' }}>
-          Search Results for "{query}"
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '5px' }}>
-          Found {total} result{total !== 1 ? 's' : ''}
-        </p>
-      </div>
+      
+      {/* 1. Standardized Header */}
+      <SectionHeader 
+        title={`Search: "${query}"`} 
+        subtitle={`Found ${total} result${total !== 1 ? 's' : ''}`} 
+      />
 
       {loading ? (
         <div className="articles-grid">
@@ -91,10 +93,13 @@ const SearchResults: React.FC<SearchResultsProps> = ({
               ))}
             </div>
           ) : (
-             <div className="placeholder-page">
+             <div className="placeholder-page" style={{ textAlign: 'center', marginTop: '50px' }}>
               <h2>No results found</h2>
-              <p>We couldn't find any articles matching "{query}".</p>
-              <Link to="/" className="btn-secondary">Back to Feed</Link>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>We couldn't find any articles matching "{query}".</p>
+              
+              <Link to="/" style={{ textDecoration: 'none' }}>
+                <Button variant="secondary">Back to Feed</Button>
+              </Link>
             </div>
           )}
         </>

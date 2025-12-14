@@ -1,7 +1,7 @@
 // src/components/modals/SmartBriefingModal.tsx
 import React from 'react';
 import '../../App.css'; 
-import './SmartBriefingModal.css'; // Importing new CSS
+import './SmartBriefingModal.css'; 
 import { IArticle } from '../../types';
 
 interface SmartBriefingModalProps {
@@ -49,7 +49,7 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({ article, onClos
                   title="Bias Score (0-100). Lower is better." 
                   onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}
                 >
-                  Bias: <span className="accent-text">{article.biasScore}</span>
+                  Bias {article.biasScore}
                 </span>
                 <span>•</span>
                 <span 
@@ -57,7 +57,7 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({ article, onClos
                   title="Credibility Grade (A+ to F)" 
                   onClick={(e) => showTooltip("Credibility Grade based on facts and sources.", e)}
                 >
-                  Grade: <span className="accent-text">{article.credibilityGrade}</span>
+                  Grade {article.credibilityGrade}
                 </span>
               </>
             )}
@@ -76,7 +76,7 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({ article, onClos
               <ul className="smart-brief-list">
                 {article.keyFindings.map((finding, i) => (
                   <li key={i} className="smart-brief-list-item">
-                    <span className="smart-brief-bullet">•</span>
+                    <span className="smart-brief-bullet">0{i+1}</span>
                     {finding}
                   </li>
                 ))}

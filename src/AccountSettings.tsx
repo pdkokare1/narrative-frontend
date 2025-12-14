@@ -1,8 +1,9 @@
 // src/AccountSettings.tsx
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; 
+import { Link, useNavigate } from 'react-router-dom'; 
 import { getToken } from "firebase/messaging";
-import { messaging } from './firebaseConfig';
+import { signOut } from 'firebase/auth'; // Import signOut
+import { messaging, auth } from './firebaseConfig'; // Import auth
 import * as api from './services/api'; 
 import './App.css'; 
 import './AccountSettings.css'; 
@@ -18,6 +19,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentFontSize, onSe
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notifStatus, setNotifStatus] = useState<'default' | 'granted' | 'denied' | 'loading'>('default');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -76,6 +78,24 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentFontSize, onSe
       } catch (err) {
           console.error("Notification Error:", err);
           setNotifStatus('default');
+      }
+  };
+
+  // --- HANDLER: Delete Account ---
+  const handleDeleteAccount = async () => {
+      const confirm = window.confirm("Are you sure? This will permanently delete your stats, saved articles, and profile. This cannot be undone.");
+      if (!confirm) return;
+
+      try {
+          setLoading(true);
+          await api.deleteAccount(); // Call API
+          await signOut(auth); // Sign out from Firebase
+          alert("Account deleted.");
+          navigate('/'); // Redirect to home/login
+      } catch (err) {
+          console.error("Delete Account Error:", err);
+          alert("Failed to delete account. Please try again.");
+          setLoading(false);
       }
   };
 
@@ -230,10 +250,26 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentFontSize, onSe
                     )}
                 </div>
             </div>
+
+            {/* --- DANGER ZONE (Delete Account) --- */}
+            <div className="settings-card" style={{ marginTop: '30px', borderColor: 'var(--color-error)' }}>
+                <h2 className="settings-section-title" style={{ color: 'var(--color-error)' }}>Danger Zone</h2>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '15px' }}>
+                    Permanently delete your account and all associated data. This action cannot be undone.
+                </p>
+                <button 
+                    onClick={handleDeleteAccount} 
+                    className="btn-secondary" 
+                    style={{ borderColor: 'var(--color-error)', color: 'var(--color-error)', width: '100%' }}
+                >
+                    Delete Account
+                </button>
+            </div>
+
           </>
         )}
 
-        <div style={{ marginTop: '30px' }}>
+        <div style={{ marginTop: '30px', marginBottom: '50px' }}>
             <Link to="/my-dashboard" className="btn-secondary" style={{ textDecoration: 'none', padding: '10px 25px' }}>
             Back to Dashboard
             </Link>

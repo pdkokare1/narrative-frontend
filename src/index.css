@@ -1,7 +1,20 @@
+/* src/index.css */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+:root {
+  /* --- 1. BRAND PALETTE (Centralized) --- */
+  --accent-gold: #B38F5F;
+  --accent-gold-hover: #CCA573;
+  --accent-gold-dim: rgba(179, 143, 95, 0.1); /* Low opacity gold */
+  
+  /* --- 2. LAYOUT DIMENSIONS --- */
+  --header-height: 60px;
+  --bottom-nav-height: 65px;
+  --player-height: 80px; /* Approx height of bubble player */
 }
 
 body {
@@ -16,6 +29,7 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
 }
@@ -25,7 +39,7 @@ code {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4fd1c5;
+  background: #4fd1c5; /* We will override this in App.css with theme vars */
   border-radius: 5px;
 }
 

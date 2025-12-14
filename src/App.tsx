@@ -22,18 +22,20 @@ import BottomNav from './components/ui/BottomNav';
 import ErrorBoundary from './components/ErrorBoundary';
 import CustomTooltip from './components/ui/CustomTooltip';
 
-import CompareCoverageModal from './components/modals/CompareCoverageModal';
-import DetailedAnalysisModal from './components/modals/DetailedAnalysisModal';
-
 import Login from './Login';
 import CreateProfile from './CreateProfile';
 import { IFilters, IArticle, IUserProfile } from './types';
 
+// --- LAZY LOADED COMPONENTS ---
 const MyDashboard = lazy(() => import('./MyDashboard'));
 const SavedArticles = lazy(() => import('./SavedArticles'));
 const AccountSettings = lazy(() => import('./AccountSettings'));
 const SearchResults = lazy(() => import('./SearchResults')); 
 const EmergencyResources = lazy(() => import('./EmergencyResources'));
+
+// Lazy load Modals to save initial bundle size
+const CompareCoverageModal = lazy(() => import('./components/modals/CompareCoverageModal'));
+const DetailedAnalysisModal = lazy(() => import('./components/modals/DetailedAnalysisModal'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -131,7 +133,7 @@ function MainLayout({ profile }: MainLayoutProps) {
         document.body.classList.remove('font-medium', 'font-large', 'font-xl');
         document.body.classList.add(`font-${savedFont}`);
     }
-  }, [fontSize]); // Added dependency to re-run if needed, though init is primary
+  }, [fontSize]);
 
   useEffect(() => {
       document.body.classList.remove('font-medium', 'font-large', 'font-xl');
@@ -317,23 +319,25 @@ function MainLayout({ profile }: MainLayoutProps) {
         </Routes>
       </div>
 
-      {compareModal.open && (
-        <CompareCoverageModal 
-          clusterId={compareModal.clusterId} 
-          articleTitle={compareModal.articleTitle} 
-          onClose={() => setCompareModal({ ...compareModal, open: false })} 
-          onAnalyze={handleAnalyzeClick} 
-          showTooltip={showTooltip} 
-        />
-      )}
-      
-      {analysisModal.open && (
-        <DetailedAnalysisModal 
-          article={analysisModal.article} 
-          onClose={() => setAnalysisModal({ ...analysisModal, open: false })} 
-          showTooltip={showTooltip} 
-        />
-      )}
+      <Suspense fallback={null}>
+        {compareModal.open && (
+          <CompareCoverageModal 
+            clusterId={compareModal.clusterId} 
+            articleTitle={compareModal.articleTitle} 
+            onClose={() => setCompareModal({ ...compareModal, open: false })} 
+            onAnalyze={handleAnalyzeClick} 
+            showTooltip={showTooltip} 
+          />
+        )}
+        
+        {analysisModal.open && (
+          <DetailedAnalysisModal 
+            article={analysisModal.article} 
+            onClose={() => setAnalysisModal({ ...analysisModal, open: false })} 
+            showTooltip={showTooltip} 
+          />
+        )}
+      </Suspense>
 
       <BottomNav />
       <GlobalPlayerBar />

@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 import { useRadio } from '../../context/RadioContext';
 import * as api from '../../services/api';
 import { useToast } from '../../context/ToastContext';
-import useHaptic from '../../hooks/useHaptic'; // NEW
+import useHaptic from '../../hooks/useHaptic'; 
 import './BottomNav.css';
 
 const BottomNav: React.FC = () => {
@@ -19,19 +19,18 @@ const BottomNav: React.FC = () => {
   } = useRadio();
   
   const { addToast } = useToast();
-  const vibrate = useHaptic(); // NEW
+  const vibrate = useHaptic();
   const [loading, setLoading] = useState(false);
 
-  // If the radio player is visible, hide the bottom nav on mobile
-  if (isVisible) return null;
-
+  // --- FIXED: Do NOT hide nav when playing. Keeps user immersed. ---
+  
   const handleRadioClick = async (e: React.MouseEvent) => {
     e.preventDefault(); 
-    vibrate(); // Haptic
+    vibrate(); 
     if (loading) return;
 
     if (isPlaying || (isPaused && currentArticle)) {
-        togglePlayer();
+        togglePlayer(); // Opens/Closes the Bubble
         return;
     }
 

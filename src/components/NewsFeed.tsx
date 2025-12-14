@@ -1,12 +1,9 @@
 // src/components/NewsFeed.tsx
-import React, { useEffect, useState } from 'react';
-import * as api from '../services/api';
-import ArticleCard from './ArticleCard';
-import ArticleFilters from './ArticleFilters';
+import React, { useState } from 'react';
+import UnifiedFeed from './feeds/UnifiedFeed';
+import InFocusBar from './InFocusBar';
 import { IArticle, IFilters } from '../types';
 import './NewsFeed.css';
-import { usePullToRefresh } from '../hooks/usePullToRefresh';
-import useShare from '../hooks/useShare'; // <--- NEW IMPORT
 
 interface NewsFeedProps {
   filters: IFilters;
@@ -18,121 +15,46 @@ interface NewsFeedProps {
   showTooltip: (text: string, e: React.MouseEvent) => void;
 }
 
-const NewsFeed: React.FC<NewsFeedProps> = ({ 
-  filters, onFilterChange, onAnalyze, onCompare, savedArticleIds, onToggleSave, showTooltip 
-}) => {
-  const [articles, setArticles] = useState<IArticle[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  
-  // --- Hooks ---
-  const { handleShare } = useShare(); // <--- Initialize Share Hook
-
-  // --- Handlers ---
-  const handleRead = (article: IArticle) => {
-    // Log the read action and open URL
-    api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
-    window.open(article.url, '_blank', 'noopener,noreferrer');
-  };
-  
-  const fetchArticles = async (reset = false) => {
-    if (reset) setLoading(true);
-    try {
-      const offset = reset ? 0 : page * 12;
-      // Destructure { data } to get the actual payload
-      const { data } = await api.fetchArticles({ ...filters, offset, limit: 12 });
-      
-      if (reset) {
-        setArticles(data.articles);
-        setPage(1);
-      } else {
-        setArticles(prev => [...prev, ...data.articles]);
-        setPage(prev => prev + 1);
-      }
-      setHasMore(data.pagination.total > (offset + data.articles.length));
-    } catch (err) {
-      console.error("Feed Error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchArticles(true);
-  }, [filters]);
-
-  // --- Pull To Refresh Integration ---
-  const { pullChange, refreshing } = usePullToRefresh(async () => {
-    await fetchArticles(true); // Force reset on pull
-  });
+const NewsFeed: React.FC<NewsFeedProps> = (props) => {
+  const [feedMode, setFeedMode] = useState<'latest' | 'foryou' | 'personalized'>('latest');
 
   return (
     <div className="news-feed-container">
-      
-      {/* Visual Indicator for Pull */}
-      <div 
-        className={`ptr-element ${refreshing ? 'refreshing' : ''}`}
-        style={{ transform: `translateY(${pullChange}px)` }}
-      >
-        <div className={`ptr-icon ${pullChange > 60 ? 'rotate' : ''}`}>
-           {refreshing ? <div className="ptr-spinner"></div> : '↓'}
-        </div>
-      </div>
+      {/* 1. Trending Topics Bar */}
+      <InFocusBar />
 
-      <div className="feed-header">
-        <h1 className="feed-title">
-          {filters.category === 'All Categories' ? 'Top Headlines' : filters.category}
-        </h1>
-        <ArticleFilters filters={filters} onChange={onFilterChange} />
-      </div>
-
-      <div 
-        className="articles-grid"
-        style={{ transform: `translateY(${refreshing ? 60 : pullChange * 0.4}px)`, transition: refreshing ? 'transform 0.3s' : 'none' }}
-      >
-        {articles.map(article => (
-          <ArticleCard 
-            key={article._id} 
-            article={article}
-            onAnalyze={onAnalyze}
-            onCompare={onCompare}
-            onShare={() => handleShare(article)} // <--- Pass Share Handler
-            onRead={() => handleRead(article)}   // <--- Pass Read Handler
-            isSaved={savedArticleIds.has(article._id || '')}
-            onToggleSave={onToggleSave}
-            showTooltip={showTooltip}
-          />
-        ))}
-      </div>
-
-      {loading && (
-        <div className="loading-container">
-            <div className="spinner"></div>
-            <p>Curating the spectrum...</p>
-        </div>
-      )}
-
-      {!loading && hasMore && (
-        <div className="load-more">
-          <button className="load-more-btn" onClick={() => fetchArticles(false)}>
-            Load More Stories
+      {/* 2. Feed Toggles (Tabs) */}
+      <div className="feed-header-row">
+        <h1 className="feed-main-title">Headlines</h1>
+        <div className="feed-toggle-container">
+          <button 
+            className={`feed-toggle-btn ${feedMode === 'latest' ? 'active' : ''}`}
+            onClick={() => setFeedMode('latest')}
+          >
+            Latest
+          </button>
+          <button 
+            className={`feed-toggle-btn ${feedMode === 'foryou' ? 'active' : ''}`}
+            onClick={() => setFeedMode('foryou')}
+          >
+            Balanced
+          </button>
+          <button 
+            className={`feed-toggle-btn ${feedMode === 'personalized' ? 'active' : ''}`}
+            onClick={() => setFeedMode('personalized')}
+          >
+            My Mix
           </button>
         </div>
-      )}
-      
-      {!loading && !hasMore && articles.length > 0 && (
-         <p className="end-message">You're all caught up!</p>
-      )}
+      </div>
 
-       {!loading && articles.length === 0 && (
-         <div className="empty-state">
-           <p>No stories found for these filters.</p>
-           <button className="btn-secondary" onClick={() => onFilterChange({...filters, category: 'All Categories'})}>
-             Clear Filters
-           </button>
-         </div>
-      )}
+      {/* 3. The Unified Feed (Handles Infinite Scroll & Content) */}
+      <div className="feed-content-wrapper">
+        <UnifiedFeed 
+          mode={feedMode}
+          {...props}
+        />
+      </div>
     </div>
   );
 };

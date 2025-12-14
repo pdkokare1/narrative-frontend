@@ -22,7 +22,8 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
 
     try {
       // 1. Capture the DOM element as a canvas (Scale 3 for High Res)
-      const canvas = await html2canvas(cardRef.current, {
+      // We use 'any' type here to allow fontDefinitions which is missing in some type definitions
+      const options: any = {
         scale: 3, 
         backgroundColor: '#1E1E1E', 
         useCORS: true, 
@@ -33,7 +34,9 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
             family: 'Inter',
             style: 'normal'
         }]
-      });
+      };
+
+      const canvas = await html2canvas(cardRef.current, options);
 
       // 2. Convert to Blob
       canvas.toBlob(async (blob) => {

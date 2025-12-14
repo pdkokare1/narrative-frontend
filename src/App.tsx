@@ -120,8 +120,12 @@ function MainLayout({ profile }: MainLayoutProps) {
   const [savedArticleIds, setSavedArticleIds] = useState<Set<string>>(new Set(profile.savedArticles || []));
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
-  // SCROLL REF FOR VIRTUOSO
-  const contentRef = useRef<HTMLDivElement>(null);
+  // --- SCROLL CONTAINER REF (Using state to trigger re-render on mount) ---
+  const [scrollParent, setScrollParent] = useState<HTMLElement | null>(null);
+  const onContentRefChange = useCallback((node: HTMLDivElement | null) => {
+    if (node) setScrollParent(node);
+  }, []);
+
   const pendingDeletesRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   useEffect(() => {
@@ -297,8 +301,8 @@ function MainLayout({ profile }: MainLayoutProps) {
           onLogout={handleLogout} 
         />
 
-        {/* --- MAIN SCROLL AREA --- */}
-        <div className="content" ref={contentRef}>
+        {/* --- MAIN SCROLL AREA (Ref attached here) --- */}
+        <div className="content" ref={onContentRefChange}>
             <Routes>
             <Route path="/" element={
                 <NewsFeed
@@ -309,7 +313,7 @@ function MainLayout({ profile }: MainLayoutProps) {
                 savedArticleIds={savedArticleIds}
                 onToggleSave={handleToggleSave}
                 showTooltip={showTooltip}
-                scrollToTopRef={contentRef} // PASSING REF HERE
+                scrollParent={scrollParent} // Passing the Element directly
                 />
             } />
             

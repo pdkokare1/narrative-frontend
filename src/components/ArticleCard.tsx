@@ -5,6 +5,7 @@ import { getSentimentInfo, isOpinion, getOptimizedImageUrl } from '../utils/help
 import { getFallbackImage } from '../utils/constants'; 
 import SmartBriefingModal from './modals/SmartBriefingModal';
 import useIsMobile from '../hooks/useIsMobile';
+import useHaptic from '../hooks/useHaptic'; // NEW
 import { IArticle } from '../types';
 
 interface ArticleCardProps {
@@ -21,7 +22,6 @@ interface ArticleCardProps {
   onStop?: () => void;
 }
 
-// Wrapped in memo() to prevent unnecessary re-renders during scroll
 const ArticleCard = memo(function ArticleCard({ 
   article, 
   onCompare, 
@@ -38,16 +38,12 @@ const ArticleCard = memo(function ArticleCard({
   const [showBriefing, setShowBriefing] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false); 
   const isMobileView = useIsMobile();
+  const vibrate = useHaptic(); // NEW
 
-  // Logic Types
   const isHardNews = article.analysisType === 'Full';
   const isOpEd = isOpinion(article);
   const showCompareOnSoft = !isHardNews && ((article.clusterCount || 0) > 1);
-
-  // Sentiment Data
   const sentimentInfo = getSentimentInfo(article.sentiment);
-
-  // --- Image Handling State with Optimization ---
   const optimizedUrl = getOptimizedImageUrl(article.imageUrl);
   
   const [imgSrc, setImgSrc] = useState(optimizedUrl || getFallbackImage(article.category));
@@ -67,9 +63,16 @@ const ArticleCard = memo(function ArticleCard({
 
   const stopMobileClick = (e: React.MouseEvent) => { if (isMobileView) { e.stopPropagation(); } };
 
+  // --- ACTIONS WITH HAPTICS ---
+  const handleAction = (action: () => void, e: React.MouseEvent) => {
+      stopMobileClick(e);
+      vibrate();
+      action();
+  };
+
   const SaveButton = () => (
     <button 
-      onClick={(e) => { stopMobileClick(e); onToggleSave(article); }} 
+      onClick={(e) => handleAction(() => onToggleSave(article), e)} 
       className="btn-secondary" 
       title={isSaved ? "Remove from saved" : "Save article"}
     >
@@ -81,7 +84,7 @@ const ArticleCard = memo(function ArticleCard({
     if (isPlaying && onStop) {
       return (
         <button 
-          onClick={(e) => { stopMobileClick(e); onStop(); }} 
+          onClick={(e) => handleAction(onStop, e)} 
           className="btn-secondary stop-btn"
         >
           Stop
@@ -91,7 +94,7 @@ const ArticleCard = memo(function ArticleCard({
     if (onPlay) {
       return (
         <button 
-          onClick={(e) => { stopMobileClick(e); onPlay(); }} 
+          onClick={(e) => handleAction(onPlay, e)} 
           className="btn-secondary"
         >
           Listen
@@ -109,7 +112,6 @@ const ArticleCard = memo(function ArticleCard({
               {article.suggestionType === 'Challenge' ? 'Perspective Widener' : 'Comfort Read'}
             </div>
         )}
-
         {isOpEd && (
            <div className="badge opinion">
               OPINION
@@ -128,7 +130,6 @@ const ArticleCard = memo(function ArticleCard({
           {!imageLoaded && (
              <div className="skeleton-pulse" style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
           )}
-          
           <img 
             src={imgSrc} 
             alt={article.headline} 
@@ -152,7 +153,7 @@ const ArticleCard = memo(function ArticleCard({
                 </span>
              </div>
 
-            <div className="article-headline-link" onClick={(e) => { stopMobileClick(e); setShowBriefing(true); }} style={{ cursor: 'pointer' }} title="Open Smart Briefing">
+            <div className="article-headline-link" onClick={(e) => handleAction(() => setShowBriefing(true), e)} style={{ cursor: 'pointer' }} title="Open Smart Briefing">
                 <h3 className="article-headline">{article.headline}</h3>
             </div>
             <p className="article-summary">{article.summary}</p>
@@ -161,7 +162,6 @@ const ArticleCard = memo(function ArticleCard({
           <div className="article-content-bottom">
             <div className="article-meta-v2">
               <span className="source" title={article.source}>{article.source}</span>
-              
               {isHardNews && (
                 <>
                   <span className="meta-divider">|</span>
@@ -199,12 +199,12 @@ const ArticleCard = memo(function ArticleCard({
               {isHardNews && (
                 <>
                   <div className="article-actions-top">
-                    <button onClick={(e) => { stopMobileClick(e); setShowBriefing(true); }} className="btn-primary brief-btn">Brief</button>
+                    <button onClick={(e) => handleAction(() => setShowBriefing(true), e)} className="btn-primary brief-btn">Brief</button>
                     <ListenButton />
-                    <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary">Share</button>
+                    <button onClick={(e) => handleAction(() => onShare(article), e)} className="btn-secondary">Share</button>
                     <SaveButton /> 
                   </div>
-                  <button onClick={(e) => { stopMobileClick(e); onCompare(article); }} className="btn-primary btn-full-width">
+                  <button onClick={(e) => handleAction(() => onCompare(article), e)} className="btn-primary btn-full-width">
                       {(article.clusterCount || 0) > 1 ? `Compare Coverage (${article.clusterCount})` : "Compare Coverage"}
                   </button>
                 </>
@@ -214,13 +214,13 @@ const ArticleCard = memo(function ArticleCard({
                 <>
                   <div className="article-actions-top">
                     <ListenButton />
-                    <button onClick={(e) => { stopMobileClick(e); onShare(article); }} className="btn-secondary">Share</button>
+                    <button onClick={(e) => handleAction(() => onShare(article), e)} className="btn-secondary">Share</button>
                     <SaveButton /> 
                   </div>
                   {showCompareOnSoft ? (
-                     <button onClick={(e) => { stopMobileClick(e); onCompare(article); }} className="btn-primary btn-full-width">Compare Coverage ({article.clusterCount})</button>
+                     <button onClick={(e) => handleAction(() => onCompare(article), e)} className="btn-primary btn-full-width">Compare Coverage ({article.clusterCount})</button>
                   ) : (
-                     <button onClick={(e) => { stopMobileClick(e); onRead(article); }} className="btn-primary btn-full-width">
+                     <button onClick={(e) => handleAction(() => onRead(article), e)} className="btn-primary btn-full-width">
                         {isOpEd ? 'Read Full Opinion' : 'Read Article'}
                      </button>
                   )}

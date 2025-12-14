@@ -5,7 +5,7 @@ import { getSentimentInfo, isOpinion, getOptimizedImageUrl } from '../utils/help
 import { getFallbackImage } from '../utils/constants'; 
 import SmartBriefingModal from './modals/SmartBriefingModal';
 import useIsMobile from '../hooks/useIsMobile';
-import useHaptic from '../hooks/useHaptic'; // NEW
+import useHaptic from '../hooks/useHaptic'; 
 import { IArticle } from '../types';
 
 interface ArticleCardProps {
@@ -38,12 +38,10 @@ const ArticleCard = memo(function ArticleCard({
   const [showBriefing, setShowBriefing] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false); 
   const isMobileView = useIsMobile();
-  const vibrate = useHaptic(); // NEW
+  const vibrate = useHaptic();
 
   const isHardNews = article.analysisType === 'Full';
   const isOpEd = isOpinion(article);
-  const showCompareOnSoft = !isHardNews && ((article.clusterCount || 0) > 1);
-  const sentimentInfo = getSentimentInfo(article.sentiment);
   const optimizedUrl = getOptimizedImageUrl(article.imageUrl);
   
   const [imgSrc, setImgSrc] = useState(optimizedUrl || getFallbackImage(article.category));
@@ -55,177 +53,132 @@ const ArticleCard = memo(function ArticleCard({
   }, [article.imageUrl, article.category]);
 
   const handleImageError = () => {
-      const fallback = getFallbackImage(article.category);
-      if (imgSrc !== fallback) {
-          setImgSrc(fallback);
-      }
+      setImgSrc(getFallbackImage(article.category));
   };
 
-  const stopMobileClick = (e: React.MouseEvent) => { if (isMobileView) { e.stopPropagation(); } };
-
-  // --- ACTIONS WITH HAPTICS ---
   const handleAction = (action: () => void, e: React.MouseEvent) => {
-      stopMobileClick(e);
+      e.stopPropagation();
       vibrate();
       action();
   };
 
-  const SaveButton = () => (
-    <button 
-      onClick={(e) => handleAction(() => onToggleSave(article), e)} 
-      className="btn-secondary" 
-      title={isSaved ? "Remove from saved" : "Save article"}
-    >
-      {isSaved ? 'Unsave' : 'Save'}
-    </button>
-  );
-
-  const ListenButton = () => {
-    if (isPlaying && onStop) {
-      return (
-        <button 
-          onClick={(e) => handleAction(onStop, e)} 
-          className="btn-secondary stop-btn"
-        >
-          Stop
-        </button>
-      );
-    }
-    if (onPlay) {
-      return (
-        <button 
-          onClick={(e) => handleAction(onPlay, e)} 
-          className="btn-secondary"
-        >
-          Listen
-        </button>
-      );
-    }
-    return null;
-  };
-
-  const renderTopBadges = () => {
-    return (
-      <div className="card-badges">
-        {article.suggestionType && (
-            <div className={`badge ${article.suggestionType === 'Challenge' ? 'challenge' : 'comfort'}`}>
-              {article.suggestionType === 'Challenge' ? 'Perspective Widener' : 'Comfort Read'}
-            </div>
-        )}
-        {isOpEd && (
-           <div className="badge opinion">
-              OPINION
-           </div>
-        )}
-      </div>
-    );
-  };
+  // --- SVG ICONS ---
+  const PlayIcon = () => <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>;
+  const PauseIcon = () => <svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>;
+  const BookmarkIcon = () => <svg viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"}><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>;
+  const ShareIcon = () => <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>;
+  const CompareIcon = () => <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>;
 
   return (
     <>
       <div className={`article-card ${isPlaying ? 'now-playing' : ''}`}>
-        {renderTopBadges()}
+        {/* --- 1. BADGES --- */}
+        <div className="card-badges">
+          {article.suggestionType === 'Challenge' && <div className="badge challenge">Perspective</div>}
+          {isOpEd && <div className="badge opinion">Opinion</div>}
+        </div>
         
+        {/* --- 2. IMAGE --- */}
         <div className="article-image">
-          {!imageLoaded && (
-             <div className="skeleton-pulse" style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
-          )}
           <img 
             src={imgSrc} 
             alt={article.headline} 
             onError={handleImageError} 
             onLoad={() => setImageLoaded(true)} 
             loading="lazy" 
-            style={{ 
-                opacity: imageLoaded ? 1 : 0, 
-                transition: 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative', 
-                zIndex: 1 
-            }}
+            style={{ opacity: imageLoaded ? 1 : 0 }}
           />
         </div>
         
+        {/* --- 3. CONTENT --- */}
         <div className="article-content">
-          <div className="article-content-top">
-             <div className="category-row">
-                <span className="category-tag">
-                    {article.category || 'News'}
-                </span>
-             </div>
-
-            <div className="article-headline-link" onClick={(e) => handleAction(() => setShowBriefing(true), e)} style={{ cursor: 'pointer' }} title="Open Smart Briefing">
-                <h3 className="article-headline">{article.headline}</h3>
-            </div>
-            <p className="article-summary">{article.summary}</p>
-          </div>
           
-          <div className="article-content-bottom">
-            <div className="article-meta-v2">
-              <span className="source" title={article.source}>{article.source}</span>
-              {isHardNews && (
-                <>
-                  <span className="meta-divider">|</span>
-                  <span className="bias-score-card" onClick={(e) => showTooltip("Bias Score (0-100). Less is better.", e)}>Bias: <span className="accent-text">{article.biasScore}</span></span>
-                  <span className="meta-divider">|</span>
-                  <span className="political-lean-card"><span className={article.politicalLean !== 'Not Applicable' ? 'accent-text' : ''}>{article.politicalLean}</span></span>
-                </>
-              )}
-            </div>
+          {/* Metadata */}
+          <div className="article-meta-top">
+             <span className="source-name">{article.source}</span>
+             <span className="date">{new Date(article.publishedAt).toLocaleDateString()}</span>
+          </div>
+
+          {/* Headline */}
+          <h3 
+            className="article-headline" 
+            onClick={(e) => handleAction(() => setShowBriefing(true), e)}
+          >
+            {article.headline}
+          </h3>
+
+          {/* Summary */}
+          <p className="article-summary">{article.summary}</p>
+          
+          {/* Footer & Actions */}
+          <div className="article-footer">
             
-            <div className="quality-display-v2">
-                {!isHardNews ? (
-                    <>
-                        <span className="quality-grade-text info">
-                            <span style={{ fontSize: '12px', marginRight: '4px' }}>{isOpEd ? '🗣️' : '⚡'}</span> 
-                            {isOpEd ? 'Core Argument' : 'Quick Summary'}
-                        </span>
-                        <span className="sentiment-text" onClick={(e) => showTooltip("The tone of this article.", e)}>
-                            Sentiment: <span className={sentimentInfo.className}>{sentimentInfo.label}</span>
-                        </span>
-                    </>
-                ) : (
-                    <>
-                        <span className="quality-grade-text" onClick={(e) => showTooltip("Grade based on credibility.", e)}>
-                            Grade: {article.credibilityGrade ? <span className="accent-text">{article.credibilityGrade}</span> : 'N/A'}
-                        </span>
-                        <span className="sentiment-text" onClick={(e) => showTooltip("Overall Sentiment.", e)}>
-                            Sentiment: <span className={sentimentInfo.className}>{sentimentInfo.label}</span>
-                        </span>
-                    </>
-                )}
-            </div>
-            
-            <div className="article-actions">
-              {isHardNews && (
-                <>
-                  <div className="article-actions-top">
-                    <button onClick={(e) => handleAction(() => setShowBriefing(true), e)} className="btn-primary brief-btn">Brief</button>
-                    <ListenButton />
-                    <button onClick={(e) => handleAction(() => onShare(article), e)} className="btn-secondary">Share</button>
-                    <SaveButton /> 
-                  </div>
-                  <button onClick={(e) => handleAction(() => onCompare(article), e)} className="btn-primary btn-full-width">
-                      {(article.clusterCount || 0) > 1 ? `Compare Coverage (${article.clusterCount})` : "Compare Coverage"}
-                  </button>
-                </>
-              )}
-              
-              {!isHardNews && (
-                <>
-                  <div className="article-actions-top">
-                    <ListenButton />
-                    <button onClick={(e) => handleAction(() => onShare(article), e)} className="btn-secondary">Share</button>
-                    <SaveButton /> 
-                  </div>
-                  {showCompareOnSoft ? (
-                     <button onClick={(e) => handleAction(() => onCompare(article), e)} className="btn-primary btn-full-width">Compare Coverage ({article.clusterCount})</button>
-                  ) : (
-                     <button onClick={(e) => handleAction(() => onRead(article), e)} className="btn-primary btn-full-width">
-                        {isOpEd ? 'Read Full Opinion' : 'Read Article'}
-                     </button>
-                  )}
-                </>
-              )}
+            {/* Stats Row */}
+            {isHardNews && (
+                <div className="stats-row">
+                    <div className="stat-item" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
+                        <span>Bias:</span>
+                        <span className="stat-val accent-text">{article.biasScore}</span>
+                    </div>
+                    <span>•</span>
+                    <div className="stat-item">
+                        <span>Lean:</span>
+                        <span className={`stat-val ${article.politicalLean === 'Center' ? 'accent-text' : ''}`}>{article.politicalLean}</span>
+                    </div>
+                </div>
+            )}
+
+            {/* Main Action Bar */}
+            <div className="action-bar">
+                
+                <div className="action-left">
+                    {/* Play Button */}
+                    <button 
+                        className={`icon-btn ${isPlaying ? 'active' : ''}`}
+                        onClick={(e) => handleAction(isPlaying && onStop ? onStop : (onPlay || (() => {})), e)}
+                        title={isPlaying ? "Stop" : "Listen to Analysis"}
+                    >
+                        {isPlaying ? <PauseIcon /> : <PlayIcon />}
+                    </button>
+
+                    {/* Save Button */}
+                    <button 
+                        className={`icon-btn ${isSaved ? 'active' : ''}`}
+                        onClick={(e) => handleAction(() => onToggleSave(article), e)}
+                        title={isSaved ? "Remove" : "Save for later"}
+                    >
+                        <BookmarkIcon />
+                    </button>
+
+                    {/* Share Button */}
+                    <button 
+                        className="icon-btn"
+                        onClick={(e) => handleAction(() => onShare(article), e)}
+                        title="Share Analysis"
+                    >
+                        <ShareIcon />
+                    </button>
+
+                    {/* Compare Button (Conditional) */}
+                    {(isHardNews || (article.clusterCount || 0) > 1) && (
+                        <button 
+                            className="icon-btn"
+                            onClick={(e) => handleAction(() => onCompare(article), e)}
+                            title="Compare Coverage"
+                        >
+                            <CompareIcon />
+                        </button>
+                    )}
+                </div>
+
+                {/* Primary Text Action */}
+                <button 
+                    className="read-btn"
+                    onClick={(e) => isHardNews ? handleAction(() => setShowBriefing(true), e) : handleAction(() => onRead(article), e)}
+                >
+                    {isHardNews ? 'Smart Brief' : 'Read Source'}
+                </button>
+
             </div>
           </div>
         </div>

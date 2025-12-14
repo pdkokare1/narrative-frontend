@@ -58,6 +58,30 @@ const CompareCoverageModal: React.FC<CompareModalProps> = ({ clusterId, articleT
    const totalArticles = (clusterData.left?.length || 0) + (clusterData.center?.length || 0) + (clusterData.right?.length || 0) + (clusterData.reviews?.length || 0);
    const handleOverlayClick = (e: React.MouseEvent) => { if (e.target === e.currentTarget) { onClose(); } };
 
+   // --- SPECTRUM BAR COMPONENT ---
+   const SpectrumBar = () => {
+       if (totalArticles === 0) return null;
+       const left = clusterData.left.length;
+       const center = clusterData.center.length;
+       const right = clusterData.right.length;
+       const total = left + center + right || 1; // avoid div/0
+
+       return (
+           <div style={{ padding: '0 25px 20px 25px' }}>
+               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-tertiary)', marginBottom: '5px', textTransform: 'uppercase', fontWeight: 700 }}>
+                   <span>Left Lean</span>
+                   <span>Balanced</span>
+                   <span>Right Lean</span>
+               </div>
+               <div style={{ display: 'flex', height: '8px', borderRadius: '4px', overflow: 'hidden', background: 'var(--bg-elevated)' }}>
+                   <div style={{ width: `${(left/total)*100}%`, background: '#dc2626' }}></div>
+                   <div style={{ width: `${(center/total)*100}%`, background: '#4CAF50' }}></div>
+                   <div style={{ width: `${(right/total)*100}%`, background: '#2563eb' }}></div>
+               </div>
+           </div>
+       );
+   };
+
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="compare-modal" onClick={(e) => e.stopPropagation()}>
@@ -66,6 +90,9 @@ const CompareCoverageModal: React.FC<CompareModalProps> = ({ clusterId, articleT
           <button className="close-btn" onClick={onClose} title="Close comparison">×</button>
         </div>
         
+        {/* --- SPECTRUM VISUALIZER --- */}
+        {!loading && <SpectrumBar />}
+
         {/* --- TABS --- */}
         <div className="modal-tabs">
           <button className={activeTab === 'timeline' ? 'active' : ''} onClick={() => setActiveTab('timeline')}>Timeline</button>
@@ -137,7 +164,7 @@ function renderArticleGroup(articleList: IArticle[], perspective: string, onAnal
               </div>
               <div className="coverage-actions">
                 <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1}}><button style={{width: '100%'}}>Read Article</button></a>
-                {!isReview && ( <button onClick={() => onAnalyze(article)}>View Analysis</button> )}
+                {!isReview && ( <button onClick={() => onAnalyze(article)}>View Analysis</button> )}\
               </div>
             </div>
             <div className="coverage-image">

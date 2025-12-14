@@ -25,8 +25,12 @@ const DetailedAnalysisModal: React.FC<AnalysisModalProps> = ({ article, onClose,
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="analysis-modal" onClick={(e) => e.stopPropagation()}>
+        
+        {/* Header - Editorial Style */}
         <div className="modal-header">
-          <h2>{article.headline.substring(0, 60)}{article.headline.length > 60 ? '...' : ''}</h2>
+          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px' }}>
+            {article.headline.substring(0, 60)}{article.headline.length > 60 ? '...' : ''}
+          </h2>
           <button className="close-btn" onClick={onClose} title="Close analysis">×</button>
         </div>
         
@@ -49,7 +53,7 @@ const DetailedAnalysisModal: React.FC<AnalysisModalProps> = ({ article, onClose,
         </div>
         
         <div className="modal-footer">
-          <button onClick={onClose}>Close</button>
+          <button onClick={onClose} className="btn-secondary">Close Report</button>
         </div>
       </div>
     </div>
@@ -92,14 +96,14 @@ const OverviewTab: React.FC<{ article: IArticle; showTooltip: any }> = ({ articl
 
       {hasFindings && ( 
         <div className="recommendations"> 
-          <h4>Key Findings</h4> 
+          <h4>KEY FINDINGS</h4> 
           <ul> {article.keyFindings!.map((finding, i) => <li key={`kf-${i}`}>{finding}</li>)} </ul> 
         </div> 
       )} 
       
       {hasRecs && ( 
         <div className="recommendations"> 
-          <h4>Recommendations</h4> 
+          <h4>RECOMMENDATIONS</h4> 
           <ul> {article.recommendations!.map((rec, i) => <li key={`rec-${i}`}>{rec}</li>)} </ul> 
         </div> 
       )} 
@@ -153,7 +157,7 @@ const OverviewBreakdownTab: React.FC<{ article: IArticle; showTooltip: any }> = 
         <div className="component-section-header"> 
           <h4>Bias Details ({article.biasScore ?? 'N/A'}/100)</h4> 
           <div className="toggle-zero-scores"> 
-            <label> <input type="checkbox" checked={showZeroScores} onChange={() => setShowZeroScores(!showZeroScores)} /> Show Parameters Not Scored </label> 
+            <label> <input type="checkbox" checked={showZeroScores} onChange={() => setShowZeroScores(!showZeroScores)} /> Show 0 Scores </label> 
           </div> 
         </div> 
         <div className="divider" /> 
@@ -207,7 +211,7 @@ const ScoreBox: React.FC<{ label: string; value: number | undefined; showTooltip
   } 
   return ( 
     <div className="score-circle" title={tooltip} onClick={(e) => showTooltip(tooltip, e)}> 
-      <div className="score-value">{value ?? 'N/A'}</div> 
+      <div className="score-value" style={{ fontFamily: 'var(--font-heading)' }}>{value ?? 'N/A'}</div> 
       <div className="score-label">{label}</div> 
     </div> 
   ); 
@@ -215,8 +219,8 @@ const ScoreBox: React.FC<{ label: string; value: number | undefined; showTooltip
 
 const CircularProgressBar: React.FC<{ label: string; value: number; tooltip?: string; showTooltip: any }> = ({ label, value, tooltip, showTooltip }) => { 
   const numericValue = Math.max(0, Math.min(100, Number(value) || 0)); 
-  const strokeWidth = 8; 
-  const radius = 40; 
+  const strokeWidth = 6;  // Thinner stroke for elegance
+  const radius = 42; 
   const circumference = 2 * Math.PI * radius; 
   const offset = circumference - (numericValue / 100) * circumference; 
   
@@ -242,7 +246,7 @@ const CircularProgressBar: React.FC<{ label: string; value: number; tooltip?: st
             transform="rotate(-90 50 50)" 
           /> 
         )} 
-        <text x="50" y="50" className="circle-progress-text-value" dominantBaseline="middle" textAnchor="middle"> 
+        <text x="50" y="52" className="circle-progress-text-value" dominantBaseline="middle" textAnchor="middle" style={{ fontFamily: 'var(--font-heading)' }}> 
           {numericValue} 
         </text> 
       </svg> 

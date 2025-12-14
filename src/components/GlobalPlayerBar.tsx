@@ -1,5 +1,5 @@
 // src/components/GlobalPlayerBar.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRadio } from '../context/RadioContext';
 import './GlobalPlayerBar.css';
 
@@ -10,7 +10,9 @@ const GlobalPlayerBar: React.FC = () => {
     isPlaying, 
     isPaused, 
     isLoading,
-    isVisible,
+    isVisible, // Audio exists
+    playerOpen, // UI should show
+    closePlayer,
     stop, 
     pause, 
     resume, 
@@ -26,38 +28,54 @@ const GlobalPlayerBar: React.FC = () => {
     changeSpeed
   } = useRadio();
 
-  // Local state for smooth scrubbing (prevents jitter while dragging)
   const [isDragging, setIsDragging] = useState(false);
   const [dragTime, setDragTime] = useState(0);
+  const autoHideRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Sync local drag time with actual time (only when NOT dragging)
+  // --- AUTO-HIDE LOGIC ---
+  const resetAutoHide = () => {
+    if (autoHideRef.current) clearTimeout(autoHideRef.current);
+    if (isPlaying && playerOpen) { // Only auto-hide if actively playing
+        autoHideRef.current = setTimeout(() => {
+            closePlayer();
+        }, 7000); // 7 Seconds
+    }
+  };
+
+  useEffect(() => {
+    if (playerOpen) {
+        resetAutoHide();
+    } else {
+        if (autoHideRef.current) clearTimeout(autoHideRef.current);
+    }
+    return () => { if (autoHideRef.current) clearTimeout(autoHideRef.current); };
+  }, [playerOpen, isPlaying]); // Reset when play state changes or bubble opens
+
+  // Sync seek bar
   useEffect(() => {
     if (!isDragging) {
       setDragTime(currentTime);
     }
   }, [currentTime, isDragging]);
 
-  if (!isVisible) return null;
+  // If no audio loaded or manually closed, don't render
+  if (!isVisible || !playerOpen) return null;
 
-  // --- UP NEXT MODE ---
-  if (isWaitingForNext) {
-    return (
-      <div className="global-player-bar up-next-mode">
-        <div className="up-next-content">
-          <span className="up-next-label">Up Next in {autoplayTimer}s...</span>
-          <div className="up-next-loader-track">
-             <div className="up-next-loader-fill" style={{ width: `${((autoplayTimer || 0)/5)*100}%` }}></div>
-          </div>
-        </div>
-        <div className="player-controls">
-            <button onClick={playNext} className="player-btn primary">Play Now</button>
-            <button onClick={cancelAutoplay} className="player-btn secondary">Cancel</button>
-        </div>
-      </div>
-    );
-  }
+  // --- HANDLERS (All reset the timer) ---
+  const withReset = (fn: () => void) => () => { fn(); resetAutoHide(); };
 
-  // --- HELPER: Time Formatter (mm:ss) ---
+  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDragTime(Number(e.target.value));
+    resetAutoHide();
+  };
+
+  const handleSeekStart = () => { setIsDragging(true); resetAutoHide(); };
+  const handleSeekEnd = (e: any) => {
+    setIsDragging(false);
+    seekTo(Number(e.currentTarget.value));
+    resetAutoHide();
+  };
+
   const formatTime = (time: number) => {
     if (!time || isNaN(time)) return "0:00";
     const minutes = Math.floor(time / 60);
@@ -65,33 +83,34 @@ const GlobalPlayerBar: React.FC = () => {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  // --- HELPER: Speed Cycler ---
   const handleSpeedClick = () => {
     const speeds = [1.0, 1.25, 1.5, 0.5, 0.75];
-    const currentIndex = speeds.indexOf(playbackRate);
-    // Find next speed, default to 1.0 if not found
-    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % speeds.length;
+    const nextIndex = (speeds.indexOf(playbackRate) + 1) % speeds.length;
     changeSpeed(speeds[nextIndex]);
+    resetAutoHide();
   };
 
-  // --- HANDLERS ---
-  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDragTime(Number(e.target.value));
-  };
+  // --- UP NEXT BUBBLE ---
+  if (isWaitingForNext) {
+    return (
+      <div className="global-player-bar up-next-mode bubble-mode" onClick={resetAutoHide}>
+        <div className="up-next-content">
+          <span className="up-next-label">Up Next in {autoplayTimer}s...</span>
+          <div className="up-next-loader-track">
+             <div className="up-next-loader-fill" style={{ width: `${((autoplayTimer || 0)/5)*100}%` }}></div>
+          </div>
+        </div>
+        <div className="player-controls">
+            <button onClick={withReset(playNext)} className="player-btn primary">Play Now</button>
+            <button onClick={withReset(cancelAutoplay)} className="player-btn secondary">Cancel</button>
+        </div>
+      </div>
+    );
+  }
 
-  const handleSeekStart = () => setIsDragging(true);
-
-  const handleSeekEnd = (e: React.MouseEvent<HTMLInputElement> | React.TouchEvent<HTMLInputElement>) => {
-    setIsDragging(false);
-    // @ts-ignore - Event target value access
-    seekTo(Number(e.currentTarget.value));
-  };
-
-  // --- ACTIVE PLAYING MODE ---
+  // --- ACTIVE PLAYER BUBBLE ---
   return (
-    <div className="global-player-bar">
-      
-      {/* 1. Scrubber (Top Edge) */}
+    <div className="global-player-bar bubble-mode" onClick={resetAutoHide}>
       <div className="scrubber-container">
         <input 
             type="range" 
@@ -104,16 +123,11 @@ const GlobalPlayerBar: React.FC = () => {
             onMouseUp={handleSeekEnd}
             onTouchEnd={handleSeekEnd}
             className="scrubber-range"
-            style={{ 
-                // Dynamic gradient for filled vs empty part
-                backgroundSize: `${(dragTime / (duration || 1)) * 100}% 100%` 
-            }}
+            style={{ backgroundSize: `${(dragTime / (duration || 1)) * 100}% 100%` }}
         />
       </div>
 
       <div className="player-main-row">
-        
-        {/* 2. Info Section */}
         <div className="player-info">
             <div className="player-meta-top">
                 {currentSpeaker && (
@@ -133,36 +147,21 @@ const GlobalPlayerBar: React.FC = () => {
             </div>
         </div>
 
-        {/* 3. Controls Section */}
         <div className="player-controls">
             {isLoading ? (
                 <div className="spinner-small white"></div>
             ) : (
                 <>
-                   {/* Speed Toggle */}
-                   <button onClick={handleSpeedClick} className="player-btn text-btn" title="Playback Speed">
-                       {playbackRate}x
-                   </button>
-
-                   {/* Previous */}
-                   <button onClick={playPrevious} className="player-btn icon-only" title="Previous / Replay">
-                       ⏮
-                   </button>
-
-                   {/* Play/Pause */}
+                   <button onClick={handleSpeedClick} className="player-btn text-btn">{playbackRate}x</button>
+                   <button onClick={withReset(playPrevious)} className="player-btn icon-only">⏮</button>
                    {isPaused ? (
-                     <button onClick={resume} className="player-btn icon-only primary-play" title="Resume">▶</button>
+                     <button onClick={withReset(resume)} className="player-btn icon-only primary-play">▶</button>
                    ) : (
-                     <button onClick={pause} className="player-btn icon-only primary-play" title="Pause">⏸</button>
+                     <button onClick={withReset(pause)} className="player-btn icon-only primary-play">⏸</button>
                    )}
-                   
-                   {/* Next */}
-                   <button onClick={playNext} className="player-btn icon-only" title="Next Story">
-                       ⏭
-                   </button>
-                   
-                   {/* Stop */}
-                   <button onClick={stop} className="player-btn close-action" title="Stop Radio">×</button>
+                   <button onClick={withReset(playNext)} className="player-btn icon-only">⏭</button>
+                   {/* Close Button manually hides bubble */}
+                   <button onClick={closePlayer} className="player-btn close-action" title="Hide Player">⌄</button>
                 </>
             )}
         </div>

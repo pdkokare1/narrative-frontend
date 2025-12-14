@@ -1,12 +1,15 @@
 // src/components/ArticleCard.tsx
 import React, { useState, useEffect, memo } from 'react'; 
 import './ArticleCard.css'; 
-import { getSentimentInfo, isOpinion, getOptimizedImageUrl } from '../utils/helpers'; 
+import { isOpinion, getOptimizedImageUrl } from '../utils/helpers'; 
 import { getFallbackImage } from '../utils/constants'; 
 import SmartBriefingModal from './modals/SmartBriefingModal';
 import useIsMobile from '../hooks/useIsMobile';
-import useHaptic from '../hooks/useHaptic'; 
 import { IArticle } from '../types';
+
+// --- NEW IMPORTS ---
+import Button from './ui/Button';
+import { PlayIcon, PauseIcon, BookmarkIcon, ShareIcon, CompareIcon } from './ui/Icons';
 
 interface ArticleCardProps {
   article: IArticle;
@@ -38,7 +41,6 @@ const ArticleCard = memo(function ArticleCard({
   const [showBriefing, setShowBriefing] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false); 
   const isMobileView = useIsMobile();
-  const vibrate = useHaptic();
 
   const isHardNews = article.analysisType === 'Full';
   const isOpEd = isOpinion(article);
@@ -56,29 +58,19 @@ const ArticleCard = memo(function ArticleCard({
       setImgSrc(getFallbackImage(article.category));
   };
 
-  const handleAction = (action: () => void, e: React.MouseEvent) => {
-      e.stopPropagation();
-      vibrate();
-      action();
-  };
-
-  // --- SVG ICONS ---
-  const PlayIcon = () => <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>;
-  const PauseIcon = () => <svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>;
-  const BookmarkIcon = () => <svg viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"}><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>;
-  const ShareIcon = () => <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>;
-  const CompareIcon = () => <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>;
+  const preventBubble = (e: React.MouseEvent) => e.stopPropagation();
 
   return (
     <>
       <div className={`article-card ${isPlaying ? 'now-playing' : ''}`}>
-        {/* --- 1. BADGES --- */}
+        
+        {/* --- BADGES --- */}
         <div className="card-badges">
           {article.suggestionType === 'Challenge' && <div className="badge challenge">Perspective</div>}
           {isOpEd && <div className="badge opinion">Opinion</div>}
         </div>
         
-        {/* --- 2. IMAGE --- */}
+        {/* --- IMAGE --- */}
         <div className="article-image">
           <img 
             src={imgSrc} 
@@ -90,30 +82,26 @@ const ArticleCard = memo(function ArticleCard({
           />
         </div>
         
-        {/* --- 3. CONTENT --- */}
+        {/* --- CONTENT --- */}
         <div className="article-content">
-          
-          {/* Metadata */}
           <div className="article-meta-top">
              <span className="source-name">{article.source}</span>
              <span className="date">{new Date(article.publishedAt).toLocaleDateString()}</span>
           </div>
 
-          {/* Headline */}
           <h3 
             className="article-headline" 
-            onClick={(e) => handleAction(() => setShowBriefing(true), e)}
+            onClick={(e) => { preventBubble(e); setShowBriefing(true); }}
           >
             {article.headline}
           </h3>
 
-          {/* Summary */}
           <p className="article-summary">{article.summary}</p>
           
-          {/* Footer & Actions */}
+          {/* --- FOOTER --- */}
           <div className="article-footer">
             
-            {/* Stats Row */}
+            {/* Stats */}
             {isHardNews && (
                 <div className="stats-row">
                     <div className="stat-item" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
@@ -128,57 +116,52 @@ const ArticleCard = memo(function ArticleCard({
                 </div>
             )}
 
-            {/* Main Action Bar */}
+            {/* Action Bar using Modular Components */}
             <div className="action-bar">
-                
                 <div className="action-left">
-                    {/* Play Button */}
-                    <button 
-                        className={`icon-btn ${isPlaying ? 'active' : ''}`}
-                        onClick={(e) => handleAction(isPlaying && onStop ? onStop : (onPlay || (() => {})), e)}
-                        title={isPlaying ? "Stop" : "Listen to Analysis"}
+                    <Button 
+                        variant="icon" 
+                        isActive={isPlaying}
+                        onClick={(e) => { preventBubble(e); (isPlaying && onStop ? onStop() : onPlay?.()); }}
+                        title={isPlaying ? "Stop" : "Listen"}
                     >
                         {isPlaying ? <PauseIcon /> : <PlayIcon />}
-                    </button>
+                    </Button>
 
-                    {/* Save Button */}
-                    <button 
-                        className={`icon-btn ${isSaved ? 'active' : ''}`}
-                        onClick={(e) => handleAction(() => onToggleSave(article), e)}
-                        title={isSaved ? "Remove" : "Save for later"}
+                    <Button 
+                        variant="icon" 
+                        isActive={isSaved}
+                        onClick={(e) => { preventBubble(e); onToggleSave(article); }}
+                        title={isSaved ? "Remove" : "Save"}
                     >
-                        <BookmarkIcon />
-                    </button>
+                        <BookmarkIcon filled={isSaved} />
+                    </Button>
 
-                    {/* Share Button */}
-                    <button 
-                        className="icon-btn"
-                        onClick={(e) => handleAction(() => onShare(article), e)}
-                        title="Share Analysis"
+                    <Button 
+                        variant="icon" 
+                        onClick={(e) => { preventBubble(e); onShare(article); }}
+                        title="Share"
                     >
                         <ShareIcon />
-                    </button>
+                    </Button>
 
-                    {/* Compare Button (Conditional) */}
                     {(isHardNews || (article.clusterCount || 0) > 1) && (
-                        <button 
-                            className="icon-btn"
-                            onClick={(e) => handleAction(() => onCompare(article), e)}
+                        <Button 
+                            variant="icon" 
+                            onClick={(e) => { preventBubble(e); onCompare(article); }}
                             title="Compare Coverage"
                         >
                             <CompareIcon />
-                        </button>
+                        </Button>
                     )}
                 </div>
 
-                {/* Primary Text Action */}
-                <button 
-                    className="read-btn"
-                    onClick={(e) => isHardNews ? handleAction(() => setShowBriefing(true), e) : handleAction(() => onRead(article), e)}
+                <Button 
+                    variant="text"
+                    onClick={(e) => { preventBubble(e); isHardNews ? setShowBriefing(true) : onRead(article); }}
                 >
                     {isHardNews ? 'Smart Brief' : 'Read Source'}
-                </button>
-
+                </Button>
             </div>
           </div>
         </div>

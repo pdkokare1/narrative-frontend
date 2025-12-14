@@ -5,6 +5,7 @@ import { auth } from './firebaseConfig';
 import * as firebaseui from 'firebaseui'; 
 import 'firebaseui/dist/firebaseui.css';  
 import './Login.css'; 
+import Card from './components/ui/Card'; // New Component
 
 // Configure FirebaseUI.
 const uiConfig = {
@@ -36,11 +37,13 @@ const Login: React.FC = () => {
   return (
     <div className="login-page-wrapper">
       <div className="login-container">
-        <div className="login-form-panel">
-          <h1>The Gamut</h1> 
-          <p>Please sign in to analyze the full spectrum</p>
-          <div ref={elementRef} id="firebaseui-auth-container"></div>
-        </div>
+        <Card variant="glass" padding="lg">
+          <div className="login-form-panel" style={{ padding: 0 }}> 
+            <h1>The Gamut</h1> 
+            <p>Please sign in to analyze the full spectrum</p>
+            <div ref={elementRef} id="firebaseui-auth-container"></div>
+          </div>
+        </Card>
       </div>
     </div>
   );

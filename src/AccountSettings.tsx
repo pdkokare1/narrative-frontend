@@ -117,8 +117,8 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentFontSize, onSe
         )}
 
         {error && (
-          <div className="settings-card" style={{ textAlign: 'center', borderColor: '#E57373' }}>
-             <p style={{ color: '#E57373', marginBottom: '15px' }}>{error}</p>
+          <div className="settings-card" style={{ textAlign: 'center', borderColor: 'var(--color-error)' }}>
+             <p style={{ color: 'var(--color-error)', marginBottom: '15px' }}>{error}</p>
              <button onClick={() => window.location.reload()} className="btn-secondary">Retry</button>
           </div>
         )}
@@ -127,19 +127,25 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentFontSize, onSe
           <>
             <div className="settings-card">
                 <div className="settings-field">
-                <span className="settings-label">Username</span>
-                <p className="settings-value">{profileData.username}</p>
+                  <span className="settings-label">Username</span>
+                  <p className="settings-value">{profileData.username}</p>
                 </div>
 
                 <div className="settings-field">
-                <span className="settings-label">Email</span>
-                <p className="settings-value">{profileData.email}</p>
+                  <span className="settings-label">Email</span>
+                  <p className="settings-value">{profileData.email}</p>
                 </div>
                 
                 <hr className="settings-divider" />
                 
-                <h2 className="settings-section-title">Your Stats</h2>
+                <h2 className="settings-section-title">Your Progress</h2>
                 
+                <div className="stat-row">
+                    <strong>Daily Streak</strong>
+                    <span style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        {profileData.currentStreak || 0} Days 🔥
+                    </span>
+                </div>
                 <div className="stat-row">
                     <strong>Articles Analyzed</strong>
                     <span>{profileData.articlesViewedCount || 0}</span>
@@ -152,6 +158,31 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentFontSize, onSe
                     <strong>Articles Shared</strong>
                     <span>{profileData.articlesSharedCount || 0}</span>
                 </div>
+
+                {/* --- Badges Section --- */}
+                {profileData.badges && profileData.badges.length > 0 && (
+                    <div style={{ marginTop: '20px' }}>
+                        <span className="settings-label">Earned Badges</span>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '10px' }}>
+                            {profileData.badges.map((badge, idx) => (
+                                <div key={idx} style={{ 
+                                    background: 'var(--bg-elevated)', 
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '8px',
+                                    padding: '8px 12px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    fontSize: '12px',
+                                    color: 'var(--text-primary)'
+                                }}>
+                                    <span style={{ fontSize: '16px' }}>{badge.icon}</span>
+                                    <span style={{ fontWeight: 600 }}>{badge.label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* --- Appearance Section --- */}
@@ -181,7 +212,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentFontSize, onSe
                         </div>
                         
                         {notifStatus === 'granted' ? (
-                            <button className="btn-secondary" disabled style={{ color: '#4CAF50', borderColor: '#4CAF50' }}>
+                            <button className="btn-secondary" disabled style={{ color: 'var(--color-success)', borderColor: 'var(--color-success)' }}>
                                 Enabled ✓
                             </button>
                         ) : notifStatus === 'loading' ? (
@@ -193,7 +224,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentFontSize, onSe
                         )}
                     </div>
                     {notifStatus === 'denied' && (
-                        <p style={{ fontSize: '11px', color: '#E57373', marginTop: '10px' }}>
+                        <p style={{ fontSize: '11px', color: 'var(--color-error)', marginTop: '10px' }}>
                             * Notifications are blocked in your browser settings.
                         </p>
                     )}

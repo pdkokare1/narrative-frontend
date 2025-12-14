@@ -21,8 +21,10 @@ import GlobalPlayerBar from './components/GlobalPlayerBar';
 import BottomNav from './components/ui/BottomNav';
 import ErrorBoundary from './components/ErrorBoundary';
 import CustomTooltip from './components/ui/CustomTooltip';
-// --- NEW ---
 import BadgePopup from './components/ui/BadgePopup';
+// --- NEW ---
+import OnboardingTour from './components/ui/OnboardingTour';
+
 import { IBadge } from './types'; 
 
 import Login from './Login';
@@ -36,7 +38,6 @@ const AccountSettings = lazy(() => import('./AccountSettings'));
 const SearchResults = lazy(() => import('./SearchResults')); 
 const EmergencyResources = lazy(() => import('./EmergencyResources'));
 
-// Lazy load Modals to save initial bundle size
 const CompareCoverageModal = lazy(() => import('./components/modals/CompareCoverageModal'));
 const DetailedAnalysisModal = lazy(() => import('./components/modals/DetailedAnalysisModal'));
 
@@ -112,7 +113,6 @@ function MainLayout({ profile }: MainLayoutProps) {
   const [compareModal, setCompareModal] = useState<{ open: boolean; clusterId: number | null; articleTitle: string; articleId: string | null }>({ open: false, clusterId: null, articleTitle: '', articleId: null });
   const [analysisModal, setAnalysisModal] = useState<{ open: boolean; article: IArticle | null }>({ open: false, article: null });
   
-  // --- NEW: Badge State ---
   const [earnedBadge, setEarnedBadge] = useState<IBadge | null>(null);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -183,7 +183,6 @@ function MainLayout({ profile }: MainLayoutProps) {
     }
   };
 
-  // --- REFACTORED: Check for Badges ---
   const checkBadge = (res: any) => {
       if (res && res.data && res.data.newBadge) {
           setEarnedBadge(res.data.newBadge);
@@ -275,7 +274,9 @@ function MainLayout({ profile }: MainLayoutProps) {
       
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
       
-      {/* --- NEW: Badge Popup --- */}
+      {/* --- NEW: Onboarding Tour --- */}
+      <OnboardingTour />
+      
       {earnedBadge && (
           <BadgePopup badge={earnedBadge} onClose={() => setEarnedBadge(null)} />
       )}

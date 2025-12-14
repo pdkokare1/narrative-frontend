@@ -102,6 +102,16 @@ export const fetchForYouArticles = async () => {
   }
 };
 
+// 3. Fetch Personalized Feed (NEW)
+export const fetchPersonalizedArticles = async () => {
+  try {
+    const response = await api.get<{ articles: IArticle[], meta: any }>('/articles/personalized');
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // --- Standard Methods ---
 export const searchArticles = (query: string, params?: IFilters) => 
   api.get<ISearchResponse>('/search', { params: { q: query, ...params } });
@@ -117,7 +127,7 @@ export const getProfile = () => api.get<IUserProfile>('/profile/me');
 export const getStats = () => api.get<any>('/profile/stats');
 export const getWeeklyDigest = () => api.get<any>('/profile/weekly-digest');
 export const createProfile = (data: { username: string }) => api.post<IUserProfile>('/profile', data);
-export const deleteAccount = () => api.delete('/profile'); // NEW: Update 9
+export const deleteAccount = () => api.delete('/profile'); 
 
 // Notification Token
 export const saveNotificationToken = (token: string) => api.post('/profile/save-token', { token });

@@ -1,285 +1,265 @@
 /* src/components/ArticleCard.css */
 
-/* ==================== CARD CONTAINER ==================== */
+/* ==================== MAGAZINE CARD CONTAINER ==================== */
 .article-card {
   background: var(--bg-card);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 1px solid var(--border-color); /* Very subtle border */
+  border-radius: var(--radius-sm); /* Sharper corners for editorial feel */
   position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: none;
-  min-width: 270px;
+  overflow: hidden;
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), 
+              box-shadow 0.4s ease,
+              border-color 0.4s ease;
   height: 100%;
 }
 
 .article-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--border-color);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-light);
 }
 
-/* "Now Playing" Active State */
+/* "Now Playing" - Gold Glow */
 .article-card.now-playing {
-  border: 1px solid var(--accent-primary);
-  box-shadow: 0 0 0 1px var(--accent-primary), 0 4px 12px rgba(0,0,0,0.1);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 20px var(--accent-glow);
 }
 
-/* ==================== BADGES (Top Right) ==================== */
+/* ==================== BADGES (Floating Glass) ==================== */
 .card-badges {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 12px;
+  right: 12px;
   display: flex;
-  gap: 5px;
-  z-index: 2;
+  gap: 6px;
+  z-index: 5;
 }
 
 .badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .badge.challenge {
-  background: var(--accent-primary);
-  color: white;
-  border: none;
+  background: rgba(212, 175, 55, 0.9); /* Gold */
+  color: #000;
 }
 
 .badge.comfort {
-  background: var(--bg-elevated);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.9);
+  color: #000;
 }
 
 .badge.opinion {
-  background: #FFB300; /* Amber/Yellow specific for opinion */
+  background: #EAEAEA;
   color: #000;
-  border: none;
-  font-weight: 700;
+  border: 1px solid #999;
 }
 
-/* ==================== IMAGE SECTION ==================== */
+/* ==================== IMAGE (Cinematic) ==================== */
 .article-image {
   width: 100%;
-  height: 170px;
+  height: 200px; /* Taller for dramatic effect */
   background: var(--bg-secondary);
   position: relative;
   overflow: hidden;
-  border-bottom: 1px solid var(--border-light);
 }
 
 .article-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
-  transition: transform 0.5s ease, filter 0.3s ease;
-  filter: brightness(0.95);
+  transition: transform 0.8s ease; /* Slow, cinematic zoom */
+  filter: brightness(0.95) contrast(1.05);
 }
 
 .article-card:hover .article-image img {
-  transform: scale(1.03);
-  filter: brightness(1);
+  transform: scale(1.05);
+  filter: brightness(1) contrast(1.1);
 }
 
-/* ==================== CONTENT SECTION ==================== */
+/* ==================== CONTENT BODY ==================== */
 .article-content {
-  padding: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   flex: 1;
-  overflow: hidden;
+  gap: 12px;
 }
 
-.article-content-top {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.article-content-bottom {
-  flex-shrink: 0;
-}
-
-/* Category Tag */
-.category-row {
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.category-tag {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 700;
-  color: var(--accent-primary);
-  background: var(--bg-elevated);
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid var(--border-color);
-}
-
-/* Headline & Summary */
-.article-headline {
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--text-primary);
-  margin-bottom: 10px;
-  word-wrap: break-word;
-}
-
-.article-headline-link {
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-}
-
-.article-headline-link:hover .article-headline {
-  color: var(--accent-primary);
-}
-
-.article-summary {
-  font-size: 11px;
-  line-height: 1.6;
-  color: var(--text-secondary);
-  margin-bottom: 20px;
-  word-wrap: break-word;
-}
-
-/* ==================== META DATA ==================== */
-.article-meta-v2 {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-light);
-  gap: 8px;
-  flex-wrap: nowrap;
-  overflow: hidden;
-}
-
-.source, .bias-score-card, .political-lean-card {
-  font-size: 10px;
-  color: var(--text-tertiary);
-  font-weight: 500;
-  letter-spacing: 0.5px;
-}
-
-.source {
-  font-weight: 600;
-  text-transform: uppercase;
-  flex-shrink: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.bias-score-card, .political-lean-card {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.meta-divider {
-  color: var(--text-muted);
-  font-size: 10px;
-  flex-shrink: 0;
-}
-
-/* ==================== QUALITY & SENTIMENT ==================== */
-.quality-display-v2 {
+/* 1. Meta Row (Source & Time) */
+.article-meta-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
-  gap: 5px 10px;
-}
-
-.quality-grade-text, .sentiment-text {
+  font-family: var(--font-body);
   font-size: 10px;
-  font-weight: 600;
-  color: var(--text-tertiary);
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  margin-bottom: 4px;
 }
 
-.quality-grade-text.info {
-  color: var(--text-secondary);
-}
-
-.quality-grade-text .icon {
-  font-size: 12px;
-  margin-right: 4px;
-}
-
-.sentiment-text {
-  font-weight: 500;
-  text-transform: none;
-}
-
-.sentiment-positive { color: var(--color-success); font-weight: 600; }
-.sentiment-negative { color: var(--color-error); font-weight: 600; }
-.sentiment-neutral { color: var(--text-tertiary); font-weight: 600; }
-
-/* ==================== ACTIONS LAYOUT ==================== */
-.article-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-top: 15px;
-  border-top: 1px solid var(--border-light);
-}
-
-.article-actions-top {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-  gap: 8px;
-}
-
-.article-actions-top > a {
-  display: block;
-  text-decoration: none;
-}
-
-.article-actions-top > a > .btn-primary,
-.article-actions-top > a > .btn-secondary {
-  width: 100%;
-}
-
-/* Specific Button Styles */
-.brief-btn {
-  background: var(--bg-elevated);
-  color: var(--accent-primary);
-  border: 1px solid var(--accent-primary);
-}
-
-.stop-btn {
-  color: var(--color-error);
-  border-color: var(--color-error);
+.source-name {
+  color: var(--accent-primary); /* Gold Source Name */
   font-weight: 700;
 }
 
-.stop-btn:hover {
-  background: rgba(229, 115, 115, 0.1);
+/* 2. Headline (The Hero) */
+.article-headline {
+  font-family: var(--font-heading); /* Playfair Display */
+  font-size: 20px;
+  line-height: 1.35;
+  font-weight: 600; /* Regular weight looks more elegant in Serif */
+  color: var(--text-primary);
+  margin: 0;
+  cursor: pointer;
+  transition: color 0.2s ease;
 }
 
-/* Full width buttons inside actions */
-.article-actions > .btn-secondary.btn-full-width,
-.article-actions > .btn-primary.btn-full-width {
-  width: 100%;
+.article-headline:hover {
+  color: var(--accent-primary);
 }
 
-.article-actions > .btn-secondary.btn-full-width:only-child {
-  margin-bottom: 0;
+/* 3. Summary */
+.article-summary {
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Limit to 3 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: auto; /* Pushes footer down */
+}
+
+/* ==================== FOOTER / ACTIONS ==================== */
+.article-footer {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Stats Row (Bias/Trust) - Minimalist */
+.stats-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: help;
+}
+
+.stat-val {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-family: var(--font-body);
+}
+
+/* Action Bar */
+.action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.action-left {
+  display: flex;
+  gap: 8px;
+}
+
+/* Icon Buttons (Save, Share, Play) */
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: rgba(212, 175, 55, 0.05);
+}
+
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+/* Active State for Save/Play */
+.icon-btn.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #000; /* Black icon on Gold bg */
+}
+
+/* Primary "Read" Button - Text Style */
+.read-btn {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--accent-primary);
+  padding: 4px 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.read-btn:hover {
+  color: var(--accent-primary);
+  padding-bottom: 6px; /* Lift effect */
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .article-card {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: 1px solid var(--border-color);
+    background: transparent; /* Seamless list */
+  }
+  
+  .article-image {
+    height: 220px; /* Bigger images on mobile */
+  }
+  
+  .article-headline {
+    font-size: 22px; /* Larger headings for touch */
+  }
 }

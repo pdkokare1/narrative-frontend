@@ -1,14 +1,15 @@
 // src/components/NewsFeed.tsx
-import React, { useState, useRef } from 'react';
-import { Helmet } from 'react-helmet-async';
-import UnifiedFeed from './feeds/UnifiedFeed';
-import InFocusBar from './InFocusBar'; 
-import '../App.css'; 
+import React, { useEffect, useState } from 'react';
+import * as api from '../services/api';
+import ArticleCard from './ArticleCard';
+import ArticleFilters from './ArticleFilters';
 import { IArticle, IFilters } from '../types';
+import './NewsFeed.css';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 
 interface NewsFeedProps {
   filters: IFilters;
-  onFilterChange: (filters: IFilters) => void;
+  onFilterChange: (f: IFilters) => void;
   onAnalyze: (article: IArticle) => void;
   onCompare: (article: IArticle) => void;
   savedArticleIds: Set<string>;
@@ -17,72 +18,108 @@ interface NewsFeedProps {
 }
 
 const NewsFeed: React.FC<NewsFeedProps> = ({ 
-  filters, 
-  onFilterChange, 
-  onAnalyze, 
-  onCompare, 
-  savedArticleIds, 
-  onToggleSave, 
-  showTooltip 
+  filters, onFilterChange, onAnalyze, onCompare, savedArticleIds, onToggleSave, showTooltip 
 }) => {
-  const [mode, setMode] = useState<'latest' | 'foryou' | 'personalized'>('latest'); 
-  const contentRef = useRef<HTMLDivElement>(null); 
-
-  const getPageTitle = () => {
-    if (mode === 'foryou') return 'Balanced For You | The Gamut';
-    if (mode === 'personalized') return 'My Mix | The Gamut';
-    if (filters.category && filters.category !== 'All Categories') return `${filters.category} News | The Gamut`;
-    return 'The Gamut - Analyse The Full Spectrum';
+  const [articles, setArticles] = useState<IArticle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  
+  const fetchArticles = async (reset = false) => {
+    if (reset) setLoading(true);
+    try {
+      const offset = reset ? 0 : page * 12;
+      const data = await api.getArticles({ ...filters, offset, limit: 12 });
+      
+      if (reset) {
+        setArticles(data.articles);
+        setPage(1);
+      } else {
+        setArticles(prev => [...prev, ...data.articles]);
+        setPage(prev => prev + 1);
+      }
+      setHasMore(data.pagination.total > (offset + data.articles.length));
+    } catch (err) {
+      console.error("Feed Error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const renderToggle = () => (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-      <div style={{ 
-        display: 'flex', background: 'var(--bg-elevated)', borderRadius: '25px', 
-        padding: '4px', border: '1px solid var(--border-color)', position: 'relative' 
-      }}>
-        {['latest', 'foryou', 'personalized'].map((m) => (
-            <button
-              key={m}
-              onClick={() => setMode(m as any)}
-              style={{
-                background: mode === m ? 'var(--accent-primary)' : 'transparent',
-                color: mode === m ? 'white' : 'var(--text-secondary)',
-                border: 'none', borderRadius: '20px', padding: '8px 16px',
-                fontSize: '11px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.3s ease',
-                textTransform: 'capitalize'
-              }}
-            >
-              {m === 'foryou' ? 'Balanced' : m === 'personalized' ? 'For You' : 'Latest'}
-            </button>
-        ))}
-      </div>
-    </div>
-  );
+  useEffect(() => {
+    fetchArticles(true);
+  }, [filters]);
+
+  // --- Pull To Refresh Integration ---
+  const { pullChange, refreshing } = usePullToRefresh(async () => {
+    await fetchArticles(true); // Force reset on pull
+  });
 
   return (
-    <main className="content" ref={contentRef}>
-      <Helmet>
-        <title>{getPageTitle()}</title>
-      </Helmet>
+    <div className="news-feed-container">
+      
+      {/* Visual Indicator for Pull */}
+      <div 
+        className={`ptr-element ${refreshing ? 'refreshing' : ''}`}
+        style={{ transform: `translateY(${pullChange}px)` }}
+      >
+        <div className={`ptr-icon ${pullChange > 60 ? 'rotate' : ''}`}>
+           {refreshing ? <div className="ptr-spinner"></div> : '↓'}
+        </div>
+      </div>
 
-      {/* --- In Focus Bar --- */}
-      <InFocusBar />
+      <div className="feed-header">
+        <h1 className="feed-title">
+          {filters.category === 'All Categories' ? 'Top Headlines' : filters.category}
+        </h1>
+        <ArticleFilters filters={filters} onChange={onFilterChange} />
+      </div>
 
-      {renderToggle()}
+      <div 
+        className="articles-grid"
+        style={{ transform: `translateY(${refreshing ? 60 : pullChange * 0.4}px)`, transition: refreshing ? 'transform 0.3s' : 'none' }}
+      >
+        {articles.map(article => (
+          <ArticleCard 
+            key={article._id} 
+            article={article}
+            onAnalyze={onAnalyze}
+            onCompare={onCompare}
+            isSaved={savedArticleIds.has(article._id || '')}
+            onToggleSave={onToggleSave}
+            showTooltip={showTooltip}
+          />
+        ))}
+      </div>
 
-      <UnifiedFeed 
-          mode={mode}
-          filters={filters}
-          onFilterChange={onFilterChange}
-          onAnalyze={onAnalyze}
-          onCompare={onCompare}
-          savedArticleIds={savedArticleIds}
-          onToggleSave={onToggleSave}
-          showTooltip={showTooltip}
-          scrollToTopRef={contentRef}
-      />
-    </main>
+      {loading && (
+        <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Curating the spectrum...</p>
+        </div>
+      )}
+
+      {!loading && hasMore && (
+        <div className="load-more">
+          <button className="load-more-btn" onClick={() => fetchArticles(false)}>
+            Load More Stories
+          </button>
+        </div>
+      )}
+      
+      {!loading && !hasMore && articles.length > 0 && (
+         <p className="end-message">You're all caught up!</p>
+      )}
+
+       {!loading && articles.length === 0 && (
+         <div className="empty-state">
+           <p>No stories found for these filters.</p>
+           <button className="btn-secondary" onClick={() => onFilterChange({...filters, category: 'All Categories'})}>
+             Clear Filters
+           </button>
+         </div>
+      )}
+    </div>
   );
 };
 

@@ -10,9 +10,9 @@ import { useToast } from '../../context/ToastContext';
 import { useRadio } from '../../context/RadioContext';
 import useShare from '../../hooks/useShare'; 
 import useIsMobile from '../../hooks/useIsMobile'; 
-import useHaptic from '../../hooks/useHaptic'; // NEW
+import useHaptic from '../../hooks/useHaptic'; 
 import { IArticle, IFilters } from '../../types';
-import './UnifiedFeed.css'; // NEW
+import './UnifiedFeed.css'; 
 
 // Global cache for scroll position
 let feedStateCache: any = null;
@@ -44,13 +44,13 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
   const { handleShare } = useShare(); 
   const isMobile = useIsMobile(); 
-  const vibrate = useHaptic(); // NEW
+  const vibrate = useHaptic(); 
   const queryClient = useQueryClient();
   
   const [visibleArticleIndex, setVisibleArticleIndex] = useState(0);
   const virtuosoRef = useRef<VirtuosoGridHandle>(null);
   const [scrollParent, setScrollParent] = useState<HTMLElement | undefined>(undefined);
-  const [showNewPill, setShowNewPill] = useState(false); // NEW
+  const [showNewPill, setShowNewPill] = useState(false); 
 
   // --- 1. DATA FETCHING LOGIC ---
   
@@ -92,16 +92,13 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   // --- 2. LIVE UPDATES (POLLING) ---
   useEffect(() => {
-      // Only poll on "Latest" feed
       if (mode !== 'latest') return;
 
       const checkForUpdates = async () => {
           try {
-              // Fetch just 1 latest item to check timestamp
               const { data } = await api.fetchArticles({ ...filters, limit: 1, offset: 0 });
               if (data.articles && data.articles.length > 0) {
                   const latestRemote = new Date(data.articles[0].publishedAt).getTime();
-                  // Compare with currently displayed top article
                   const currentTop = latestQuery.data?.pages[0]?.articles[0];
                   
                   if (currentTop && latestRemote > new Date(currentTop.publishedAt).getTime()) {
@@ -111,7 +108,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
           } catch (e) { /* Ignore poll errors */ }
       };
 
-      const interval = setInterval(checkForUpdates, 60000); // Check every 60s
+      const interval = setInterval(checkForUpdates, 60000); 
       return () => clearInterval(interval);
   }, [mode, filters, latestQuery.data]);
 
@@ -212,7 +209,10 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       onAnalyze={onAnalyze}
       onShare={() => handleShare(article)} 
       onRead={() => {
-          if (virtuosoRef.current) feedStateCache = virtuosoRef.current.getState();
+          // FIX: Explicitly cast to 'any' to bypass TS error on getState()
+          if (virtuosoRef.current) {
+              feedStateCache = (virtuosoRef.current as any).getState();
+          }
           api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
           window.open(article.url, '_blank', 'noopener,noreferrer');
       }}
@@ -257,7 +257,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   return (
     <>
-        {/* --- NEW CONTENT PILL --- */}
         <div className={`new-content-pill ${showNewPill ? 'visible' : ''}`} onClick={handleRefresh}>
             <span>↑ New Articles Available</span>
         </div>

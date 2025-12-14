@@ -8,7 +8,7 @@ import './DashboardPages.css';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider, useToast } from './context/ToastContext';
-import { RadioProvider } from './context/RadioContext'; 
+import { RadioProvider, useRadio } from './context/RadioContext'; 
 
 import useIsMobile from './hooks/useIsMobile';
 import * as api from './services/api'; 
@@ -91,6 +91,8 @@ interface MainLayoutProps {
 function MainLayout({ profile }: MainLayoutProps) {
   const { logout } = useAuth();
   const { addToast } = useToast();
+  // --- NEW: Consume Radio Context to adjust layout ---
+  const { playerOpen, isVisible } = useRadio();
   const isMobileView = useIsMobile();
 
   const [theme, setTheme] = useState('dark');
@@ -256,7 +258,10 @@ function MainLayout({ profile }: MainLayoutProps) {
       
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
 
-      <div className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''}`}>
+      {/* --- NEW: Dynamic Class for Player Awareness --- */}
+      <div 
+        className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''} ${playerOpen && isVisible ? 'player-active' : ''}`}
+      >
         <div 
           className={`sidebar-mobile-overlay ${isSidebarOpen ? 'open' : ''}`} 
           onClick={() => setIsSidebarOpen(false)}

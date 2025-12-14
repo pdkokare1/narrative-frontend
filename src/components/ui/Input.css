@@ -1,0 +1,92 @@
+/* src/components/ui/Input.css */
+
+.ui-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.ui-input-wrapper.full-width {
+  width: 100%;
+}
+
+.ui-input-label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+  margin-left: 4px;
+}
+
+/* --- CONTAINER (The Box) --- */
+.ui-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--bg-secondary); /* Fallback */
+  background: rgba(255, 255, 255, 0.03); /* Glass Tint */
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  transition: all 0.3s ease;
+}
+
+/* Focus State: The Gold Glow */
+.ui-input-container:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 1px var(--accent-primary), 0 4px 12px rgba(212, 175, 55, 0.1);
+  background: var(--bg-elevated);
+}
+
+.ui-input-container.has-error {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 1px var(--color-error);
+}
+
+/* --- THE FIELD --- */
+.ui-input-field {
+  width: 100%;
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.ui-input-field::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* --- ICON SUPPORT --- */
+.ui-input-icon {
+  padding-left: 14px;
+  display: flex;
+  align-items: center;
+  color: var(--text-tertiary);
+}
+
+.ui-input-icon + .ui-input-field {
+  padding-left: 10px; /* Adjust padding if icon exists */
+}
+
+/* --- SPINNER --- */
+.ui-input-spinner {
+  width: 16px;
+  height: 16px;
+  margin-right: 14px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.ui-input-error-text {
+  font-size: 11px;
+  color: var(--color-error);
+  margin-left: 4px;
+}

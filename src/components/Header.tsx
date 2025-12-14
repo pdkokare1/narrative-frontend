@@ -1,7 +1,9 @@
 // src/components/Header.tsx
 import React, { useState, useEffect, useRef } from 'react'; 
 import { Link, useNavigate } from 'react-router-dom'; 
+import * as api from '../services/api';
 import './Header.css'; 
+import { IArticle } from '../types';
 
 interface HeaderProps {
   theme: string;
@@ -15,6 +17,10 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
   const [isSearchOpen, setIsSearchOpen] = useState(false); 
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Live Search State
+  const [suggestions, setSuggestions] = useState<IArticle[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   const dropdownRef = useRef<HTMLDivElement>(null); 
   const searchRef = useRef<HTMLDivElement>(null); 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -28,12 +34,12 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
-      // Close Search Bar
+      // Close Search Bar & Suggestions
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        // Only close if we aren't typing
         if (document.activeElement !== inputRef.current) {
              setIsSearchOpen(false);
         }
+        setSuggestions([]); // Clear suggestions on close
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -49,6 +55,27 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
     }
   }, [isSearchOpen]);
 
+  // --- LIVE SEARCH DEBOUNCE ---
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchQuery.trim().length >= 2) {
+        setIsSearching(true);
+        try {
+          const { data } = await api.searchArticles(searchQuery, { limit: 5 });
+          setSuggestions(data.articles || []);
+        } catch (error) {
+          console.error("Live search failed", error);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setSuggestions([]);
+      }
+    }, 300); // Wait 300ms after user stops typing
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
   const handleUsernameClick = (e: React.MouseEvent) => {
      e.stopPropagation(); 
      setIsDropdownOpen(prev => !prev); 
@@ -59,14 +86,27 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
       setIsSearchOpen(false);
+      setSuggestions([]);
       setSearchQuery(''); 
-      // Remove focus to close keyboard on mobile
       if (inputRef.current) inputRef.current.blur();
     }
   };
 
+  const handleSuggestionClick = (articleId: string) => {
+      // Go directly to article (via home feed filter or dedicated page if you had one)
+      // For now, we'll go to search page with the specific headline to find it easily
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`); 
+      setIsSearchOpen(false);
+      setSuggestions([]);
+      setSearchQuery('');
+  };
+
   const toggleSearch = () => {
       setIsSearchOpen(!isSearchOpen);
+      if (isSearchOpen) {
+          setSuggestions([]);
+          setSearchQuery('');
+      }
   };
 
   return (
@@ -104,6 +144,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {isSearching && <div className="search-spinner"></div>}
           </form>
           
           <button 
@@ -113,13 +154,11 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               {isSearchOpen ? (
-                // Close Icon (X)
                 <>
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
                 </>
               ) : (
-                // Search Icon (Glass)
                 <>
                   <circle cx="11" cy="11" r="8"></circle>
                   <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -127,6 +166,32 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, onToggleSidebar, us
               )}
             </svg>
           </button>
+
+          {/* --- Live Suggestions Dropdown --- */}
+          {suggestions.length > 0 && isSearchOpen && (
+              <div className="live-search-dropdown">
+                  <div className="live-search-label">TOP MATCHES</div>
+                  {suggestions.map(article => (
+                      <div 
+                        key={article._id} 
+                        className="live-search-item"
+                        onClick={() => handleSuggestionClick(article._id)}
+                      >
+                          <span className="live-item-icon">📄</span>
+                          <div className="live-item-text">
+                              <div className="live-item-headline">{article.headline}</div>
+                              <div className="live-item-meta">{article.source} • {new Date(article.publishedAt).toLocaleDateString()}</div>
+                          </div>
+                      </div>
+                  ))}
+                  <div 
+                    className="live-search-footer"
+                    onClick={handleSearchSubmit}
+                  >
+                      See all results for "{searchQuery}" →
+                  </div>
+              </div>
+          )}
         </div>
 
         {/* --- Desktop User Menu --- */}

@@ -23,7 +23,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import CustomTooltip from './components/ui/CustomTooltip';
 // --- NEW ---
 import BadgePopup from './components/ui/BadgePopup';
-import { IBadge } from './types'; // Ensure IBadge is imported
+import { IBadge } from './types'; 
 
 import Login from './Login';
 import CreateProfile from './CreateProfile';

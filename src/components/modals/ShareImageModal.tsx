@@ -2,7 +2,7 @@
 import React, { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import '../../App.css'; 
-import './ShareImageModal.css'; // Import new CSS
+import './ShareImageModal.css'; 
 import { IArticle } from '../../types';
 
 interface ShareImageModalProps {
@@ -21,12 +21,18 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
     setGenerating(true);
 
     try {
-      // 1. Capture the DOM element as a canvas
+      // 1. Capture the DOM element as a canvas (Scale 3 for High Res)
       const canvas = await html2canvas(cardRef.current, {
-        scale: 2, // High resolution (Retina)
-        backgroundColor: '#1E1E1E', // Force dark background
+        scale: 3, 
+        backgroundColor: '#1E1E1E', 
         useCORS: true, 
-        logging: false
+        logging: false,
+        allowTaint: true,
+        fontDefinitions: [{
+            src: "url('https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff')",
+            family: 'Inter',
+            style: 'normal'
+        }]
       });
 
       // 2. Convert to Blob

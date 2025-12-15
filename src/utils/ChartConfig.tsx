@@ -1,29 +1,38 @@
-// src/utils/ChartConfig.ts
+// src/utils/ChartConfig.tsx
 import { ChartOptions } from 'chart.js';
 
-// --- Premium Color Palettes ---
+// Helper to grab CSS variable values at runtime
+const getVar = (name: string, fallback: string) => {
+  if (typeof window !== 'undefined') {
+    const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    if (val) return val;
+  }
+  return fallback;
+};
+
+// --- Dynamic Palettes (Linked to variables.css) ---
 export const leanColors: Record<string, string> = {
-    'Left': '#CF5C5C',         // Muted Red
-    'Left-Leaning': '#E08D8D', // Soft Red
-    'Center': '#D4AF37',       // Gold (The Standard)
-    'Right-Leaning': '#8DABE0',// Soft Blue
-    'Right': '#5C8BCF',        // Muted Blue
-    'Not Applicable': '#666666'
+    'Left': getVar('--color-lean-left', '#CF5C5C'),
+    'Left-Leaning': getVar('--color-lean-left-dim', '#E08D8D'),
+    'Center': getVar('--color-lean-center', '#D4AF37'),
+    'Right-Leaning': getVar('--color-lean-right-dim', '#8DABE0'),
+    'Right': getVar('--color-lean-right', '#5C8BCF'),
+    'Not Applicable': getVar('--color-lean-neutral', '#666666')
 };
 
 export const sentimentColors: Record<string, string> = { 
-    'Positive': '#4E9F54', // Elegant Green
-    'Negative': '#CF5C5C', // Elegant Red
-    'Neutral': '#888888'   // Grey
+    'Positive': getVar('--color-sentiment-pos', '#4E9F54'),
+    'Negative': getVar('--color-sentiment-neg', '#CF5C5C'),
+    'Neutral': getVar('--color-sentiment-neu', '#888888')
 };
 
 export const qualityColors: Record<string, string> = {
-    'A+ Excellent (90-100)': '#D4AF37', // Gold
-    'A High (80-89)': '#C5A028',
-    'B Professional (70-79)': '#4E9F54', // Green
-    'C Acceptable (60-69)': '#8DABE0',   // Blue
-    'D-F Poor (0-59)': '#CF5C5C',        // Red
-    'N/A (Review/Opinion)': '#666666'
+    'A+ Excellent (90-100)': getVar('--color-grade-a', '#D4AF37'),
+    'A High (80-89)': '#C5A028', // Fallback derived
+    'B Professional (70-79)': getVar('--color-grade-b', '#4E9F54'),
+    'C Acceptable (60-69)': getVar('--color-grade-c', '#8DABE0'),
+    'D-F Poor (0-59)': getVar('--color-grade-d', '#CF5C5C'),
+    'N/A (Review/Opinion)': getVar('--color-lean-neutral', '#666666')
 };
 
 // Gold Spectrum for Charts

@@ -84,6 +84,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username }) => {
   return (
     <header className="header">
       <div className="header-left">
+        {/* HAMBURGER REMOVED */}
         <div className="logo-container">
           <Link to="/" style={{ textDecoration: 'none' }}>
             <h1 className="logo-text">The Gamut</h1>
@@ -119,7 +120,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username }) => {
           )}
         </div>
 
-        {/* Updated User Dropdown */}
+        {/* Updated User Dropdown: Includes all major links */}
         <div className="header-user-desktop" ref={dropdownRef}> 
           <div className="header-user-clickable-area" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
             <span className="header-username-desktop">{username}</span>

@@ -4,7 +4,6 @@ import './ArticleCard.css';
 import { isOpinion, getOptimizedImageUrl, generateImageSrcSet } from '../utils/helpers'; 
 import { getFallbackImage } from '../utils/constants'; 
 import SmartBriefingModal from './modals/SmartBriefingModal';
-import useIsMobile from '../hooks/useIsMobile';
 import { IArticle } from '../types';
 
 // --- UI Components ---
@@ -40,7 +39,6 @@ const ArticleCard = memo(function ArticleCard({
 }: ArticleCardProps) {
   const [showBriefing, setShowBriefing] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false); 
-  const isMobileView = useIsMobile();
 
   // 1. Calculate values safely
   const isHardNews = article?.analysisType === 'Full';
@@ -48,28 +46,22 @@ const ArticleCard = memo(function ArticleCard({
   
   // 2. Image Logic
   const fallbackImg = getFallbackImage(article?.category);
-  // Default source (fallback or optimized 600px for legacy browsers)
   const defaultSrc = getOptimizedImageUrl(article?.imageUrl, 600) || fallbackImg;
-  // SrcSet for modern responsive loading
   const srcSet = article?.imageUrl ? generateImageSrcSet(article.imageUrl) : undefined;
 
-  // 3. State for handling load errors
   const [currentSrc, setCurrentSrc] = useState(defaultSrc);
   const [currentSrcSet, setCurrentSrcSet] = useState(srcSet);
 
   useEffect(() => {
       if (!article) return;
-      
       const newDefault = getOptimizedImageUrl(article.imageUrl, 600) || getFallbackImage(article.category);
       const newSrcSet = article.imageUrl ? generateImageSrcSet(article.imageUrl) : undefined;
-      
       setCurrentSrc(newDefault);
       setCurrentSrcSet(newSrcSet);
       setImageLoaded(false); 
   }, [article?.imageUrl, article?.category]);
 
   const handleImageError = () => {
-      // If the optimized image fails, clear srcset and show local fallback
       setCurrentSrc(getFallbackImage(article?.category));
       setCurrentSrcSet(undefined);
   };
@@ -80,12 +72,12 @@ const ArticleCard = memo(function ArticleCard({
 
   return (
     <>
-      <div className={`article-card ${isPlaying ? 'now-playing' : ''}`}>
+      <article className={`article-card ${isPlaying ? 'now-playing' : ''}`}>
         
         {/* --- BADGES --- */}
         <div className="card-badges">
-          {article.suggestionType === 'Challenge' && <div className="badge challenge">Perspective</div>}
-          {isOpEd && <div className="badge opinion">Opinion</div>}
+          {article.suggestionType === 'Challenge' && <span className="badge challenge">Perspective</span>}
+          {isOpEd && <span className="badge opinion">Opinion</span>}
         </div>
         
         {/* --- IMAGE --- */}
@@ -93,12 +85,8 @@ const ArticleCard = memo(function ArticleCard({
           <img 
             src={currentSrc}
             srcSet={currentSrcSet}
-            // Logic:
-            // Mobile (<768px): 100% viewport width
-            // Tablet (<1200px): 50% viewport width (2 col grid)
-            // Desktop: 33% viewport width (3 col grid)
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            alt={article.headline} 
+            alt="" 
             onError={handleImageError} 
             onLoad={() => setImageLoaded(true)} 
             loading="lazy" 
@@ -110,15 +98,17 @@ const ArticleCard = memo(function ArticleCard({
         <div className="article-content">
           <div className="article-meta-top">
              <span className="source-name">{article.source}</span>
-             <span className="date">{new Date(article.publishedAt).toLocaleDateString()}</span>
+             <time className="date">{new Date(article.publishedAt).toLocaleDateString()}</time>
           </div>
 
-          <h3 
-            className="article-headline" 
+          {/* ACCESSIBILITY FIX: Use button for interactive headline */}
+          <button 
+            className="article-headline-btn"
             onClick={(e) => { preventBubble(e); setShowBriefing(true); }}
+            aria-label={`Read analysis for ${article.headline}`}
           >
             {article.headline}
-          </h3>
+          </button>
 
           <p className="article-summary">{article.summary}</p>
           
@@ -128,11 +118,11 @@ const ArticleCard = memo(function ArticleCard({
             {/* Stats */}
             {isHardNews && (
                 <div className="stats-row">
-                    <div className="stat-item" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
+                    <button className="stat-item-btn" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
                         <span>Bias:</span>
                         <span className="stat-val accent-text">{article.biasScore}</span>
-                    </div>
-                    <span>•</span>
+                    </button>
+                    <span className="divider">•</span>
                     <div className="stat-item">
                         <span>Lean:</span>
                         <span className={`stat-val ${article.politicalLean === 'Center' ? 'accent-text' : ''}`}>{article.politicalLean}</span>
@@ -148,6 +138,7 @@ const ArticleCard = memo(function ArticleCard({
                         isActive={isPlaying}
                         onClick={(e) => { preventBubble(e); (isPlaying && onStop ? onStop() : onPlay?.()); }}
                         title={isPlaying ? "Stop" : "Listen"}
+                        aria-label={isPlaying ? "Stop audio" : "Listen to article"}
                     >
                         {isPlaying ? <PauseIcon /> : <PlayIcon />}
                     </Button>
@@ -157,6 +148,7 @@ const ArticleCard = memo(function ArticleCard({
                         isActive={isSaved}
                         onClick={(e) => { preventBubble(e); onToggleSave(article); }}
                         title={isSaved ? "Remove" : "Save"}
+                        aria-label={isSaved ? "Remove from saved" : "Save article"}
                     >
                         <BookmarkIcon filled={isSaved} />
                     </Button>
@@ -165,6 +157,7 @@ const ArticleCard = memo(function ArticleCard({
                         variant="icon" 
                         onClick={(e) => { preventBubble(e); onShare(article); }}
                         title="Share"
+                        aria-label="Share article"
                     >
                         <ShareIcon />
                     </Button>
@@ -174,6 +167,7 @@ const ArticleCard = memo(function ArticleCard({
                             variant="icon" 
                             onClick={(e) => { preventBubble(e); onCompare(article); }}
                             title="Compare Coverage"
+                            aria-label="Compare coverage"
                         >
                             <CompareIcon />
                         </Button>
@@ -189,7 +183,7 @@ const ArticleCard = memo(function ArticleCard({
             </div>
           </div>
         </div>
-      </div>
+      </article>
 
       {showBriefing && (
         <SmartBriefingModal 

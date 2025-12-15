@@ -63,14 +63,13 @@ a:hover {
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
-  padding-top: 48px; /* Matches Desktop Header Height */
+  padding-top: 48px; 
   min-height: 100vh;
   transition: all 0.3s ease-in-out;
 }
 
 .content {
   flex: 1;
-  /* Top padding removed to allow sticky headers to touch top */
   padding: 0 20px 20px 20px; 
   transition: all 0.3s ease-in-out;
   min-width: 0;
@@ -86,6 +85,30 @@ a:hover {
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+
+/* --- SWIPE ANIMATIONS (New) --- */
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.feed-anim-wrapper {
+  width: 100%;
+  /* Ensure it fills height if needed, though UnifiedFeed handles scroll */
+}
+
+.feed-anim-wrapper.enter-right {
+  animation: slideInRight 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.feed-anim-wrapper.enter-left {
+  animation: slideInLeft 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 .skeleton-pulse {

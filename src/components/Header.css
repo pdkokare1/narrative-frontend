@@ -6,7 +6,7 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 65px; /* Slightly taller for elegance */
+  height: 56px; /* Tighter height (was 65px) */
   
   /* Glassmorphism */
   background: var(--bg-glass); 
@@ -17,7 +17,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 25px;
+  padding: 0 20px; /* Reduced side padding */
   z-index: 1000;
   transition: all 0.3s ease;
 }
@@ -43,7 +43,7 @@
 
 .logo-text {
   font-family: var(--font-heading); /* Playfair Display */
-  font-size: 24px;
+  font-size: 22px; /* Slightly smaller for tighter feel */
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
@@ -52,7 +52,7 @@
 }
 
 /* ==================== BUTTONS ==================== */
-.hamburger-btn, .search-toggle-btn, .radio-header-btn {
+.hamburger-btn, .search-toggle-btn {
   background: none;
   border: none;
   color: var(--text-secondary);
@@ -65,28 +65,60 @@
   transition: all 0.2s ease;
 }
 
-.hamburger-btn:hover, .search-toggle-btn:hover, .radio-header-btn:hover {
+.hamburger-btn:hover, .search-toggle-btn:hover {
   color: var(--accent-primary);
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* Radio Pulse Animation */
-.radio-header-btn.playing {
-  color: var(--accent-gold);
+/* --- RADIO BUTTON (DESKTOP) --- */
+.radio-header-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 6px 14px; /* Pill shape padding */
+  border-radius: 20px; /* Pill shape */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px; /* Space between icon and text */
+  transition: all 0.2s ease;
 }
 
+.radio-header-btn:hover {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: rgba(212, 175, 55, 0.05);
+}
+
+.radio-header-btn.playing {
+  color: var(--accent-gold);
+  border-color: var(--accent-gold);
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.radio-label-desktop {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* Radio Pulse Animation (Icon Only) */
 .radio-pulse {
   display: flex;
   align-items: flex-end;
   justify-content: center;
   gap: 2px;
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
 }
 
 .radio-pulse .bar {
   width: 2px;
-  background-color: var(--accent-gold);
+  background-color: currentColor;
   animation: equalize 1s infinite alternate;
 }
 .radio-pulse .b1 { height: 60%; animation-delay: -0.4s; }
@@ -131,7 +163,7 @@
   background: transparent;
   border: none;
   color: var(--text-primary);
-  padding: 8px 10px;
+  padding: 6px 10px;
   width: 100%;
   font-size: 13px;
   outline: none;
@@ -141,7 +173,7 @@
 /* Search Dropdown - Glass */
 .live-search-dropdown {
   position: absolute;
-  top: 130%;
+  top: 120%;
   right: 0;
   width: 320px;
   background: var(--bg-glass);
@@ -159,7 +191,7 @@
   font-size: 9px;
   color: var(--text-tertiary);
   font-weight: 700;
-  padding: 12px 15px;
+  padding: 10px 15px;
   background: rgba(0,0,0,0.2);
   letter-spacing: 1px;
 }
@@ -167,7 +199,7 @@
 .live-search-item {
   display: flex;
   align-items: flex-start;
-  padding: 12px 15px;
+  padding: 10px 15px;
   cursor: pointer;
   border-bottom: 1px solid var(--border-light);
   transition: background 0.2s;
@@ -184,23 +216,11 @@
 
 .live-item-headline {
   font-family: var(--font-heading);
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.live-search-footer {
-  padding: 12px;
-  text-align: center;
-  font-size: 11px;
-  color: var(--accent-primary);
-  font-weight: 600;
-  cursor: pointer;
-  background: rgba(0,0,0,0.2);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 /* ==================== THEME TOGGLE ==================== */
@@ -209,8 +229,8 @@
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   font-size: 14px;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -239,25 +259,9 @@
     background: transparent;
     border: 1px solid var(--border-color);
     border-radius: 20px;
-    padding: 6px 14px;
+    padding: 5px 12px;
     position: relative;
-  }
-
-  .header-dashboard-link {
-    color: var(--text-secondary);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: color 0.2s ease;
-  }
-
-  .header-dashboard-link:hover {
-    color: var(--accent-primary);
-  }
-
-  .header-user-divider {
-    color: var(--border-color);
-    margin: 0 10px;
+    cursor: pointer;
   }
 
   .header-username-desktop {
@@ -267,17 +271,56 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  
+  .header-user-dropdown {
+    position: absolute;
+    top: 120%;
+    right: 0;
+    width: 200px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    padding: 8px 0;
+    overflow: hidden;
+  }
+  
+  .header-user-dropdown ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .header-user-dropdown li a {
+    display: block;
+    padding: 10px 20px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  
+  .header-user-dropdown li a:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+  }
 }
 
 /* ==================== MOBILE RESPONSIVE ==================== */
 @media (max-width: 768px) {
   .header {
-    height: 60px;
+    height: 50px; /* Even tighter on mobile */
     padding: 0 15px;
   }
 
   .header-left { gap: 10px; }
-  .logo-text { font-size: 20px; }
+  .logo-text { font-size: 18px; }
+
+  /* HIDE RADIO ON MOBILE */
+  .radio-header-btn {
+    display: none;
+  }
 
   /* Mobile Search Expansion */
   .search-form.open {
@@ -294,6 +337,6 @@
   .live-search-dropdown {
     width: calc(100vw - 30px);
     right: -50px;
-    top: 60px;
+    top: 50px;
   }
 }

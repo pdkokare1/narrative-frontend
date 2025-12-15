@@ -9,20 +9,13 @@
 
 /* --- VARIANTS --- */
 
-/* 1. GLASS (Default Premium Look) */
+/* 1. GLASS (Default Premium Look) - STANDARDIZED */
 .card-glass {
-  background: var(--bg-card); /* Fallback */
-  /* If supported, use backdrop filter */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  background: rgba(20, 20, 20, 0.6); /* Semi-transparent for dark mode */
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
-}
-
-/* Light Mode Override for Glass */
-:global(.light-mode) .card-glass {
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
 }
 
 .card-glass:hover {

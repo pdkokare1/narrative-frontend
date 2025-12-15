@@ -1,6 +1,7 @@
 // src/index.tsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import './variables.css'; /* NEW: Import Global Variables First */
 import './index.css';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';

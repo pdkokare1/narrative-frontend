@@ -115,9 +115,9 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
             position: 'sticky', top: 0, zIndex: 900, 
             background: 'var(--bg-primary)', 
             borderBottom: '1px solid var(--border-light)',
-            marginBottom: '15px',
+            marginBottom: '5px', // Reduced from 15px
             marginTop: 0, 
-            paddingTop: '5px'
+            paddingTop: '0px' // Reduced from 5px
         }}>
             <div style={{ display: 'flex', width: '100%' }}>
                 {[
@@ -139,7 +139,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
                                 if (!isActive) changeMode(tab.id as FeedMode, clickDirection); 
                             }}
                             style={{
-                                flex: 1, textAlign: 'center', padding: '10px 0',
+                                flex: 1, textAlign: 'center', padding: '8px 0', // Reduced padding
                                 cursor: 'pointer', position: 'relative',
                                 color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
                                 fontWeight: isActive ? 700 : 500,

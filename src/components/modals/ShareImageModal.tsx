@@ -4,6 +4,7 @@ import html2canvas from 'html2canvas';
 import '../../App.css'; 
 import './ShareImageModal.css'; 
 import { IArticle } from '../../types';
+import Button from '../ui/Button';
 
 interface ShareImageModalProps {
   article: IArticle | null;
@@ -21,8 +22,6 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
     setGenerating(true);
 
     try {
-      // 1. Capture the DOM element as a canvas (Scale 3 for High Res)
-      // We use 'any' type here to allow fontDefinitions which is missing in some type definitions
       const options: any = {
         scale: 3, 
         backgroundColor: '#1E1E1E', 
@@ -38,7 +37,6 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
 
       const canvas = await html2canvas(cardRef.current, options);
 
-      // 2. Convert to Blob
       canvas.toBlob(async (blob) => {
         if (!blob) {
             setGenerating(false);
@@ -47,7 +45,6 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
         
         const file = new File([blob], 'the-gamut-share.png', { type: 'image/png' });
 
-        // A. Try Native Mobile Share
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
@@ -63,7 +60,6 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
           }
         }
 
-        // B. Fallback: Direct Download
         const link = document.createElement('a');
         link.download = `the-gamut-${article._id}.png`;
         link.href = canvas.toDataURL('image/png');
@@ -80,9 +76,9 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
   };
 
   const leanColor = (lean: string) => {
-      if (lean === 'Left') return '#dc2626';
-      if (lean === 'Right') return '#2563eb';
-      return '#B38F5F'; // Gold for Center/Default
+      if (lean === 'Left') return '#CF5C5C';
+      if (lean === 'Right') return '#5C8BCF';
+      return '#D4AF37'; // Gold
   };
 
   return (
@@ -92,21 +88,17 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
         {/* --- THE CAPTURE CARD --- */}
         <div ref={cardRef} className="share-capture-card">
             
-            {/* Header / Logo */}
             <div className="share-card-header">
                 <span className="share-logo-text">THE GAMUT</span>
                 <span className="share-sub-text">AI ANALYSIS</span>
             </div>
 
-            {/* Headline */}
-            <h2 className="share-headline">{article.headline}</h2>
+            <h2 className="share-headline" style={{ fontFamily: 'Playfair Display, serif' }}>{article.headline}</h2>
 
-            {/* Summary - Dynamic Border Color kept inline */}
             <p className="share-summary" style={{ borderLeftColor: leanColor(article.politicalLean) }}>
                 {article.summary}
             </p>
 
-            {/* Metrics Grid */}
             {article.analysisType === 'Full' && (
                 <div className="share-metrics-grid">
                     <div className="share-metric-col">
@@ -129,7 +121,6 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
                 </div>
             )}
             
-            {/* Footer */}
             <div className="share-footer">
                 Read the full spectrum at <strong>thegamut.in</strong>
             </div>
@@ -137,19 +128,21 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
 
         {/* --- CONTROLS --- */}
         <div className="share-controls">
-            <button 
+            <Button 
                 onClick={onClose}
-                className="btn-secondary btn-cancel-share"
+                variant="secondary"
+                className="btn-cancel-share"
             >
                 Cancel
-            </button>
-            <button 
+            </Button>
+            <Button 
                 onClick={handleDownload}
-                className="btn-primary btn-download-share"
-                disabled={generating}
+                variant="primary"
+                className="btn-download-share"
+                isLoading={generating}
             >
                 {generating ? 'Generating...' : 'Share / Download'}
-            </button>
+            </Button>
         </div>
 
       </div>

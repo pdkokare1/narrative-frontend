@@ -5,15 +5,16 @@ import * as api from '../services/api';
 import { useRadio } from '../context/RadioContext';
 import { useToast } from '../context/ToastContext';
 import './Header.css'; 
-import { IArticle } from '../types';
+import { IArticle, IFilters } from '../types';
 
 interface HeaderProps {
   theme: string;
   toggleTheme: () => void;
   username: string;
+  currentFilters?: IFilters; // Added
 }
 
-const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username }) => {
+const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFilters }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false); 
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,7 +75,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username }) => {
     setRadioLoading(true);
     addToast('Tuning into Gamut Radio...', 'info');
     try {
-        const { data } = await api.fetchArticles({ limit: 20, offset: 0 });
+        // USE CURRENT FILTERS HERE
+        const { data } = await api.fetchArticles({ ...currentFilters, limit: 20, offset: 0 });
         if (data.articles?.length > 0) startRadio(data.articles, 0);
         else addToast('No news available for radio.', 'error');
     } catch (err) { addToast('Could not start radio.', 'error'); } 

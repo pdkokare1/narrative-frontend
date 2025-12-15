@@ -236,18 +236,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                 <p>Curated for you based on <strong>{metaData.topCategories?.join(', ')}</strong>.</p>
              </div>
         )}
-
-        {!isPlaying && articles.length > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px', marginTop: '10px' }}>
-                <button 
-                    onClick={() => { vibrate(); startRadio(articles, visibleArticleIndex); }}
-                    className="btn-primary"
-                    style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
-                    <span>▶</span> {mode === 'latest' ? 'Start News Radio' : 'Play Daily Mix'}
-                </button>
-            </div>
-        )}
     </div>
   );
 

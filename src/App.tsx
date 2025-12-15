@@ -15,7 +15,6 @@ import * as api from './services/api';
 
 import PageLoader from './components/PageLoader';
 import Header from './components/Header';
-// REMOVED SIDEBAR IMPORT
 import NewsFeed from './components/NewsFeed'; 
 import GlobalPlayerBar from './components/GlobalPlayerBar'; 
 import BottomNav from './components/ui/BottomNav';
@@ -32,11 +31,8 @@ const SavedArticles = lazy(() => import('./SavedArticles'));
 const AccountSettings = lazy(() => import('./AccountSettings'));
 const SearchResults = lazy(() => import('./SearchResults')); 
 const EmergencyResources = lazy(() => import('./EmergencyResources'));
-
-// FIX: Point to the 'pages' directory
 const MobileProfileMenu = lazy(() => import('./pages/MobileProfileMenu')); 
 
-// Lazy load Modals to save initial bundle size
 const CompareCoverageModal = lazy(() => import('./components/modals/CompareCoverageModal'));
 const DetailedAnalysisModal = lazy(() => import('./components/modals/DetailedAnalysisModal'));
 const FilterModal = lazy(() => import('./components/modals/FilterModal'));
@@ -93,12 +89,15 @@ interface MainLayoutProps {
 }
 
 function MainLayout({ profile }: MainLayoutProps) {
-  const { addToast } = useToast();
+  const { addToast } = useAuth() as any; // Using context for toast if available or hook
+  const { addToast: triggerToast } = useToast();
   const isMobileView = useIsMobile();
 
   const [theme, setTheme] = useState('dark');
   const [fontSize, setFontSize] = useState('medium'); 
 
+  // --- LIFTED FILTER STATE ---
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState<IFilters>({
     category: 'All Categories',
     lean: 'All Leans',
@@ -206,7 +205,7 @@ function MainLayout({ profile }: MainLayoutProps) {
 
         pendingDeletesRef.current.set(articleId, timeoutId);
 
-        addToast('Article removed', 'info', {
+        triggerToast('Article removed', 'info', {
             label: 'UNDO',
             onClick: () => {
                 clearTimeout(timeoutId);
@@ -225,7 +224,7 @@ function MainLayout({ profile }: MainLayoutProps) {
 
         try {
             await api.saveArticle(articleId);
-            addToast('Article saved', 'success');
+            triggerToast('Article saved', 'success');
         } catch (error) {
             console.error('Save failed:', error);
             setSavedArticleIds(prev => {
@@ -233,10 +232,10 @@ function MainLayout({ profile }: MainLayoutProps) {
                 next.delete(articleId);
                 return next;
             });
-            addToast('Failed to save article', 'error');
+            triggerToast('Failed to save article', 'error');
         }
     }
-  }, [savedArticleIds, addToast]);
+  }, [savedArticleIds, triggerToast]);
 
   return (
     <div className="app">
@@ -244,7 +243,7 @@ function MainLayout({ profile }: MainLayoutProps) {
         theme={theme} 
         toggleTheme={toggleTheme} 
         username={profile.username} 
-        currentFilters={filters} // PASS FILTERS HERE
+        currentFilters={filters}
       />
       
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
@@ -320,9 +319,22 @@ function MainLayout({ profile }: MainLayoutProps) {
             showTooltip={showTooltip} 
           />
         )}
+
+        {/* Global Filter Modal */}
+        {showFilterModal && (
+            <FilterModal 
+                filters={filters} 
+                onFilterChange={handleFilterChange} 
+                onClose={() => setShowFilterModal(false)} 
+            />
+        )}
       </Suspense>
 
-      <BottomNav currentFilters={filters} /> {/* PASS FILTERS HERE */}
+      <BottomNav 
+        currentFilters={filters} 
+        onOpenFilters={() => setShowFilterModal(true)} // Pass handler
+      />
+      
       <GlobalPlayerBar />
     </div>
   );

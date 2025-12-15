@@ -32,10 +32,14 @@ const SavedArticles = lazy(() => import('./SavedArticles'));
 const AccountSettings = lazy(() => import('./AccountSettings'));
 const SearchResults = lazy(() => import('./SearchResults')); 
 const EmergencyResources = lazy(() => import('./EmergencyResources'));
-const MobileProfileMenu = lazy(() => import('./MobileProfileMenu')); // Ensure this exists
 
+// FIX: Point to the 'pages' directory
+const MobileProfileMenu = lazy(() => import('./pages/MobileProfileMenu')); 
+
+// Lazy load Modals to save initial bundle size
 const CompareCoverageModal = lazy(() => import('./components/modals/CompareCoverageModal'));
 const DetailedAnalysisModal = lazy(() => import('./components/modals/DetailedAnalysisModal'));
+const FilterModal = lazy(() => import('./components/modals/FilterModal'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,9 +70,13 @@ function App() {
 
 function AppRoutes() {
   const { user, profile, loading } = useAuth();
+  
   if (loading) return <PageLoader />;
   if (!user) return <Login />;
-  if (!profile) return <CreateProfile />;
+  
+  if (!profile) {
+     return <CreateProfile />;
+  }
 
   return (
     <Suspense fallback={<PageLoader />}>
@@ -102,8 +110,6 @@ function MainLayout({ profile }: MainLayoutProps) {
   
   const [compareModal, setCompareModal] = useState<{ open: boolean; clusterId: number | null; articleTitle: string; articleId: string | null }>({ open: false, clusterId: null, articleTitle: '', articleId: null });
   const [analysisModal, setAnalysisModal] = useState<{ open: boolean; article: IArticle | null }>({ open: false, article: null });
-  
-  // REMOVED SIDEBAR STATE
   
   const [savedArticleIds, setSavedArticleIds] = useState<Set<string>>(new Set(profile.savedArticles || []));
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
@@ -150,8 +156,10 @@ function MainLayout({ profile }: MainLayoutProps) {
   const showTooltip = (text: string, e: React.MouseEvent) => {
     if (!isMobileView || !text) return; 
     e.stopPropagation();
-    const x = e.clientX || (e as any).touches?.[0]?.clientX;
-    const y = e.clientY || (e as any).touches?.[0]?.clientY;
+    // @ts-ignore
+    const x = e.clientX || (e.touches && e.touches[0].clientX);
+    // @ts-ignore
+    const y = e.clientY || (e.touches && e.touches[0].clientY);
     
     if (tooltip.visible && tooltip.text === text) {
       setTooltip({ visible: false, text: '', x: 0, y: 0 });
@@ -240,9 +248,7 @@ function MainLayout({ profile }: MainLayoutProps) {
       
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
 
-      {/* Main container logic simplified: No sidebar means no conditional class */}
       <div className="main-container">
-        
         <Routes>
           <Route path="/" element={
             <NewsFeed

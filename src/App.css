@@ -1,110 +1,6 @@
 /* src/App.css */
 
-/* ==================== PREMIUM THEME VARIABLES ==================== */
-:root {
-  /* Common variables */
-  --font-heading: 'Playfair Display', serif;
-  --font-body: 'Inter', -apple-system, sans-serif;
-  --radius-sm: 4px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --transition-fast: 0.2s cubic-bezier(0.2, 0.0, 0.2, 1);
-  --transition-smooth: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-.dark-mode {
-  /* DEEP LUXURY DARK */
-  --bg-primary: #050505; /* True Obsidian */
-  --bg-secondary: #0f0f0f; /* Slightly lighter black */
-  --bg-elevated: #1a1a1a; /* Dark Charcoal */
-  
-  /* Glassmorphism Bases */
-  --bg-glass: rgba(10, 10, 10, 0.85);
-  --bg-glass-border: rgba(255, 255, 255, 0.08);
-  
-  --bg-card: #0f0f0f;
-  --bg-card-flat: #0f0f0f;
-  
-  /* Typography */
-  --text-primary: #EAEAEA;
-  --text-secondary: #999999;
-  --text-tertiary: #666666;
-  --text-muted: #444444;
-  
-  --border-color: rgba(255, 255, 255, 0.06); /* Very subtle borders */
-  --border-light: rgba(255, 255, 255, 0.03);
-  
-  /* The "Gold" Standard */
-  --accent-primary: #D4AF37; /* Metallic Gold */
-  --accent-gold: #D4AF37;
-  --accent-secondary: #AA8C2C;
-  --accent-hover: #F2D06B;
-  --accent-glow: rgba(212, 175, 55, 0.15); /* Soft gold glow */
-  
-  /* Functional Colors (Muted for elegance) */
-  --color-success: #4E9F54;
-  --color-error: #CF5C5C;
-  --color-info: #5C8BCF;
-  
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.7);
-  
-  --gradient-accent: linear-gradient(135deg, #D4AF37 0%, #AA8C2C 100%);
-  --gradient-header: linear-gradient(to bottom, rgba(5,5,5,0.95), rgba(5,5,5,0.8));
-}
-
-.light-mode {
-  /* CREAMY LUXURY LIGHT */
-  --bg-primary: #F9F8F6; /* Alabaster / Paper */
-  --bg-secondary: #FFFFFF;
-  --bg-elevated: #FFFFFF;
-  
-  /* Glassmorphism Bases */
-  --bg-glass: rgba(255, 255, 255, 0.85);
-  --bg-glass-border: rgba(0, 0, 0, 0.06);
-
-  --bg-card: #FFFFFF;
-  --bg-card-flat: #FFFFFF;
-  
-  /* Typography */
-  --text-primary: #1A1A1A; /* Soft Black */
-  --text-secondary: #5A5A5A;
-  --text-tertiary: #8C8C8C;
-  --text-muted: #C0C0C0;
-  
-  --border-color: rgba(0, 0, 0, 0.06);
-  --border-light: rgba(0, 0, 0, 0.03);
-  
-  /* Bronze/Copper for Light Mode */
-  --accent-primary: #9C7C50; /* Antique Bronze */
-  --accent-gold: #9C7C50;
-  --accent-secondary: #7A5F3A;
-  --accent-hover: #B89668;
-  --accent-glow: rgba(156, 124, 80, 0.1);
-  
-  --color-success: #387C3D;
-  --color-error: #B53B3B;
-  --color-info: #3B6BB5;
-
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.03);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.08);
-  
-  --gradient-accent: linear-gradient(135deg, #9C7C50 0%, #7A5F3A 100%);
-  --gradient-header: linear-gradient(to bottom, rgba(249, 248, 246, 0.95), rgba(249, 248, 246, 0.8));
-}
-
-/* ==================== ACCESSIBILITY: DYNAMIC FONT SIZES ==================== */
-body.font-large .article-headline { font-size: 19px !important; line-height: 1.4; }
-body.font-large .article-summary { font-size: 14px !important; }
-body.font-large .article-content p { font-size: 15px !important; }
-
-body.font-xl .article-headline { font-size: 22px !important; line-height: 1.4; }
-body.font-xl .article-summary { font-size: 16px !important; line-height: 1.6; }
-body.font-xl .article-content p { font-size: 17px !important; }
-
-/* ==================== GLOBAL STYLES ==================== */
+/* ==================== GLOBAL RESET & BASE ==================== */
 * {
   margin: 0;
   padding: 0;
@@ -115,7 +11,7 @@ body.font-xl .article-content p { font-size: 17px !important; }
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: var(--font-body); /* Inter */
+  font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.6;
   transition: background 0.4s ease, color 0.4s ease;
@@ -124,10 +20,22 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* --- NEW: LUXURY NOISE TEXTURE --- */
+/* Adds a subtle grain to the background for a premium paper/film feel */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03; /* Very subtle */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
 /* Headings use the Serif font for Opulence */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  letter-spacing: -0.02em; /* Tighter tracking for elegance */
+  letter-spacing: -0.02em; 
   font-weight: 600;
 }
 
@@ -151,64 +59,23 @@ a:hover {
   font-weight: 600;
 }
 
-/* ==================== GLOBAL BUTTONS (MINIMALIST) ==================== */
-/* Primary: Gold Outline or Subtle Fill */
-.btn-primary {
-  padding: 10px 18px;
-  border: 1px solid var(--accent-primary);
-  background: rgba(212, 175, 55, 0.05); /* Very subtle tint */
-  color: var(--accent-primary);
-  border-radius: var(--radius-lg);
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: none;
+/* ==================== GLOBAL LAYOUT ==================== */
+.main-container {
+  display: flex;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding-top: 56px; 
+  min-height: 100vh;
+  transition: all 0.3s ease-in-out;
 }
 
-.btn-primary:hover {
-  background: var(--accent-primary);
-  color: #000; /* Contrast text on gold */
-  transform: translateY(-1px);
-  box-shadow: 0 4px 15px var(--accent-glow);
-}
-
-/* Secondary: Ghost Button */
-.btn-secondary {
-  padding: 10px 18px;
-  background: transparent;
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-secondary:hover {
-  border-color: var(--text-primary);
-  color: var(--text-primary);
-  background: var(--bg-elevated);
-}
-
-.btn-full-width { width: 100%; }
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  filter: grayscale(1);
+.content {
+  flex: 1;
+  padding: 20px; 
+  transition: all 0.3s ease-in-out;
+  min-width: 0;
+  position: relative;
 }
 
 /* ==================== ANIMATIONS ==================== */
@@ -227,27 +94,6 @@ button:disabled {
   background-size: 200% 100%;
   animation: shimmer 2s infinite ease-in-out; 
   border-radius: var(--radius-sm); 
-}
-
-/* ==================== LAYOUT UTILS ==================== */
-.main-container {
-  display: flex;
-  max-width: 1400px; /* Tighter constraint for premium feel */
-  width: 100%;
-  margin: 0 auto;
-  /* Updated to match new Header height */
-  padding-top: 56px; 
-  min-height: 100vh;
-  transition: all 0.3s ease-in-out;
-}
-
-.content {
-  flex: 1;
-  /* Reduced padding for tighter layout */
-  padding: 20px; 
-  transition: all 0.3s ease-in-out;
-  min-width: 0;
-  position: relative;
 }
 
 /* ==================== LOADING ==================== */
@@ -270,13 +116,12 @@ button:disabled {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ==================== UI COMPONENTS ==================== */
-/* Pills */
+/* ==================== UI COMPONENTS (Common) ==================== */
 .category-pills-container {
   display: flex;
   overflow-x: auto;
   gap: 12px;
-  padding: 5px 0 15px 0; /* Add bottom padding */
+  padding: 5px 0 15px 0;
   scrollbar-width: none;
 }
 .category-pills-container::-webkit-scrollbar { display: none; }
@@ -284,7 +129,7 @@ button:disabled {
 .category-pill {
   white-space: nowrap;
   padding: 8px 16px;
-  border-radius: 30px; /* Full pill shape */
+  border-radius: var(--radius-pill);
   border: 1px solid var(--border-color);
   background: var(--bg-secondary);
   color: var(--text-secondary);
@@ -306,18 +151,16 @@ button:disabled {
   box-shadow: 0 4px 12px var(--accent-glow);
 }
 
-/* Articles Grid */
 .articles-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 30px; /* More breathing room */
+  gap: 30px;
   align-items: stretch;
 }
 
-/* Modals */
 .modal-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.85); /* Darker overlay */
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
   display: flex; align-items: center; justify-content: center;
   z-index: 2000; padding: 20px; animation: fadeIn 0.3s ease-out;
@@ -326,16 +169,13 @@ button:disabled {
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
   .main-container {
-    /* Match mobile header height */
     padding-top: 50px; 
     height: 100vh;
     overflow: hidden;
   }
   
   .content {
-    /* Reduced mobile padding */
     padding: 15px 10px; 
-    /* Calc based on 50px header */
     height: calc(100vh - 50px); 
     overflow-y: auto; 
     overflow-x: hidden;
@@ -345,15 +185,22 @@ button:disabled {
   .articles-grid { display: block; }
   
   .article-card-wrapper {
-    /* Snap Logic */
     scroll-snap-align: start; 
-    /* Calc based on 50px header */
     height: calc(100vh - 50px); 
     width: 100%;
     display: flex; 
     flex-direction: column; 
     align-items: center; 
     justify-content: center;
-    padding: 20px; /* Clean padding */
+    padding: 20px;
   }
 }
+
+/* ==================== FONT SIZE UTILS (Accessibility) ==================== */
+body.font-large .article-headline { font-size: 19px !important; line-height: 1.4; }
+body.font-large .article-summary { font-size: 14px !important; }
+body.font-large .article-content p { font-size: 15px !important; }
+
+body.font-xl .article-headline { font-size: 22px !important; line-height: 1.4; }
+body.font-xl .article-summary { font-size: 16px !important; line-height: 1.6; }
+body.font-xl .article-content p { font-size: 17px !important; }

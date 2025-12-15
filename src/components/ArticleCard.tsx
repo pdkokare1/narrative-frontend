@@ -101,22 +101,30 @@ const ArticleCard = memo(function ArticleCard({
           {/* --- FOOTER --- */}
           <div className="article-footer">
             
-            {/* Stats */}
-            {isHardNews && (
-                <div className="stats-row">
-                    <div className="stat-item" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
-                        <span>Bias:</span>
-                        <span className="stat-val accent-text">{article.biasScore}</span>
+            {/* Stats (FIXED) */}
+            <div className="stats-row">
+                {isHardNews ? (
+                    <>
+                        <div className="stat-item" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
+                            <span>Bias:</span>
+                            <span className="stat-val accent-text">{article.biasScore}</span>
+                        </div>
+                        <span>•</span>
+                        <div className="stat-item">
+                            <span>Lean:</span>
+                            <span className={`stat-val ${article.politicalLean === 'Center' ? 'accent-text' : ''}`}>{article.politicalLean}</span>
+                        </div>
+                    </>
+                ) : (
+                    // Show Sentiment for Opinions
+                    <div className="stat-item" onClick={(e) => showTooltip("Sentiment Analysis", e)}>
+                        <span>Sentiment:</span>
+                        <span className="stat-val">{article.sentiment}</span>
                     </div>
-                    <span>•</span>
-                    <div className="stat-item">
-                        <span>Lean:</span>
-                        <span className={`stat-val ${article.politicalLean === 'Center' ? 'accent-text' : ''}`}>{article.politicalLean}</span>
-                    </div>
-                </div>
-            )}
+                )}
+            </div>
 
-            {/* Action Bar using Modular Components */}
+            {/* Action Bar */}
             <div className="action-bar">
                 <div className="action-left">
                     <Button 

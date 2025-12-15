@@ -7,12 +7,12 @@
   min-width: 320px;
   max-width: 90vw;
   
-  /* Glassmorphism */
-  background: rgba(20, 20, 20, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  /* Glassmorphism - STANDARDIZED */
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   
   padding: 14px 20px;
   border-radius: 50px; /* Pill Shape */

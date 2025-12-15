@@ -89,7 +89,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     staleTime: 1000 * 60 * 10,
   });
 
-  // --- 2. LIVE UPDATES (POLLING) ---
+  // --- 2. LIVE UPDATES ---
   useEffect(() => {
       if (mode !== 'latest') return;
       const checkForUpdates = async () => {
@@ -102,7 +102,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                       setShowNewPill(true);
                   }
               }
-          } catch (e) { /* Ignore poll errors */ }
+          } catch (e) { /* Ignore */ }
       };
       const interval = setInterval(checkForUpdates, 60000); 
       return () => clearInterval(interval);
@@ -118,7 +118,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       }
   };
 
-  // --- 3. MERGE & FILTER DATA ---
+  // --- 3. MERGE DATA ---
   const activeQuery = mode === 'latest' ? latestQuery : (mode === 'foryou' ? forYouQuery : personalizedQuery);
   const { status, error } = activeQuery;
 
@@ -130,7 +130,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       // @ts-ignore
       rawList = activeQuery.data?.articles || [];
     }
-    // SAFETY CHECK: Filter out null/undefined articles
     return rawList.filter(a => !!a && !!a._id);
   }, [mode, latestQuery.data, activeQuery.data]);
 
@@ -161,6 +160,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   const FeedHeader = () => (
     <div style={{ paddingBottom: '20px' }}>
+        {/* Only show category pills on desktop or if user wants them (currently hidden on mobile header in NewsFeed logic if needed, but pills are good) */}
         {mode === 'latest' && onFilterChange && (
             <CategoryPills 
               selectedCategory={filters.category || 'All Categories'} 
@@ -203,9 +203,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   };
 
   const itemContent: GridItemContent<IArticle, unknown> = (index, article) => {
-    // DOUBLE SAFETY CHECK
     if (!article || !article._id) return null;
-
     return (
         <ArticleCard
           article={article}

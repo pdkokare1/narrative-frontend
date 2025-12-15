@@ -30,6 +30,8 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   showTooltip 
 }) => {
   const [mode, setMode] = useState<FeedMode>('latest'); 
+  const [animDirection, setAnimDirection] = useState<'enter-right' | 'enter-left'>('enter-right'); // NEW state for animation
+  
   const contentRef = useRef<HTMLDivElement>(null); 
   const isMobile = useIsMobile();
   const vibrate = useHaptic();
@@ -49,19 +51,26 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
     touchEnd.current = e.targetTouches[0].clientX;
   };
 
+  const changeMode = (newMode: FeedMode, direction: 'enter-right' | 'enter-left') => {
+      vibrate();
+      setAnimDirection(direction);
+      // Small timeout to allow state to settle if needed, but usually instant is fine
+      setMode(newMode);
+  };
+
   const onTouchEnd = () => {
     if (!touchStart.current || !touchEnd.current) return;
     const distance = touchStart.current - touchEnd.current;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    if (isLeftSwipe) { // Next
-        if (mode === 'latest') { vibrate(); setMode('foryou'); }
-        else if (mode === 'foryou') { vibrate(); setMode('personalized'); }
+    if (isLeftSwipe) { // Swiping Left -> Go NEXT (Enter from Right)
+        if (mode === 'latest') changeMode('foryou', 'enter-right');
+        else if (mode === 'foryou') changeMode('personalized', 'enter-right');
     }
-    if (isRightSwipe) { // Prev
-        if (mode === 'personalized') { vibrate(); setMode('foryou'); }
-        else if (mode === 'foryou') { vibrate(); setMode('latest'); }
+    if (isRightSwipe) { // Swiping Right -> Go PREV (Enter from Left)
+        if (mode === 'personalized') changeMode('foryou', 'enter-left');
+        else if (mode === 'foryou') changeMode('latest', 'enter-left');
     }
   };
 
@@ -100,44 +109,56 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
   // --- MOBILE COLOR BAR TOGGLE ---
   const renderMobileNav = () => {
+      // Logic removed for different colors. Now unified.
       return (
         <div style={{ 
             position: 'sticky', top: 0, zIndex: 900, 
             background: 'var(--bg-primary)', 
             borderBottom: '1px solid var(--border-light)',
             marginBottom: '15px',
-            marginTop: 0, // Removed negative margin to fit tight to header
-            paddingTop: '5px' // Slight internal padding
+            marginTop: 0, 
+            paddingTop: '5px'
         }}>
             <div style={{ display: 'flex', width: '100%' }}>
                 {[
-                    { id: 'latest', label: 'Latest', color: 'var(--accent-primary)' },
-                    { id: 'foryou', label: 'Balanced', color: '#4E9F54' },
-                    { id: 'personalized', label: 'For You', color: '#8DABE0' }
-                ].map(tab => (
-                    <div 
-                        key={tab.id}
-                        onClick={() => { vibrate(); setMode(tab.id as FeedMode); }}
-                        style={{
-                            flex: 1, textAlign: 'center', padding: '10px 0',
-                            cursor: 'pointer', position: 'relative',
-                            color: mode === tab.id ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                            fontWeight: mode === tab.id ? 700 : 500,
-                            fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px',
-                            transition: 'color 0.2s'
-                        }}
-                    >
-                        {tab.label}
-                        {/* Animated Underline */}
-                        <div style={{ 
-                            position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px',
-                            background: tab.color,
-                            opacity: mode === tab.id ? 1 : 0,
-                            transform: mode === tab.id ? 'scaleX(1)' : 'scaleX(0)',
-                            transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'
-                        }} />
-                    </div>
-                ))}
+                    { id: 'latest', label: 'Latest' },
+                    { id: 'foryou', label: 'Balanced' },
+                    { id: 'personalized', label: 'For You' }
+                ].map(tab => {
+                    const isActive = mode === tab.id;
+                    // Determine animation direction on click
+                    const clickDirection = 
+                        (mode === 'latest' && tab.id !== 'latest') ? 'enter-right' :
+                        (mode === 'personalized' && tab.id !== 'personalized') ? 'enter-left' :
+                        (mode === 'foryou' && tab.id === 'personalized') ? 'enter-right' : 'enter-left';
+
+                    return (
+                        <div 
+                            key={tab.id}
+                            onClick={() => { 
+                                if (!isActive) changeMode(tab.id as FeedMode, clickDirection); 
+                            }}
+                            style={{
+                                flex: 1, textAlign: 'center', padding: '10px 0',
+                                cursor: 'pointer', position: 'relative',
+                                color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                                fontWeight: isActive ? 700 : 500,
+                                fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px',
+                                transition: 'color 0.2s'
+                            }}
+                        >
+                            {tab.label}
+                            {/* Animated Underline - ALWAYS PRIMARY ACCENT COLOR */}
+                            <div style={{ 
+                                position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px',
+                                background: 'var(--accent-primary)', // Changed to fixed variable
+                                opacity: isActive ? 1 : 0,
+                                transform: isActive ? 'scaleX(1)' : 'scaleX(0)',
+                                transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'
+                            }} />
+                        </div>
+                    );
+                })}
             </div>
         </div>
       );
@@ -157,20 +178,27 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
       {isMobile ? renderMobileNav() : renderDesktopToggle()}
 
-      {/* In Focus Bar stays, but below the nav on mobile */}
+      {/* In Focus Bar */}
       <InFocusBar />
 
-      <UnifiedFeed 
-          mode={mode}
-          filters={filters}
-          onFilterChange={onFilterChange}
-          onAnalyze={onAnalyze}
-          onCompare={onCompare}
-          savedArticleIds={savedArticleIds}
-          onToggleSave={onToggleSave}
-          showTooltip={showTooltip}
-          scrollToTopRef={contentRef}
-      />
+      {/* ANIMATION WRAPPER: 
+          We wrap the feed in a div. 
+          The 'key={mode}' forces React to destroy and recreate this div when mode changes.
+          The 'className' determines which CSS animation plays.
+      */}
+      <div key={mode} className={`feed-anim-wrapper ${animDirection}`}>
+          <UnifiedFeed 
+              mode={mode}
+              filters={filters}
+              onFilterChange={onFilterChange}
+              onAnalyze={onAnalyze}
+              onCompare={onCompare}
+              savedArticleIds={savedArticleIds}
+              onToggleSave={onToggleSave}
+              showTooltip={showTooltip}
+              scrollToTopRef={contentRef}
+          />
+      </div>
     </main>
   );
 };

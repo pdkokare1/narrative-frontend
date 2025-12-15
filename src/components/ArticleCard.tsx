@@ -42,26 +42,33 @@ const ArticleCard = memo(function ArticleCard({
   const [imageLoaded, setImageLoaded] = useState(false); 
   const isMobileView = useIsMobile();
 
-  // SAFETY CHECK: If article is missing, render nothing
-  if (!article) return null;
-
-  const isHardNews = article.analysisType === 'Full';
+  // 1. Calculate values safely (handling potential null article)
+  // We use optional chaining (?.) so these don't crash if article is missing
+  const isHardNews = article?.analysisType === 'Full';
   const isOpEd = isOpinion(article);
-  const optimizedUrl = getOptimizedImageUrl(article.imageUrl);
+  const optimizedUrl = getOptimizedImageUrl(article?.imageUrl);
+  const fallbackImg = getFallbackImage(article?.category);
   
-  const [imgSrc, setImgSrc] = useState(optimizedUrl || getFallbackImage(article.category));
+  // 2. Initialize State (Hooks must run unconditionally)
+  const [imgSrc, setImgSrc] = useState(optimizedUrl || fallbackImg);
 
+  // 3. Effect (Hooks must run unconditionally)
   useEffect(() => {
+      if (!article) return; // Guard logic inside the effect
       const newUrl = getOptimizedImageUrl(article.imageUrl);
       setImgSrc(newUrl || getFallbackImage(article.category));
       setImageLoaded(false); 
-  }, [article.imageUrl, article.category]);
+  }, [article?.imageUrl, article?.category]);
 
   const handleImageError = () => {
-      setImgSrc(getFallbackImage(article.category));
+      setImgSrc(getFallbackImage(article?.category));
   };
 
   const preventBubble = (e: React.MouseEvent) => e.stopPropagation();
+
+  // 4. NOW it is safe to return null if article is missing
+  // This happens after all hooks have been registered
+  if (!article) return null;
 
   return (
     <>

@@ -9,7 +9,6 @@
   padding: 20px;
   position: relative;
   background-color: var(--bg-primary); 
-  /* Deep textured background or simple gradient */
   background-image: var(--gradient-header);
   overflow: hidden;
 }
@@ -22,7 +21,7 @@
   max-width: 400px; 
   display: flex;
   flex-direction: column;
-  border-radius: var(--radius-sm); /* Sharper edges */
+  border-radius: var(--radius-sm);
   overflow: hidden;
   box-shadow: var(--shadow-lg);
   background-color: var(--bg-card);
@@ -37,7 +36,7 @@
 }
 
 .login-form-panel h1 {
-  font-family: var(--font-heading); /* Playfair Display */
+  font-family: var(--font-heading);
   font-size: 32px;
   font-weight: 700;
   color: var(--text-primary);
@@ -53,7 +52,7 @@
   line-height: 1.5;
 }
 
-/* --- Inputs (Gold Focus) --- */
+/* --- Inputs --- */
 .username-input {
   width: 100%;
   height: 48px;
@@ -65,7 +64,7 @@
   border-radius: var(--radius-sm);
   margin-bottom: 20px;
   outline: none;
-  transition: all 0.3s ease;
+  transition: all var(--transition-fast);
   font-family: var(--font-body);
 }
 
@@ -90,10 +89,10 @@
 #firebaseui-auth-container .firebaseui-idp-button.firebaseui-idp-google {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 50px; /* Pill shape */
+  border-radius: var(--radius-pill);
   height: 48px;
   box-shadow: none;
-  transition: all 0.3s ease;
+  transition: all var(--transition-fast);
   width: 100%;
   max-width: 100%;
 }
@@ -114,7 +113,6 @@
 
 #firebaseui-auth-container .mdl-progress { display: none; }
 
-/* Desktop */
 @media (min-width: 769px) {
   .login-container { max-width: 420px; }
 }

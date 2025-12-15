@@ -42,6 +42,9 @@ const ArticleCard = memo(function ArticleCard({
   const [imageLoaded, setImageLoaded] = useState(false); 
   const isMobileView = useIsMobile();
 
+  // SAFETY CHECK: If article is missing, render nothing
+  if (!article) return null;
+
   const isHardNews = article.analysisType === 'Full';
   const isOpEd = isOpinion(article);
   const optimizedUrl = getOptimizedImageUrl(article.imageUrl);
@@ -101,30 +104,20 @@ const ArticleCard = memo(function ArticleCard({
           {/* --- FOOTER --- */}
           <div className="article-footer">
             
-            {/* Stats (FIXED) */}
-            <div className="stats-row">
-                {isHardNews ? (
-                    <>
-                        <div className="stat-item" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
-                            <span>Bias:</span>
-                            <span className="stat-val accent-text">{article.biasScore}</span>
-                        </div>
-                        <span>•</span>
-                        <div className="stat-item">
-                            <span>Lean:</span>
-                            <span className={`stat-val ${article.politicalLean === 'Center' ? 'accent-text' : ''}`}>{article.politicalLean}</span>
-                        </div>
-                    </>
-                ) : (
-                    // Show Sentiment for Opinions
-                    <div className="stat-item" onClick={(e) => showTooltip("Sentiment Analysis", e)}>
-                        <span>Sentiment:</span>
-                        <span className={`stat-val ${article.sentiment === 'Positive' ? 'text-green' : article.sentiment === 'Negative' ? 'text-red' : ''}`}>
-                            {article.sentiment}
-                        </span>
+            {/* Stats */}
+            {isHardNews && (
+                <div className="stats-row">
+                    <div className="stat-item" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
+                        <span>Bias:</span>
+                        <span className="stat-val accent-text">{article.biasScore}</span>
                     </div>
-                )}
-            </div>
+                    <span>•</span>
+                    <div className="stat-item">
+                        <span>Lean:</span>
+                        <span className={`stat-val ${article.politicalLean === 'Center' ? 'accent-text' : ''}`}>{article.politicalLean}</span>
+                    </div>
+                </div>
+            )}
 
             {/* Action Bar */}
             <div className="action-bar">

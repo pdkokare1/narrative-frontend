@@ -100,8 +100,9 @@ export const getOptimizedImageUrl = (originalUrl: string | undefined, width: num
     return originalUrl;
   }
 
-  // 4. Construct Fetch URL
-  return `https://res.cloudinary.com/${cloudName}/image/fetch/w_${width},f_auto,q_auto,dpr_auto/${originalUrl}`;
+  // 4. Construct Fetch URL with ENCODING to handle special chars like commas/spaces
+  const encodedUrl = encodeURIComponent(originalUrl);
+  return `https://res.cloudinary.com/${cloudName}/image/fetch/w_${width},f_auto,q_auto,dpr_auto/${encodedUrl}`;
 };
 
 /**
@@ -116,11 +117,14 @@ export const generateImageSrcSet = (originalUrl: string | undefined): string | u
   const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
   if (!cloudName) return undefined;
 
+  // Encode URL to safe string
+  const encodedUrl = encodeURIComponent(originalUrl);
+
   // Generate 3 sizes: Mobile (300w), Card/Tablet (600w), Desktop/Retina (1200w)
   const widths = [300, 600, 1200];
   
   return widths.map(w => {
-    const url = `https://res.cloudinary.com/${cloudName}/image/fetch/w_${w},f_auto,q_auto,dpr_auto/${originalUrl}`;
+    const url = `https://res.cloudinary.com/${cloudName}/image/fetch/w_${w},f_auto,q_auto,dpr_auto/${encodedUrl}`;
     return `${url} ${w}w`;
   }).join(', ');
 };

@@ -14,7 +14,8 @@ import useHaptic from '../../hooks/useHaptic';
 import { IArticle, IFilters } from '../../types';
 import './UnifiedFeed.css'; 
 
-let feedStateCache: any = null;
+// Removed problematic cache variable
+// let feedStateCache: any = null; 
 
 interface UnifiedFeedProps {
   mode: 'latest' | 'foryou' | 'personalized';
@@ -200,7 +201,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   }, [scrollToTopRef]);
 
   useEffect(() => {
-    feedStateCache = null; 
+    // feedStateCache = null; // Removed
     if (scrollToTopRef?.current) scrollToTopRef.current.scrollTop = 0;
   }, [mode, filters, scrollToTopRef]);
 
@@ -268,9 +269,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
           onAnalyze={onAnalyze}
           onShare={() => handleShare(article)} 
           onRead={() => {
-              if (virtuosoRef.current) {
-                  feedStateCache = (virtuosoRef.current as any).getState();
-              }
+              // Removed invalid getState call here to fix crash
               api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
               window.open(article.url, '_blank', 'noopener,noreferrer');
           }}
@@ -327,7 +326,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             <VirtuosoGrid
               key={`${mode}-${isMobile ? 'mobile' : 'desktop'}`}
               ref={virtuosoRef}
-              restoreStateFrom={feedStateCache} 
+              // restoreStateFrom={feedStateCache} // Removed invalid prop
               customScrollParent={scrollParent}
               data={articles}
               initialItemCount={12} 

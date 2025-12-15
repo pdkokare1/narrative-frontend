@@ -1,32 +1,31 @@
 /* src/components/ui/BottomNav.css */
 
 .bottom-nav {
-  display: none; /* Hidden on Desktop */
+  display: none; 
 }
 
-/* Mobile Styling */
 @media (max-width: 768px) {
   .bottom-nav {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end; /* Align items to bottom */
+    align-items: flex-end;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 80px; /* Taller area for floating button */
+    height: 80px; 
     
-    /* Premium Glass Effect */
-    background: var(--bg-glass);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-top: 1px solid var(--bg-glass-border);
+    /* --- USE NEW GLASS VARIABLES --- */
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-top: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
     
     z-index: 1500;
-    padding-bottom: max(10px, env(safe-area-inset-bottom)); /* Respect notch */
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
     padding-left: 20px;
     padding-right: 20px;
-    box-shadow: 0 -10px 30px rgba(0,0,0,0.1); /* Soft shadow upwards */
   }
 
   .nav-item {
@@ -76,23 +75,23 @@
   /* --- CENTER RADIO BUTTON (FLOATING GEM) --- */
   .nav-item.radio-action {
     position: relative;
-    top: -15px; /* Float above the bar */
+    top: -15px; 
     overflow: visible;
-    flex: 0 0 60px; /* Fixed width */
+    flex: 0 0 60px;
   }
 
   .radio-circle {
     width: 54px;
     height: 54px;
     border-radius: 50%;
-    /* Gradient Gold */
+    /* Gradient Gold from Variables */
     background: var(--gradient-accent);
-    box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 8px 20px var(--accent-glow);
     
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #000; /* Black icon on gold */
+    color: #000;
     margin-bottom: 4px;
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
@@ -118,7 +117,7 @@
 
   .wave-bar {
     width: 3px;
-    background-color: #000; /* Black bars on gold */
+    background-color: #000;
     border-radius: 2px;
     animation: soundWave 1s ease-in-out infinite;
   }

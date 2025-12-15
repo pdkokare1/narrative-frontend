@@ -103,3 +103,24 @@ export const getOptimizedImageUrl = (originalUrl: string | undefined, width: num
   // 4. Construct Fetch URL
   return `https://res.cloudinary.com/${cloudName}/image/fetch/w_${width},f_auto,q_auto,dpr_auto/${originalUrl}`;
 };
+
+/**
+ * Generates a srcset string for responsive images using Cloudinary fetch.
+ * Returns undefined if no URL or no Cloudinary config.
+ */
+export const generateImageSrcSet = (originalUrl: string | undefined): string | undefined => {
+  if (!originalUrl) return undefined;
+  // If it's internal (already cloudinary), we skip auto-generation for now or assume it's optimized
+  if (originalUrl.includes('cloudinary.com')) return undefined;
+
+  const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+  if (!cloudName) return undefined;
+
+  // Generate 3 sizes: Mobile (300w), Card/Tablet (600w), Desktop/Retina (1200w)
+  const widths = [300, 600, 1200];
+  
+  return widths.map(w => {
+    const url = `https://res.cloudinary.com/${cloudName}/image/fetch/w_${w},f_auto,q_auto,dpr_auto/${originalUrl}`;
+    return `${url} ${w}w`;
+  }).join(', ');
+};

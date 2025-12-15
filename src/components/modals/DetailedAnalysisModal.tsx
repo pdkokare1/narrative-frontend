@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import '../../App.css'; 
 import { getBreakdownTooltip, getSentimentClass } from '../../utils/helpers'; 
 import { IArticle } from '../../types';
+import Button from '../ui/Button';
 
 interface AnalysisModalProps {
   article: IArticle | null;
@@ -26,12 +27,12 @@ const DetailedAnalysisModal: React.FC<AnalysisModalProps> = ({ article, onClose,
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="analysis-modal" onClick={(e) => e.stopPropagation()}>
         
-        {/* Header - Editorial Style */}
+        {/* Header */}
         <div className="modal-header">
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px' }}>
             {article.headline.substring(0, 60)}{article.headline.length > 60 ? '...' : ''}
           </h2>
-          <button className="close-btn" onClick={onClose} title="Close analysis">×</button>
+          <button className="close-btn" onClick={onClose} title="Close">×</button>
         </div>
         
         {!isReview && (
@@ -53,14 +54,14 @@ const DetailedAnalysisModal: React.FC<AnalysisModalProps> = ({ article, onClose,
         </div>
         
         <div className="modal-footer">
-          <button onClick={onClose} className="btn-secondary">Close Report</button>
+          <Button variant="secondary" onClick={onClose}>Close Report</Button>
         </div>
       </div>
     </div>
   );
 };
 
-// --- Analysis Tab Components ---
+// --- Analysis Tab Components --- (Unchanged logic, just keeping structure)
 
 const ReviewOverviewTab: React.FC<{ article: IArticle; showTooltip: any }> = ({ article, showTooltip }) => {
   return ( 
@@ -121,7 +122,6 @@ const OverviewBreakdownTab: React.FC<{ article: IArticle; showTooltip: any }> = 
   const credComps = article.credibilityComponents || {};
   const relComps = article.reliabilityComponents || {};
 
-  // Simple label-to-key mapper
   const biasList = [
     { l: "Sentiment Polarity", k: "sentimentPolarity" },
     { l: "Emotional Language", k: "emotionalLanguage" },
@@ -138,7 +138,6 @@ const OverviewBreakdownTab: React.FC<{ article: IArticle; showTooltip: any }> = 
     { l: "Omission Bias", k: "omissionBias" }
   ];
 
-  // Flatten the nested objects for bias
   const flatBias = { ...biasComps.linguistic, ...biasComps.sourceSelection, ...biasComps.demographic, ...biasComps.framing };
   
   const allBias = biasList.map(item => ({ label: item.l, value: Number(flatBias[item.k]) || 0 }));
@@ -151,8 +150,6 @@ const OverviewBreakdownTab: React.FC<{ article: IArticle; showTooltip: any }> = 
   
   return ( 
     <div className="tab-content"> 
-      
-      {/* Bias Section */}
       <div className="component-section"> 
         <div className="component-section-header"> 
           <h4>Bias Details ({article.biasScore ?? 'N/A'}/100)</h4> 
@@ -168,7 +165,6 @@ const OverviewBreakdownTab: React.FC<{ article: IArticle; showTooltip: any }> = 
         </div> 
       </div> 
 
-      {/* Credibility Section */}
       <div className="component-section"> 
         <div className="component-section-header"><h4>Credibility Details ({article.credibilityScore ?? 'N/V'}/100)</h4></div> 
         <div className="divider" /> 
@@ -179,7 +175,6 @@ const OverviewBreakdownTab: React.FC<{ article: IArticle; showTooltip: any }> = 
         </div> 
       </div> 
 
-      {/* Reliability Section */}
       <div className="component-section"> 
         <div className="component-section-header"><h4>Reliability Details ({article.reliabilityScore ?? 'N/V'}/100)</h4></div> 
         <div className="divider" /> 
@@ -193,13 +188,11 @@ const OverviewBreakdownTab: React.FC<{ article: IArticle; showTooltip: any }> = 
   );
 };
 
-// --- Helpers ---
 function camelToTitle(str: string) {
   const result = str.replace(/([A-Z])/g, " $1");
   return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
-// --- Reusable UI Components ---
 const ScoreBox: React.FC<{ label: string; value: number | undefined; showTooltip: any }> = ({ label, value, showTooltip }) => { 
   let tooltip = ''; 
   switch(label) { 
@@ -219,7 +212,7 @@ const ScoreBox: React.FC<{ label: string; value: number | undefined; showTooltip
 
 const CircularProgressBar: React.FC<{ label: string; value: number; tooltip?: string; showTooltip: any }> = ({ label, value, tooltip, showTooltip }) => { 
   const numericValue = Math.max(0, Math.min(100, Number(value) || 0)); 
-  const strokeWidth = 6;  // Thinner stroke for elegance
+  const strokeWidth = 6; 
   const radius = 42; 
   const circumference = 2 * Math.PI * radius; 
   const offset = circumference - (numericValue / 100) * circumference; 

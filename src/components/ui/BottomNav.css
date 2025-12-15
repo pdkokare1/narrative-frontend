@@ -13,7 +13,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 80px; 
+    height: 60px; /* Reduced from 80px */
     
     /* --- USE NEW GLASS VARIABLES --- */
     background: var(--glass-bg);
@@ -23,7 +23,7 @@
     box-shadow: var(--glass-shadow);
     
     z-index: 1500;
-    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    padding-bottom: max(5px, env(safe-area-inset-bottom));
     padding-left: 20px;
     padding-right: 20px;
   }
@@ -36,13 +36,13 @@
     text-decoration: none;
     color: var(--text-tertiary);
     flex: 1;
-    height: 50px;
+    height: 100%;
     transition: all 0.3s ease;
-    padding-bottom: 5px;
+    padding-bottom: 2px;
   }
 
   .nav-icon {
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     transition: transform 0.3s ease, color 0.3s ease;
     display: flex;
     align-items: center;
@@ -75,24 +75,27 @@
   /* --- CENTER RADIO BUTTON (FLOATING GEM) --- */
   .nav-item.radio-action {
     position: relative;
-    top: -15px; 
+    top: -6px; /* Lowered from -15px to sit closer to the bar */
     overflow: visible;
-    flex: 0 0 60px;
+    flex: 0 0 auto;
+    width: 60px;
   }
 
   .radio-circle {
-    width: 54px;
-    height: 54px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px; /* Forces exact circular shape */
+    min-height: 44px;
     border-radius: 50%;
     /* Gradient Gold from Variables */
     background: var(--gradient-accent);
-    box-shadow: 0 8px 20px var(--accent-glow);
+    box-shadow: 0 5px 15px var(--accent-glow);
     
     display: flex;
     align-items: center;
     justify-content: center;
     color: #000;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
 
@@ -111,8 +114,8 @@
     align-items: center;
     justify-content: center;
     gap: 3px;
-    height: 16px;
-    width: 20px;
+    height: 14px;
+    width: 18px;
   }
 
   .wave-bar {

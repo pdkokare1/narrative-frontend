@@ -1,0 +1,95 @@
+/* src/components/modals/FilterModal.css */
+
+.filter-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1300;
+  display: flex;
+  align-items: flex-end; /* Bottom sheet on mobile */
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.filter-modal {
+  background: var(--bg-card);
+  width: 100%;
+  max-width: 500px;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+  animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.filter-title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.filter-reset {
+  background: none;
+  border: none;
+  color: var(--accent-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-body {
+  padding: 25px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.filter-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.filter-footer {
+  padding: 20px 25px;
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-elevated);
+  /* Safe area for mobile home bar */
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+}
+
+/* Desktop: Center Modal instead of Bottom Sheet */
+@media (min-width: 769px) {
+  .filter-modal-overlay {
+    align-items: center;
+  }
+  .filter-modal {
+    border-radius: 12px;
+    max-height: 700px;
+  }
+}

@@ -124,10 +124,9 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* Headings use the Serif font for Opulence */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  letter-spacing: -0.02em; /* Tighter tracking for elegance */
+  letter-spacing: -0.02em;
   font-weight: 600;
 }
 
@@ -151,64 +150,24 @@ a:hover {
   font-weight: 600;
 }
 
-/* ==================== GLOBAL BUTTONS (MINIMALIST) ==================== */
-/* Primary: Gold Outline or Subtle Fill */
-.btn-primary {
-  padding: 10px 18px;
-  border: 1px solid var(--accent-primary);
-  background: rgba(212, 175, 55, 0.05); /* Very subtle tint */
-  color: var(--accent-primary);
-  border-radius: var(--radius-lg);
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: none;
+/* ==================== LAYOUT UTILS ==================== */
+.main-container {
+  display: flex;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding-top: 65px; /* Match Header height */
+  min-height: 100vh;
+  transition: all 0.3s ease-in-out;
 }
 
-.btn-primary:hover {
-  background: var(--accent-primary);
-  color: #000; /* Contrast text on gold */
-  transform: translateY(-1px);
-  box-shadow: 0 4px 15px var(--accent-glow);
-}
-
-/* Secondary: Ghost Button */
-.btn-secondary {
-  padding: 10px 18px;
-  background: transparent;
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-secondary:hover {
-  border-color: var(--text-primary);
-  color: var(--text-primary);
-  background: var(--bg-elevated);
-}
-
-.btn-full-width { width: 100%; }
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  filter: grayscale(1);
+/* FIX: REDUCED PADDING */
+.content {
+  flex: 1;
+  padding: 20px; /* WAS 40px */
+  transition: all 0.3s ease-in-out;
+  min-width: 0;
+  position: relative;
 }
 
 /* ==================== ANIMATIONS ==================== */
@@ -227,25 +186,6 @@ button:disabled {
   background-size: 200% 100%;
   animation: shimmer 2s infinite ease-in-out; 
   border-radius: var(--radius-sm); 
-}
-
-/* ==================== LAYOUT UTILS ==================== */
-.main-container {
-  display: flex;
-  max-width: 1400px; /* Tighter constraint for premium feel */
-  width: 100%;
-  margin: 0 auto;
-  padding-top: 60px;
-  min-height: 100vh;
-  transition: all 0.3s ease-in-out;
-}
-
-.content {
-  flex: 1;
-  padding: 40px; /* More generous whitespace */
-  transition: all 0.3s ease-in-out;
-  min-width: 0;
-  position: relative;
 }
 
 /* ==================== LOADING ==================== */
@@ -274,15 +214,15 @@ button:disabled {
   display: flex;
   overflow-x: auto;
   gap: 12px;
-  padding: 5px 0 15px 0; /* Add bottom padding */
+  padding: 0 0 10px 0;
   scrollbar-width: none;
 }
 .category-pills-container::-webkit-scrollbar { display: none; }
 
 .category-pill {
   white-space: nowrap;
-  padding: 8px 16px;
-  border-radius: 30px; /* Full pill shape */
+  padding: 6px 14px;
+  border-radius: 30px;
   border: 1px solid var(--border-color);
   background: var(--bg-secondary);
   color: var(--text-secondary);
@@ -308,14 +248,14 @@ button:disabled {
 .articles-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 30px; /* More breathing room */
+  gap: 20px;
   align-items: stretch;
 }
 
 /* Modals */
 .modal-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.85); /* Darker overlay */
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
   display: flex; align-items: center; justify-content: center;
   z-index: 2000; padding: 20px; animation: fadeIn 0.3s ease-out;
@@ -330,7 +270,8 @@ button:disabled {
   }
   
   .content {
-    padding: 0; 
+    /* FIX: EVEN LESS PADDING ON MOBILE */
+    padding: 15px 10px; /* WAS 0 or 20px */
     height: calc(100vh - 60px); 
     overflow-y: auto; 
     overflow-x: hidden;
@@ -348,6 +289,6 @@ button:disabled {
     flex-direction: column; 
     align-items: center; 
     justify-content: center;
-    padding: 20px; /* Clean padding */
+    padding: 20px; 
   }
 }

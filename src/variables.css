@@ -23,7 +23,9 @@ body.dark-mode {
   --bg-primary: #050505;   /* Deep Obsidian */
   --bg-secondary: #0a0a0a; /* Slightly lighter */
   --bg-elevated: #141414;  /* Card surface */
-  
+  --bg-card: #141414;      /* Card Standard */
+  --bg-card-flat: #0a0a0a; /* Flat internal cards */
+
   /* Glassmorphism Tokens */
   --glass-bg: rgba(15, 15, 15, 0.75);
   --glass-border: rgba(255, 255, 255, 0.08);
@@ -35,6 +37,7 @@ body.dark-mode {
   --text-secondary: #A1A1A1;
   --text-tertiary: #666666;
   --text-muted: #444444;
+  --text-inverse: #000000;
 
   /* Borders */
   --border-color: rgba(255, 255, 255, 0.08);
@@ -45,15 +48,20 @@ body.dark-mode {
   --accent-secondary: #AA8C2C;
   --accent-hover: #F2D06B;
   --accent-glow: rgba(212, 175, 55, 0.15);
+  --accent-dim: rgba(212, 175, 55, 0.05);
   
   /* Status Colors (Muted for elegance) */
   --color-success: #4E9F54;
+  --color-success-dim: rgba(78, 159, 84, 0.1);
   --color-error: #CF5C5C;
+  --color-error-dim: rgba(207, 92, 92, 0.1);
   --color-info: #5C8BCF;
+  --color-info-dim: rgba(92, 139, 207, 0.1);
 
   /* Gradients */
   --gradient-accent: linear-gradient(135deg, #D4AF37 0%, #AA8C2C 100%);
   --gradient-header: linear-gradient(to bottom, rgba(5,5,5,0.95), rgba(5,5,5,0.8));
+  --gradient-skeleton: linear-gradient(90deg, #141414 25%, #0a0a0a 50%, #141414 75%);
   
   /* Shadows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -67,6 +75,8 @@ body.light-mode {
   --bg-primary: #F4F2EE;   /* Warm Alabaster */
   --bg-secondary: #FFFFFF;
   --bg-elevated: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-card-flat: #F9F9F9;
 
   /* Glassmorphism Tokens */
   --glass-bg: rgba(255, 255, 255, 0.85);
@@ -79,6 +89,7 @@ body.light-mode {
   --text-secondary: #5A5A5A;
   --text-tertiary: #8C8C8C;
   --text-muted: #D1D1D1;
+  --text-inverse: #FFFFFF;
 
   /* Borders */
   --border-color: rgba(0, 0, 0, 0.08);
@@ -89,15 +100,20 @@ body.light-mode {
   --accent-secondary: #7A5F3A;
   --accent-hover: #B89668;
   --accent-glow: rgba(156, 124, 80, 0.1);
+  --accent-dim: rgba(156, 124, 80, 0.05);
 
   /* Status Colors */
   --color-success: #387C3D;
+  --color-success-dim: rgba(56, 124, 61, 0.1);
   --color-error: #B53B3B;
+  --color-error-dim: rgba(181, 59, 59, 0.1);
   --color-info: #3B6BB5;
+  --color-info-dim: rgba(59, 107, 181, 0.1);
 
   /* Gradients */
   --gradient-accent: linear-gradient(135deg, #9C7C50 0%, #7A5F3A 100%);
   --gradient-header: linear-gradient(to bottom, rgba(244, 242, 238, 0.95), rgba(244, 242, 238, 0.8));
+  --gradient-skeleton: linear-gradient(90deg, #FFFFFF 25%, #F4F4F4 50%, #FFFFFF 75%);
 
   /* Shadows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);

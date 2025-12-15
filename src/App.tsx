@@ -15,7 +15,7 @@ import * as api from './services/api';
 
 import PageLoader from './components/PageLoader';
 import Header from './components/Header';
-import Sidebar from './components/Sidebar';
+// REMOVED SIDEBAR IMPORT
 import NewsFeed from './components/NewsFeed'; 
 import GlobalPlayerBar from './components/GlobalPlayerBar'; 
 import BottomNav from './components/ui/BottomNav';
@@ -32,8 +32,8 @@ const SavedArticles = lazy(() => import('./SavedArticles'));
 const AccountSettings = lazy(() => import('./AccountSettings'));
 const SearchResults = lazy(() => import('./SearchResults')); 
 const EmergencyResources = lazy(() => import('./EmergencyResources'));
+const MobileProfileMenu = lazy(() => import('./MobileProfileMenu')); // Ensure this exists
 
-// Lazy load Modals to save initial bundle size
 const CompareCoverageModal = lazy(() => import('./components/modals/CompareCoverageModal'));
 const DetailedAnalysisModal = lazy(() => import('./components/modals/DetailedAnalysisModal'));
 
@@ -66,13 +66,9 @@ function App() {
 
 function AppRoutes() {
   const { user, profile, loading } = useAuth();
-  
   if (loading) return <PageLoader />;
   if (!user) return <Login />;
-  
-  if (!profile) {
-     return <CreateProfile />;
-  }
+  if (!profile) return <CreateProfile />;
 
   return (
     <Suspense fallback={<PageLoader />}>
@@ -89,7 +85,6 @@ interface MainLayoutProps {
 }
 
 function MainLayout({ profile }: MainLayoutProps) {
-  const { logout } = useAuth();
   const { addToast } = useToast();
   const isMobileView = useIsMobile();
 
@@ -107,8 +102,8 @@ function MainLayout({ profile }: MainLayoutProps) {
   
   const [compareModal, setCompareModal] = useState<{ open: boolean; clusterId: number | null; articleTitle: string; articleId: string | null }>({ open: false, clusterId: null, articleTitle: '', articleId: null });
   const [analysisModal, setAnalysisModal] = useState<{ open: boolean; article: IArticle | null }>({ open: false, article: null });
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
+  
+  // REMOVED SIDEBAR STATE
   
   const [savedArticleIds, setSavedArticleIds] = useState<Set<string>>(new Set(profile.savedArticles || []));
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
@@ -148,25 +143,15 @@ function MainLayout({ profile }: MainLayoutProps) {
     localStorage.setItem('theme', newTheme);
   };
 
-  const handleLogout = useCallback(() => { logout(); }, [logout]);
-
-  const toggleSidebar = (e: React.MouseEvent) => {
-    if (e) e.stopPropagation(); 
-    isMobileView ? setIsSidebarOpen(!isSidebarOpen) : setIsDesktopSidebarVisible(!isDesktopSidebarVisible);
-  };
-
   const handleFilterChange = (newFilters: IFilters) => {
       setFilters(newFilters);
-      if (isSidebarOpen) setIsSidebarOpen(false);
   };
 
   const showTooltip = (text: string, e: React.MouseEvent) => {
     if (!isMobileView || !text) return; 
     e.stopPropagation();
-    // @ts-ignore - Touch event compatibility
-    const x = e.clientX || (e.touches && e.touches[0].clientX);
-    // @ts-ignore
-    const y = e.clientY || (e.touches && e.touches[0].clientY);
+    const x = e.clientX || (e as any).touches?.[0]?.clientX;
+    const y = e.clientY || (e as any).touches?.[0]?.clientY;
     
     if (tooltip.visible && tooltip.text === text) {
       setTooltip({ visible: false, text: '', x: 0, y: 0 });
@@ -250,26 +235,14 @@ function MainLayout({ profile }: MainLayoutProps) {
       <Header 
         theme={theme} 
         toggleTheme={toggleTheme} 
-        onToggleSidebar={toggleSidebar} 
         username={profile.username} 
       />
       
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
 
-      <div className={`main-container ${!isDesktopSidebarVisible ? 'desktop-sidebar-hidden' : ''}`}>
-        <div 
-          className={`sidebar-mobile-overlay ${isSidebarOpen ? 'open' : ''}`} 
-          onClick={() => setIsSidebarOpen(false)}
-        ></div>
-
-        <Sidebar 
-          filters={filters} 
-          onFilterChange={handleFilterChange} 
-          isOpen={isSidebarOpen} 
-          onClose={() => setIsSidebarOpen(false)} 
-          onLogout={handleLogout} 
-        />
-
+      {/* Main container logic simplified: No sidebar means no conditional class */}
+      <div className="main-container">
+        
         <Routes>
           <Route path="/" element={
             <NewsFeed
@@ -314,6 +287,8 @@ function MainLayout({ profile }: MainLayoutProps) {
                 onSetFontSize={setFontSize} 
             />
           } />
+
+          <Route path="/profile-menu" element={<MobileProfileMenu />} />
           
           <Route path="*" element={<PageNotFound />} /> 
         </Routes>

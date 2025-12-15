@@ -34,7 +34,6 @@ const InFocusBar: React.FC = () => {
     navigate(`/search?q=${encodeURIComponent(topic)}`);
   };
 
-  // Enable mouse wheel scrolling for desktop
   const handleWheel = (e: React.WheelEvent) => {
     if (scrollRef.current) {
       scrollRef.current.scrollLeft += e.deltaY;
@@ -52,8 +51,10 @@ const InFocusBar: React.FC = () => {
       
       <div className="infocus-scroll-area" ref={scrollRef} onWheel={handleWheel}>
         {loading ? (
-           // Simple skeleton loader for pills
-           [...Array(4)].map((_, i) => <div key={i} className="infocus-pill skeleton"></div>)
+           // Smart Skeleton: 5 random-width pills
+           [80, 100, 70, 90, 60].map((width, i) => (
+             <div key={i} className="infocus-pill skeleton" style={{ width: `${width}px` }}></div>
+           ))
         ) : (
           topics.map((item, index) => (
             <button 

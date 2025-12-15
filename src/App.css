@@ -21,7 +21,6 @@ body {
 }
 
 /* --- NEW: LUXURY NOISE TEXTURE --- */
-/* Adds a subtle grain to the background for a premium paper/film feel */
 body::before {
   content: "";
   position: fixed;
@@ -32,7 +31,6 @@ body::before {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* Headings use the Serif font for Opulence */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   letter-spacing: -0.02em; 
@@ -65,14 +63,15 @@ a:hover {
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
-  padding-top: 56px; 
+  padding-top: 48px; /* Matches Desktop Header Height */
   min-height: 100vh;
   transition: all 0.3s ease-in-out;
 }
 
 .content {
   flex: 1;
-  padding: 20px; 
+  /* Top padding removed to allow sticky headers to touch top */
+  padding: 0 20px 20px 20px; 
   transition: all 0.3s ease-in-out;
   min-width: 0;
   position: relative;
@@ -169,24 +168,24 @@ a:hover {
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
   .main-container {
-    padding-top: 50px; 
+    padding-top: 44px; /* Matches Mobile Header Height */
     height: 100vh;
     overflow: hidden;
   }
   
   .content {
-    padding: 15px 10px; 
-    height: calc(100vh - 50px); 
+    /* FIX: Removed top padding so sticky headers touch the top */
+    padding: 0 10px 90px 10px; 
+    height: calc(100vh - 44px); 
     overflow-y: auto; 
     overflow-x: hidden;
-    padding-bottom: 90px;
   }
   
   .articles-grid { display: block; }
   
   .article-card-wrapper {
     scroll-snap-align: start; 
-    height: calc(100vh - 50px); 
+    height: calc(100vh - 44px); 
     width: 100%;
     display: flex; 
     flex-direction: column; 
@@ -196,7 +195,7 @@ a:hover {
   }
 }
 
-/* ==================== FONT SIZE UTILS (Accessibility) ==================== */
+/* ==================== FONT SIZE UTILS ==================== */
 body.font-large .article-headline { font-size: 19px !important; line-height: 1.4; }
 body.font-large .article-summary { font-size: 14px !important; }
 body.font-large .article-content p { font-size: 15px !important; }

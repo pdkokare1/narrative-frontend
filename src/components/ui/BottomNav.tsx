@@ -8,14 +8,7 @@ import useHaptic from '../../hooks/useHaptic';
 import './BottomNav.css';
 
 const BottomNav: React.FC = () => {
-  const { 
-    isPlaying, 
-    isPaused, 
-    startRadio, 
-    currentArticle, 
-    togglePlayer
-  } = useRadio();
-  
+  const { isPlaying, isPaused, startRadio, currentArticle, togglePlayer } = useRadio();
   const { addToast } = useToast();
   const vibrate = useHaptic();
   const [loading, setLoading] = useState(false);
@@ -77,7 +70,7 @@ const BottomNav: React.FC = () => {
         <span className="nav-label">Stats</span>
       </NavLink>
 
-      {/* --- CHANGED: SAVED -> PROFILE --- */}
+      {/* --- REPLACED: SAVED -> PROFILE MENU --- */}
       <NavLink to="/profile-menu" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={vibrate}>
         <div className="nav-icon"><svg {...iconProps} viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
         <span className="nav-label">Profile</span>

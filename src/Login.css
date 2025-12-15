@@ -36,7 +36,7 @@
 }
 
 .login-form-panel h1 {
-  font-family: var(--font-heading);
+  font-family: var(--font-logo); /* CHANGED: Matches brand logo */
   font-size: 32px;
   font-weight: 700;
   color: var(--text-primary);

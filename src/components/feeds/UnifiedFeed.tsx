@@ -14,7 +14,6 @@ import useHaptic from '../../hooks/useHaptic';
 import { IArticle, IFilters } from '../../types';
 import './UnifiedFeed.css'; 
 
-// Global cache for scroll position
 let feedStateCache: any = null;
 
 interface UnifiedFeedProps {
@@ -52,7 +51,13 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const [scrollParent, setScrollParent] = useState<HTMLElement | undefined>(undefined);
   const [showNewPill, setShowNewPill] = useState(false); 
 
-  // --- 1. DATA FETCHING LOGIC ---
+  // --- PULL TO REFRESH STATE ---
+  const [pullY, setPullY] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartRef = useRef(0);
+  const isDraggingRef = useRef(false);
+
+  // --- DATA FETCHING ---
   const latestQuery = useInfiniteQuery({
     queryKey: ['latestFeed', filters],
     queryFn: async ({ pageParam = 0 }) => {
@@ -71,25 +76,19 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   const forYouQuery = useQuery({
     queryKey: ['forYouFeed'],
-    queryFn: async () => {
-      const { data } = await api.fetchForYouArticles();
-      return data;
-    },
+    queryFn: async () => { const { data } = await api.fetchForYouArticles(); return data; },
     enabled: mode === 'foryou',
     staleTime: 1000 * 60 * 15,
   });
 
   const personalizedQuery = useQuery({
     queryKey: ['personalizedFeed'],
-    queryFn: async () => {
-      const { data } = await api.fetchPersonalizedArticles();
-      return data;
-    },
+    queryFn: async () => { const { data } = await api.fetchPersonalizedArticles(); return data; },
     enabled: mode === 'personalized',
     staleTime: 1000 * 60 * 10,
   });
 
-  // --- 2. LIVE UPDATES ---
+  // --- LIVE UPDATES ---
   useEffect(() => {
       if (mode !== 'latest') return;
       const checkForUpdates = async () => {
@@ -108,19 +107,80 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       return () => clearInterval(interval);
   }, [mode, filters, latestQuery.data]);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
       vibrate();
+      setIsRefreshing(true);
       setShowNewPill(false);
-      queryClient.resetQueries({ queryKey: ['latestFeed'] });
-      latestQuery.refetch();
+      
+      // Artificial delay for UX feeling
+      await new Promise(r => setTimeout(r, 800));
+
+      if (mode === 'latest') {
+          queryClient.resetQueries({ queryKey: ['latestFeed'] });
+          await latestQuery.refetch();
+      } else if (mode === 'foryou') {
+          await forYouQuery.refetch();
+      } else {
+          await personalizedQuery.refetch();
+      }
+      
+      setIsRefreshing(false);
+      setPullY(0);
       if (virtuosoRef.current) {
           virtuosoRef.current.scrollToIndex({ index: 0, align: 'start', behavior: 'smooth' });
       }
   };
 
-  // --- 3. MERGE DATA ---
+  // --- PULL GESTURE HANDLERS ---
+  useEffect(() => {
+      if (!isMobile || !scrollToTopRef?.current) return;
+      const container = scrollToTopRef.current;
+
+      const handleTouchStart = (e: TouchEvent) => {
+          if (container.scrollTop <= 0) {
+              touchStartRef.current = e.touches[0].clientY;
+              isDraggingRef.current = true;
+          }
+      };
+
+      const handleTouchMove = (e: TouchEvent) => {
+          if (!isDraggingRef.current) return;
+          const y = e.touches[0].clientY;
+          const diff = y - touchStartRef.current;
+          
+          if (diff > 0 && container.scrollTop <= 0) {
+              // Resistance effect
+              setPullY(Math.min(diff * 0.4, 120)); 
+              // Prevent native scroll if pulling down at top
+              if (diff > 10 && e.cancelable) e.preventDefault(); 
+          } else {
+              setPullY(0);
+          }
+      };
+
+      const handleTouchEnd = () => {
+          isDraggingRef.current = false;
+          if (pullY > 60) {
+              handleRefresh();
+          } else {
+              setPullY(0);
+          }
+      };
+
+      container.addEventListener('touchstart', handleTouchStart, { passive: false });
+      container.addEventListener('touchmove', handleTouchMove, { passive: false });
+      container.addEventListener('touchend', handleTouchEnd);
+
+      return () => {
+          container.removeEventListener('touchstart', handleTouchStart);
+          container.removeEventListener('touchmove', handleTouchMove);
+          container.removeEventListener('touchend', handleTouchEnd);
+      };
+  }, [isMobile, scrollToTopRef, pullY]);
+
+
   const activeQuery = mode === 'latest' ? latestQuery : (mode === 'foryou' ? forYouQuery : personalizedQuery);
-  const { status, error } = activeQuery;
+  const { status } = activeQuery;
 
   const articles = useMemo(() => {
     let rawList: IArticle[] = [];
@@ -135,7 +195,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   const metaData = mode !== 'latest' ? (activeQuery.data as any)?.meta : null;
 
-  // --- 4. SCROLL & RESTORE ---
   useEffect(() => {
     if (scrollToTopRef?.current) setScrollParent(scrollToTopRef.current);
   }, [scrollToTopRef]);
@@ -145,7 +204,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     if (scrollToTopRef?.current) scrollToTopRef.current.scrollTop = 0;
   }, [mode, filters, scrollToTopRef]);
 
-  // --- 5. RENDERERS ---
   const GridList = useMemo(() => forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ style, children, ...props }, ref) => (
     <div ref={ref} {...props} style={{ ...style }} className="articles-grid">
       {children}
@@ -160,7 +218,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   const FeedHeader = () => (
     <div style={{ paddingBottom: '20px' }}>
-        {/* Only show category pills on desktop or if user wants them (currently hidden on mobile header in NewsFeed logic if needed, but pills are good) */}
         {mode === 'latest' && onFilterChange && (
             <CategoryPills 
               selectedCategory={filters.category || 'All Categories'} 
@@ -227,56 +284,62 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     );
   };
 
-  if (status === 'pending') {
-      return (
-         <div className="articles-grid">
-           <div style={{gridColumn: '1 / -1'}}><FeedHeader /></div>
-           {[...Array(8)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) }
-         </div>
-      );
-  }
-
-  if (status === 'error') {
-      return (
-        <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
-            <p>Unable to load feed.</p>
-            <button onClick={() => window.location.reload()} className="btn-secondary" style={{ marginTop: '10px' }}>Retry</button>
-        </div>
-      );
-  }
-
-  if (articles.length === 0) {
-      return (
-        <>
-          <FeedHeader />
-          <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
-              <p>No articles found.</p>
-          </div>
-        </>
-      );
-  }
-
+  // --- RENDER ---
   return (
     <>
+        {/* PULL TO REFRESH INDICATOR */}
+        <div 
+            className="pull-refresh-indicator" 
+            style={{ 
+                height: `${pullY}px`, 
+                opacity: pullY > 0 ? 1 : 0 
+            }}
+        >
+            {isRefreshing ? (
+                <div className="spinner-small" style={{width: '20px', height: '20px'}}></div>
+            ) : (
+                <span style={{ transform: `rotate(${pullY * 2}deg)` }}>↓</span>
+            )}
+        </div>
+
         <div className={`new-content-pill ${showNewPill ? 'visible' : ''}`} onClick={handleRefresh}>
             <span>↑ New Articles Available</span>
         </div>
 
-        <VirtuosoGrid
-          key={`${mode}-${isMobile ? 'mobile' : 'desktop'}`}
-          ref={virtuosoRef}
-          restoreStateFrom={feedStateCache} 
-          customScrollParent={scrollParent}
-          data={articles}
-          initialItemCount={12} 
-          endReached={() => { 
-              if (mode === 'latest' && latestQuery.hasNextPage) latestQuery.fetchNextPage(); 
-          }}
-          overscan={800} 
-          rangeChanged={({ startIndex }) => setVisibleArticleIndex(startIndex)}
-          components={{ Header: FeedHeader, Footer: FeedFooter, List: GridList, Item: GridItem }}
-          itemContent={itemContent}
-        />
+        {status === 'pending' ? (
+             <div className="articles-grid">
+               <div style={{gridColumn: '1 / -1'}}><FeedHeader /></div>
+               {[...Array(8)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) }
+             </div>
+        ) : status === 'error' ? (
+            <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
+                <p>Unable to load feed.</p>
+                <button onClick={() => window.location.reload()} className="btn-secondary" style={{ marginTop: '10px' }}>Retry</button>
+            </div>
+        ) : articles.length === 0 ? (
+            <>
+              <FeedHeader />
+              <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
+                  <p>No articles found.</p>
+              </div>
+            </>
+        ) : (
+            <VirtuosoGrid
+              key={`${mode}-${isMobile ? 'mobile' : 'desktop'}`}
+              ref={virtuosoRef}
+              restoreStateFrom={feedStateCache} 
+              customScrollParent={scrollParent}
+              data={articles}
+              initialItemCount={12} 
+              endReached={() => { 
+                  if (mode === 'latest' && latestQuery.hasNextPage) latestQuery.fetchNextPage(); 
+              }}
+              overscan={800} 
+              rangeChanged={({ startIndex }) => setVisibleArticleIndex(startIndex)}
+              components={{ Header: FeedHeader, Footer: FeedFooter, List: GridList, Item: GridItem }}
+              itemContent={itemContent}
+            />
+        )}
     </>
   );
 };

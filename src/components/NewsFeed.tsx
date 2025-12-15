@@ -36,7 +36,8 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   };
 
   const renderToggle = () => (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+    // Reduced marginBottom from 20px to 10px
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
       <div style={{ 
         display: 'flex', background: 'var(--bg-elevated)', borderRadius: '25px', 
         padding: '4px', border: '1px solid var(--border-color)', position: 'relative' 

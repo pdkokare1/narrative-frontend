@@ -1,23 +1,22 @@
 /* src/components/Header.css */
 
-/* ==================== HEADER LAYOUT (GLASS) ==================== */
 .header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 56px; /* Tighter height (was 65px) */
+  height: 56px;
   
-  /* Glassmorphism */
-  background: var(--bg-glass); 
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--bg-glass-border);
+  /* --- USE NEW GLASS VARIABLES --- */
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid var(--glass-border);
   
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px; /* Reduced side padding */
+  padding: 0 20px;
   z-index: 1000;
   transition: all 0.3s ease;
 }
@@ -34,7 +33,6 @@
   gap: 12px;
 }
 
-/* ==================== LOGO ==================== */
 .logo-container {
   display: flex;
   flex-direction: column;
@@ -42,8 +40,8 @@
 }
 
 .logo-text {
-  font-family: var(--font-heading); /* Playfair Display */
-  font-size: 22px; /* Slightly smaller for tighter feel */
+  font-family: var(--font-heading);
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
@@ -51,7 +49,7 @@
   letter-spacing: -0.5px;
 }
 
-/* ==================== BUTTONS ==================== */
+/* Buttons */
 .hamburger-btn, .search-toggle-btn {
   background: none;
   border: none;
@@ -70,18 +68,18 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* --- RADIO BUTTON (DESKTOP) --- */
+/* Radio Button */
 .radio-header-btn {
   background: transparent;
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 6px 14px; /* Pill shape padding */
-  border-radius: 20px; /* Pill shape */
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px; /* Space between icon and text */
+  gap: 8px;
   transition: all 0.2s ease;
 }
 
@@ -92,8 +90,8 @@
 }
 
 .radio-header-btn.playing {
-  color: var(--accent-gold);
-  border-color: var(--accent-gold);
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
   background: rgba(212, 175, 55, 0.1);
 }
 
@@ -106,7 +104,7 @@
   white-space: nowrap;
 }
 
-/* Radio Pulse Animation (Icon Only) */
+/* Radio Pulse */
 .radio-pulse {
   display: flex;
   align-items: flex-end;
@@ -130,7 +128,7 @@
   100% { height: 100%; }
 }
 
-/* ==================== SEARCH BAR ==================== */
+/* Search Bar */
 .search-bar-wrapper {
   position: relative;
   display: flex;
@@ -143,7 +141,7 @@
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   background: var(--bg-elevated);
-  border-radius: 20px;
+  border-radius: var(--radius-pill);
   border: 1px solid transparent;
   width: 0;
   opacity: 0;
@@ -170,22 +168,26 @@
   font-family: var(--font-body);
 }
 
-/* Search Dropdown - Glass */
-.live-search-dropdown {
+/* Dropdowns (Using Glass Vars) */
+.live-search-dropdown, .header-user-dropdown {
   position: absolute;
   top: 120%;
   right: 0;
-  width: 320px;
-  background: var(--bg-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-lg);
+  
+  border-radius: var(--radius-md);
   overflow: hidden;
   z-index: 1200;
   animation: fadeIn 0.2s ease-out;
 }
+
+.live-search-dropdown { width: 320px; }
+.header-user-dropdown { width: 200px; padding: 8px 0; }
 
 .live-search-label {
   font-size: 9px;
@@ -205,13 +207,9 @@
   transition: background 0.2s;
 }
 
-.live-search-item:hover {
+.live-search-item:hover, .header-user-dropdown li a:hover {
   background: rgba(255,255,255,0.05);
-}
-
-.live-item-text {
-  flex: 1;
-  min-width: 0;
+  color: var(--text-primary);
 }
 
 .live-item-headline {
@@ -223,7 +221,45 @@
   text-overflow: ellipsis;
 }
 
-/* ==================== THEME TOGGLE ==================== */
+.header-user-dropdown ul { list-style: none; padding: 0; margin: 0; }
+.header-user-dropdown li a {
+  display: block;
+  padding: 10px 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+/* User Menu Desktop */
+.header-user-desktop {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .header-user-desktop {
+    display: flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-pill);
+    padding: 5px 12px;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .header-username-desktop {
+    color: var(--text-primary);
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
 .theme-toggle {
   background: transparent;
   border: 1px solid var(--border-color);
@@ -244,85 +280,16 @@
   color: var(--accent-primary);
 }
 
-/* ==================== USER MENU (DESKTOP) ==================== */
-.header-user-desktop {
-  display: none;
-}
-
-@media (min-width: 769px) {
-  .header-user-desktop {
-    display: flex;
-    align-items: center;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    background: transparent;
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    padding: 5px 12px;
-    position: relative;
-    cursor: pointer;
-  }
-
-  .header-username-desktop {
-    color: var(--text-primary);
-    max-width: 120px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .header-user-dropdown {
-    position: absolute;
-    top: 120%;
-    right: 0;
-    width: 200px;
-    background: var(--bg-glass);
-    backdrop-filter: blur(16px);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    box-shadow: var(--shadow-lg);
-    padding: 8px 0;
-    overflow: hidden;
-  }
-  
-  .header-user-dropdown ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .header-user-dropdown li a {
-    display: block;
-    padding: 10px 20px;
-    font-size: 13px;
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: all 0.2s;
-  }
-  
-  .header-user-dropdown li a:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
-  }
-}
-
-/* ==================== MOBILE RESPONSIVE ==================== */
+/* Mobile */
 @media (max-width: 768px) {
   .header {
-    height: 50px; /* Even tighter on mobile */
+    height: 50px;
     padding: 0 15px;
   }
-
   .header-left { gap: 10px; }
   .logo-text { font-size: 18px; }
+  .radio-header-btn { display: none; }
 
-  /* HIDE RADIO ON MOBILE */
-  .radio-header-btn {
-    display: none;
-  }
-
-  /* Mobile Search Expansion */
   .search-form.open {
     position: absolute;
     right: 55px;

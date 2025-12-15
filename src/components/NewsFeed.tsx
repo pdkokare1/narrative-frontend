@@ -74,7 +74,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
   // --- DESKTOP TOGGLE (Pills) ---
   const renderDesktopToggle = () => (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', marginTop: '20px' }}>
       <div style={{ 
         display: 'flex', background: 'var(--bg-elevated)', borderRadius: '25px', 
         padding: '4px', border: '1px solid var(--border-color)', position: 'relative' 
@@ -100,17 +100,14 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
   // --- MOBILE COLOR BAR TOGGLE ---
   const renderMobileNav = () => {
-      const activeColor = 
-        mode === 'latest' ? 'var(--accent-primary)' : 
-        mode === 'foryou' ? '#4E9F54' : '#8DABE0'; // Gold, Green, Blue
-
       return (
         <div style={{ 
             position: 'sticky', top: 0, zIndex: 900, 
             background: 'var(--bg-primary)', 
             borderBottom: '1px solid var(--border-light)',
             marginBottom: '15px',
-            marginTop: '-5px' // Pull it up slightly
+            marginTop: 0, // Removed negative margin to fit tight to header
+            paddingTop: '5px' // Slight internal padding
         }}>
             <div style={{ display: 'flex', width: '100%' }}>
                 {[
@@ -122,7 +119,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
                         key={tab.id}
                         onClick={() => { vibrate(); setMode(tab.id as FeedMode); }}
                         style={{
-                            flex: 1, textAlign: 'center', padding: '12px 0',
+                            flex: 1, textAlign: 'center', padding: '10px 0',
                             cursor: 'pointer', position: 'relative',
                             color: mode === tab.id ? 'var(--text-primary)' : 'var(--text-tertiary)',
                             fontWeight: mode === tab.id ? 700 : 500,

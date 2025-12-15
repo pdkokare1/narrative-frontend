@@ -1,8 +1,10 @@
 // src/components/ui/SkeletonCard.tsx
 import React, { useMemo } from 'react';
 import '../../App.css'; 
+import './SkeletonCard.css';
 
 const SkeletonCard: React.FC = () => {
+  // Randomize widths slightly to feel organic
   const lineWidths = useMemo(() => ({
     title: `${Math.floor(Math.random() * (90 - 70) + 70)}%`, 
     summary1: `${Math.floor(Math.random() * (98 - 90) + 90)}%`, 
@@ -11,42 +13,37 @@ const SkeletonCard: React.FC = () => {
   }), []);
 
   return (
-    <div className="article-card" style={{ pointerEvents: 'none', height: '100%', border: '1px solid var(--border-color)' }}>
+    <div className="skeleton-card">
       
-      {/* 1. Image Placeholder (Taller 200px) */}
-      <div className="article-image" style={{ height: '200px', position: 'relative' }}>
-        <div className="skeleton-pulse" style={{ position: 'absolute', inset: 0 }}></div>
+      {/* Image */}
+      <div className="skel-image-wrapper">
+        <div className="skeleton-pulse skel-fill"></div>
       </div>
       
-      {/* 2. Content */}
-      <div className="article-content" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className="skel-content">
         
         {/* Source & Date */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-            <div className="skeleton-pulse" style={{ height: '10px', width: '80px', borderRadius: '2px' }}></div>
-            <div className="skeleton-pulse" style={{ height: '10px', width: '60px', borderRadius: '2px' }}></div>
+        <div className="skel-meta-row">
+            <div className="skeleton-pulse skel-block" style={{ width: '80px', height: '10px' }}></div>
+            <div className="skeleton-pulse skel-block" style={{ width: '60px', height: '10px' }}></div>
         </div>
 
-        {/* Headline (Serif style - taller) */}
-        <div className="skeleton-pulse" style={{ height: '24px', width: '100%', marginBottom: '8px', borderRadius: '4px' }}></div>
-        <div className="skeleton-pulse" style={{ height: '24px', width: lineWidths.title, marginBottom: '20px', borderRadius: '4px' }}></div>
+        {/* Headline */}
+        <div className="skeleton-pulse skel-block skel-title"></div>
+        <div className="skeleton-pulse skel-block skel-title-sub" style={{ width: lineWidths.title }}></div>
         
         {/* Summary */}
-        <div className="skeleton-pulse" style={{ height: '12px', width: lineWidths.summary1, marginBottom: '8px', borderRadius: '2px' }}></div>
-        <div className="skeleton-pulse" style={{ height: '12px', width: lineWidths.summary2, marginBottom: '8px', borderRadius: '2px' }}></div>
-        <div className="skeleton-pulse" style={{ height: '12px', width: lineWidths.summary3, marginBottom: 'auto', borderRadius: '2px' }}></div>
+        <div className="skeleton-pulse skel-block skel-line" style={{ width: lineWidths.summary1 }}></div>
+        <div className="skeleton-pulse skel-block skel-line" style={{ width: lineWidths.summary2 }}></div>
+        <div className="skeleton-pulse skel-block skel-line skel-line-last" style={{ width: lineWidths.summary3 }}></div>
 
         {/* Footer Actions */}
-        <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-           
-           {/* Left Icons */}
-           <div style={{ display: 'flex', gap: '10px' }}>
-              <div className="skeleton-pulse" style={{ height: '36px', width: '36px', borderRadius: '50%' }}></div>
-              <div className="skeleton-pulse" style={{ height: '36px', width: '36px', borderRadius: '50%' }}></div>
+        <div className="skel-footer">
+           <div className="skel-actions-left">
+              <div className="skeleton-pulse skel-icon"></div>
+              <div className="skeleton-pulse skel-icon"></div>
            </div>
-
-           {/* Right Text Button */}
-           <div className="skeleton-pulse" style={{ height: '14px', width: '80px', borderRadius: '2px' }}></div>
+           <div className="skeleton-pulse skel-btn"></div>
         </div>
       </div>
     </div>

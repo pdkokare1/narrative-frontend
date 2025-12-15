@@ -119,7 +119,9 @@ const ArticleCard = memo(function ArticleCard({
                     // Show Sentiment for Opinions
                     <div className="stat-item" onClick={(e) => showTooltip("Sentiment Analysis", e)}>
                         <span>Sentiment:</span>
-                        <span className="stat-val">{article.sentiment}</span>
+                        <span className={`stat-val ${article.sentiment === 'Positive' ? 'text-green' : article.sentiment === 'Negative' ? 'text-red' : ''}`}>
+                            {article.sentiment}
+                        </span>
                     </div>
                 )}
             </div>

@@ -15,6 +15,26 @@
   --radius-md: 12px;
   --radius-lg: 24px;
   --radius-pill: 50px;
+
+  /* ================= SEMANTIC IDENTITY (Single Source of Truth) ================= */
+  /* Political Leans */
+  --color-lean-left: #CF5C5C;         /* Muted Red */
+  --color-lean-left-dim: #E08D8D;     /* Soft Red */
+  --color-lean-center: #D4AF37;       /* Gold (The Standard) */
+  --color-lean-right: #5C8BCF;        /* Muted Blue */
+  --color-lean-right-dim: #8DABE0;    /* Soft Blue */
+  --color-lean-neutral: #666666;
+
+  /* Quality Grades */
+  --color-grade-a: #D4AF37;           /* Gold */
+  --color-grade-b: #4E9F54;           /* Green */
+  --color-grade-c: #8DABE0;           /* Blue */
+  --color-grade-d: #CF5C5C;           /* Red */
+  
+  /* Sentiment */
+  --color-sentiment-pos: #4E9F54;
+  --color-sentiment-neg: #CF5C5C;
+  --color-sentiment-neu: #888888;
 }
 
 /* ================= DARK MODE (DEFAULT LUXURY) ================= */

@@ -1,0 +1,106 @@
+/* src/variables.css */
+
+:root {
+  /* ================= TYPOGRAPHY ================= */
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+
+  /* ================= ANIMATION ================= */
+  --transition-fast: 0.2s cubic-bezier(0.2, 0.0, 0.2, 1);
+  --transition-smooth: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --transition-bounce: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* ================= SHAPES ================= */
+  --radius-sm: 4px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+  --radius-pill: 50px;
+}
+
+/* ================= DARK MODE (DEFAULT LUXURY) ================= */
+body.dark-mode {
+  /* Bases */
+  --bg-primary: #050505;   /* Deep Obsidian */
+  --bg-secondary: #0a0a0a; /* Slightly lighter */
+  --bg-elevated: #141414;  /* Card surface */
+  
+  /* Glassmorphism Tokens */
+  --glass-bg: rgba(15, 15, 15, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: 20px;
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+
+  /* Text */
+  --text-primary: #EDEDED;
+  --text-secondary: #A1A1A1;
+  --text-tertiary: #666666;
+  --text-muted: #444444;
+
+  /* Borders */
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.04);
+
+  /* THE GOLD STANDARD */
+  --accent-primary: #D4AF37; /* Metallic Gold */
+  --accent-secondary: #AA8C2C;
+  --accent-hover: #F2D06B;
+  --accent-glow: rgba(212, 175, 55, 0.15);
+  
+  /* Status Colors (Muted for elegance) */
+  --color-success: #4E9F54;
+  --color-error: #CF5C5C;
+  --color-info: #5C8BCF;
+
+  /* Gradients */
+  --gradient-accent: linear-gradient(135deg, #D4AF37 0%, #AA8C2C 100%);
+  --gradient-header: linear-gradient(to bottom, rgba(5,5,5,0.95), rgba(5,5,5,0.8));
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+/* ================= LIGHT MODE (CREAMY LUXURY) ================= */
+body.light-mode {
+  /* Bases */
+  --bg-primary: #F4F2EE;   /* Warm Alabaster */
+  --bg-secondary: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+
+  /* Glassmorphism Tokens */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-blur: 16px;
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+
+  /* Text */
+  --text-primary: #1A1A1A;
+  --text-secondary: #5A5A5A;
+  --text-tertiary: #8C8C8C;
+  --text-muted: #D1D1D1;
+
+  /* Borders */
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border-light: rgba(0, 0, 0, 0.04);
+
+  /* Bronze/Copper Accent */
+  --accent-primary: #9C7C50; 
+  --accent-secondary: #7A5F3A;
+  --accent-hover: #B89668;
+  --accent-glow: rgba(156, 124, 80, 0.1);
+
+  /* Status Colors */
+  --color-success: #387C3D;
+  --color-error: #B53B3B;
+  --color-info: #3B6BB5;
+
+  /* Gradients */
+  --gradient-accent: linear-gradient(135deg, #9C7C50 0%, #7A5F3A 100%);
+  --gradient-header: linear-gradient(to bottom, rgba(244, 242, 238, 0.95), rgba(244, 242, 238, 0.8));
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.1);
+}

@@ -35,6 +35,9 @@ const FilterModal: React.FC<FilterModalProps> = ({ filters, onFilterChange, onCl
     <div className="filter-modal-overlay" onClick={onClose}>
       <div className="filter-modal" onClick={e => e.stopPropagation()}>
         
+        {/* Mobile Drag Handle Visual */}
+        <div className="filter-drag-handle" />
+
         <div className="filter-header">
           <h3 className="filter-title">Filter & Sort</h3>
           <button className="filter-reset" onClick={handleReset}>Reset</button>

@@ -5,7 +5,7 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 48px; /* Reduced from 56px */
+  height: 48px; 
   
   /* Glassmorphism */
   background: var(--glass-bg);
@@ -40,8 +40,8 @@
 }
 
 .logo-text {
-  font-family: var(--font-heading);
-  font-size: 20px; /* Slightly smaller for tighter header */
+  font-family: var(--font-logo); /* CHANGED: Keep logo beautiful */
+  font-size: 20px; 
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
@@ -74,7 +74,7 @@
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 4px 12px; /* Reduced padding */
+  padding: 4px 12px; 
   border-radius: var(--radius-pill);
   display: flex;
   align-items: center;
@@ -171,9 +171,9 @@
 /* Dropdowns */
 .live-search-dropdown, .header-user-dropdown {
   position: absolute;
-  top: 100%; /* Fix: Sticks exactly to bottom of header */
+  top: 100%; 
   right: 0;
-  margin-top: 4px; /* Slight gap */
+  margin-top: 4px; 
   
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
@@ -284,7 +284,7 @@
 /* Mobile */
 @media (max-width: 768px) {
   .header {
-    height: 44px; /* Tight Mobile Header */
+    height: 44px; 
     padding: 0 15px;
   }
   .header-left { gap: 10px; }

@@ -6,8 +6,13 @@ import * as api from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import useHaptic from '../../hooks/useHaptic'; 
 import './BottomNav.css';
+import { IFilters } from '../../types'; // ADDED
 
-const BottomNav: React.FC = () => {
+interface BottomNavProps {
+  currentFilters?: IFilters; // ADDED
+}
+
+const BottomNav: React.FC<BottomNavProps> = ({ currentFilters }) => {
   const { isPlaying, isPaused, startRadio, currentArticle, togglePlayer } = useRadio();
   const { addToast } = useToast();
   const vibrate = useHaptic();
@@ -27,7 +32,8 @@ const BottomNav: React.FC = () => {
     addToast('Tuning into Gamut Radio...', 'info');
     
     try {
-        const { data } = await api.fetchArticles({ limit: 20, offset: 0 });
+        // USE CURRENT FILTERS HERE
+        const { data } = await api.fetchArticles({ ...currentFilters, limit: 20, offset: 0 });
         if (data.articles && data.articles.length > 0) {
             startRadio(data.articles, 0);
         } else {

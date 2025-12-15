@@ -6,7 +6,6 @@ import * as api from '../../services/api';
 import ArticleCard from '../ArticleCard';
 import SkeletonCard from '../ui/SkeletonCard';
 import CategoryPills from '../ui/CategoryPills';
-import FilterModal from '../modals/FilterModal'; // NEW
 import { useToast } from '../../context/ToastContext';
 import { useRadio } from '../../context/RadioContext';
 import useShare from '../../hooks/useShare'; 
@@ -41,7 +40,8 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   showTooltip,
   scrollToTopRef 
 }) => {
-  const { playSingle, stop, currentArticle } = useRadio(); // REMOVED: startRadio
+  const { addToast } = useToast();
+  const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
   const { handleShare } = useShare(); 
   const isMobile = useIsMobile(); 
   const vibrate = useHaptic(); 
@@ -51,7 +51,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const virtuosoRef = useRef<VirtuosoGridHandle>(null);
   const [scrollParent, setScrollParent] = useState<HTMLElement | undefined>(undefined);
   const [showNewPill, setShowNewPill] = useState(false); 
-  const [showFilterModal, setShowFilterModal] = useState(false); // NEW
 
   // --- 1. DATA FETCHING LOGIC ---
   const latestQuery = useInfiniteQuery({
@@ -119,16 +118,20 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       }
   };
 
-  // --- 3. MERGE DATA ---
+  // --- 3. MERGE & FILTER DATA ---
   const activeQuery = mode === 'latest' ? latestQuery : (mode === 'foryou' ? forYouQuery : personalizedQuery);
   const { status, error } = activeQuery;
 
   const articles = useMemo(() => {
+    let rawList: IArticle[] = [];
     if (mode === 'latest') {
-      return latestQuery.data?.pages.flatMap(page => page.articles) || [];
+      rawList = latestQuery.data?.pages.flatMap(page => page.articles) || [];
+    } else {
+      // @ts-ignore
+      rawList = activeQuery.data?.articles || [];
     }
-    // @ts-ignore
-    return activeQuery.data?.articles || [];
+    // SAFETY CHECK: Filter out null/undefined articles
+    return rawList.filter(a => !!a && !!a._id);
   }, [mode, latestQuery.data, activeQuery.data]);
 
   const metaData = mode !== 'latest' ? (activeQuery.data as any)?.meta : null;
@@ -156,27 +159,13 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     </div>
   )), []);
 
-  // --- NEW: Compact Filter Header ---
   const FeedHeader = () => (
     <div style={{ paddingBottom: '20px' }}>
-        
-        {/* Filter Row */}
         {mode === 'latest' && onFilterChange && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-                <button 
-                    className="btn-secondary" 
-                    onClick={() => setShowFilterModal(true)}
-                    style={{ padding: '6px 12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}
-                >
-                    <span style={{ fontSize: '14px' }}>⚡</span> Filters
-                </button>
-                <div style={{ flex: 1, overflow: 'hidden' }}>
-                    <CategoryPills 
-                        selectedCategory={filters.category || 'All Categories'} 
-                        onSelect={(cat) => { vibrate(); onFilterChange({ ...filters, category: cat }); }} 
-                    />
-                </div>
-            </div>
+            <CategoryPills 
+              selectedCategory={filters.category || 'All Categories'} 
+              onSelect={(cat) => { vibrate(); onFilterChange({ ...filters, category: cat }); }} 
+            />
         )}
         
         {mode === 'foryou' && metaData && (
@@ -188,6 +177,18 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
              <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
                 <p>Curated for you based on <strong>{metaData.topCategories?.join(', ')}</strong>.</p>
              </div>
+        )}
+
+        {!isPlaying && articles.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px', marginTop: '10px' }}>
+                <button 
+                    onClick={() => { vibrate(); startRadio(articles, visibleArticleIndex); }}
+                    className="btn-primary"
+                    style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                    <span>▶</span> {mode === 'latest' ? 'Start News Radio' : 'Play Daily Mix'}
+                </button>
+            </div>
         )}
     </div>
   );
@@ -201,27 +202,32 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       );
   };
 
-  const itemContent: GridItemContent<IArticle, unknown> = (index, article) => (
-    <ArticleCard
-      article={article}
-      onCompare={() => onCompare(article)}
-      onAnalyze={onAnalyze}
-      onShare={() => handleShare(article)} 
-      onRead={() => {
-          if (virtuosoRef.current) {
-              feedStateCache = (virtuosoRef.current as any).getState();
-          }
-          api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
-          window.open(article.url, '_blank', 'noopener,noreferrer');
-      }}
-      showTooltip={showTooltip}
-      isSaved={savedArticleIds.has(article._id)}
-      onToggleSave={() => onToggleSave(article)}
-      isPlaying={currentArticle?._id === article._id}
-      onPlay={() => playSingle(article)}
-      onStop={stop}
-    />
-  );
+  const itemContent: GridItemContent<IArticle, unknown> = (index, article) => {
+    // DOUBLE SAFETY CHECK
+    if (!article || !article._id) return null;
+
+    return (
+        <ArticleCard
+          article={article}
+          onCompare={() => onCompare(article)}
+          onAnalyze={onAnalyze}
+          onShare={() => handleShare(article)} 
+          onRead={() => {
+              if (virtuosoRef.current) {
+                  feedStateCache = (virtuosoRef.current as any).getState();
+              }
+              api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
+              window.open(article.url, '_blank', 'noopener,noreferrer');
+          }}
+          showTooltip={showTooltip}
+          isSaved={savedArticleIds.has(article._id)}
+          onToggleSave={() => onToggleSave(article)}
+          isPlaying={currentArticle?._id === article._id}
+          onPlay={() => playSingle(article)}
+          onStop={stop}
+        />
+    );
+  };
 
   if (status === 'pending') {
       return (
@@ -273,14 +279,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
           components={{ Header: FeedHeader, Footer: FeedFooter, List: GridList, Item: GridItem }}
           itemContent={itemContent}
         />
-
-        {showFilterModal && onFilterChange && (
-            <FilterModal 
-                filters={filters} 
-                onFilterChange={onFilterChange} 
-                onClose={() => setShowFilterModal(false)} 
-            />
-        )}
     </>
   );
 };

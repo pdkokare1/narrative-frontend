@@ -1,13 +1,13 @@
 // src/components/ArticleCard.tsx
 import React, { useState, useEffect, memo } from 'react'; 
 import './ArticleCard.css'; 
-import { isOpinion, getOptimizedImageUrl } from '../utils/helpers'; 
+import { isOpinion, getOptimizedImageUrl, generateImageSrcSet } from '../utils/helpers'; 
 import { getFallbackImage } from '../utils/constants'; 
 import SmartBriefingModal from './modals/SmartBriefingModal';
 import useIsMobile from '../hooks/useIsMobile';
 import { IArticle } from '../types';
 
-// --- NEW IMPORTS ---
+// --- UI Components ---
 import Button from './ui/Button';
 import { PlayIcon, PauseIcon, BookmarkIcon, ShareIcon, CompareIcon } from './ui/Icons';
 
@@ -42,32 +42,40 @@ const ArticleCard = memo(function ArticleCard({
   const [imageLoaded, setImageLoaded] = useState(false); 
   const isMobileView = useIsMobile();
 
-  // 1. Calculate values safely (handling potential null article)
-  // We use optional chaining (?.) so these don't crash if article is missing
+  // 1. Calculate values safely
   const isHardNews = article?.analysisType === 'Full';
   const isOpEd = isOpinion(article);
-  const optimizedUrl = getOptimizedImageUrl(article?.imageUrl);
-  const fallbackImg = getFallbackImage(article?.category);
   
-  // 2. Initialize State (Hooks must run unconditionally)
-  const [imgSrc, setImgSrc] = useState(optimizedUrl || fallbackImg);
+  // 2. Image Logic
+  const fallbackImg = getFallbackImage(article?.category);
+  // Default source (fallback or optimized 600px for legacy browsers)
+  const defaultSrc = getOptimizedImageUrl(article?.imageUrl, 600) || fallbackImg;
+  // SrcSet for modern responsive loading
+  const srcSet = article?.imageUrl ? generateImageSrcSet(article.imageUrl) : undefined;
 
-  // 3. Effect (Hooks must run unconditionally)
+  // 3. State for handling load errors
+  const [currentSrc, setCurrentSrc] = useState(defaultSrc);
+  const [currentSrcSet, setCurrentSrcSet] = useState(srcSet);
+
   useEffect(() => {
-      if (!article) return; // Guard logic inside the effect
-      const newUrl = getOptimizedImageUrl(article.imageUrl);
-      setImgSrc(newUrl || getFallbackImage(article.category));
+      if (!article) return;
+      
+      const newDefault = getOptimizedImageUrl(article.imageUrl, 600) || getFallbackImage(article.category);
+      const newSrcSet = article.imageUrl ? generateImageSrcSet(article.imageUrl) : undefined;
+      
+      setCurrentSrc(newDefault);
+      setCurrentSrcSet(newSrcSet);
       setImageLoaded(false); 
   }, [article?.imageUrl, article?.category]);
 
   const handleImageError = () => {
-      setImgSrc(getFallbackImage(article?.category));
+      // If the optimized image fails, clear srcset and show local fallback
+      setCurrentSrc(getFallbackImage(article?.category));
+      setCurrentSrcSet(undefined);
   };
 
   const preventBubble = (e: React.MouseEvent) => e.stopPropagation();
 
-  // 4. NOW it is safe to return null if article is missing
-  // This happens after all hooks have been registered
   if (!article) return null;
 
   return (
@@ -83,7 +91,13 @@ const ArticleCard = memo(function ArticleCard({
         {/* --- IMAGE --- */}
         <div className="article-image">
           <img 
-            src={imgSrc} 
+            src={currentSrc}
+            srcSet={currentSrcSet}
+            // Logic:
+            // Mobile (<768px): 100% viewport width
+            // Tablet (<1200px): 50% viewport width (2 col grid)
+            // Desktop: 33% viewport width (3 col grid)
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             alt={article.headline} 
             onError={handleImageError} 
             onLoad={() => setImageLoaded(true)} 

@@ -13,7 +13,6 @@
 .settings-card {
   text-align: left;
   width: 100%;
-  /* Removed: background, border, shadow (Handled by Card component) */
 }
 
 .mt-20 { margin-top: 20px; }
@@ -81,7 +80,7 @@
 
 /* --- Danger Zone Customization --- */
 .danger-card {
-  border-color: rgba(207, 92, 92, 0.3); /* Subtle red border */
+  border-color: var(--color-error-dim); 
 }
 
 .danger-title {
@@ -102,7 +101,7 @@
 }
 
 .btn-danger-custom:hover {
-  background: rgba(207, 92, 92, 0.1) !important;
+  background: var(--color-error-dim) !important;
 }
 
 .btn-signout-custom {
@@ -111,7 +110,6 @@
   border-color: var(--text-tertiary) !important;
 }
 
-/* Mobile Adjustments */
 @media (max-width: 768px) {
   .settings-container {
     padding: 10px 0;

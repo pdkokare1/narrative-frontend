@@ -11,7 +11,7 @@ interface HeaderProps {
   theme: string;
   toggleTheme: () => void;
   username: string;
-  currentFilters?: IFilters; // Added
+  currentFilters?: IFilters;
 }
 
 const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFilters }) => {
@@ -75,7 +75,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
     setRadioLoading(true);
     addToast('Tuning into Gamut Radio...', 'info');
     try {
-        // USE CURRENT FILTERS HERE
         const { data } = await api.fetchArticles({ ...currentFilters, limit: 20, offset: 0 });
         if (data.articles?.length > 0) startRadio(data.articles, 0);
         else addToast('No news available for radio.', 'error');
@@ -86,7 +85,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   return (
     <header className="header">
       <div className="header-left">
-        {/* HAMBURGER REMOVED */}
         <div className="logo-container">
           <Link to="/" style={{ textDecoration: 'none' }}>
             <h1 className="logo-text">The Gamut</h1>
@@ -96,18 +94,24 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
 
       <div className="header-right">
         
+        {/* RADIO BUTTON (Hidden on Mobile via CSS) */}
         <button onClick={handleRadioClick} className={`radio-header-btn ${isPlaying ? 'playing' : ''}`} title="Start Radio">
-            {radioLoading ? ( <div className="spinner-small" style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'var(--accent-primary)', margin: 0 }}></div> ) 
-            : isPlaying ? ( <span className="radio-pulse"><span className="bar b1"></span><span className="bar b2"></span><span className="bar b3"></span></span> ) 
-            : ( <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg> )}
+            {radioLoading ? ( 
+                <div className="spinner-small" style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'var(--accent-primary)', margin: 0 }}></div> 
+            ) : isPlaying ? ( 
+                <span className="radio-pulse"><span className="bar b1"></span><span className="bar b2"></span><span className="bar b3"></span></span> 
+            ) : ( 
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg> 
+            )}
+            <span className="radio-label-desktop">Gamut Radio</span>
         </button>
 
         <div ref={searchRef} className="search-bar-wrapper">
           <form onSubmit={handleSearchSubmit} className={`search-form ${isSearchOpen ? 'open' : ''}`}>
-            <input ref={inputRef} type="text" className="search-input" placeholder="Search topics..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            <input ref={inputRef} type="text" className="search-input" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </form>
           <button onClick={() => setIsSearchOpen(!isSearchOpen)} className="search-toggle-btn" title="Search">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           </button>
           {suggestions.length > 0 && isSearchOpen && (
               <div className="live-search-dropdown">
@@ -122,11 +126,11 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
           )}
         </div>
 
-        {/* Updated User Dropdown: Includes all major links */}
+        {/* User Dropdown */}
         <div className="header-user-desktop" ref={dropdownRef}> 
           <div className="header-user-clickable-area" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
             <span className="header-username-desktop">{username}</span>
-            <svg className="custom-select-arrow" style={{ width: '16px', height: '16px', fill: 'var(--text-tertiary)', marginLeft: '4px' }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"></path></svg>
+            <svg className="custom-select-arrow" style={{ width: '14px', height: '14px', fill: 'var(--text-tertiary)', marginLeft: '4px' }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"></path></svg>
           </div>
           {isDropdownOpen && (
             <div className="header-user-dropdown">

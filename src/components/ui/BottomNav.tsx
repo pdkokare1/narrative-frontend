@@ -10,9 +10,10 @@ import { IFilters } from '../../types';
 
 interface BottomNavProps {
   currentFilters?: IFilters;
+  onOpenFilters?: () => void; // New Prop
 }
 
-const BottomNav: React.FC<BottomNavProps> = ({ currentFilters }) => {
+const BottomNav: React.FC<BottomNavProps> = ({ currentFilters, onOpenFilters }) => {
   const { isPlaying, isPaused, startRadio, currentArticle, togglePlayer } = useRadio();
   const { addToast } = useToast();
   const vibrate = useHaptic();
@@ -46,21 +47,12 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentFilters }) => {
     }
   };
 
-  // Common props for elegance and consistency
-  const iconProps = { 
-    width: 24, 
-    height: 24, 
-    fill: "none", 
-    stroke: "currentColor", 
-    strokeWidth: 1.5, 
-    strokeLinecap: "round" as "round", 
-    strokeLinejoin: "round" as "round" 
-  };
+  const iconProps = { width: 22, height: 22, fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as "round", strokeLinejoin: "round" as "round" };
 
   return (
     <nav className="bottom-nav">
       
-      {/* 1. FEED (Home/Layout) */}
+      {/* 1. FEED (Grid Icon) */}
       <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} end onClick={vibrate}>
         <div className="nav-icon">
           <svg {...iconProps} viewBox="0 0 24 24">
@@ -73,15 +65,16 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentFilters }) => {
         <span className="nav-label">Feed</span>
       </NavLink>
 
-      {/* 2. SEARCH (Minimal Loupe) */}
-      <NavLink to="/search" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={vibrate}>
+      {/* 2. STATS (Chart Icon) - MOVED HERE */}
+      <NavLink to="/my-dashboard" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={vibrate}>
         <div className="nav-icon">
           <svg {...iconProps} viewBox="0 0 24 24">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
           </svg>
         </div>
-        <span className="nav-label">Search</span>
+        <span className="nav-label">Stats</span>
       </NavLink>
 
       {/* 3. RADIO (Center Floating) */}
@@ -96,7 +89,6 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentFilters }) => {
                 <div className="wave-bar"></div>
               </div>
           ) : ( 
-            // Headphones Icon
             <svg {...iconProps} strokeWidth={2} width={26} height={26} viewBox="0 0 24 24" style={{marginLeft: '0'}}>
               <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
               <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
@@ -106,19 +98,25 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentFilters }) => {
         <span className="nav-label radio-label">{loading ? 'Loading' : (isPlaying || isPaused) ? 'Now Playing' : 'Radio'}</span>
       </div>
 
-      {/* 4. STATS (Bar Chart) */}
-      <NavLink to="/my-dashboard" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={vibrate}>
+      {/* 4. FILTERS (Sliders Icon) - NEW POSITION */}
+      <div className="nav-item" onClick={() => { vibrate(); if(onOpenFilters) onOpenFilters(); }}>
         <div className="nav-icon">
           <svg {...iconProps} viewBox="0 0 24 24">
-            <line x1="18" y1="20" x2="18" y2="10"></line>
-            <line x1="12" y1="20" x2="12" y2="4"></line>
-            <line x1="6" y1="20" x2="6" y2="14"></line>
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
           </svg>
         </div>
-        <span className="nav-label">Stats</span>
-      </NavLink>
+        <span className="nav-label">Filters</span>
+      </div>
 
-      {/* 5. PROFILE (User) */}
+      {/* 5. PROFILE (User Icon) */}
       <NavLink to="/profile-menu" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={vibrate}>
         <div className="nav-icon">
           <svg {...iconProps} viewBox="0 0 24 24">

@@ -5,6 +5,7 @@ import TopicTimeline from '../TopicTimeline';
 import '../../App.css'; 
 import { getSentimentClass, getOptimizedImageUrl } from '../../utils/helpers';
 import { IArticle } from '../../types';
+import Button from '../ui/Button'; // New
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
@@ -64,7 +65,7 @@ const CompareCoverageModal: React.FC<CompareModalProps> = ({ clusterId, articleT
        const left = clusterData.left.length;
        const center = clusterData.center.length;
        const right = clusterData.right.length;
-       const total = left + center + right || 1; // avoid div/0
+       const total = left + center + right || 1; 
 
        return (
            <div style={{ padding: '0 25px 20px 25px' }}>
@@ -73,10 +74,10 @@ const CompareCoverageModal: React.FC<CompareModalProps> = ({ clusterId, articleT
                    <span>Balanced</span>
                    <span>Right Lean</span>
                </div>
-               <div style={{ display: 'flex', height: '8px', borderRadius: '4px', overflow: 'hidden', background: 'var(--bg-elevated)' }}>
-                   <div style={{ width: `${(left/total)*100}%`, background: '#dc2626' }}></div>
-                   <div style={{ width: `${(center/total)*100}%`, background: '#4CAF50' }}></div>
-                   <div style={{ width: `${(right/total)*100}%`, background: '#2563eb' }}></div>
+               <div style={{ display: 'flex', height: '6px', borderRadius: '4px', overflow: 'hidden', background: 'var(--bg-elevated)' }}>
+                   <div style={{ width: `${(left/total)*100}%`, background: '#CF5C5C' }}></div>
+                   <div style={{ width: `${(center/total)*100}%`, background: '#D4AF37' }}></div>
+                   <div style={{ width: `${(right/total)*100}%`, background: '#5C8BCF' }}></div>
                </div>
            </div>
        );
@@ -86,14 +87,14 @@ const CompareCoverageModal: React.FC<CompareModalProps> = ({ clusterId, articleT
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="compare-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Compare Coverage: "{articleTitle.substring(0, 40)}..."</h2>
-          <button className="close-btn" onClick={onClose} title="Close comparison">×</button>
+          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '20px' }}>
+            Compare Coverage: "{articleTitle.substring(0, 40)}..."
+          </h2>
+          <button className="close-btn" onClick={onClose} title="Close">×</button>
         </div>
         
-        {/* --- SPECTRUM VISUALIZER --- */}
         {!loading && <SpectrumBar />}
 
-        {/* --- TABS --- */}
         <div className="modal-tabs">
           <button className={activeTab === 'timeline' ? 'active' : ''} onClick={() => setActiveTab('timeline')}>Timeline</button>
           <button className={activeTab === 'left' ? 'active' : ''} onClick={() => setActiveTab('left')}>Left ({clusterData.left.length})</button>
@@ -107,17 +108,12 @@ const CompareCoverageModal: React.FC<CompareModalProps> = ({ clusterId, articleT
           : totalArticles === 0 ? ( <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)' }}><p>No other articles found covering this topic.</p></div> )
           : (
             <>
-              {/* --- TIMELINE VIEW --- */}
               {activeTab === 'timeline' && (
                  <div className="perspective-section">
-                    <h3 style={{ fontSize: '14px', color: 'var(--text-primary)', marginBottom: '15px', borderLeft: '4px solid var(--accent-primary)', paddingLeft: '10px' }}>
-                        Story Development
-                    </h3>
                     <TopicTimeline clusterData={clusterData} />
                  </div>
               )}
 
-              {/* --- STANDARD VIEWS --- */}
               {activeTab === 'left' && renderArticleGroup(clusterData.left, 'Left', onAnalyze, showTooltip)}
               {activeTab === 'center' && renderArticleGroup(clusterData.center, 'Center', onAnalyze, showTooltip)}
               {activeTab === 'right' && renderArticleGroup(clusterData.right, 'Right', onAnalyze, showTooltip)}
@@ -136,7 +132,6 @@ const CompareCoverageModal: React.FC<CompareModalProps> = ({ clusterId, articleT
   );
 };
 
-// --- Helper to render article lists ---
 function renderArticleGroup(articleList: IArticle[], perspective: string, onAnalyze: (a: IArticle) => void, showTooltip: (t: string, e: React.MouseEvent) => void) {
   if (!articleList || articleList.length === 0) return null;
   
@@ -150,21 +145,27 @@ function renderArticleGroup(articleList: IArticle[], perspective: string, onAnal
         return (
           <div key={article._id || article.url} className="coverage-article">
             <div className="coverage-content">
-              <a href={article.url} target="_blank" rel="noopener noreferrer"><h4>{article.headline || 'No Headline'}</h4></a>
+              <a href={article.url} target="_blank" rel="noopener noreferrer">
+                  <h4 style={{ fontFamily: 'var(--font-heading)' }}>{article.headline || 'No Headline'}</h4>
+              </a>
               <p>{(article.summary || '').substring(0, 150)}...</p>
               <div className="article-scores">
                 {!isReview ? (
                   <>
-                    <span title="Bias Score" onClick={(e) => showTooltip("Bias Score", e)}>Bias: {article.biasScore != null ? <span className="accent-text">{article.biasScore}</span> : 'N/A'}</span>
-                    <span title="Trust Score" onClick={(e) => showTooltip("Trust Score", e)}>Trust: {article.trustScore != null ? <span className="accent-text">{article.trustScore}</span> : 'N/A'}</span>
+                    <span title="Bias Score" onClick={(e) => showTooltip("Bias Score", e)}>Bias: <span className="accent-text">{article.biasScore}</span></span>
+                    <span title="Trust Score" onClick={(e) => showTooltip("Trust Score", e)}>Trust: <span className="accent-text">{article.trustScore}</span></span>
                   </>
                 ) : (
                   <span title="Sentiment" onClick={(e) => showTooltip("Sentiment", e)}>Sentiment: <span className={getSentimentClass(article.sentiment)}>{article.sentiment}</span></span>
                 )}
               </div>
               <div className="coverage-actions">
-                <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1}}><button style={{width: '100%'}}>Read Article</button></a>
-                {!isReview && ( <button onClick={() => onAnalyze(article)}>View Analysis</button> )}\
+                <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1, textDecoration:'none'}}>
+                    <Button variant="secondary" style={{width: '100%', fontSize: '10px'}}>Read</Button>
+                </a>
+                {!isReview && ( 
+                    <Button variant="secondary" onClick={() => onAnalyze(article)} style={{width: '100%', fontSize: '10px'}}>Analyze</Button>
+                )}
               </div>
             </div>
             <div className="coverage-image">

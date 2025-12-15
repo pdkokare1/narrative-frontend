@@ -2,8 +2,12 @@
 
 :root {
   /* ================= TYPOGRAPHY ================= */
-  --font-heading: 'Playfair Display', serif;
-  --font-body: 'Inter', -apple-system, sans-serif;
+  /* The "Beautiful" font for the Logo only */
+  --font-logo: 'Playfair Display', serif;
+  
+  /* The "Minimal, Modern, Rich" font for everything else */
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Outfit', sans-serif;
 
   /* ================= ANIMATION ================= */
   --transition-fast: 0.2s cubic-bezier(0.2, 0.0, 0.2, 1);

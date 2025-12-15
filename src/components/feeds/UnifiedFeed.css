@@ -1,5 +1,19 @@
 /* src/components/feeds/UnifiedFeed.css */
 
+/* --- PULL TO REFRESH --- */
+.pull-refresh-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  overflow: hidden;
+  transition: height 0.1s ease-out; /* Smooth drag */
+  color: var(--accent-primary);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* Original Pill Logic */
 .new-content-pill {
   position: fixed;
   top: 90px; /* Below new header */
@@ -42,6 +56,6 @@
 /* Mobile Adjustment */
 @media (max-width: 768px) {
   .new-content-pill {
-    top: 130px; /* Account for InFocus bar + Mobile Header */
+    top: 130px; 
   }
 }

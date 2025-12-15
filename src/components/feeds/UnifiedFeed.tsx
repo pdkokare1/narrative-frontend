@@ -218,7 +218,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   )), []);
 
   const FeedHeader = () => (
-    <div style={{ paddingBottom: '20px' }}>
+    <div style={{ paddingBottom: '5px' }}> {/* Reduced from 20px */}
         {mode === 'latest' && onFilterChange && (
             <CategoryPills 
               selectedCategory={filters.category || 'All Categories'} 

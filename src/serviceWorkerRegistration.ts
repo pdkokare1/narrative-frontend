@@ -15,7 +15,6 @@ type Config = {
 
 export function register(config?: Config) {
   if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
-    // FIX: Add || '' to fallback to empty string if undefined
     const publicUrl = new URL(process.env.PUBLIC_URL || '', window.location.href);
     
     if (publicUrl.origin !== window.location.origin) {
@@ -69,7 +68,12 @@ function registerValidSW(swUrl: string, config?: Config) {
       };
     })
     .catch((error) => {
-      console.error('Error during service worker registration:', error);
+      // Suppress annoying MIME type error if SW is missing
+      if (error.message && error.message.includes('MIME type')) {
+        console.warn('Service Worker registration skipped: service-worker.js not found or invalid MIME type.');
+      } else {
+        console.error('Error during service worker registration:', error);
+      }
     });
 }
 

@@ -143,7 +143,8 @@ a:hover {
   display: flex;
   overflow-x: auto;
   gap: 12px;
-  padding: 5px 0 15px 0;
+  /* Reduced vertical padding to save space */
+  padding: 2px 0 5px 0; 
   scrollbar-width: none;
 }
 .category-pills-container::-webkit-scrollbar { display: none; }
@@ -191,15 +192,15 @@ a:hover {
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
   .main-container {
-    padding-top: 44px; /* Matches Mobile Header Height */
+    padding-top: 40px; /* Matches New Reduced Mobile Header Height */
     height: 100vh;
     overflow: hidden;
   }
   
   .content {
-    /* FIX: Removed top padding so sticky headers touch the top */
-    padding: 0 10px 90px 10px; 
-    height: calc(100vh - 44px); 
+    /* Reduced bottom padding since bottom nav is shorter */
+    padding: 0 10px 70px 10px; 
+    height: calc(100vh - 40px); 
     overflow-y: auto; 
     overflow-x: hidden;
   }
@@ -208,13 +209,14 @@ a:hover {
   
   .article-card-wrapper {
     scroll-snap-align: start; 
-    height: calc(100vh - 44px); 
+    height: calc(100vh - 40px); 
     width: 100%;
     display: flex; 
     flex-direction: column; 
     align-items: center; 
     justify-content: center;
-    padding: 20px;
+    /* Reduced padding around cards */
+    padding: 10px 20px;
   }
 }
 

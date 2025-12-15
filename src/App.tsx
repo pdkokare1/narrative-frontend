@@ -244,11 +244,13 @@ function MainLayout({ profile }: MainLayoutProps) {
         theme={theme} 
         toggleTheme={toggleTheme} 
         username={profile.username} 
+        currentFilters={filters} // PASS FILTERS HERE
       />
       
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
 
       <div className="main-container">
+        
         <Routes>
           <Route path="/" element={
             <NewsFeed
@@ -320,7 +322,7 @@ function MainLayout({ profile }: MainLayoutProps) {
         )}
       </Suspense>
 
-      <BottomNav />
+      <BottomNav currentFilters={filters} /> {/* PASS FILTERS HERE */}
       <GlobalPlayerBar />
     </div>
   );

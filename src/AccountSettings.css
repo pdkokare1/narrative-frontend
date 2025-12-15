@@ -4,38 +4,22 @@
   max-width: 600px;
   margin: 0 auto;
   text-align: center;
-  /* Centers the container vertically in the viewport if content is short */
   min-height: calc(100vh - 140px);
   display: flex;
   flex-direction: column;
-  justify-content: center;
 }
 
-.settings-container h1 {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 30px;
-}
-
-/* --- Profile Card --- */
+/* --- Card Utilities --- */
 .settings-card {
   text-align: left;
-  color: var(--text-primary);
   width: 100%;
-  padding: 30px;
-  background: var(--bg-secondary);
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  /* Removed: background, border, shadow (Handled by Card component) */
 }
 
-.settings-card:hover {
-  border-color: var(--accent-primary);
-  transform: translateY(-2px);
-}
+.mt-20 { margin-top: 20px; }
+.mt-30 { margin-top: 30px; }
 
+/* --- Fields --- */
 .settings-field {
   margin-bottom: 20px;
 }
@@ -95,15 +79,42 @@
   color: var(--text-primary);
 }
 
+/* --- Danger Zone Customization --- */
+.danger-card {
+  border-color: rgba(207, 92, 92, 0.3); /* Subtle red border */
+}
+
+.danger-title {
+  color: var(--color-error);
+}
+
+.danger-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 15px;
+}
+
+/* Custom button classes to pass into <Button /> */
+.btn-danger-custom {
+  width: 100%;
+  color: var(--color-error) !important;
+  border-color: var(--color-error) !important;
+}
+
+.btn-danger-custom:hover {
+  background: rgba(207, 92, 92, 0.1) !important;
+}
+
+.btn-signout-custom {
+  width: 100%;
+  color: var(--text-secondary) !important;
+  border-color: var(--text-tertiary) !important;
+}
+
 /* Mobile Adjustments */
 @media (max-width: 768px) {
   .settings-container {
-    padding: 20px 0;
-    min-height: auto;
+    padding: 10px 0;
     justify-content: flex-start;
-  }
-  
-  .settings-card {
-    padding: 20px;
   }
 }

@@ -6,6 +6,7 @@ import * as api from '../../services/api';
 import ArticleCard from '../ArticleCard';
 import SkeletonCard from '../ui/SkeletonCard';
 import CategoryPills from '../ui/CategoryPills';
+import FilterModal from '../modals/FilterModal'; // NEW
 import { useToast } from '../../context/ToastContext';
 import { useRadio } from '../../context/RadioContext';
 import useShare from '../../hooks/useShare'; 
@@ -40,8 +41,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   showTooltip,
   scrollToTopRef 
 }) => {
-  const { addToast } = useToast();
-  const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
+  const { playSingle, stop, currentArticle } = useRadio(); // REMOVED: startRadio
   const { handleShare } = useShare(); 
   const isMobile = useIsMobile(); 
   const vibrate = useHaptic(); 
@@ -51,9 +51,9 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const virtuosoRef = useRef<VirtuosoGridHandle>(null);
   const [scrollParent, setScrollParent] = useState<HTMLElement | undefined>(undefined);
   const [showNewPill, setShowNewPill] = useState(false); 
+  const [showFilterModal, setShowFilterModal] = useState(false); // NEW
 
   // --- 1. DATA FETCHING LOGIC ---
-  
   const latestQuery = useInfiniteQuery({
     queryKey: ['latestFeed', filters],
     queryFn: async ({ pageParam = 0 }) => {
@@ -93,21 +93,18 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   // --- 2. LIVE UPDATES (POLLING) ---
   useEffect(() => {
       if (mode !== 'latest') return;
-
       const checkForUpdates = async () => {
           try {
               const { data } = await api.fetchArticles({ ...filters, limit: 1, offset: 0 });
               if (data.articles && data.articles.length > 0) {
                   const latestRemote = new Date(data.articles[0].publishedAt).getTime();
                   const currentTop = latestQuery.data?.pages[0]?.articles[0];
-                  
                   if (currentTop && latestRemote > new Date(currentTop.publishedAt).getTime()) {
                       setShowNewPill(true);
                   }
               }
           } catch (e) { /* Ignore poll errors */ }
       };
-
       const interval = setInterval(checkForUpdates, 60000); 
       return () => clearInterval(interval);
   }, [mode, filters, latestQuery.data]);
@@ -159,13 +156,27 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     </div>
   )), []);
 
+  // --- NEW: Compact Filter Header ---
   const FeedHeader = () => (
     <div style={{ paddingBottom: '20px' }}>
+        
+        {/* Filter Row */}
         {mode === 'latest' && onFilterChange && (
-            <CategoryPills 
-              selectedCategory={filters.category || 'All Categories'} 
-              onSelect={(cat) => { vibrate(); onFilterChange({ ...filters, category: cat }); }} 
-            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                <button 
+                    className="btn-secondary" 
+                    onClick={() => setShowFilterModal(true)}
+                    style={{ padding: '6px 12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}
+                >
+                    <span style={{ fontSize: '14px' }}>⚡</span> Filters
+                </button>
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                    <CategoryPills 
+                        selectedCategory={filters.category || 'All Categories'} 
+                        onSelect={(cat) => { vibrate(); onFilterChange({ ...filters, category: cat }); }} 
+                    />
+                </div>
+            </div>
         )}
         
         {mode === 'foryou' && metaData && (
@@ -177,18 +188,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
              <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
                 <p>Curated for you based on <strong>{metaData.topCategories?.join(', ')}</strong>.</p>
              </div>
-        )}
-
-        {!isPlaying && articles.length > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px', marginTop: '10px' }}>
-                <button 
-                    onClick={() => { vibrate(); startRadio(articles, visibleArticleIndex); }}
-                    className="btn-primary"
-                    style={{ padding: '10px 20px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
-                    <span>▶</span> {mode === 'latest' ? 'Start News Radio' : 'Play Daily Mix'}
-                </button>
-            </div>
         )}
     </div>
   );
@@ -209,7 +208,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       onAnalyze={onAnalyze}
       onShare={() => handleShare(article)} 
       onRead={() => {
-          // FIX: Explicitly cast to 'any' to bypass TS error on getState()
           if (virtuosoRef.current) {
               feedStateCache = (virtuosoRef.current as any).getState();
           }
@@ -225,7 +223,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     />
   );
 
-  // --- 6. LOADING STATES ---
   if (status === 'pending') {
       return (
          <div className="articles-grid">
@@ -276,6 +273,14 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
           components={{ Header: FeedHeader, Footer: FeedFooter, List: GridList, Item: GridItem }}
           itemContent={itemContent}
         />
+
+        {showFilterModal && onFilterChange && (
+            <FilterModal 
+                filters={filters} 
+                onFilterChange={onFilterChange} 
+                onClose={() => setShowFilterModal(false)} 
+            />
+        )}
     </>
   );
 };

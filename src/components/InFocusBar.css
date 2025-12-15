@@ -4,7 +4,6 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  /* FIX: Reduced from 20px to 5px */
   margin-bottom: 5px; 
   padding: 0 5px;
   width: 100%;
@@ -75,11 +74,13 @@
 }
 
 .infocus-pill.skeleton {
-  width: 80px;
-  height: 28px;
-  background: var(--border-light);
+  background: var(--bg-elevated); /* Base color */
   border: none;
-  animation: pulse 1.5s infinite;
+  height: 28px;
+  /* Use the global shimmer animation from App.css */
+  animation: shimmer 2s infinite ease-in-out;
+  background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-secondary) 50%, var(--bg-elevated) 75%);
+  background-size: 200% 100%;
   cursor: default;
 }
 

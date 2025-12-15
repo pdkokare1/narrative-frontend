@@ -6,7 +6,7 @@
   justify-content: center;
   border: none;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: all var(--transition-fast);
   font-family: var(--font-body);
   position: relative;
   overflow: hidden;
@@ -23,7 +23,7 @@
 /* 1. Primary (Gold Fill/Outline) */
 .btn-primary {
   padding: 10px 20px;
-  background: rgba(212, 175, 55, 0.1);
+  background: var(--accent-dim);
   border: 1px solid var(--accent-primary);
   color: var(--accent-primary);
   border-radius: 20px;
@@ -35,7 +35,7 @@
 
 .btn-primary:hover {
   background: var(--accent-primary);
-  color: #000;
+  color: var(--text-inverse);
   transform: translateY(-2px);
   box-shadow: 0 4px 15px var(--accent-glow);
 }
@@ -67,19 +67,19 @@
   background: transparent;
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
-  padding: 0; /* Override padding */
+  padding: 0;
 }
 
 .btn-icon:hover {
   border-color: var(--accent-primary);
   color: var(--accent-primary);
-  background: rgba(212, 175, 55, 0.05);
+  background: var(--accent-dim);
 }
 
 .btn-icon.active {
   background: var(--accent-primary);
   border-color: var(--accent-primary);
-  color: #000;
+  color: var(--text-inverse);
   box-shadow: 0 0 15px var(--accent-glow);
 }
 

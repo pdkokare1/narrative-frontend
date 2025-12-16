@@ -1,3 +1,7 @@
+{
+type: uploaded file
+fileName: pdkokare1/narrative-frontend/narrative-frontend-ad73814401b57423744b5a2c29f1b37faa4ec81d/src/components/Header.tsx
+fullContent:
 // src/components/Header.tsx
 import React, { useState, useRef, useEffect } from 'react'; 
 import { Link, useNavigate } from 'react-router-dom'; 
@@ -6,6 +10,7 @@ import { useRadio } from '../context/RadioContext';
 import { useToast } from '../context/ToastContext';
 import './Header.css'; 
 import { IArticle, IFilters } from '../types';
+import { Capacitor } from '@capacitor/core'; 
 
 interface HeaderProps {
   theme: string;
@@ -30,6 +35,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   const inputRef = useRef<HTMLInputElement>(null);
   
   const navigate = useNavigate();
+  const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -94,17 +100,19 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
 
       <div className="header-right">
         
-        {/* RADIO BUTTON (Hidden on Mobile via CSS) */}
-        <button onClick={handleRadioClick} className={`radio-header-btn ${isPlaying ? 'playing' : ''}`} title="Start Radio">
-            {radioLoading ? ( 
-                <div className="spinner-small" style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'var(--accent-primary)', margin: 0 }}></div> 
-            ) : isPlaying ? ( 
-                <span className="radio-pulse"><span className="bar b1"></span><span className="bar b2"></span><span className="bar b3"></span></span> 
-            ) : ( 
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg> 
-            )}
-            <span className="radio-label-desktop">Gamut Radio</span>
-        </button>
+        {/* Hide Radio Button on Native App (Use Bottom Nav) */}
+        {!isNative && (
+          <button onClick={handleRadioClick} className={`radio-header-btn ${isPlaying ? 'playing' : ''}`} title="Start Radio">
+              {radioLoading ? ( 
+                  <div className="spinner-small" style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'var(--accent-primary)', margin: 0 }}></div> 
+              ) : isPlaying ? ( 
+                  <span className="radio-pulse"><span className="bar b1"></span><span className="bar b2"></span><span className="bar b3"></span></span> 
+              ) : ( 
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg> 
+              )}
+              <span className="radio-label-desktop">Gamut Radio</span>
+          </button>
+        )}
 
         <div ref={searchRef} className="search-bar-wrapper">
           <form onSubmit={handleSearchSubmit} className={`search-form ${isSearchOpen ? 'open' : ''}`}>
@@ -126,28 +134,32 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
           )}
         </div>
 
-        {/* User Dropdown */}
-        <div className="header-user-desktop" ref={dropdownRef}> 
-          <div className="header-user-clickable-area" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-            <span className="header-username-desktop">{username}</span>
-            <svg className="custom-select-arrow" style={{ width: '14px', height: '14px', fill: 'var(--text-tertiary)', marginLeft: '4px' }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"></path></svg>
-          </div>
-          {isDropdownOpen && (
-            <div className="header-user-dropdown">
-              <ul>
-                <li><Link to="/my-dashboard" onClick={() => setIsDropdownOpen(false)}>Dashboard</Link></li>
-                <li><Link to="/saved-articles" onClick={() => setIsDropdownOpen(false)}>Saved Articles</Link></li>
-                <li><Link to="/emergency-resources" onClick={() => setIsDropdownOpen(false)}>Emergency Help</Link></li>
-                <li><Link to="/account-settings" onClick={() => setIsDropdownOpen(false)}>Settings</Link></li>
-              </ul>
+        {!isNative && (
+          <div className="header-user-desktop" ref={dropdownRef}> 
+            <div className="header-user-clickable-area" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+              <span className="header-username-desktop">{username}</span>
+              <svg className="custom-select-arrow" style={{ width: '14px', height: '14px', fill: 'var(--text-tertiary)', marginLeft: '4px' }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"></path></svg>
             </div>
-          )}
-        </div>
+            {isDropdownOpen && (
+              <div className="header-user-dropdown">
+                <ul>
+                  <li><Link to="/my-dashboard" onClick={() => setIsDropdownOpen(false)}>Dashboard</Link></li>
+                  <li><Link to="/saved-articles" onClick={() => setIsDropdownOpen(false)}>Saved Articles</Link></li>
+                  <li><Link to="/emergency-resources" onClick={() => setIsDropdownOpen(false)}>Emergency Help</Link></li>
+                  <li><Link to="/account-settings" onClick={() => setIsDropdownOpen(false)}>Settings</Link></li>
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
 
-        <button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '🌙' : '☀️'}</button>
+        {!isNative && (
+           <button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '🌙' : '☀️'}</button>
+        )}
       </div>
     </header>
   );
 };
 
 export default Header;
+}

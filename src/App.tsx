@@ -1,7 +1,3 @@
-{
-type: uploaded file
-fileName: pdkokare1/narrative-frontend/narrative-frontend-ad73814401b57423744b5a2c29f1b37faa4ec81d/src/App.tsx
-fullContent:
 // src/App.tsx
 import React, { useState, useEffect, Suspense, lazy, useCallback, useRef } from 'react'; 
 import { Routes, Route, Navigate, Link } from 'react-router-dom';

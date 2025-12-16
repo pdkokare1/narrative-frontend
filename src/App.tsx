@@ -1,3 +1,7 @@
+{
+type: uploaded file
+fileName: pdkokare1/narrative-frontend/narrative-frontend-ad73814401b57423744b5a2c29f1b37faa4ec81d/src/App.tsx
+fullContent:
 // src/App.tsx
 import React, { useState, useEffect, Suspense, lazy, useCallback, useRef } from 'react'; 
 import { Routes, Route, Navigate, Link } from 'react-router-dom';
@@ -11,6 +15,7 @@ import { ToastProvider, useToast } from './context/ToastContext';
 import { RadioProvider } from './context/RadioContext'; 
 
 import useIsMobile from './hooks/useIsMobile';
+import useNativeFeatures from './hooks/useNativeFeatures'; 
 import * as api from './services/api'; 
 
 import PageLoader from './components/PageLoader';
@@ -67,6 +72,9 @@ function App() {
 function AppRoutes() {
   const { user, profile, loading } = useAuth();
   
+  // --- ACTIVATE NATIVE FEATURES ---
+  useNativeFeatures(user); 
+  
   if (loading) return <PageLoader />;
   if (!user) return <Login />;
   
@@ -89,14 +97,12 @@ interface MainLayoutProps {
 }
 
 function MainLayout({ profile }: MainLayoutProps) {
-  const { addToast } = useAuth() as any; // Using context for toast if available or hook
   const { addToast: triggerToast } = useToast();
   const isMobileView = useIsMobile();
 
   const [theme, setTheme] = useState('dark');
   const [fontSize, setFontSize] = useState('medium'); 
 
-  // --- LIFTED FILTER STATE ---
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState<IFilters>({
     category: 'All Categories',
@@ -249,7 +255,6 @@ function MainLayout({ profile }: MainLayoutProps) {
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
 
       <div className="main-container">
-        
         <Routes>
           <Route path="/" element={
             <NewsFeed
@@ -262,7 +267,6 @@ function MainLayout({ profile }: MainLayoutProps) {
               showTooltip={showTooltip}
             />
           } />
-          
           <Route path="/search" element={ 
             <SearchResults 
               onAnalyze={handleAnalyzeClick}
@@ -272,9 +276,7 @@ function MainLayout({ profile }: MainLayoutProps) {
               showTooltip={showTooltip}
             /> 
           } />
-
           <Route path="/my-dashboard" element={<MyDashboard theme={theme} />} />
-          
           <Route path="/saved-articles" element={ 
               <SavedArticles 
                 onToggleSave={handleToggleSave}
@@ -285,18 +287,14 @@ function MainLayout({ profile }: MainLayoutProps) {
                 showTooltip={showTooltip}
               /> 
           } />
-
           <Route path="/emergency-resources" element={<EmergencyResources />} />
-          
           <Route path="/account-settings" element={
             <AccountSettings 
                 currentFontSize={fontSize} 
                 onSetFontSize={setFontSize} 
             />
           } />
-
           <Route path="/profile-menu" element={<MobileProfileMenu />} />
-          
           <Route path="*" element={<PageNotFound />} /> 
         </Routes>
       </div>
@@ -311,7 +309,6 @@ function MainLayout({ profile }: MainLayoutProps) {
             showTooltip={showTooltip} 
           />
         )}
-        
         {analysisModal.open && (
           <DetailedAnalysisModal 
             article={analysisModal.article} 
@@ -319,8 +316,6 @@ function MainLayout({ profile }: MainLayoutProps) {
             showTooltip={showTooltip} 
           />
         )}
-
-        {/* Global Filter Modal */}
         {showFilterModal && (
             <FilterModal 
                 filters={filters} 
@@ -332,7 +327,7 @@ function MainLayout({ profile }: MainLayoutProps) {
 
       <BottomNav 
         currentFilters={filters} 
-        onOpenFilters={() => setShowFilterModal(true)} // Pass handler
+        onOpenFilters={() => setShowFilterModal(true)} 
       />
       
       <GlobalPlayerBar />
@@ -352,3 +347,4 @@ function PageNotFound() {
 }
 
 export default App;
+}

@@ -14,6 +14,7 @@ body {
   font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.6;
+  /* FIXED: Reduced transition scope to avoid layout jitter */
   transition: background 0.4s ease, color 0.4s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -65,13 +66,15 @@ a:hover {
   margin: 0 auto;
   padding-top: 48px; 
   min-height: 100vh;
-  transition: all 0.3s ease-in-out;
+  /* FIXED: Removed layout transition causing scroll recalculation glitches */
+  /* transition: all 0.3s ease-in-out; */
 }
 
 .content {
   flex: 1;
   padding: 0 20px 20px 20px; 
-  transition: all 0.3s ease-in-out;
+  /* FIXED: Removed layout transition here too */
+  /* transition: all 0.3s ease-in-out; */
   min-width: 0;
   position: relative;
 }
@@ -100,7 +103,6 @@ a:hover {
 
 .feed-anim-wrapper {
   width: 100%;
-  /* Ensure it fills height if needed, though UnifiedFeed handles scroll */
 }
 
 .feed-anim-wrapper.enter-right {
@@ -143,7 +145,6 @@ a:hover {
   display: flex;
   overflow-x: auto;
   gap: 12px;
-  /* Reduced vertical padding to save space */
   padding: 2px 0 5px 0; 
   scrollbar-width: none;
 }
@@ -192,13 +193,12 @@ a:hover {
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
   .main-container {
-    padding-top: 40px; /* Matches New Reduced Mobile Header Height */
+    padding-top: 40px; 
     height: 100vh;
     overflow: hidden;
   }
   
   .content {
-    /* Reduced bottom padding since bottom nav is shorter */
     padding: 0 10px 70px 10px; 
     height: calc(100vh - 40px); 
     overflow-y: auto; 
@@ -215,7 +215,6 @@ a:hover {
     flex-direction: column; 
     align-items: center; 
     justify-content: center;
-    /* Reduced padding around cards */
     padding: 10px 20px;
   }
 }

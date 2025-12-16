@@ -36,9 +36,9 @@ interface FeedContext {
   isFetchingNextPage: boolean;
 }
 
-// --- STABLE COMPONENTS (Defined outside to prevent re-creation) ---
+// --- STABLE COMPONENTS ---
 
-const FeedHeader: React.FC<{ context?: FeedContext }> = ({ context }) => {
+const FeedHeader: React.FC<{ context?: FeedContext }> = React.memo(({ context }) => {
   if (!context) return null;
   const { mode, filters, onFilterChange, vibrate, metaData } = context;
 
@@ -63,12 +63,10 @@ const FeedHeader: React.FC<{ context?: FeedContext }> = ({ context }) => {
         )}
     </div>
   );
-};
+});
 
-const FeedFooter: React.FC<{ context?: FeedContext }> = ({ context }) => {
-  // Only show loading skeleton if we are in 'latest' mode and fetching more
+const FeedFooter: React.FC<{ context?: FeedContext }> = React.memo(({ context }) => {
   if (!context || (context.mode === 'latest' && !context.isFetchingNextPage)) return <div style={{ height: '60px' }} />;
-  // For other modes, just some padding
   if (context.mode !== 'latest') return <div style={{ height: '60px' }} />;
   
   return (
@@ -76,7 +74,7 @@ const FeedFooter: React.FC<{ context?: FeedContext }> = ({ context }) => {
        {[...Array(4)].map((_, i) => ( <div className="article-card-wrapper" key={`skel-${i}`}><SkeletonCard /></div> ))}
     </div>
   );
-};
+});
 
 const GridList = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ style, children, ...props }, ref) => (
   <div ref={ref} {...props} style={{ ...style }} className="articles-grid">
@@ -101,6 +99,9 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   showTooltip,
   scrollToTopRef 
 }) => {
+  const { addToast } = useToast();
+  // Using Radio Context triggers re-renders on time update.
+  // We accept this, but MUST ensure passed props to Virtuoso are stable.
   const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
   const { handleShare } = useShare(); 
   const isMobile = useIsMobile(); 
@@ -267,7 +268,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   }, [mode, filters, scrollToTopRef]);
 
   // --- MEMOIZED COMPONENTS OBJECT ---
-  // This object MUST be stable to prevent Virtuoso from re-rendering the whole list
   const gridComponents = useMemo(() => ({
       Header: FeedHeader,
       Footer: FeedFooter,
@@ -275,8 +275,19 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       Item: GridItem
   }), []);
 
+  // --- MEMOIZED CONTEXT ---
+  // Crucial fix: The context object must NOT change reference on every render
+  // We only include dependencies that actually affect the header/footer
+  const feedContextValue = useMemo(() => ({
+      mode,
+      filters,
+      onFilterChange,
+      vibrate,
+      metaData,
+      isFetchingNextPage: latestQuery.isFetchingNextPage
+  }), [mode, filters, onFilterChange, vibrate, metaData, latestQuery.isFetchingNextPage]);
+
   // --- MEMOIZED ITEM CONTENT ---
-  // This function MUST be stable.
   const itemContent: GridItemContent<IArticle, unknown> = useCallback((index, article) => {
     if (!article || !article._id) return null;
     return (
@@ -344,22 +355,15 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
               useWindowScroll={!isMobile} 
               customScrollParent={isMobile ? scrollParent : undefined}
               data={articles}
-              context={{ 
-                  mode, 
-                  filters, 
-                  onFilterChange, 
-                  vibrate, 
-                  metaData, 
-                  isFetchingNextPage: latestQuery.isFetchingNextPage 
-              }}
+              context={feedContextValue} // Passing STABLE context
               initialItemCount={12} 
               endReached={() => { 
                   if (mode === 'latest' && latestQuery.hasNextPage) latestQuery.fetchNextPage(); 
               }}
               overscan={800} 
               rangeChanged={({ startIndex }) => setVisibleArticleIndex(startIndex)}
-              components={gridComponents} // Use the stable memoized object
-              itemContent={itemContent}   // Use the stable callback
+              components={gridComponents} 
+              itemContent={itemContent}   
             />
         )}
     </>

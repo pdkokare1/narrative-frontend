@@ -1,12 +1,5 @@
 /* src/components/ArticleCard.css */
 
-/* ==================== ANIMATION ==================== */
-/* REMOVED: Animation caused scroll jitter in virtualized lists */
-/* @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-} */
-
 /* ==================== MAGAZINE CARD CONTAINER ==================== */
 .article-card {
   background: var(--bg-card);
@@ -16,15 +9,20 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; <--- REMOVED THIS */
-  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), 
-              box-shadow 0.4s ease,
-              border-color 0.4s ease;
+  
+  /* FIXED: Removed 'transform' from transition to prevent scroll jitter */
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  
   height: 100%;
+  
+  /* FIXED: Removed initial animation that caused list jumping */
+  /* animation: fadeInUp 0.6s ... */
 }
 
 .article-card:hover {
-  transform: translateY(-4px);
+  /* FIXED: Removed translateY(-4px) to stop cards "dancing" under the mouse during scroll */
+  /* transform: translateY(-4px); */
+  
   box-shadow: var(--shadow-lg);
   border-color: var(--border-light);
 }
@@ -42,7 +40,7 @@
   display: flex;
   gap: 6px;
   z-index: 5;
-  pointer-events: none; /* Let clicks pass through */
+  pointer-events: none;
 }
 
 .badge {
@@ -52,7 +50,6 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
-  /* Use variable glass settings for performance */
   backdrop-filter: var(--glass-blur); 
   -webkit-backdrop-filter: var(--glass-blur);
   background: var(--glass-bg);

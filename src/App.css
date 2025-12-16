@@ -1,3 +1,7 @@
+{
+type: uploaded file
+fileName: pdkokare1/narrative-frontend/narrative-frontend-ad73814401b57423744b5a2c29f1b37faa4ec81d/src/App.css
+fullContent:
 /* src/App.css */
 
 /* ==================== GLOBAL RESET & BASE ==================== */
@@ -14,11 +18,16 @@ body {
   font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.6;
-  /* FIXED: Reduced transition scope to avoid layout jitter */
   transition: background 0.4s ease, color 0.4s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior-y: none;
+  
+  /* --- MOBILE SAFE AREA SUPPORT --- */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 /* --- NEW: LUXURY NOISE TEXTURE --- */
@@ -64,17 +73,14 @@ a:hover {
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
+  /* Adjust for Safe Area + Header Height */
   padding-top: 48px; 
   min-height: 100vh;
-  /* FIXED: Removed layout transition causing scroll recalculation glitches */
-  /* transition: all 0.3s ease-in-out; */
 }
 
 .content {
   flex: 1;
   padding: 0 20px 20px 20px; 
-  /* FIXED: Removed layout transition here too */
-  /* transition: all 0.3s ease-in-out; */
   min-width: 0;
   position: relative;
 }
@@ -193,6 +199,8 @@ a:hover {
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
   .main-container {
+    /* Slightly taller top padding on mobile to account for safe area if needed, 
+       but mostly handled by body padding now */
     padding-top: 40px; 
     height: 100vh;
     overflow: hidden;
@@ -227,3 +235,4 @@ body.font-large .article-content p { font-size: 15px !important; }
 body.font-xl .article-headline { font-size: 22px !important; line-height: 1.4; }
 body.font-xl .article-summary { font-size: 16px !important; line-height: 1.6; }
 body.font-xl .article-content p { font-size: 17px !important; }
+}

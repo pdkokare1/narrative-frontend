@@ -196,9 +196,16 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   const metaData = mode !== 'latest' ? (activeQuery.data as any)?.meta : null;
 
+  // --- FIX: SCROLL PARENT LOGIC ---
   useEffect(() => {
-    if (scrollToTopRef?.current) setScrollParent(scrollToTopRef.current);
-  }, [scrollToTopRef]);
+    // Only use the custom container if we are on mobile (where CSS sets overflow-y: auto)
+    if (isMobile && scrollToTopRef?.current) {
+        setScrollParent(scrollToTopRef.current);
+    } else {
+        // On desktop, let Virtuoso use the Window/Body scroll to prevent infinite loop
+        setScrollParent(undefined);
+    }
+  }, [scrollToTopRef, isMobile]);
 
   useEffect(() => {
     // feedStateCache = null; // Removed

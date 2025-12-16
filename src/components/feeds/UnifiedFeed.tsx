@@ -1,5 +1,5 @@
 // src/components/feeds/UnifiedFeed.tsx
-import React, { useState, useEffect, useMemo, useRef, forwardRef } from 'react'; 
+import React, { useState, useEffect, useMemo, useRef, forwardRef, useCallback } from 'react'; 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { VirtuosoGrid, VirtuosoGridHandle, GridItemContent } from 'react-virtuoso'; 
 import * as api from '../../services/api'; 
@@ -26,7 +26,7 @@ interface UnifiedFeedProps {
   scrollToTopRef?: React.RefObject<HTMLDivElement>;
 }
 
-// --- CONTEXT INTERFACE FOR STABLE COMPONENTS ---
+// --- CONTEXT INTERFACE ---
 interface FeedContext {
   mode: string;
   filters: IFilters;
@@ -36,7 +36,8 @@ interface FeedContext {
   isFetchingNextPage: boolean;
 }
 
-// --- STABLE HEADER COMPONENT (Prevents Re-render Glitch) ---
+// --- STABLE COMPONENTS (Defined outside to prevent re-creation) ---
+
 const FeedHeader: React.FC<{ context?: FeedContext }> = ({ context }) => {
   if (!context) return null;
   const { mode, filters, onFilterChange, vibrate, metaData } = context;
@@ -64,9 +65,10 @@ const FeedHeader: React.FC<{ context?: FeedContext }> = ({ context }) => {
   );
 };
 
-// --- STABLE FOOTER COMPONENT ---
 const FeedFooter: React.FC<{ context?: FeedContext }> = ({ context }) => {
+  // Only show loading skeleton if we are in 'latest' mode and fetching more
   if (!context || (context.mode === 'latest' && !context.isFetchingNextPage)) return <div style={{ height: '60px' }} />;
+  // For other modes, just some padding
   if (context.mode !== 'latest') return <div style={{ height: '60px' }} />;
   
   return (
@@ -76,14 +78,8 @@ const FeedFooter: React.FC<{ context?: FeedContext }> = ({ context }) => {
   );
 };
 
-// --- STABLE LIST CONTAINERS ---
 const GridList = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ style, children, ...props }, ref) => (
-  <div 
-    ref={ref} 
-    {...props} 
-    style={{ ...style }} 
-    className="articles-grid"
-  >
+  <div ref={ref} {...props} style={{ ...style }} className="articles-grid">
     {children}
   </div>
 ));
@@ -105,7 +101,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   showTooltip,
   scrollToTopRef 
 }) => {
-  const { addToast } = useToast();
   const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
   const { handleShare } = useShare(); 
   const isMobile = useIsMobile(); 
@@ -271,8 +266,18 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     if (scrollToTopRef?.current) scrollToTopRef.current.scrollTop = 0;
   }, [mode, filters, scrollToTopRef]);
 
-  // --- ITEM RENDERER ---
-  const itemContent: GridItemContent<IArticle, unknown> = (index, article) => {
+  // --- MEMOIZED COMPONENTS OBJECT ---
+  // This object MUST be stable to prevent Virtuoso from re-rendering the whole list
+  const gridComponents = useMemo(() => ({
+      Header: FeedHeader,
+      Footer: FeedFooter,
+      List: GridList,
+      Item: GridItem
+  }), []);
+
+  // --- MEMOIZED ITEM CONTENT ---
+  // This function MUST be stable.
+  const itemContent: GridItemContent<IArticle, unknown> = useCallback((index, article) => {
     if (!article || !article._id) return null;
     return (
         <ArticleCard
@@ -292,7 +297,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
           onStop={stop}
         />
     );
-  };
+  }, [onCompare, onAnalyze, handleShare, showTooltip, savedArticleIds, onToggleSave, currentArticle, playSingle, stop]);
 
   // --- RENDER ---
   return (
@@ -318,9 +323,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
         {status === 'pending' ? (
              <div className="articles-grid">
-               {/* Skeleton Loading State */}
                <div style={{gridColumn: '1 / -1', paddingBottom: '20px'}}>
-                  {/* Matches FeedHeader height roughy */}
                   <div className="skeleton-pulse" style={{width: '100%', height: '40px', borderRadius: '20px'}}></div>
                </div>
                {[...Array(8)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) }
@@ -355,13 +358,8 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
               }}
               overscan={800} 
               rangeChanged={({ startIndex }) => setVisibleArticleIndex(startIndex)}
-              components={{ 
-                  Header: FeedHeader, 
-                  Footer: FeedFooter, 
-                  List: GridList, 
-                  Item: GridItem 
-              }}
-              itemContent={itemContent}
+              components={gridComponents} // Use the stable memoized object
+              itemContent={itemContent}   // Use the stable callback
             />
         )}
     </>

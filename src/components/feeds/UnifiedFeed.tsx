@@ -14,9 +14,6 @@ import useHaptic from '../../hooks/useHaptic';
 import { IArticle, IFilters } from '../../types';
 import './UnifiedFeed.css'; 
 
-// Removed problematic cache variable
-// let feedStateCache: any = null; 
-
 interface UnifiedFeedProps {
   mode: 'latest' | 'foryou' | 'personalized';
   filters?: IFilters; 
@@ -198,17 +195,14 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   // --- FIX: SCROLL PARENT LOGIC ---
   useEffect(() => {
-    // Only use the custom container if we are on mobile (where CSS sets overflow-y: auto)
     if (isMobile && scrollToTopRef?.current) {
         setScrollParent(scrollToTopRef.current);
     } else {
-        // On desktop, let Virtuoso use the Window/Body scroll to prevent infinite loop
         setScrollParent(undefined);
     }
   }, [scrollToTopRef, isMobile]);
 
   useEffect(() => {
-    // feedStateCache = null; // Removed
     if (scrollToTopRef?.current) scrollToTopRef.current.scrollTop = 0;
   }, [mode, filters, scrollToTopRef]);
 
@@ -225,7 +219,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   )), []);
 
   const FeedHeader = () => (
-    <div style={{ paddingBottom: '5px' }}> {/* Reduced from 20px */}
+    <div style={{ paddingBottom: '5px' }}>
         {mode === 'latest' && onFilterChange && (
             <CategoryPills 
               selectedCategory={filters.category || 'All Categories'} 
@@ -264,7 +258,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
           onAnalyze={onAnalyze}
           onShare={() => handleShare(article)} 
           onRead={() => {
-              // Removed invalid getState call here to fix crash
               api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
               window.open(article.url, '_blank', 'noopener,noreferrer');
           }}
@@ -321,8 +314,8 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             <VirtuosoGrid
               key={`${mode}-${isMobile ? 'mobile' : 'desktop'}`}
               ref={virtuosoRef}
-              // restoreStateFrom={feedStateCache} // Removed invalid prop
-              customScrollParent={scrollParent}
+              useWindowScroll={!isMobile} // <--- FIX: Enable window scroll for Desktop
+              customScrollParent={isMobile ? scrollParent : undefined}
               data={articles}
               initialItemCount={12} 
               endReached={() => { 

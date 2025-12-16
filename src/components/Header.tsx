@@ -1,7 +1,3 @@
-{
-type: uploaded file
-fileName: pdkokare1/narrative-frontend/narrative-frontend-ad73814401b57423744b5a2c29f1b37faa4ec81d/src/components/Header.tsx
-fullContent:
 // src/components/Header.tsx
 import React, { useState, useRef, useEffect } from 'react'; 
 import { Link, useNavigate } from 'react-router-dom'; 

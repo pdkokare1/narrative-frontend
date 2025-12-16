@@ -33,7 +33,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const addToast = useCallback((message: string, type: 'info' | 'success' | 'error' = 'info', action: ToastAction | null = null) => {
     const id = Date.now();
-    setToasts((prev) => [...prev, { id, message, type, action }]);
+    // UX IMPROVEMENT: Clear existing toasts so only ONE shows at a time.
+    // This prevents "notification spam" covering the mobile screen.
+    setToasts([{ id, message, type, action }]);
     
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));

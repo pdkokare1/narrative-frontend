@@ -26,6 +26,74 @@ interface UnifiedFeedProps {
   scrollToTopRef?: React.RefObject<HTMLDivElement>;
 }
 
+// --- CONTEXT INTERFACE FOR STABLE COMPONENTS ---
+interface FeedContext {
+  mode: string;
+  filters: IFilters;
+  onFilterChange?: (filters: IFilters) => void;
+  vibrate: () => void;
+  metaData: any;
+  isFetchingNextPage: boolean;
+}
+
+// --- STABLE HEADER COMPONENT (Prevents Re-render Glitch) ---
+const FeedHeader: React.FC<{ context?: FeedContext }> = ({ context }) => {
+  if (!context) return null;
+  const { mode, filters, onFilterChange, vibrate, metaData } = context;
+
+  return (
+    <div style={{ paddingBottom: '5px' }}>
+        {mode === 'latest' && onFilterChange && (
+            <CategoryPills 
+              selectedCategory={filters.category || 'All Categories'} 
+              onSelect={(cat) => { vibrate(); onFilterChange({ ...filters, category: cat }); }} 
+            />
+        )}
+        
+        {mode === 'foryou' && metaData && (
+             <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
+                <p>Based on your interest in <strong>{metaData.basedOnCategory}</strong>. Including {metaData.usualLean} sources and opposing views.</p>
+             </div>
+        )}
+        {mode === 'personalized' && metaData && (
+             <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
+                <p>Curated for you based on <strong>{metaData.topCategories?.join(', ')}</strong>.</p>
+             </div>
+        )}
+    </div>
+  );
+};
+
+// --- STABLE FOOTER COMPONENT ---
+const FeedFooter: React.FC<{ context?: FeedContext }> = ({ context }) => {
+  if (!context || (context.mode === 'latest' && !context.isFetchingNextPage)) return <div style={{ height: '60px' }} />;
+  if (context.mode !== 'latest') return <div style={{ height: '60px' }} />;
+  
+  return (
+    <div className="articles-grid" style={{ marginTop: '20px', paddingBottom: '40px' }}>
+       {[...Array(4)].map((_, i) => ( <div className="article-card-wrapper" key={`skel-${i}`}><SkeletonCard /></div> ))}
+    </div>
+  );
+};
+
+// --- STABLE LIST CONTAINERS ---
+const GridList = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ style, children, ...props }, ref) => (
+  <div 
+    ref={ref} 
+    {...props} 
+    style={{ ...style }} 
+    className="articles-grid"
+  >
+    {children}
+  </div>
+));
+
+const GridItem = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ children, ...props }, ref) => (
+  <div {...props} ref={ref} className="article-card-wrapper" style={{ margin: 0, minHeight: '300px' }}>
+    {children}
+  </div>
+));
+
 const UnifiedFeed: React.FC<UnifiedFeedProps> = ({ 
   mode,
   filters = {}, 
@@ -110,7 +178,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       setIsRefreshing(true);
       setShowNewPill(false);
       
-      // Artificial delay for UX feeling
       await new Promise(r => setTimeout(r, 800));
 
       if (mode === 'latest') {
@@ -147,9 +214,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
           const diff = y - touchStartRef.current;
           
           if (diff > 0 && container.scrollTop <= 0) {
-              // Resistance effect
               setPullY(Math.min(diff * 0.4, 120)); 
-              // Prevent native scroll if pulling down at top
               if (diff > 10 && e.cancelable) e.preventDefault(); 
           } else {
               setPullY(0);
@@ -193,7 +258,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   const metaData = mode !== 'latest' ? (activeQuery.data as any)?.meta : null;
 
-  // --- FIX: SCROLL PARENT LOGIC ---
+  // --- SCROLL PARENT LOGIC ---
   useEffect(() => {
     if (isMobile && scrollToTopRef?.current) {
         setScrollParent(scrollToTopRef.current);
@@ -206,49 +271,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     if (scrollToTopRef?.current) scrollToTopRef.current.scrollTop = 0;
   }, [mode, filters, scrollToTopRef]);
 
-  const GridList = useMemo(() => forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ style, children, ...props }, ref) => (
-    <div ref={ref} {...props} style={{ ...style }} className="articles-grid">
-      {children}
-    </div>
-  )), []);
-
-  const GridItem = useMemo(() => forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ children, ...props }, ref) => (
-    <div {...props} ref={ref} className="article-card-wrapper" style={{ margin: 0, minHeight: '300px' }}>
-      {children}
-    </div>
-  )), []);
-
-  const FeedHeader = () => (
-    <div style={{ paddingBottom: '5px' }}>
-        {mode === 'latest' && onFilterChange && (
-            <CategoryPills 
-              selectedCategory={filters.category || 'All Categories'} 
-              onSelect={(cat) => { vibrate(); onFilterChange({ ...filters, category: cat }); }} 
-            />
-        )}
-        
-        {mode === 'foryou' && metaData && (
-             <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
-                <p>Based on your interest in <strong>{metaData.basedOnCategory}</strong>. Including {metaData.usualLean} sources and opposing views.</p>
-             </div>
-        )}
-        {mode === 'personalized' && metaData && (
-             <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
-                <p>Curated for you based on <strong>{metaData.topCategories?.join(', ')}</strong>.</p>
-             </div>
-        )}
-    </div>
-  );
-
-  const FeedFooter = () => {
-      if (mode !== 'latest' || !latestQuery.isFetchingNextPage) return <div style={{ height: '60px' }} />;
-      return (
-        <div className="articles-grid" style={{ marginTop: '20px', paddingBottom: '40px' }}>
-           {[...Array(4)].map((_, i) => ( <div className="article-card-wrapper" key={`skel-${i}`}><SkeletonCard /></div> ))}
-        </div>
-      );
-  };
-
+  // --- ITEM RENDERER ---
   const itemContent: GridItemContent<IArticle, unknown> = (index, article) => {
     if (!article || !article._id) return null;
     return (
@@ -295,7 +318,11 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
         {status === 'pending' ? (
              <div className="articles-grid">
-               <div style={{gridColumn: '1 / -1'}}><FeedHeader /></div>
+               {/* Skeleton Loading State */}
+               <div style={{gridColumn: '1 / -1', paddingBottom: '20px'}}>
+                  {/* Matches FeedHeader height roughy */}
+                  <div className="skeleton-pulse" style={{width: '100%', height: '40px', borderRadius: '20px'}}></div>
+               </div>
                {[...Array(8)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) }
              </div>
         ) : status === 'error' ? (
@@ -304,26 +331,36 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                 <button onClick={() => window.location.reload()} className="btn-secondary" style={{ marginTop: '10px' }}>Retry</button>
             </div>
         ) : articles.length === 0 ? (
-            <>
-              <FeedHeader />
-              <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
-                  <p>No articles found.</p>
-              </div>
-            </>
+            <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
+                <p>No articles found.</p>
+            </div>
         ) : (
             <VirtuosoGrid
               key={`${mode}-${isMobile ? 'mobile' : 'desktop'}`}
               ref={virtuosoRef}
-              useWindowScroll={!isMobile} // <--- FIX: Enable window scroll for Desktop
+              useWindowScroll={!isMobile} 
               customScrollParent={isMobile ? scrollParent : undefined}
               data={articles}
+              context={{ 
+                  mode, 
+                  filters, 
+                  onFilterChange, 
+                  vibrate, 
+                  metaData, 
+                  isFetchingNextPage: latestQuery.isFetchingNextPage 
+              }}
               initialItemCount={12} 
               endReached={() => { 
                   if (mode === 'latest' && latestQuery.hasNextPage) latestQuery.fetchNextPage(); 
               }}
               overscan={800} 
               rangeChanged={({ startIndex }) => setVisibleArticleIndex(startIndex)}
-              components={{ Header: FeedHeader, Footer: FeedFooter, List: GridList, Item: GridItem }}
+              components={{ 
+                  Header: FeedHeader, 
+                  Footer: FeedFooter, 
+                  List: GridList, 
+                  Item: GridItem 
+              }}
               itemContent={itemContent}
             />
         )}

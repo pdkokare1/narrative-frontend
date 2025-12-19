@@ -352,7 +352,8 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             <VirtuosoGrid
               key={`${mode}-${isMobile ? 'mobile' : 'desktop'}`}
               ref={virtuosoRef}
-              useWindowScroll={!isMobile} 
+              useWindowScroll={!isMobile}
+              style={{ height: '100%', width: '100%' }}
               customScrollParent={isMobile ? scrollParent : undefined}
               data={articles}
               context={feedContextValue} // Passing STABLE context

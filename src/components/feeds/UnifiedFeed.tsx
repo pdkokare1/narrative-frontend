@@ -129,7 +129,8 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   // --- DATA FETCHING ---
   const latestQuery = useInfiniteQuery({
-    queryKey: ['latestFeed', filters],
+    // FIX: Use JSON.stringify(filters) to ensure stable key comparison
+    queryKey: ['latestFeed', JSON.stringify(filters)],
     queryFn: async ({ pageParam = 0 }) => {
       try {
         const { data } = await api.fetchArticles({ ...filters, limit: 12, offset: pageParam as number });
@@ -282,7 +283,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const activeQuery = mode === 'latest' ? latestQuery : (mode === 'foryou' ? forYouQuery : personalizedQuery);
   const { status } = activeQuery;
 
-  // --- ROBUST ARTICLE EXTRACTION ---
+  // --- ROBUST ARTICLE EXTRACTION & DEDUPLICATION ---
   const articles = useMemo(() => {
     let rawList: IArticle[] = [];
     
@@ -303,7 +304,14 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       else if (data?.data && Array.isArray(data.data)) rawList = data.data;
     }
     
-    return rawList.filter(a => !!a && !!a._id);
+    // FIX: Deduplicate articles by ID to prevent key collisions and list jumping
+    const seen = new Set<string>();
+    return rawList.filter(a => {
+        if (!a || !a._id) return false;
+        if (seen.has(a._id)) return false;
+        seen.add(a._id);
+        return true;
+    });
   }, [mode, latestQuery.data, activeQuery.data]);
 
   const metaData = mode !== 'latest' ? (activeQuery.data as any)?.meta : null;

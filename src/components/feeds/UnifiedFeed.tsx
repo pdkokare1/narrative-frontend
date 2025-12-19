@@ -382,7 +382,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
                 <h3>No articles found</h3>
                 <p>Try refreshing or checking back later.</p>
-                <button onClick={handleRefresh} className="btn-secondary" style={{ marginTop: '15px' }}>Refresh Feed</button>
+                <button onClick={handleRefresh} className="btn-secondary" style={{ marginTop: '15px' }}>Force Refresh</button>
             </div>
         ) : (
             <VirtuosoGrid

@@ -76,7 +76,7 @@ const FeedFooter: React.FC<{ context?: FeedContext }> = React.memo(({ context })
   );
 });
 
-// FIX: Merge styles properly and disable overflow anchoring
+// FIX: Merge styles properly and disable overflow anchoring to prevent scroll jumps
 const GridList = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ style, children, ...props }, ref) => (
   <div 
     ref={ref} 
@@ -88,7 +88,7 @@ const GridList = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>
   </div>
 ));
 
-// FIX: Merge styles properly to preserve Virtuoso layout logic
+// FIX: Ensure stable height usage for Grid Items
 const GridItem = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ children, style, ...props }, ref) => (
   <div 
     {...props} 
@@ -118,7 +118,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const vibrate = useHaptic(); 
   const queryClient = useQueryClient();
   
-  // REMOVED: visibleArticleIndex state which was causing re-renders on every scroll
   const virtuosoRef = useRef<VirtuosoGridHandle>(null);
   const [scrollParent, setScrollParent] = useState<HTMLElement | undefined>(undefined);
   const [showNewPill, setShowNewPill] = useState(false); 
@@ -296,15 +295,18 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   const metaData = mode !== 'latest' ? (activeQuery.data as any)?.meta : null;
 
-  // --- SCROLL PARENT LOGIC ---
+  // --- SCROLL PARENT LOGIC (FIXED FOR DESKTOP) ---
   useEffect(() => {
-    if (isMobile && scrollToTopRef?.current) {
+    // If a scrollToTopRef is provided, it means we have a specific scroll container.
+    // Use it regardless of mobile/desktop to prevent window scroll conflicts.
+    if (scrollToTopRef?.current) {
         setScrollParent(scrollToTopRef.current);
     } else {
         setScrollParent(undefined);
     }
-  }, [scrollToTopRef, isMobile]);
+  }, [scrollToTopRef]); // Dependency simplified
 
+  // Reset scroll on filter change
   useEffect(() => {
     if (scrollToTopRef?.current) scrollToTopRef.current.scrollTop = 0;
   }, [mode, filters, scrollToTopRef]);
@@ -392,11 +394,12 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             </div>
         ) : (
             <VirtuosoGrid
-              key={`${mode}-${isMobile ? 'mobile' : 'desktop'}`}
+              key={mode} // Simplified key to avoid unnecessary remounts
               ref={virtuosoRef}
-              useWindowScroll={!isMobile}
+              // Only use window scroll if we DO NOT have a specific scroll parent
+              useWindowScroll={!scrollParent}
               style={{ height: '100%', width: '100%' }}
-              customScrollParent={isMobile ? scrollParent : undefined}
+              customScrollParent={scrollParent}
               data={articles}
               computeItemKey={(index, article) => article._id}
               context={feedContextValue} 
@@ -404,8 +407,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
               endReached={() => { 
                   if (mode === 'latest' && latestQuery.hasNextPage) latestQuery.fetchNextPage(); 
               }}
-              overscan={600}
-              // REMOVED: rangeChanged to prevent re-renders during scroll
+              overscan={800} // Increased overscan for smoother scrolling
               components={gridComponents} 
               itemContent={itemContent}   
             />

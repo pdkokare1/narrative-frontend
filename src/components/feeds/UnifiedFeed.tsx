@@ -66,6 +66,7 @@ const FeedHeader: React.FC<{ context?: FeedContext }> = React.memo(({ context })
 });
 
 const FeedFooter: React.FC<{ context?: FeedContext }> = React.memo(({ context }) => {
+  // Only show skeletons if strictly fetching next page
   if (!context || (context.mode === 'latest' && !context.isFetchingNextPage)) return <div style={{ height: '60px' }} />;
   if (context.mode !== 'latest') return <div style={{ height: '60px' }} />;
   
@@ -76,19 +77,18 @@ const FeedFooter: React.FC<{ context?: FeedContext }> = React.memo(({ context })
   );
 });
 
-// FIX: Merge styles properly and disable overflow anchoring to prevent scroll jumps
+// FIX: Merge styles properly and disable overflow anchoring
 const GridList = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ style, children, ...props }, ref) => (
   <div 
     ref={ref} 
     {...props} 
-    style={{ ...style, overflowAnchor: 'none' }} 
+    style={{ ...style, overflowAnchor: 'none', paddingBottom: '20px' }} 
     className="articles-grid"
   >
     {children}
   </div>
 ));
 
-// FIX: Ensure stable height usage for Grid Items
 const GridItem = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ children, style, ...props }, ref) => (
   <div 
     {...props} 
@@ -295,23 +295,20 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   const metaData = mode !== 'latest' ? (activeQuery.data as any)?.meta : null;
 
-  // --- SCROLL PARENT LOGIC (FIXED FOR DESKTOP) ---
+  // --- SCROLL PARENT LOGIC ---
   useEffect(() => {
-    // If a scrollToTopRef is provided, it means we have a specific scroll container.
-    // Use it regardless of mobile/desktop to prevent window scroll conflicts.
     if (scrollToTopRef?.current) {
         setScrollParent(scrollToTopRef.current);
     } else {
         setScrollParent(undefined);
     }
-  }, [scrollToTopRef]); // Dependency simplified
+  }, [scrollToTopRef]);
 
-  // Reset scroll on filter change
   useEffect(() => {
     if (scrollToTopRef?.current) scrollToTopRef.current.scrollTop = 0;
   }, [mode, filters, scrollToTopRef]);
 
-  // --- MEMOIZED COMPONENTS OBJECT ---
+  // --- MEMOIZED COMPONENTS ---
   const gridComponents = useMemo(() => ({
       Header: FeedHeader,
       Footer: FeedFooter,
@@ -319,7 +316,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       Item: GridItem
   }), []);
 
-  // --- MEMOIZED CONTEXT ---
   const feedContextValue = useMemo(() => ({
       mode,
       filters,
@@ -355,7 +351,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   // --- RENDER ---
   return (
     <>
-        {/* PULL TO REFRESH INDICATOR */}
         <div 
             className="pull-refresh-indicator" 
             style={{ 
@@ -394,20 +389,25 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             </div>
         ) : (
             <VirtuosoGrid
-              key={mode} // Simplified key to avoid unnecessary remounts
+              key={mode} 
               ref={virtuosoRef}
-              // Only use window scroll if we DO NOT have a specific scroll parent
-              useWindowScroll={!scrollParent}
+              // FIX: Default to FALSE (internal scrolling) on desktop if no custom parent is found. 
+              // This prevents the infinite loop where Window scroll is 0 but content is growing.
+              useWindowScroll={isMobile ? !scrollParent : false}
               style={{ height: '100%', width: '100%' }}
               customScrollParent={scrollParent}
               data={articles}
               computeItemKey={(index, article) => article._id}
               context={feedContextValue} 
               initialItemCount={12} 
+              // FIX: Added STRICT check for !isFetchingNextPage to stop infinite loops
               endReached={() => { 
-                  if (mode === 'latest' && latestQuery.hasNextPage) latestQuery.fetchNextPage(); 
+                  if (mode === 'latest' && latestQuery.hasNextPage && !latestQuery.isFetchingNextPage) {
+                      latestQuery.fetchNextPage(); 
+                  }
               }}
-              overscan={800} // Increased overscan for smoother scrolling
+              // FIX: Reduced overscan to prevent eager fetching of next page
+              overscan={400} 
               components={gridComponents} 
               itemContent={itemContent}   
             />

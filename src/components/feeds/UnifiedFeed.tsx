@@ -76,14 +76,26 @@ const FeedFooter: React.FC<{ context?: FeedContext }> = React.memo(({ context })
   );
 });
 
+// FIX 1: Add overflowAnchor: 'none' to prevent browser scroll jumping
 const GridList = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ style, children, ...props }, ref) => (
-  <div ref={ref} {...props} style={{ ...style }} className="articles-grid">
+  <div 
+    ref={ref} 
+    {...props} 
+    style={{ ...style, overflowAnchor: 'none' }} 
+    className="articles-grid"
+  >
     {children}
   </div>
 ));
 
+// FIX 2: Ensure height is 100% so it fills the grid cell properly
 const GridItem = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ children, ...props }, ref) => (
-  <div {...props} ref={ref} className="article-card-wrapper" style={{ margin: 0, minHeight: '300px' }}>
+  <div 
+    {...props} 
+    ref={ref} 
+    className="article-card-wrapper" 
+    style={{ margin: 0, minHeight: '300px', height: '100%' }}
+  >
     {children}
   </div>
 ));
@@ -96,7 +108,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   onCompare, 
   savedArticleIds, 
   onToggleSave, 
-  showTooltip,
+  showTooltip, 
   scrollToTopRef 
 }) => {
   const { addToast } = useToast();
@@ -123,8 +135,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     queryFn: async ({ pageParam = 0 }) => {
       try {
         const { data } = await api.fetchArticles({ ...filters, limit: 12, offset: pageParam as number });
-        // DEBUG: Log the raw data to see structure
-        console.log(`[UnifiedFeed] Fetched page ${pageParam}:`, data);
         return data;
       } catch (error) {
         console.error('[UnifiedFeed] Fetch Error:', error);
@@ -392,12 +402,14 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
               style={{ height: '100%', width: '100%' }}
               customScrollParent={isMobile ? scrollParent : undefined}
               data={articles}
+              // FIX 3: Compute stable keys to prevent React state loss (glitching)
+              computeItemKey={(index, article) => article._id}
               context={feedContextValue} 
               initialItemCount={12} 
               endReached={() => { 
                   if (mode === 'latest' && latestQuery.hasNextPage) latestQuery.fetchNextPage(); 
               }}
-              overscan={800} 
+              overscan={600} 
               rangeChanged={({ startIndex }) => setVisibleArticleIndex(startIndex)}
               components={gridComponents} 
               itemContent={itemContent}   

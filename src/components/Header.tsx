@@ -158,4 +158,3 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
 };
 
 export default Header;
-}

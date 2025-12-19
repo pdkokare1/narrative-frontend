@@ -77,7 +77,6 @@ const FeedFooter: React.FC<{ context?: FeedContext }> = React.memo(({ context })
   );
 });
 
-// FIX: Merge styles properly and disable overflow anchoring
 const GridList = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ style, children, ...props }, ref) => (
   <div 
     ref={ref} 
@@ -142,14 +141,28 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage: any, allPages) => {
+      // 1. ROBUST CHECK: Extract items correctly
+      const lastPageItems = Array.isArray(lastPage) ? lastPage : (lastPage?.articles || lastPage?.data || []);
+      
+      // 2. STOP if the last page was empty (no more content)
+      if (lastPageItems.length === 0) return undefined;
+
+      // 3. STOP if we received fewer items than requested (implies end of list)
+      if (lastPageItems.length < 12) return undefined;
+
+      // 4. Calculate next offset
       const loadedCount = allPages.reduce((acc, page: any) => {
           const items = Array.isArray(page) ? page : (page?.articles || page?.data || []);
           return acc + items.length;
       }, 0);
       
-      const totalAvailable = lastPage?.pagination?.total || lastPage?.total || 10000;
+      // 5. Check against total ONLY if total is explicitly provided and valid
+      const totalAvailable = lastPage?.pagination?.total || lastPage?.total;
+      if (typeof totalAvailable === 'number' && loadedCount >= totalAvailable) {
+          return undefined;
+      }
       
-      return loadedCount < totalAvailable ? loadedCount : undefined;
+      return loadedCount;
     },
     enabled: mode === 'latest',
     staleTime: 1000 * 60 * 5, 
@@ -391,8 +404,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             <VirtuosoGrid
               key={mode} 
               ref={virtuosoRef}
-              // FIX: Default to FALSE (internal scrolling) on desktop if no custom parent is found. 
-              // This prevents the infinite loop where Window scroll is 0 but content is growing.
               useWindowScroll={isMobile ? !scrollParent : false}
               style={{ height: '100%', width: '100%' }}
               customScrollParent={scrollParent}
@@ -400,13 +411,12 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
               computeItemKey={(index, article) => article._id}
               context={feedContextValue} 
               initialItemCount={12} 
-              // FIX: Added STRICT check for !isFetchingNextPage to stop infinite loops
               endReached={() => { 
-                  if (mode === 'latest' && latestQuery.hasNextPage && !latestQuery.isFetchingNextPage) {
+                  // FIX: Robust check to prevent infinite loop
+                  if (mode === 'latest' && latestQuery.hasNextPage && !latestQuery.isFetchingNextPage && !latestQuery.isFetching) {
                       latestQuery.fetchNextPage(); 
                   }
               }}
-              // FIX: Reduced overscan to prevent eager fetching of next page
               overscan={400} 
               components={gridComponents} 
               itemContent={itemContent}   

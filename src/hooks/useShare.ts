@@ -48,4 +48,3 @@ const useShare = () => {
 };
 
 export default useShare;
-}

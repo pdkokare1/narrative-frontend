@@ -1,5 +1,21 @@
 /* src/components/feeds/UnifiedFeed.css */
 
+/* --- GRID LAYOUT (Crucial for Virtuoso Stability) --- */
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 10px;
+  /* Prevent scrolling jumps */
+  will-change: scroll-position;
+}
+
+/* Ensure items fill their allocated grid space */
+.article-card-wrapper {
+  height: 100%;
+  width: 100%;
+}
+
 /* --- PULL TO REFRESH --- */
 .pull-refresh-indicator {
   display: flex;
@@ -57,5 +73,11 @@
 @media (max-width: 768px) {
   .new-content-pill {
     top: 130px; 
+  }
+  
+  .articles-grid {
+    gap: 15px;
+    padding: 15px;
+    /* On mobile, sometimes single column is preferred, but auto-fill handles it */
   }
 }

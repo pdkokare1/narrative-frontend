@@ -100,8 +100,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   scrollToTopRef 
 }) => {
   const { addToast } = useToast();
-  // Using Radio Context triggers re-renders on time update.
-  // We accept this, but MUST ensure passed props to Virtuoso are stable.
   const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
   const { handleShare } = useShare(); 
   const isMobile = useIsMobile(); 
@@ -123,13 +121,27 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const latestQuery = useInfiniteQuery({
     queryKey: ['latestFeed', filters],
     queryFn: async ({ pageParam = 0 }) => {
-      const { data } = await api.fetchArticles({ ...filters, limit: 12, offset: pageParam as number });
-      return data;
+      try {
+        const { data } = await api.fetchArticles({ ...filters, limit: 12, offset: pageParam as number });
+        // DEBUG: Log the raw data to see structure
+        console.log(`[UnifiedFeed] Fetched page ${pageParam}:`, data);
+        return data;
+      } catch (error) {
+        console.error('[UnifiedFeed] Fetch Error:', error);
+        throw error;
+      }
     },
     initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
-      const loadedCount = allPages.reduce((acc, page) => acc + page.articles.length, 0);
-      const totalAvailable = lastPage.pagination?.total || 0;
+    getNextPageParam: (lastPage: any, allPages) => {
+      // Robustly calculate loaded count based on structure
+      const loadedCount = allPages.reduce((acc, page: any) => {
+          const items = Array.isArray(page) ? page : (page?.articles || page?.data || []);
+          return acc + items.length;
+      }, 0);
+      
+      // Robustly find total available, fallback to high number if unknown to allow scrolling
+      const totalAvailable = lastPage?.pagination?.total || lastPage?.total || 10000;
+      
       return loadedCount < totalAvailable ? loadedCount : undefined;
     },
     enabled: mode === 'latest',
@@ -156,9 +168,19 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       const checkForUpdates = async () => {
           try {
               const { data } = await api.fetchArticles({ ...filters, limit: 1, offset: 0 });
-              if (data.articles && data.articles.length > 0) {
-                  const latestRemote = new Date(data.articles[0].publishedAt).getTime();
-                  const currentTop = latestQuery.data?.pages[0]?.articles[0];
+              let latestArticle: IArticle | null = null;
+              
+              if (data?.articles && data.articles.length > 0) latestArticle = data.articles[0];
+              // @ts-ignore
+              else if (Array.isArray(data) && data.length > 0) latestArticle = data[0];
+
+              if (latestArticle) {
+                  const latestRemote = new Date(latestArticle.publishedAt).getTime();
+                  // Safe access to current top article
+                  const currentPages = latestQuery.data?.pages;
+                  const firstPage = currentPages?.[0] as any;
+                  const currentTop = (Array.isArray(firstPage) ? firstPage[0] : firstPage?.articles?.[0]);
+                  
                   if (currentTop && latestRemote > new Date(currentTop.publishedAt).getTime()) {
                       setShowNewPill(true);
                   }
@@ -241,14 +263,28 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const activeQuery = mode === 'latest' ? latestQuery : (mode === 'foryou' ? forYouQuery : personalizedQuery);
   const { status } = activeQuery;
 
+  // --- ROBUST ARTICLE EXTRACTION ---
   const articles = useMemo(() => {
     let rawList: IArticle[] = [];
+    
     if (mode === 'latest') {
-      rawList = latestQuery.data?.pages.flatMap(page => page.articles) || [];
+      if (!latestQuery.data) return [];
+      
+      // Handle legacy API (array) vs new API (object with articles property)
+      rawList = latestQuery.data.pages.flatMap((page: any) => {
+        if (Array.isArray(page)) return page;
+        if (page?.articles && Array.isArray(page.articles)) return page.articles;
+        if (page?.data && Array.isArray(page.data)) return page.data;
+        return [];
+      });
+      
     } else {
-      // @ts-ignore
-      rawList = activeQuery.data?.articles || [];
+      const data = activeQuery.data as any;
+      if (Array.isArray(data)) rawList = data;
+      else if (data?.articles && Array.isArray(data.articles)) rawList = data.articles;
+      else if (data?.data && Array.isArray(data.data)) rawList = data.data;
     }
+    
     return rawList.filter(a => !!a && !!a._id);
   }, [mode, latestQuery.data, activeQuery.data]);
 
@@ -276,8 +312,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   }), []);
 
   // --- MEMOIZED CONTEXT ---
-  // Crucial fix: The context object must NOT change reference on every render
-  // We only include dependencies that actually affect the header/footer
   const feedContextValue = useMemo(() => ({
       mode,
       filters,
@@ -346,7 +380,9 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             </div>
         ) : articles.length === 0 ? (
             <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
-                <p>No articles found.</p>
+                <h3>No articles found</h3>
+                <p>Try refreshing or checking back later.</p>
+                <button onClick={handleRefresh} className="btn-secondary" style={{ marginTop: '15px' }}>Refresh Feed</button>
             </div>
         ) : (
             <VirtuosoGrid
@@ -356,7 +392,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
               style={{ height: '100%', width: '100%' }}
               customScrollParent={isMobile ? scrollParent : undefined}
               data={articles}
-              context={feedContextValue} // Passing STABLE context
+              context={feedContextValue} 
               initialItemCount={12} 
               endReached={() => { 
                   if (mode === 'latest' && latestQuery.hasNextPage) latestQuery.fetchNextPage(); 

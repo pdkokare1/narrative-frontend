@@ -22,4 +22,3 @@ const useHaptic = () => {
 };
 
 export default useHaptic;
-}

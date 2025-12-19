@@ -342,4 +342,3 @@ function PageNotFound() {
 }
 
 export default App;
-}

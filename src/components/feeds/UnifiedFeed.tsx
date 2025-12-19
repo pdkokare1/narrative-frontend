@@ -76,7 +76,7 @@ const FeedFooter: React.FC<{ context?: FeedContext }> = React.memo(({ context })
   );
 });
 
-// FIX 1: Add overflowAnchor: 'none' to prevent browser scroll jumping
+// FIX: Merge styles properly and disable overflow anchoring
 const GridList = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ style, children, ...props }, ref) => (
   <div 
     ref={ref} 
@@ -88,13 +88,13 @@ const GridList = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>
   </div>
 ));
 
-// FIX 2: Ensure height is 100% so it fills the grid cell properly
-const GridItem = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ children, ...props }, ref) => (
+// FIX: Merge styles properly to preserve Virtuoso layout logic
+const GridItem = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ children, style, ...props }, ref) => (
   <div 
     {...props} 
     ref={ref} 
     className="article-card-wrapper" 
-    style={{ margin: 0, minHeight: '300px', height: '100%' }}
+    style={{ ...style, margin: 0, minHeight: '300px', height: '100%' }}
   >
     {children}
   </div>
@@ -118,7 +118,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const vibrate = useHaptic(); 
   const queryClient = useQueryClient();
   
-  const [visibleArticleIndex, setVisibleArticleIndex] = useState(0);
+  // REMOVED: visibleArticleIndex state which was causing re-renders on every scroll
   const virtuosoRef = useRef<VirtuosoGridHandle>(null);
   const [scrollParent, setScrollParent] = useState<HTMLElement | undefined>(undefined);
   const [showNewPill, setShowNewPill] = useState(false); 
@@ -143,13 +143,11 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage: any, allPages) => {
-      // Robustly calculate loaded count based on structure
       const loadedCount = allPages.reduce((acc, page: any) => {
           const items = Array.isArray(page) ? page : (page?.articles || page?.data || []);
           return acc + items.length;
       }, 0);
       
-      // Robustly find total available, fallback to high number if unknown to allow scrolling
       const totalAvailable = lastPage?.pagination?.total || lastPage?.total || 10000;
       
       return loadedCount < totalAvailable ? loadedCount : undefined;
@@ -186,7 +184,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
               if (latestArticle) {
                   const latestRemote = new Date(latestArticle.publishedAt).getTime();
-                  // Safe access to current top article
                   const currentPages = latestQuery.data?.pages;
                   const firstPage = currentPages?.[0] as any;
                   const currentTop = (Array.isArray(firstPage) ? firstPage[0] : firstPage?.articles?.[0]);
@@ -280,7 +277,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     if (mode === 'latest') {
       if (!latestQuery.data) return [];
       
-      // Handle legacy API (array) vs new API (object with articles property)
       rawList = latestQuery.data.pages.flatMap((page: any) => {
         if (Array.isArray(page)) return page;
         if (page?.articles && Array.isArray(page.articles)) return page.articles;
@@ -402,15 +398,14 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
               style={{ height: '100%', width: '100%' }}
               customScrollParent={isMobile ? scrollParent : undefined}
               data={articles}
-              // FIX 3: Compute stable keys to prevent React state loss (glitching)
               computeItemKey={(index, article) => article._id}
               context={feedContextValue} 
               initialItemCount={12} 
               endReached={() => { 
                   if (mode === 'latest' && latestQuery.hasNextPage) latestQuery.fetchNextPage(); 
               }}
-              overscan={600} 
-              rangeChanged={({ startIndex }) => setVisibleArticleIndex(startIndex)}
+              overscan={600}
+              // REMOVED: rangeChanged to prevent re-renders during scroll
               components={gridComponents} 
               itemContent={itemContent}   
             />

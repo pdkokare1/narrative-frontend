@@ -63,4 +63,3 @@ const useNativeFeatures = (user: any) => {
 };
 
 export default useNativeFeatures;
-}

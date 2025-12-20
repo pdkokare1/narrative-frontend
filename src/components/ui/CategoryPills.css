@@ -6,8 +6,9 @@
     overflow-x: auto;
     white-space: nowrap;
     
-    /* Layout & Spacing matches the feed design */
-    padding: 8px 16px 12px 16px;
+    /* Layout & Spacing */
+    /* Reduced bottom padding from 12px to 4px to decrease gap with Newsfeed */
+    padding: 8px 16px 4px 16px; 
     margin-bottom: 0;
     align-items: center;
     
@@ -15,10 +16,9 @@
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE 10+ */
     
-    /* Smooth scrolling for the auto-scroll feature */
+    /* Smooth scrolling */
     scroll-behavior: smooth;
     
-    /* Optional: Ensure it sits correctly in the layout */
     width: 100%;
     box-sizing: border-box;
 }
@@ -28,11 +28,8 @@
 }
 
 .pill {
-    /* Layout & Size */
+    /* Base Desktop Size */
     padding: 8px 16px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     
     /* Typography */
     font-family: var(--font-body, sans-serif);
@@ -65,22 +62,33 @@
     transform: translateY(-1px);
 }
 
-/* Active State - The "Luxury" Look */
+/* Active State - Luxury Look */
 .pill.active {
-    /* Uses the Gold/Bronze gradient defined in variables.css */
     background: var(--gradient-accent);
-    
-    /* Ensures text is readable (Black on Gold, White on Bronze) */
     color: var(--text-inverse);
-    
     border-color: transparent;
     font-weight: 600;
-    
-    /* Adds the glow effect */
     box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 /* Press Animation */
 .pill:active {
     transform: scale(0.96);
+}
+
+/* ================= MOBILE OPTIMIZATIONS ================= */
+@media (max-width: 768px) {
+    .category-pills-container {
+        /* Tighter side padding on mobile */
+        padding-left: 12px;
+        padding-right: 12px;
+        gap: 6px;
+    }
+
+    .pill {
+        /* Smaller Size for Mobile */
+        padding: 6px 12px;
+        font-size: 0.75rem; /* Smaller text (12px approx) */
+        border-radius: 20px;
+    }
 }

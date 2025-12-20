@@ -5,6 +5,7 @@ import { isOpinion, getOptimizedImageUrl, generateImageSrcSet } from '../utils/h
 import { getFallbackImage } from '../utils/constants'; 
 import SmartBriefingModal from './modals/SmartBriefingModal';
 import { IArticle } from '../types';
+import useHaptic from '../hooks/useHaptic'; // Import Haptics
 
 // --- UI Components ---
 import Button from './ui/Button';
@@ -38,7 +39,8 @@ const ArticleCard = memo(function ArticleCard({
   onStop 
 }: ArticleCardProps) {
   const [showBriefing, setShowBriefing] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false); 
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const triggerHaptic = useHaptic(); // Initialize Haptics
 
   // 1. Calculate values safely
   const isHardNews = article?.analysisType === 'Full';
@@ -67,6 +69,12 @@ const ArticleCard = memo(function ArticleCard({
   };
 
   const preventBubble = (e: React.MouseEvent) => e.stopPropagation();
+
+  // Helper for Haptic Interaction
+  const handleInteraction = (action: () => void, type: 'light' | 'medium' = 'light') => {
+      triggerHaptic(type);
+      action();
+  };
 
   if (!article) return null;
 
@@ -104,7 +112,10 @@ const ArticleCard = memo(function ArticleCard({
           {/* ACCESSIBILITY FIX: Use button for interactive headline */}
           <button 
             className="article-headline-btn"
-            onClick={(e) => { preventBubble(e); setShowBriefing(true); }}
+            onClick={(e) => { 
+                preventBubble(e); 
+                handleInteraction(() => setShowBriefing(true)); 
+            }}
             aria-label={`Read analysis for ${article.headline}`}
           >
             {article.headline}
@@ -136,7 +147,11 @@ const ArticleCard = memo(function ArticleCard({
                     <Button 
                         variant="icon" 
                         isActive={isPlaying}
-                        onClick={(e) => { preventBubble(e); (isPlaying && onStop ? onStop() : onPlay?.()); }}
+                        onClick={(e) => { 
+                            preventBubble(e); 
+                            // Medium impact for Play/Pause as it's a primary action
+                            handleInteraction(() => (isPlaying && onStop ? onStop() : onPlay?.()), 'medium'); 
+                        }}
                         title={isPlaying ? "Stop" : "Listen"}
                         aria-label={isPlaying ? "Stop audio" : "Listen to article"}
                     >
@@ -146,7 +161,11 @@ const ArticleCard = memo(function ArticleCard({
                     <Button 
                         variant="icon" 
                         isActive={isSaved}
-                        onClick={(e) => { preventBubble(e); onToggleSave(article); }}
+                        onClick={(e) => { 
+                            preventBubble(e); 
+                            // Light impact for Save (immediate feedback)
+                            handleInteraction(() => onToggleSave(article)); 
+                        }}
                         title={isSaved ? "Remove" : "Save"}
                         aria-label={isSaved ? "Remove from saved" : "Save article"}
                     >
@@ -155,7 +174,10 @@ const ArticleCard = memo(function ArticleCard({
 
                     <Button 
                         variant="icon" 
-                        onClick={(e) => { preventBubble(e); onShare(article); }}
+                        onClick={(e) => { 
+                            preventBubble(e); 
+                            handleInteraction(() => onShare(article)); 
+                        }}
                         title="Share"
                         aria-label="Share article"
                     >
@@ -165,7 +187,10 @@ const ArticleCard = memo(function ArticleCard({
                     {(isHardNews || (article.clusterCount || 0) > 1) && (
                         <Button 
                             variant="icon" 
-                            onClick={(e) => { preventBubble(e); onCompare(article); }}
+                            onClick={(e) => { 
+                                preventBubble(e); 
+                                handleInteraction(() => onCompare(article)); 
+                            }}
                             title="Compare Coverage"
                             aria-label="Compare coverage"
                         >
@@ -176,7 +201,10 @@ const ArticleCard = memo(function ArticleCard({
 
                 <Button 
                     variant="text"
-                    onClick={(e) => { preventBubble(e); isHardNews ? setShowBriefing(true) : onRead(article); }}
+                    onClick={(e) => { 
+                        preventBubble(e); 
+                        handleInteraction(() => isHardNews ? setShowBriefing(true) : onRead(article)); 
+                    }}
                 >
                     {isHardNews ? 'Smart Brief' : 'Read Source'}
                 </Button>

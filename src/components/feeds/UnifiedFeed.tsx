@@ -35,7 +35,7 @@ const FeedHeader: React.FC<{
   metaData: any 
 }> = React.memo(({ mode, filters, onFilterChange, vibrate, metaData }) => {
   return (
-    <div style={{ paddingBottom: '15px' }}>
+    <div className="feed-header-sticky">
         {mode === 'latest' && onFilterChange && (
             <CategoryPills 
               selectedCategory={filters.category || 'All Categories'} 
@@ -44,12 +44,12 @@ const FeedHeader: React.FC<{
         )}
         
         {mode === 'foryou' && metaData && (
-             <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
+             <div style={{ textAlign: 'center', paddingBottom: '15px', color: 'var(--text-secondary)', fontSize: '12px' }}>
                 <p>Based on your interest in <strong>{metaData.basedOnCategory || 'various topics'}</strong>. Including {metaData.usualLean || 'balanced'} sources and opposing views.</p>
              </div>
         )}
         {mode === 'personalized' && metaData && (
-             <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
+             <div style={{ textAlign: 'center', paddingBottom: '15px', color: 'var(--text-secondary)', fontSize: '12px' }}>
                 <p>Curated for you based on <strong>{metaData.topCategories?.join(', ') || 'your history'}</strong>.</p>
              </div>
         )}
@@ -346,7 +346,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                     ))}
                 </div>
 
-                {/* MANUAL LOAD MORE BUTTON - PREVENTS INFINITE LOOP */}
+                {/* MANUAL LOAD MORE BUTTON */}
                 {mode === 'latest' && (
                     <div className="load-more-container">
                         {latestQuery.isFetchingNextPage ? (

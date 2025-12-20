@@ -21,11 +21,9 @@
   /* 1. STICKY FILTER HEADER */
   .feed-header-sticky {
     position: sticky;
-    top: 60px; /* Adjust if your Main Header is taller/shorter */
+    top: 60px; 
     z-index: 20;
     background: var(--bg-default); 
-    
-    /* REMOVED PADDING to reduce gap between pills and card */
     padding-bottom: 0px; 
     margin-bottom: 0px;
   }
@@ -36,8 +34,8 @@
     flex-direction: column;
     gap: 0; 
     
-    /* Reduced side padding (10px -> 4px) for wider cards */
-    padding: 0 4px 80px 4px; 
+    /* REMOVED SIDE PADDING completely to maximize width */
+    padding: 0 0 80px 0; 
     
     overflow: visible; 
   }
@@ -46,15 +44,19 @@
   .articles-grid.mobile-stack .article-card-wrapper {
     position: sticky;
     
-    /* TOP: Reduced to 95px to sit tighter under the pills */
+    /* TOP: 95px keeps it below the sticky pills */
     top: 95px; 
     
-    /* HEIGHT: Increased subtraction to 195px to ensure bottom content clears the Nav Dock */
-    height: calc(100dvh - 195px);
+    /* HEIGHT: Adjusted to 230px subtraction.
+       This lifts the bottom of the card UP, ensuring footer buttons 
+       are visible above the Bottom Nav Dock and Home Indicator. */
+    height: calc(100dvh - 230px);
     
-    min-height: 400px;
+    /* Prevent card from crushing too much on tiny screens */
+    min-height: 380px;
     
-    margin-bottom: 25px; /* Spacing between stacks */
+    /* Margin between cards in the stack */
+    margin-bottom: 25px; 
     z-index: 10;
   }
 }

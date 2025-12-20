@@ -1,0 +1,60 @@
+/* src/components/ui/CategoryPills.css */
+
+.category-pills-container {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    white-space: nowrap;
+    
+    /* Hide scrollbars for cleaner UI */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+    
+    /* Spacing matches the feed design */
+    padding: 4px 12px 8px 12px;
+    margin-bottom: 0;
+    align-items: center;
+    
+    /* Smooth scrolling for the auto-scroll feature */
+    scroll-behavior: smooth;
+}
+
+.category-pills-container::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: none;
+    
+    /* Default State */
+    background: var(--surface-hover, #f0f0f0);
+    color: var(--text-secondary, #666);
+    
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    
+    /* Prevent text selection */
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.pill:hover {
+    background: var(--border, #e0e0e0);
+}
+
+.pill:active {
+    transform: scale(0.95);
+}
+
+/* Active State */
+.pill.active {
+    background: var(--primary, #007bff);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}

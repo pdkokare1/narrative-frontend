@@ -1,5 +1,5 @@
 // src/components/feeds/UnifiedFeed.tsx
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'; 
+import React, { useState, useEffect, useMemo } from 'react'; 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '../../services/api'; 
 import ArticleCard from '../ArticleCard';
@@ -79,15 +79,10 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const queryClient = useQueryClient();
   
   const [showNewPill, setShowNewPill] = useState(false); 
-  
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   // CONSTANTS
   const BATCH_SIZE = 24; 
-
-  // --- PULL TO REFRESH STATE ---
-  const [pullY, setPullY] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const touchStartRef = useRef(0);
-  const isDraggingRef = useRef(false);
 
   // --- DATA FETCHING ---
   const latestQuery = useInfiniteQuery({
@@ -224,8 +219,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       setIsRefreshing(true);
       setShowNewPill(false);
       
-      await new Promise(r => setTimeout(r, 800));
-
       if (mode === 'latest') {
           queryClient.resetQueries({ queryKey: ['latestFeed'] });
           await latestQuery.refetch();
@@ -236,56 +229,10 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       }
       
       setIsRefreshing(false);
-      setPullY(0);
       if (scrollToTopRef?.current) {
           scrollToTopRef.current.scrollTop = 0;
       }
   };
-
-  // --- PULL GESTURE HANDLERS ---
-  useEffect(() => {
-      if (!isMobile || !scrollToTopRef?.current) return;
-      const container = scrollToTopRef.current;
-
-      const handleTouchStart = (e: TouchEvent) => {
-          if (container.scrollTop <= 0) {
-              touchStartRef.current = e.touches[0].clientY;
-              isDraggingRef.current = true;
-          }
-      };
-
-      const handleTouchMove = (e: TouchEvent) => {
-          if (!isDraggingRef.current) return;
-          const y = e.touches[0].clientY;
-          const diff = y - touchStartRef.current;
-          
-          if (diff > 0 && container.scrollTop <= 0) {
-              setPullY(Math.min(diff * 0.4, 120)); 
-              if (diff > 10 && e.cancelable) e.preventDefault(); 
-          } else {
-              setPullY(0);
-          }
-      };
-
-      const handleTouchEnd = () => {
-          isDraggingRef.current = false;
-          if (pullY > 60) {
-              handleRefresh();
-          } else {
-              setPullY(0);
-          }
-      };
-
-      container.addEventListener('touchstart', handleTouchStart, { passive: false });
-      container.addEventListener('touchmove', handleTouchMove, { passive: false });
-      container.addEventListener('touchend', handleTouchEnd);
-
-      return () => {
-          container.removeEventListener('touchstart', handleTouchStart);
-          container.removeEventListener('touchmove', handleTouchMove);
-          container.removeEventListener('touchend', handleTouchEnd);
-      };
-  }, [isMobile, scrollToTopRef, pullY]);
 
   const metaData = mode !== 'latest' ? (activeQuery.data as any)?.meta : null;
 
@@ -293,21 +240,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
         
-        {/* PULL INDICATOR */}
-        <div 
-            className="pull-refresh-indicator" 
-            style={{ 
-                height: `${pullY}px`, 
-                opacity: pullY > 0 ? 1 : 0 
-            }}
-        >
-            {isRefreshing ? (
-                <div className="spinner-small" style={{width: '20px', height: '20px'}}></div>
-            ) : (
-                <span style={{ transform: `rotate(${pullY * 2}deg)` }}>↓</span>
-            )}
-        </div>
-
         {/* NEW CONTENT PILL */}
         <div className={`new-content-pill ${showNewPill ? 'visible' : ''}`} onClick={handleRefresh}>
             <span>↑ New Articles Available</span>
@@ -328,7 +260,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             className={`articles-grid ${isMobile ? 'mobile-stack' : ''}`} 
             ref={scrollToTopRef}
         >
-            {status === 'pending' ? (
+            {status === 'pending' && !isRefreshing ? (
                  <>
                    {[...Array(8)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) }
                  </>
@@ -337,7 +269,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                     <p>Unable to load feed.</p>
                     <button onClick={() => window.location.reload()} className="btn-secondary" style={{ marginTop: '10px' }}>Retry</button>
                 </div>
-            ) : articles.length === 0 ? (
+            ) : articles.length === 0 && !isRefreshing ? (
                 <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
                     <h3>No articles found</h3>
                     <p>Try refreshing or checking back later.</p>
@@ -345,6 +277,11 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                 </div>
             ) : (
                 <>
+                    {/* If refreshing, maybe show skeletons again or just keep content? 
+                        Usually keeping content is better UX, but let's show skeletons if we cleared query. 
+                        In handleRefresh we resetQueries for latestFeed. 
+                        So status might go to 'pending' or 'fetching'. 
+                    */}
                     {articles.map((article) => (
                         <div className="article-card-wrapper" key={article._id}>
                              <ArticleCard

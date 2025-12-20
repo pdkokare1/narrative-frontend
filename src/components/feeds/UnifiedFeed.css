@@ -15,49 +15,64 @@
   width: 100%;
 }
 
-/* --- MOBILE STACKED LAYOUT --- */
+/* --- MOBILE STACKED LAYOUT (Snap Scrolling) --- */
 @media (max-width: 768px) {
   
-  /* 1. STICKY FILTER HEADER */
-  .feed-header-sticky {
-    position: sticky;
-    top: 60px; 
-    z-index: 20;
-    background: var(--bg-default); 
-    padding-bottom: 0px; 
-    margin-bottom: 0px;
-  }
-
-  /* 2. STACK CONTAINER */
+  /* Main Container acts as the Scroll Window */
   .articles-grid.mobile-stack {
     display: flex;
     flex-direction: column;
-    gap: 0; 
+    gap: 12px; /* Gap between cards */
     
-    /* REMOVED SIDE PADDING completely to maximize width */
-    padding: 0 0 80px 0; 
+    /* WIDER CARDS: Reduced padding from 16px to 4px */
+    padding: 0 4px 80px 4px; 
     
-    overflow: visible; 
+    /* SNAP SCROLLING ENGINES */
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    
+    /* Calculate exact height: 100dvh - (Header + Pills + Buffer) */
+    /* Adjust 115px if the header/pills are taller/shorter */
+    height: calc(100dvh - 115px);
+    
+    /* Hide Scrollbar */
+    scrollbar-width: none; 
+  }
+  
+  .articles-grid.mobile-stack::-webkit-scrollbar {
+    display: none;
   }
 
-  /* 3. THE PERFECTLY CENTERED CARD */
+  /* INDIVIDUAL CARD WRAPPER */
   .articles-grid.mobile-stack .article-card-wrapper {
+    position: relative;
+    width: 100%;
+    
+    /* FORCE SINGLE CARD HEIGHT */
+    /* This ensures the card fills the available view perfectly */
+    height: 100%; 
+    min-height: 100%;
+
+    /* SNAP ALIGNMENT */
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+  }
+  
+  /* STICKY HEADER (Pills) */
+  .feed-header-sticky {
     position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--background); 
     
-    /* TOP: 95px keeps it below the sticky pills */
-    top: 95px; 
+    /* Reduced padding as requested */
+    padding-top: 4px;
+    padding-bottom: 4px;
+    margin-bottom: 0px;
     
-    /* HEIGHT: Adjusted to 230px subtraction.
-       This lifts the bottom of the card UP, ensuring footer buttons 
-       are visible above the Bottom Nav Dock and Home Indicator. */
-    height: calc(100dvh - 230px);
-    
-    /* Prevent card from crushing too much on tiny screens */
-    min-height: 380px;
-    
-    /* Margin between cards in the stack */
-    margin-bottom: 25px; 
-    z-index: 10;
+    /* Ensure it sits above scrolling content if needed */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
   }
 }
 
@@ -69,9 +84,10 @@
   width: 100%;
   overflow: hidden;
   transition: height 0.1s ease-out;
-  color: var(--accent-primary);
+  color: var(--primary);
   font-size: 20px;
   font-weight: 700;
+  background: var(--background);
 }
 
 /* --- NEW CONTENT PILL --- */
@@ -84,8 +100,8 @@
   background: rgba(15, 15, 15, 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--accent-primary);
-  color: var(--accent-primary);
+  border: 1px solid var(--primary);
+  color: var(--primary);
   
   padding: 8px 20px;
   border-radius: 30px;
@@ -108,7 +124,7 @@
 }
 
 .new-content-pill:hover {
-  background: var(--accent-primary);
+  background: var(--primary);
   color: #000;
   transform: translateX(-50%) scale(1.05);
 }
@@ -120,11 +136,14 @@
   align-items: center;
   padding: 30px 0;
   width: 100%;
+  
+  /* Ensure it snaps too so you can scroll to it */
+  scroll-snap-align: start;
 }
 
 .load-more-btn {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-color);
+  background: var(--surface);
+  border: 1px solid var(--border);
   color: var(--text-primary);
   padding: 12px 24px;
   border-radius: 25px;
@@ -140,7 +159,7 @@
 }
 
 .end-message {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-size: 12px;
   font-style: italic;
 }

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 // @ts-ignore
 import Toast from '../components/ui/Toast';
+import useHaptic from '../hooks/useHaptic'; // Import Haptics
 
 interface ToastAction {
   label: string;
@@ -30,17 +31,24 @@ export function useToast() {
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const triggerHaptic = useHaptic(); // Initialize Haptic Hook
 
   const addToast = useCallback((message: string, type: 'info' | 'success' | 'error' = 'info', action: ToastAction | null = null) => {
     const id = Date.now();
+
+    // UX IMPROVEMENT: Sensory Feedback
+    // Trigger vibration based on toast type
+    if (type === 'success') triggerHaptic('success');
+    else if (type === 'error') triggerHaptic('error');
+    else triggerHaptic('light');
+
     // UX IMPROVEMENT: Clear existing toasts so only ONE shows at a time.
-    // This prevents "notification spam" covering the mobile screen.
     setToasts([{ id, message, type, action }]);
     
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
-  }, []);
+  }, [triggerHaptic]); // Added dependency
 
   const removeToast = (id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));

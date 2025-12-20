@@ -5,6 +5,7 @@ import * as api from './services/api';
 import ArticleCard from './components/ArticleCard'; 
 import SkeletonCard from './components/ui/SkeletonCard';
 import { useToast } from './context/ToastContext';
+import { useRadio } from './context/RadioContext'; // Smart Radio
 import useShare from './hooks/useShare'; 
 import './App.css'; 
 import { IArticle } from './types';
@@ -35,6 +36,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const { addToast } = useToast();
+  const { updateContextQueue } = useRadio(); // Smart Radio
   const { handleShare } = useShare(); 
 
   useEffect(() => {
@@ -54,6 +56,13 @@ const SearchResults: React.FC<SearchResultsProps> = ({
     };
     performSearch();
   }, [query, addToast]);
+
+  // --- SMART RADIO REGISTRATION ---
+  useEffect(() => {
+    if (articles.length > 0 && query) {
+      updateContextQueue(articles, `Search: ${query}`);
+    }
+  }, [articles, query, updateContextQueue]);
 
   const handleReadClick = (article: IArticle) => {
     api.logRead(article._id).catch(err => console.error("Log Read Error:", err));

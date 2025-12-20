@@ -1,5 +1,5 @@
 // src/components/feeds/UnifiedFeed.tsx
-import React, { useState, useEffect, useMemo } from 'react'; 
+import React, { useState, useEffect, useMemo, useRef } from 'react'; 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '../../services/api'; 
 import ArticleCard from '../ArticleCard';
@@ -12,6 +12,35 @@ import useIsMobile from '../../hooks/useIsMobile';
 import useHaptic from '../../hooks/useHaptic'; 
 import { IArticle, IFilters } from '../../types';
 import './UnifiedFeed.css'; 
+
+// --- Custom Hook for Infinite Scroll (No external deps) ---
+function useIntersectionObserver(
+  callback: () => void,
+  options: IntersectionObserverInit = { threshold: 0.1, rootMargin: '100px' }
+) {
+  const targetRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        callback();
+      }
+    }, options);
+
+    const currentTarget = targetRef.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [callback, options]);
+
+  return targetRef;
+}
 
 interface UnifiedFeedProps {
   mode: 'latest' | 'foryou' | 'personalized';
@@ -44,7 +73,6 @@ const FeedHeader: React.FC<{
             />
         )}
         
-        {/* Reduced bottom padding to tighten layout */}
         {mode === 'foryou' && metaData && (
              <div style={{ textAlign: 'center', paddingBottom: '5px', color: 'var(--text-secondary)', fontSize: '12px' }}>
                 <p>Based on your interest in <strong>{metaData.basedOnCategory || 'various topics'}</strong>. Including {metaData.usualLean || 'balanced'} sources and opposing views.</p>
@@ -71,7 +99,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   scrollToTopRef 
 }) => {
   const { addToast } = useToast();
-  // Destructure updateContextQueue to register this feed
   const { startRadio, playSingle, stop, currentArticle, isPlaying, updateContextQueue } = useRadio();
   const { handleShare } = useShare(); 
   const isMobile = useIsMobile(); 
@@ -98,22 +125,16 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage: any, allPages) => {
-      // 1. ROBUST CHECK: Extract items correctly
       const lastPageItems = Array.isArray(lastPage) ? lastPage : (lastPage?.articles || lastPage?.data || []);
       
-      // 2. STOP if the last page was empty (no more content)
       if (!lastPageItems || lastPageItems.length === 0) return undefined;
-
-      // 3. STOP if we received fewer items than requested (implies end of list)
       if (lastPageItems.length < BATCH_SIZE) return undefined;
 
-      // 4. Calculate next offset
       const loadedCount = allPages.reduce((acc, page: any) => {
           const items = Array.isArray(page) ? page : (page?.articles || page?.data || []);
           return acc + items.length;
       }, 0);
       
-      // 5. Check against total ONLY if total is explicitly provided and valid
       const totalAvailable = lastPage?.pagination?.total || lastPage?.total;
       if (typeof totalAvailable === 'number' && loadedCount >= totalAvailable) {
           return undefined;
@@ -139,7 +160,16 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     staleTime: 1000 * 60 * 10,
   });
 
-  // --- ROBUST ARTICLE EXTRACTION & DEDUPLICATION ---
+  // --- INFINITE SCROLL TRIGGER ---
+  const handleLoadMore = () => {
+      if (latestQuery.hasNextPage && !latestQuery.isFetchingNextPage) {
+          latestQuery.fetchNextPage();
+      }
+  };
+
+  const loadMoreRef = useIntersectionObserver(handleLoadMore);
+
+  // --- DATA EXTRACTION ---
   const activeQuery = mode === 'latest' ? latestQuery : (mode === 'foryou' ? forYouQuery : personalizedQuery);
   const { status } = activeQuery;
 
@@ -174,7 +204,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     });
   }, [mode, latestQuery.data, activeQuery.data]);
 
-  // --- SMART RADIO REGISTRATION ---
+  // --- RADIO REGISTRATION ---
   useEffect(() => {
       if (articles.length > 0) {
           let label = 'Latest News';
@@ -236,7 +266,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   const metaData = mode !== 'latest' ? (activeQuery.data as any)?.meta : null;
 
-  // --- RENDER ---
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
         
@@ -245,7 +274,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             <span>↑ New Articles Available</span>
         </div>
 
-        {/* HEADER (Sticky) */}
+        {/* HEADER */}
         <FeedHeader 
             mode={mode} 
             filters={filters} 
@@ -254,8 +283,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             metaData={metaData} 
         />
 
-        {/* SCROLLABLE GRID (With Snap) */}
-        {/* The ref is attached here because THIS element scrolls now */}
+        {/* SCROLLABLE GRID */}
         <div 
             className={`articles-grid ${isMobile ? 'mobile-stack' : ''}`} 
             ref={scrollToTopRef}
@@ -277,11 +305,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                 </div>
             ) : (
                 <>
-                    {/* If refreshing, maybe show skeletons again or just keep content? 
-                        Usually keeping content is better UX, but let's show skeletons if we cleared query. 
-                        In handleRefresh we resetQueries for latestFeed. 
-                        So status might go to 'pending' or 'fetching'. 
-                    */}
                     {articles.map((article) => (
                         <div className="article-card-wrapper" key={article._id}>
                              <ArticleCard
@@ -303,25 +326,20 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                         </div>
                     ))}
 
-                    {/* MANUAL LOAD MORE BUTTON */}
+                    {/* AUTOMATIC LOAD MORE SENSOR */}
                     {mode === 'latest' && (
-                        <div className="load-more-container">
+                        <div className="load-more-container" ref={loadMoreRef}>
                             {latestQuery.isFetchingNextPage ? (
                                 <div className="spinner-small" />
                             ) : latestQuery.hasNextPage ? (
-                                <button 
-                                    className="load-more-btn"
-                                    onClick={() => { vibrate(); latestQuery.fetchNextPage(); }}
-                                >
-                                    Load More Articles
-                                </button>
+                                <span style={{ opacity: 0.5, fontSize: '0.8rem' }}>Loading more...</span>
                             ) : (
                                 <div className="end-message">You're all caught up</div>
                             )}
                         </div>
                     )}
                     
-                    {/* SPACER FOR BOTTOM NAV */}
+                    {/* SPACER */}
                     <div style={{ height: '80px', flexShrink: 0, scrollSnapAlign: 'none' }} />
                 </>
             )}

@@ -7,8 +7,8 @@ import 'firebaseui/dist/firebaseui.css';
 import './Login.css'; 
 import Card from './components/ui/Card';
 
-// --- VISUAL MOSAIC DATA ---
-// We use gradients to simulate "News Images" without needing external assets.
+// --- GHOST DATA ---
+// Beautiful gradients that will "ignite" when they pass under the login card
 const GHOST_CARDS = [
   { category: "POLITICS", title: "Summit Talks: New Climate Agreements Signed", color: "linear-gradient(135deg, #FF6B6B 0%, #EE5D5D 100%)" },
   { category: "TECH", title: "Quantum Leap: Silicon Valley's New Bet", color: "linear-gradient(135deg, #4FACFE 0%, #00F2FE 100%)" },
@@ -49,22 +49,19 @@ const Login: React.FC = () => {
     };
   }, []);
 
-  // Helper to render a scrolling column with gradient cards
-  const renderMosaicColumn = (speedClass: string, reverse: boolean = false) => (
-    <div className={`mosaic-column ${speedClass} ${reverse ? 'reverse' : ''}`}>
+  // Helper to render a scrolling column
+  const renderGhostColumn = (speedClass: string, reverse: boolean = false) => (
+    <div className={`ghost-column ${speedClass} ${reverse ? 'reverse' : ''}`}>
       {/* Quadruple the list for seamless infinite scroll */}
       {[...GHOST_CARDS, ...GHOST_CARDS, ...GHOST_CARDS, ...GHOST_CARDS].map((item, idx) => (
-        <div key={`${speedClass}-${idx}`} className="mosaic-card">
-          {/* The "Image" Area */}
-          <div className="mosaic-image" style={{ background: item.color }}></div>
-          
-          {/* Content */}
-          <div className="mosaic-content">
-            <div className="mosaic-category">{item.category}</div>
-            <div className="mosaic-title">{item.title}</div>
-            <div className="mosaic-meta">
-               <span className="mosaic-pill"></span>
-               <span className="mosaic-pill short"></span>
+        <div key={`${speedClass}-${idx}`} className="ghost-card">
+          <div className="ghost-image" style={{ background: item.color }}></div>
+          <div className="ghost-content">
+            <div className="ghost-category">{item.category}</div>
+            <div className="ghost-title">{item.title}</div>
+            <div className="ghost-meta">
+               <span className="ghost-pill"></span>
+               <span className="ghost-pill short"></span>
             </div>
           </div>
         </div>
@@ -75,22 +72,23 @@ const Login: React.FC = () => {
   return (
     <div className="login-page-wrapper">
       
-      {/* --- BACKGROUND MOSAIC STREAM --- */}
-      <div className="narrative-mosaic-bg">
-        <div className="mosaic-overlay-vignette"></div>
-        <div className="mosaic-columns">
-          {renderMosaicColumn('slow')}
-          {renderMosaicColumn('medium', true)} {/* Reverse */}
-          {renderMosaicColumn('slow')}
-          {renderMosaicColumn('fast', true)}   {/* Extra col for wide screens */}
+      {/* --- BACKGROUND STREAM --- */}
+      <div className="narrative-stream-bg">
+        <div className="stream-vignette"></div>
+        <div className="stream-columns">
+          {renderGhostColumn('slow')}
+          {renderGhostColumn('medium', true)}
+          {renderGhostColumn('slow')}
+          {renderGhostColumn('fast', true)}
         </div>
       </div>
 
-      {/* --- FOREGROUND LOGIN CARD --- */}
-      <div className="login-container-wrapper">
-        {/* Glow Effect behind card */}
-        <div className="login-glow"></div>
+      {/* --- FOREGROUND LOGIN --- */}
+      <div className="login-stage">
         
+        {/* The "Scanner" Light Source - This causes the glow effect */}
+        <div className="login-sensor-glow"></div>
+
         <div className="login-container">
           <Card variant="glass" padding="lg">
             <div className="login-form-panel" style={{ padding: 0 }}> 

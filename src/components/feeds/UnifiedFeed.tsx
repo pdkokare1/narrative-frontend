@@ -125,7 +125,8 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const [showNewPill, setShowNewPill] = useState(false); 
   
   // CONSTANTS
-  const BATCH_SIZE = 20; // Increased to ensure screen fill and prevent infinite loops
+  const BATCH_SIZE = 24; // Increased to ensure screen fill and prevent infinite loops
+  const [isThrottled, setIsThrottled] = useState(false); // New throttle state
 
   // --- PULL TO REFRESH STATE ---
   const [pullY, setPullY] = useState(0);
@@ -429,12 +430,22 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
               context={feedContextValue} 
               initialItemCount={BATCH_SIZE} 
               endReached={() => { 
-                  // FIX: Improved guard to prevent infinite loops
-                  if (mode === 'latest' && latestQuery.hasNextPage && !latestQuery.isFetching && !latestQuery.isFetchingNextPage) {
-                      latestQuery.fetchNextPage(); 
+                  // FIX: Throttled guard to prevent infinite loops
+                  if (
+                    mode === 'latest' && 
+                    latestQuery.hasNextPage && 
+                    !latestQuery.isFetching && 
+                    !latestQuery.isFetchingNextPage &&
+                    !isThrottled
+                  ) {
+                      setIsThrottled(true);
+                      latestQuery.fetchNextPage().finally(() => {
+                         // Add a small delay before allowing another fetch
+                         setTimeout(() => setIsThrottled(false), 500);
+                      });
                   }
               }}
-              overscan={600} 
+              overscan={400} 
               components={gridComponents} 
               itemContent={itemContent}   
             />

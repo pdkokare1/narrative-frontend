@@ -19,16 +19,15 @@
 @media (max-width: 768px) {
   
   /* 1. STICKY FILTER HEADER */
-  /* Keeps the category pills visible while you scroll the stack */
   .feed-header-sticky {
     position: sticky;
     top: 60px; /* Adjust if your Main Header is taller/shorter */
     z-index: 20;
     background: var(--bg-default); 
-    padding-bottom: 10px;
-    margin-bottom: 5px;
-    /* Create a fade out effect at bottom of header if desired */
-    /* box-shadow: 0 5px 15px -10px rgba(0,0,0,0.5); */
+    
+    /* REMOVED PADDING to reduce gap between pills and card */
+    padding-bottom: 0px; 
+    margin-bottom: 0px;
   }
 
   /* 2. STACK CONTAINER */
@@ -36,21 +35,23 @@
     display: flex;
     flex-direction: column;
     gap: 0; 
-    padding: 0 10px 80px 10px; 
-    overflow: visible; /* Allow sticky to work */
+    
+    /* Reduced side padding (10px -> 4px) for wider cards */
+    padding: 0 4px 80px 4px; 
+    
+    overflow: visible; 
   }
 
   /* 3. THE PERFECTLY CENTERED CARD */
   .articles-grid.mobile-stack .article-card-wrapper {
     position: sticky;
     
-    /* TOP: Main Header (60) + Pills/Padding (~55) = 115px */
-    top: 115px; 
+    /* TOP: Reduced to 95px to sit tighter under the pills */
+    top: 95px; 
     
-    /* HEIGHT: 100vh - Top(115) - BottomNav(75) = Center */
-    height: calc(100dvh - 190px);
+    /* HEIGHT: Increased subtraction to 195px to ensure bottom content clears the Nav Dock */
+    height: calc(100dvh - 195px);
     
-    /* Min height to prevent crushing on very small screens */
     min-height: 400px;
     
     margin-bottom: 25px; /* Spacing between stacks */

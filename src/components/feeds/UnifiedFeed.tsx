@@ -323,7 +323,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             </div>
         ) : (
             <>
-                <div className="articles-grid">
+                <div className={`articles-grid ${isMobile ? 'mobile-stack' : ''}`}>
                     {articles.map((article) => (
                         <div className="article-card-wrapper" key={article._id}>
                              <ArticleCard

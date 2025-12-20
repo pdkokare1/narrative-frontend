@@ -79,20 +79,6 @@
   }
 }
 
-/* --- PULL TO REFRESH --- */
-.pull-refresh-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  overflow: hidden;
-  transition: height 0.1s ease-out;
-  color: var(--primary);
-  font-size: 20px;
-  font-weight: 700;
-  background: var(--background);
-}
-
 /* --- NEW CONTENT PILL --- */
 .new-content-pill {
   position: fixed;

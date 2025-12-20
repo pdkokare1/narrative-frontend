@@ -196,42 +196,72 @@
 /* ==================== MOBILE ADJUSTMENTS ==================== */
 @media (max-width: 768px) {
   .article-card {
-    border: 1px solid var(--border-color); 
+    border: 1px solid var(--border-color);
     
-    /* Only round TOP corners for stacked look */
-    border-radius: 20px 20px 0 0; 
+    /* FIX: Fully rounded corners for isolated snap cards */
+    border-radius: 16px; 
     
-    /* Ensure bottom border is visible against nav */
-    border-bottom: 1px solid var(--border-color);
+    /* Ensure no weird overflow */
+    overflow: hidden;
     
-    box-shadow: 0 -4px 15px rgba(0,0,0,0.3); 
+    /* Shadow for depth */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
     background: var(--bg-card); 
+    
+    /* FORCE FULL HEIGHT */
+    height: 100%;
   }
   
   .article-image {
-    /* Reduced image height to make room for footer */
+    /* FIX: Dynamic height to ensure footer visibility */
+    /* Image takes 35% of the card height */
     flex: 0 0 35%; 
-    min-height: 160px;
-    height: auto;
+    width: 100%;
+    min-height: unset; /* Allow it to shrink if needed */
   }
   
   .article-content {
-    /* Reduced padding to maximize internal space */
-    padding: 15px 12px;
-    justify-content: space-between; 
+    /* Tighter padding for mobile */
+    padding: 16px 12px;
+    
+    /* Flex grow to fill the rest */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
   }
 
   .article-headline-btn {
-    font-size: 17px; 
-    line-height: 1.35;
+    font-size: 1.1rem; 
+    line-height: 1.3;
+    
+    /* Limit headline lines */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
   
   .article-summary {
-     font-size: 13px;
-     /* Clamp tightly to ensure footer fits */
+     font-size: 0.9rem;
+     line-height: 1.4;
+     
+     /* FIX: Clamp summary based on remaining space */
+     /* This prevents pushing the footer off screen */
      display: -webkit-box;
      -webkit-line-clamp: 4;
      -webkit-box-orient: vertical;
      overflow: hidden;
+     
+     /* Ensure it takes available space but doesn't overflow */
+     flex-grow: 1; 
+  }
+  
+  .article-footer {
+      /* Ensure footer is always stuck to bottom */
+      margin-top: auto;
+      padding-top: 12px;
+      padding-bottom: 4px; /* Small buffer */
   }
 }

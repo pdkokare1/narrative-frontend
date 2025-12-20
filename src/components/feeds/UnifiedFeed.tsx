@@ -53,12 +53,12 @@ const FeedHeader: React.FC<{ context?: FeedContext }> = React.memo(({ context })
         
         {mode === 'foryou' && metaData && (
              <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
-                <p>Based on your interest in <strong>{metaData.basedOnCategory}</strong>. Including {metaData.usualLean} sources and opposing views.</p>
+                <p>Based on your interest in <strong>{metaData.basedOnCategory || 'various topics'}</strong>. Including {metaData.usualLean || 'balanced'} sources and opposing views.</p>
              </div>
         )}
         {mode === 'personalized' && metaData && (
              <div style={{ textAlign: 'center', marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '12px' }}>
-                <p>Curated for you based on <strong>{metaData.topCategories?.join(', ')}</strong>.</p>
+                <p>Curated for you based on <strong>{metaData.topCategories?.join(', ') || 'your history'}</strong>.</p>
              </div>
         )}
     </div>
@@ -66,15 +66,18 @@ const FeedHeader: React.FC<{ context?: FeedContext }> = React.memo(({ context })
 });
 
 const FeedFooter: React.FC<{ context?: FeedContext }> = React.memo(({ context }) => {
-  // Only show skeletons if strictly fetching next page
-  if (!context || (context.mode === 'latest' && !context.isFetchingNextPage)) return <div style={{ height: '60px' }} />;
-  if (context.mode !== 'latest') return <div style={{ height: '60px' }} />;
+  if (!context) return <div style={{ height: '60px' }} />;
   
-  return (
-    <div className="articles-grid" style={{ marginTop: '20px', paddingBottom: '40px' }}>
-       {[...Array(4)].map((_, i) => ( <div className="article-card-wrapper" key={`skel-${i}`}><SkeletonCard /></div> ))}
-    </div>
-  );
+  // Only show skeletons if strictly fetching next page for infinite scroll
+  if (context.mode === 'latest' && context.isFetchingNextPage) {
+      return (
+        <div className="articles-grid" style={{ marginTop: '20px', paddingBottom: '40px' }}>
+           {[...Array(4)].map((_, i) => ( <div className="article-card-wrapper" key={`skel-${i}`}><SkeletonCard /></div> ))}
+        </div>
+      );
+  }
+  
+  return <div style={{ height: '80px' }} />; // Extra buffer space
 });
 
 const GridList = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ style, children, ...props }, ref) => (
@@ -120,6 +123,9 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const virtuosoRef = useRef<VirtuosoGridHandle>(null);
   const [scrollParent, setScrollParent] = useState<HTMLElement | undefined>(undefined);
   const [showNewPill, setShowNewPill] = useState(false); 
+  
+  // CONSTANTS
+  const BATCH_SIZE = 20; // Increased to ensure screen fill and prevent infinite loops
 
   // --- PULL TO REFRESH STATE ---
   const [pullY, setPullY] = useState(0);
@@ -129,11 +135,10 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   // --- DATA FETCHING ---
   const latestQuery = useInfiniteQuery({
-    // FIX: Use JSON.stringify(filters) to ensure stable key comparison
     queryKey: ['latestFeed', JSON.stringify(filters)],
     queryFn: async ({ pageParam = 0 }) => {
       try {
-        const { data } = await api.fetchArticles({ ...filters, limit: 12, offset: pageParam as number });
+        const { data } = await api.fetchArticles({ ...filters, limit: BATCH_SIZE, offset: pageParam as number });
         return data;
       } catch (error) {
         console.error('[UnifiedFeed] Fetch Error:', error);
@@ -146,10 +151,10 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       const lastPageItems = Array.isArray(lastPage) ? lastPage : (lastPage?.articles || lastPage?.data || []);
       
       // 2. STOP if the last page was empty (no more content)
-      if (lastPageItems.length === 0) return undefined;
+      if (!lastPageItems || lastPageItems.length === 0) return undefined;
 
       // 3. STOP if we received fewer items than requested (implies end of list)
-      if (lastPageItems.length < 12) return undefined;
+      if (lastPageItems.length < BATCH_SIZE) return undefined;
 
       // 4. Calculate next offset
       const loadedCount = allPages.reduce((acc, page: any) => {
@@ -304,10 +309,12 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       else if (data?.data && Array.isArray(data.data)) rawList = data.data;
     }
     
-    // FIX: Deduplicate articles by ID to prevent key collisions and list jumping
+    // FIX: Deduplicate and Sanitization (Prevent Crash)
     const seen = new Set<string>();
     return rawList.filter(a => {
-        if (!a || !a._id) return false;
+        // Strict null checks
+        if (!a || typeof a !== 'object') return false;
+        if (!a._id) return false;
         if (seen.has(a._id)) return false;
         seen.add(a._id);
         return true;
@@ -348,7 +355,9 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   // --- MEMOIZED ITEM CONTENT ---
   const itemContent: GridItemContent<IArticle, unknown> = useCallback((index, article) => {
+    // Extra safety check
     if (!article || !article._id) return null;
+    
     return (
         <ArticleCard
           article={article}
@@ -416,16 +425,16 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
               style={{ height: '100%', width: '100%' }}
               customScrollParent={scrollParent}
               data={articles}
-              computeItemKey={(index, article) => article._id}
+              computeItemKey={(index, article) => article?._id || `temp-${index}`}
               context={feedContextValue} 
-              initialItemCount={12} 
+              initialItemCount={BATCH_SIZE} 
               endReached={() => { 
-                  // FIX: Robust check to prevent infinite loop
-                  if (mode === 'latest' && latestQuery.hasNextPage && !latestQuery.isFetchingNextPage && !latestQuery.isFetching) {
+                  // FIX: Improved guard to prevent infinite loops
+                  if (mode === 'latest' && latestQuery.hasNextPage && !latestQuery.isFetching && !latestQuery.isFetchingNextPage) {
                       latestQuery.fetchNextPage(); 
                   }
               }}
-              overscan={400} 
+              overscan={600} 
               components={gridComponents} 
               itemContent={itemContent}   
             />

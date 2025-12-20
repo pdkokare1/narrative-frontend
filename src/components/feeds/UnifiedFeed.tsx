@@ -43,13 +43,14 @@ const FeedHeader: React.FC<{
             />
         )}
         
+        {/* Reduced bottom padding to tighten layout */}
         {mode === 'foryou' && metaData && (
-             <div style={{ textAlign: 'center', paddingBottom: '15px', color: 'var(--text-secondary)', fontSize: '12px' }}>
+             <div style={{ textAlign: 'center', paddingBottom: '5px', color: 'var(--text-secondary)', fontSize: '12px' }}>
                 <p>Based on your interest in <strong>{metaData.basedOnCategory || 'various topics'}</strong>. Including {metaData.usualLean || 'balanced'} sources and opposing views.</p>
              </div>
         )}
         {mode === 'personalized' && metaData && (
-             <div style={{ textAlign: 'center', paddingBottom: '15px', color: 'var(--text-secondary)', fontSize: '12px' }}>
+             <div style={{ textAlign: 'center', paddingBottom: '5px', color: 'var(--text-secondary)', fontSize: '12px' }}>
                 <p>Curated for you based on <strong>{metaData.topCategories?.join(', ') || 'your history'}</strong>.</p>
              </div>
         )}

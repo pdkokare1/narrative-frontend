@@ -22,7 +22,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   const [suggestions, setSuggestions] = useState<IArticle[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  const { isPlaying, isPaused, startRadio, resume, pause, currentArticle } = useRadio();
+  const { isPlaying, isPaused, startRadio, resume, pause, currentArticle, contextQueue, contextLabel } = useRadio();
   const { addToast } = useToast();
   const [radioLoading, setRadioLoading] = useState(false);
 
@@ -74,10 +74,21 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
     if (radioLoading) return;
     if (isPlaying) { pause(); return; }
     if (isPaused && currentArticle) { resume(); return; }
+    
     setRadioLoading(true);
+
+    // 1. Context Aware
+    if (contextQueue && contextQueue.length > 0) {
+        addToast(`Tuning into ${contextLabel}...`, 'info');
+        startRadio(contextQueue, 0);
+        setRadioLoading(false);
+        return;
+    }
+
+    // 2. Fallback
     addToast('Tuning into Gamut Radio...', 'info');
     try {
-        const { data } = await api.fetchArticles({ ...currentFilters, limit: 20, offset: 0 });
+        const { data } = await api.fetchArticles({ limit: 20, offset: 0 });
         if (data.articles?.length > 0) startRadio(data.articles, 0);
         else addToast('No news available for radio.', 'error');
     } catch (err) { addToast('Could not start radio.', 'error'); } 

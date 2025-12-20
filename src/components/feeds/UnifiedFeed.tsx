@@ -86,9 +86,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const touchStartRef = useRef(0);
   const isDraggingRef = useRef(false);
 
-  // --- INFINITE SCROLL OBSERVER ---
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-
   // --- DATA FETCHING ---
   const latestQuery = useInfiniteQuery({
     queryKey: ['latestFeed', JSON.stringify(filters)],
@@ -103,19 +100,27 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage: any, allPages) => {
+      // 1. ROBUST CHECK: Extract items correctly
       const lastPageItems = Array.isArray(lastPage) ? lastPage : (lastPage?.articles || lastPage?.data || []);
+      
+      // 2. STOP if the last page was empty (no more content)
       if (!lastPageItems || lastPageItems.length === 0) return undefined;
+
+      // 3. STOP if we received fewer items than requested (implies end of list)
       if (lastPageItems.length < BATCH_SIZE) return undefined;
 
+      // 4. Calculate next offset
       const loadedCount = allPages.reduce((acc, page: any) => {
           const items = Array.isArray(page) ? page : (page?.articles || page?.data || []);
           return acc + items.length;
       }, 0);
       
+      // 5. Check against total ONLY if total is explicitly provided and valid
       const totalAvailable = lastPage?.pagination?.total || lastPage?.total;
       if (typeof totalAvailable === 'number' && loadedCount >= totalAvailable) {
           return undefined;
       }
+      
       return loadedCount;
     },
     enabled: mode === 'latest',
@@ -257,6 +262,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       else if (data?.data && Array.isArray(data.data)) rawList = data.data;
     }
     
+    // FIX: Deduplicate
     const seen = new Set<string>();
     return rawList.filter(a => {
         if (!a || typeof a !== 'object') return false;
@@ -268,37 +274,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   }, [mode, latestQuery.data, activeQuery.data]);
 
   const metaData = mode !== 'latest' ? (activeQuery.data as any)?.meta : null;
-
-  // --- INTERSECTION OBSERVER FOR INFINITE SCROLL ---
-  useEffect(() => {
-    if (mode !== 'latest') return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (
-          entries[0].isIntersecting && 
-          latestQuery.hasNextPage && 
-          !latestQuery.isFetchingNextPage && 
-          !latestQuery.isFetching
-        ) {
-          latestQuery.fetchNextPage();
-        }
-      },
-      { 
-        threshold: 0.1,
-        root: scrollToTopRef?.current || null, // Observes visibility within the main scroll area
-        rootMargin: '200px' // Preload before hitting bottom
-      }
-    );
-
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
-    }
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [mode, latestQuery.hasNextPage, latestQuery.isFetchingNextPage, latestQuery.isFetching, scrollToTopRef]);
 
   // --- RENDER ---
   return (
@@ -371,26 +346,21 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                     ))}
                 </div>
 
-                {/* SENTINEL & LOADING STATE */}
+                {/* MANUAL LOAD MORE BUTTON - PREVENTS INFINITE LOOP */}
                 {mode === 'latest' && (
-                    <div style={{ width: '100%', height: '20px', marginTop: '20px' }}>
+                    <div className="load-more-container">
                         {latestQuery.isFetchingNextPage ? (
-                            <div className="articles-grid">
-                                {[...Array(4)].map((_, i) => ( 
-                                    <div className="article-card-wrapper" key={`skel-${i}`}><SkeletonCard /></div> 
-                                ))}
-                            </div>
+                            <div className="spinner-small" />
+                        ) : latestQuery.hasNextPage ? (
+                            <button 
+                                className="load-more-btn"
+                                onClick={() => { vibrate(); latestQuery.fetchNextPage(); }}
+                            >
+                                Load More Articles
+                            </button>
                         ) : (
-                            // The invisible watcher
-                            <div ref={loadMoreRef} style={{ height: '20px', width: '100%' }} />
+                            <div className="end-message">You're all caught up</div>
                         )}
-                    </div>
-                )}
-                
-                {/* END OF LIST MESSAGE */}
-                {mode === 'latest' && !latestQuery.hasNextPage && articles.length > 0 && (
-                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)', fontSize: '12px' }}>
-                        <p>You're all caught up</p>
                     </div>
                 )}
                  

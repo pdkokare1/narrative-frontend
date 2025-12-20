@@ -62,6 +62,7 @@
   background: var(--bg-secondary);
   position: relative;
   overflow: hidden;
+  flex-shrink: 0; /* Don't shrink the image */
 }
 
 .article-image img {
@@ -132,7 +133,6 @@
 
 .article-summary {
   font-family: var(--font-body);
-  /* UPDATED: Reduced size significantly to create hierarchy */
   font-size: 11px;
   line-height: 1.5;
   color: var(--text-secondary);
@@ -148,6 +148,8 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  /* Push footer to bottom */
+  margin-top: auto; 
 }
 
 /* Stats Row */
@@ -198,26 +200,39 @@
   gap: 4px;
 }
 
-/* Mobile Adjustments */
+/* ==================== MOBILE ADJUSTMENTS ==================== */
 @media (max-width: 768px) {
   .article-card {
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    border-bottom: 1px solid var(--border-color);
-    background: transparent;
+    /* Full Card Style for Stacking */
+    border: 1px solid var(--border-color); /* Restore border for stack definition */
+    border-radius: 20px 20px 0 0; /* Tab/Stack look */
+    
+    /* Shadow on top to create depth when stacked */
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.2), 0 4px 15px rgba(0,0,0,0.1); 
+    background: var(--bg-card); /* Ensure solid background so it covers the one behind */
   }
   
   .article-image {
-    height: 200px;
+    /* Taller image on mobile since we have vertical space */
+    height: 35%; 
+    min-height: 200px;
   }
   
+  .article-content {
+    /* Ensure content spreads nicely */
+    padding: 20px 15px;
+  }
+
   .article-headline-btn {
-    font-size: 17px; 
+    font-size: 18px; 
+    line-height: 1.35;
   }
   
   .article-summary {
-     /* Keep summary small on mobile too */
-     font-size: 12px;
+     font-size: 13px; /* Slightly more readable on the focused card */
+     display: -webkit-box;
+     -webkit-line-clamp: 4; /* Limit lines to prevent overflow */
+     -webkit-box-orient: vertical;
+     overflow: hidden;
   }
 }

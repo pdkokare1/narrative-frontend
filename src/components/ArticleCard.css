@@ -80,7 +80,7 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
-  flex: 1; /* Fills remaining space */
+  flex: 1; 
   gap: 10px;
 }
 
@@ -133,7 +133,7 @@
   line-height: 1.5;
   color: var(--text-secondary);
   display: block;
-  margin-bottom: auto; /* Pushes footer down */
+  margin-bottom: auto; 
 }
 
 /* ==================== FOOTER ==================== */
@@ -197,36 +197,40 @@
 @media (max-width: 768px) {
   .article-card {
     border: 1px solid var(--border-color); 
-    border-radius: 20px 20px 0 0; /* Stacked look */
     
-    /* Strong shadow for depth */
+    /* Only round TOP corners for stacked look */
+    border-radius: 20px 20px 0 0; 
+    
+    /* Ensure bottom border is visible against nav */
+    border-bottom: 1px solid var(--border-color);
+    
     box-shadow: 0 -4px 15px rgba(0,0,0,0.3); 
     background: var(--bg-card); 
   }
   
   .article-image {
-    /* Flexible height! Takes up about 40% of the card */
-    flex: 0 0 40%; 
-    min-height: 200px;
+    /* Reduced image height to make room for footer */
+    flex: 0 0 35%; 
+    min-height: 160px;
     height: auto;
   }
   
   .article-content {
-    padding: 20px 18px;
-    /* Ensure footer stays at bottom */
+    /* Reduced padding to maximize internal space */
+    padding: 15px 12px;
     justify-content: space-between; 
   }
 
   .article-headline-btn {
-    font-size: 18px; 
+    font-size: 17px; 
     line-height: 1.35;
   }
   
   .article-summary {
      font-size: 13px;
-     /* Clamp summary if it's too long for the card */
+     /* Clamp tightly to ensure footer fits */
      display: -webkit-box;
-     -webkit-line-clamp: 5;
+     -webkit-line-clamp: 4;
      -webkit-box-orient: vertical;
      overflow: hidden;
   }

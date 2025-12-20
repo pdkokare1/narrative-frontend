@@ -3,14 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import * as api from './services/api'; 
 import ArticleCard from './components/ArticleCard'; 
+import NarrativeCard from './components/NarrativeCard'; // NEW
+import NarrativeModal from './components/modals/NarrativeModal'; // NEW
 import SkeletonCard from './components/ui/SkeletonCard';
 import { useToast } from './context/ToastContext';
-import { useRadio } from './context/RadioContext'; // Smart Radio
+import { useRadio } from './context/RadioContext'; 
 import useShare from './hooks/useShare'; 
 import './App.css'; 
-import { IArticle } from './types';
+import { IArticle, INarrative, FeedItem } from './types';
 
-// --- NEW IMPORTS ---
 import SectionHeader from './components/ui/SectionHeader';
 import Button from './components/ui/Button';
 
@@ -32,11 +33,16 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q');
   
-  const [articles, setArticles] = useState<IArticle[]>([]);
+  // FIX: State now accepts FeedItem[] (Articles + Narratives)
+  const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  
+  // NEW: Narrative Modal State
+  const [selectedNarrative, setSelectedNarrative] = useState<INarrative | null>(null);
+
   const { addToast } = useToast();
-  const { updateContextQueue } = useRadio(); // Smart Radio
+  const { updateContextQueue } = useRadio(); 
   const { handleShare } = useShare(); 
 
   useEffect(() => {
@@ -45,7 +51,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({
       setLoading(true);
       try {
         const { data } = await api.searchArticles(query);
-        setArticles(data.articles || []);
+        // FIX: Assign FeedItem[]
+        setItems(data.articles || []);
         setTotal(data.pagination?.total || 0);
       } catch (error) {
         console.error('Search error:', error);
@@ -59,10 +66,13 @@ const SearchResults: React.FC<SearchResultsProps> = ({
 
   // --- SMART RADIO REGISTRATION ---
   useEffect(() => {
-    if (articles.length > 0 && query) {
-      updateContextQueue(articles, `Search: ${query}`);
+    // FIX: Filter only playable articles for Radio
+    const playableArticles = items.filter(i => i.type !== 'Narrative') as IArticle[];
+
+    if (playableArticles.length > 0 && query) {
+      updateContextQueue(playableArticles, `Search: ${query}`);
     }
-  }, [articles, query, updateContextQueue]);
+  }, [items, query, updateContextQueue]);
 
   const handleReadClick = (article: IArticle) => {
     api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
@@ -84,22 +94,37 @@ const SearchResults: React.FC<SearchResultsProps> = ({
         </div>
       ) : (
         <>
-          {articles.length > 0 ? (
+          {items.length > 0 ? (
             <div className="articles-grid">
-              {articles.map((article) => (
-                <div className="article-card-wrapper" key={article._id}>
-                  <ArticleCard
-                    article={article}
-                    onCompare={() => onCompare(article)}
-                    onAnalyze={onAnalyze}
-                    onShare={() => handleShare(article)} 
-                    onRead={() => handleReadClick(article)}
-                    showTooltip={showTooltip}
-                    isSaved={savedArticleIds.has(article._id)}
-                    onToggleSave={() => onToggleSave(article)}
-                  />
-                </div>
-              ))}
+              {items.map((item) => {
+                // RENDER LOGIC: NARRATIVE VS ARTICLE
+                if (item.type === 'Narrative') {
+                    return (
+                        <div className="article-card-wrapper" key={item._id}>
+                            <NarrativeCard 
+                                data={item as INarrative}
+                                onClick={() => setSelectedNarrative(item as INarrative)}
+                            />
+                        </div>
+                    );
+                } else {
+                    const article = item as IArticle;
+                    return (
+                        <div className="article-card-wrapper" key={article._id}>
+                          <ArticleCard
+                            article={article}
+                            onCompare={() => onCompare(article)}
+                            onAnalyze={onAnalyze}
+                            onShare={() => handleShare(article)} 
+                            onRead={() => handleReadClick(article)}
+                            showTooltip={showTooltip}
+                            isSaved={savedArticleIds.has(article._id)}
+                            onToggleSave={() => onToggleSave(article)}
+                          />
+                        </div>
+                    );
+                }
+              })}
             </div>
           ) : (
              <div className="placeholder-page" style={{ textAlign: 'center', marginTop: '50px' }}>
@@ -112,6 +137,14 @@ const SearchResults: React.FC<SearchResultsProps> = ({
             </div>
           )}
         </>
+      )}
+
+      {/* Narrative Modal for Search Results */}
+      {selectedNarrative && (
+          <NarrativeModal 
+              data={selectedNarrative} 
+              onClose={() => setSelectedNarrative(null)} 
+          />
       )}
     </div>
   );

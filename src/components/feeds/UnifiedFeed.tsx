@@ -58,33 +58,55 @@ interface UnifiedFeedProps {
 
 // --- STABLE COMPONENTS ---
 
+// Manual Refresh Icon (Simple SVG)
+const RefreshIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M23 4v6h-6"></path>
+        <path d="M1 20v-6h6"></path>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+    </svg>
+);
+
 const FeedHeader: React.FC<{ 
   mode: string; 
   filters: IFilters; 
   onFilterChange?: (f: IFilters) => void; 
   vibrate: () => void; 
-  metaData: any 
-}> = React.memo(({ mode, filters, onFilterChange, vibrate, metaData }) => {
+  metaData: any;
+  onRefresh: () => void;
+  isRefreshing: boolean;
+}> = React.memo(({ mode, filters, onFilterChange, vibrate, metaData, onRefresh, isRefreshing }) => {
   return (
     <div className="feed-header-sticky">
-        {mode === 'latest' && onFilterChange && (
-            <CategoryPills 
-              categories={["All", "Technology", "Business", "Science", "Health", "Entertainment", "Sports", "World", "Politics"]}
-              selectedCategory={filters.category || 'All'} 
-              onSelectCategory={(cat) => { vibrate(); onFilterChange({ ...filters, category: cat }); }} 
-            />
-        )}
-        
-        {mode === 'foryou' && metaData && (
-             <div style={{ textAlign: 'center', paddingBottom: '5px', color: 'var(--text-secondary)', fontSize: '12px' }}>
-                <p>Based on your interest in <strong>{metaData.basedOnCategory || 'various topics'}</strong>. Including {metaData.usualLean || 'balanced'} sources and opposing views.</p>
-             </div>
-        )}
-        {mode === 'personalized' && metaData && (
-             <div style={{ textAlign: 'center', paddingBottom: '5px', color: 'var(--text-secondary)', fontSize: '12px' }}>
-                <p>Curated for you based on <strong>{metaData.topCategories?.join(', ') || 'your history'}</strong>.</p>
-             </div>
-        )}
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+            {mode === 'latest' && onFilterChange && (
+                <CategoryPills 
+                  categories={["All", "Technology", "Business", "Science", "Health", "Entertainment", "Sports", "World", "Politics"]}
+                  selectedCategory={filters.category || 'All'} 
+                  onSelectCategory={(cat) => { vibrate(); onFilterChange({ ...filters, category: cat }); }} 
+                />
+            )}
+            
+            {mode === 'foryou' && metaData && (
+                 <div style={{ paddingBottom: '5px', color: 'var(--text-secondary)', fontSize: '12px' }}>
+                    <p>Based on interest in <strong>{metaData.basedOnCategory || 'various topics'}</strong>.</p>
+                 </div>
+            )}
+            {mode === 'personalized' && metaData && (
+                 <div style={{ paddingBottom: '5px', color: 'var(--text-secondary)', fontSize: '12px' }}>
+                    <p>Curated from <strong>{metaData.topCategories?.join(', ') || 'your history'}</strong>.</p>
+                 </div>
+            )}
+        </div>
+
+        {/* MANUAL REFRESH BUTTON */}
+        <button 
+            className={`refresh-btn ${isRefreshing ? 'spinning' : ''}`} 
+            onClick={onRefresh}
+            aria-label="Refresh Feed"
+        >
+            <RefreshIcon />
+        </button>
     </div>
   );
 });
@@ -287,7 +309,9 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             filters={filters} 
             onFilterChange={onFilterChange} 
             vibrate={vibrate} 
-            metaData={metaData} 
+            metaData={metaData}
+            onRefresh={handleRefresh}
+            isRefreshing={isRefreshing}
         />
 
         {/* SCROLLABLE GRID */}

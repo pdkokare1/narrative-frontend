@@ -1,4 +1,4 @@
-// narrative-frontend/src/components/feeds/UnifiedFeed.tsx
+// src/components/feeds/UnifiedFeed.tsx
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'; 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '../../services/api'; 
@@ -164,7 +164,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   });
 
   // --- INFINITE SCROLL TRIGGER (OPTIMIZED) ---
-  // Fix: Wrapped in useCallback to prevent Observer re-initialization on every render
   const handleLoadMore = useCallback(() => {
       if (latestQuery.hasNextPage && !latestQuery.isFetchingNextPage) {
           latestQuery.fetchNextPage();
@@ -184,12 +183,13 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     if (!activeQuery.data) return [];
 
     if (mode === 'latest') {
-      rawList = latestQuery.data.pages.flatMap((page: any) => {
+      // FIX: Added optional chaining (?.) and fallback (|| []) to satisfy TypeScript
+      rawList = latestQuery.data?.pages.flatMap((page: any) => {
         if (Array.isArray(page)) return page;
         if (page?.articles && Array.isArray(page.articles)) return page.articles;
         if (page?.data && Array.isArray(page.data)) return page.data;
         return [];
-      });
+      }) || [];
       
     } else {
       const data = activeQuery.data as any;

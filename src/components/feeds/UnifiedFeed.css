@@ -1,12 +1,12 @@
 /* src/components/feeds/UnifiedFeed.css */
 
-/* --- GRID LAYOUT (Crucial for Virtuoso Stability) --- */
+/* --- GRID LAYOUT --- */
 .articles-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
   padding: 10px;
-  /* Prevent scrolling jumps */
+  /* Native scroll performance */
   will-change: scroll-position;
 }
 
@@ -29,7 +29,7 @@
   font-weight: 700;
 }
 
-/* Original Pill Logic */
+/* --- NEW CONTENT PILL --- */
 .new-content-pill {
   position: fixed;
   top: 90px; /* Below new header */
@@ -69,6 +69,38 @@
   transform: translateX(-50%) scale(1.05);
 }
 
+/* --- LOAD MORE BUTTON --- */
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px 0;
+  width: 100%;
+}
+
+.load-more-btn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.load-more-btn:active {
+  transform: scale(0.96);
+}
+
+.end-message {
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-style: italic;
+}
+
 /* Mobile Adjustment */
 @media (max-width: 768px) {
   .new-content-pill {
@@ -78,6 +110,5 @@
   .articles-grid {
     gap: 15px;
     padding: 15px;
-    /* On mobile, sometimes single column is preferred, but auto-fill handles it */
   }
 }

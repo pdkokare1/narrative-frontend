@@ -52,10 +52,17 @@
 .badge.comfort { background: rgba(255, 255, 255, 0.9); color: #000; }
 .badge.opinion { background: #EAEAEA; color: #000; border: 1px solid #999; }
 
-/* ==================== IMAGE ==================== */
+/* ==================== IMAGE (LAYOUT STABLE) ==================== */
 .article-image {
   width: 100%;
-  height: 180px;
+  
+  /* LAYOUT STABILITY FIX (Desktop): 
+     Use aspect-ratio instead of fixed height. 
+     This reserves the correct space immediately before the image loads. 
+  */
+  aspect-ratio: 16 / 9; 
+  height: auto; 
+  
   background: var(--bg-secondary);
   position: relative;
   overflow: hidden;
@@ -213,11 +220,13 @@
   }
   
   .article-image {
-    /* FIX: Dynamic height to ensure footer visibility */
-    /* Image takes 35% of the card height */
+    /* FIX: Mobile Snap Layout needs fixed height percentages */
+    /* Override aspect-ratio for mobile vertical stack */
+    aspect-ratio: unset;
+    height: auto;
     flex: 0 0 35%; 
     width: 100%;
-    min-height: unset; /* Allow it to shrink if needed */
+    min-height: unset; 
   }
   
   .article-content {

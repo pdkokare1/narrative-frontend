@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '../../services/api'; 
 import ArticleCard from '../ArticleCard';
+import NarrativeCard from '../NarrativeCard'; // NEW
 import SkeletonCard from '../ui/SkeletonCard';
 import CategoryPills from '../ui/CategoryPills';
 import { useToast } from '../../context/ToastContext';
@@ -10,10 +11,10 @@ import { useRadio } from '../../context/RadioContext';
 import useShare from '../../hooks/useShare'; 
 import useIsMobile from '../../hooks/useIsMobile'; 
 import useHaptic from '../../hooks/useHaptic'; 
-import { IArticle, IFilters } from '../../types';
+import { IArticle, INarrative, IFilters, FeedItem } from '../../types';
 import './UnifiedFeed.css'; 
 
-// --- Custom Hook for Infinite Scroll (No external deps) ---
+// --- Custom Hook for Infinite Scroll ---
 function useIntersectionObserver(
   callback: () => void,
   options: IntersectionObserverInit = { threshold: 0.1, rootMargin: '100px' }
@@ -48,6 +49,7 @@ interface UnifiedFeedProps {
   onFilterChange?: (filters: IFilters) => void;
   onAnalyze: (article: IArticle) => void;
   onCompare: (article: IArticle) => void;
+  onOpenNarrative: (narrative: INarrative) => void; // NEW PROP
   savedArticleIds: Set<string>;
   onToggleSave: (article: IArticle) => void;
   showTooltip: (text: string, e: React.MouseEvent) => void;
@@ -93,6 +95,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   onFilterChange, 
   onAnalyze, 
   onCompare, 
+  onOpenNarrative,
   savedArticleIds, 
   onToggleSave, 
   showTooltip, 
@@ -173,8 +176,8 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const activeQuery = mode === 'latest' ? latestQuery : (mode === 'foryou' ? forYouQuery : personalizedQuery);
   const { status } = activeQuery;
 
-  const articles = useMemo(() => {
-    let rawList: IArticle[] = [];
+  const feedItems = useMemo(() => {
+    let rawList: FeedItem[] = [];
     
     if (mode === 'latest') {
       if (!latestQuery.data) return [];
@@ -195,26 +198,29 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     
     // Deduplicate
     const seen = new Set<string>();
-    return rawList.filter(a => {
-        if (!a || typeof a !== 'object') return false;
-        if (!a._id) return false;
-        if (seen.has(a._id)) return false;
-        seen.add(a._id);
+    return rawList.filter(item => {
+        if (!item || typeof item !== 'object') return false;
+        if (!item._id) return false;
+        if (seen.has(item._id)) return false;
+        seen.add(item._id);
         return true;
     });
   }, [mode, latestQuery.data, activeQuery.data]);
 
   // --- RADIO REGISTRATION ---
   useEffect(() => {
-      if (articles.length > 0) {
+      // Filter only playable articles for the radio (exclude Narratives)
+      const playableArticles = feedItems.filter(item => item.type !== 'Narrative') as IArticle[];
+      
+      if (playableArticles.length > 0) {
           let label = 'Latest News';
           if (mode === 'foryou') label = 'For You';
           if (mode === 'personalized') label = 'Your Feed';
           if (filters?.category && filters.category !== 'All Categories') label = filters.category;
           
-          updateContextQueue(articles, label);
+          updateContextQueue(playableArticles, label);
       }
-  }, [articles, mode, filters, updateContextQueue]);
+  }, [feedItems, mode, filters, updateContextQueue]);
 
   // --- LIVE UPDATES ---
   useEffect(() => {
@@ -222,14 +228,14 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       const checkForUpdates = async () => {
           try {
               const { data } = await api.fetchArticles({ ...filters, limit: 1, offset: 0 });
-              let latestArticle: IArticle | null = null;
+              let latestItem: FeedItem | null = null;
               
-              if (data?.articles && data.articles.length > 0) latestArticle = data.articles[0];
+              if (data?.articles && data.articles.length > 0) latestItem = data.articles[0];
               // @ts-ignore
-              else if (Array.isArray(data) && data.length > 0) latestArticle = data[0];
+              else if (Array.isArray(data) && data.length > 0) latestItem = data[0];
 
-              if (latestArticle) {
-                  const latestRemote = new Date(latestArticle.publishedAt).getTime();
+              if (latestItem) {
+                  const latestRemote = new Date(latestItem.publishedAt).getTime();
                   const currentPages = latestQuery.data?.pages;
                   const firstPage = currentPages?.[0] as any;
                   const currentTop = (Array.isArray(firstPage) ? firstPage[0] : firstPage?.articles?.[0]);
@@ -297,7 +303,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                     <p>Unable to load feed.</p>
                     <button onClick={() => window.location.reload()} className="btn-secondary" style={{ marginTop: '10px' }}>Retry</button>
                 </div>
-            ) : articles.length === 0 && !isRefreshing ? (
+            ) : feedItems.length === 0 && !isRefreshing ? (
                 <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
                     <h3>No articles found</h3>
                     <p>Try refreshing or checking back later.</p>
@@ -305,26 +311,41 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                 </div>
             ) : (
                 <>
-                    {articles.map((article) => (
-                        <div className="article-card-wrapper" key={article._id}>
-                             <ArticleCard
-                                article={article}
-                                onCompare={() => onCompare(article)}
-                                onAnalyze={onAnalyze}
-                                onShare={() => handleShare(article)} 
-                                onRead={() => {
-                                    api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
-                                    window.open(article.url, '_blank', 'noopener,noreferrer');
-                                }}
-                                showTooltip={showTooltip}
-                                isSaved={savedArticleIds.has(article._id)}
-                                onToggleSave={() => onToggleSave(article)}
-                                isPlaying={currentArticle?._id === article._id}
-                                onPlay={() => playSingle(article)}
-                                onStop={stop}
-                            />
-                        </div>
-                    ))}
+                    {feedItems.map((item) => {
+                        // RENDER LOGIC: NARRATIVE VS ARTICLE
+                        if (item.type === 'Narrative') {
+                            return (
+                                <div className="article-card-wrapper" key={item._id}>
+                                    <NarrativeCard 
+                                        data={item as INarrative}
+                                        onClick={() => onOpenNarrative(item as INarrative)}
+                                    />
+                                </div>
+                            );
+                        } else {
+                            const article = item as IArticle;
+                            return (
+                                <div className="article-card-wrapper" key={article._id}>
+                                    <ArticleCard
+                                        article={article}
+                                        onCompare={() => onCompare(article)}
+                                        onAnalyze={onAnalyze}
+                                        onShare={() => handleShare(article)} 
+                                        onRead={() => {
+                                            api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
+                                            window.open(article.url, '_blank', 'noopener,noreferrer');
+                                        }}
+                                        showTooltip={showTooltip}
+                                        isSaved={savedArticleIds.has(article._id)}
+                                        onToggleSave={() => onToggleSave(article)}
+                                        isPlaying={currentArticle?._id === article._id}
+                                        onPlay={() => playSingle(article)}
+                                        onStop={stop}
+                                    />
+                                </div>
+                            );
+                        }
+                    })}
 
                     {/* AUTOMATIC LOAD MORE SENSOR */}
                     {mode === 'latest' && (

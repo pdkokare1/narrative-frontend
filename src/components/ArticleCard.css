@@ -14,15 +14,9 @@
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
   
   height: 100%;
-  
-  /* FIXED: Removed initial animation that caused list jumping */
-  /* animation: fadeInUp 0.6s ... */
 }
 
 .article-card:hover {
-  /* FIXED: Removed translateY(-4px) to stop cards "dancing" under the mouse during scroll */
-  /* transform: translateY(-4px); */
-  
   box-shadow: var(--shadow-lg);
   border-color: var(--border-light);
 }
@@ -64,7 +58,7 @@
 /* ==================== IMAGE ==================== */
 .article-image {
   width: 100%;
-  height: 200px;
+  height: 180px; /* Slightly reduced height to give more room to text */
   background: var(--bg-secondary);
   position: relative;
   overflow: hidden;
@@ -85,11 +79,11 @@
 
 /* ==================== CONTENT BODY ==================== */
 .article-content {
-  padding: 24px;
+  padding: 20px; /* Reduced padding slightly for more space */
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: 12px;
+  gap: 10px;
 }
 
 .article-meta-top {
@@ -102,7 +96,7 @@
   text-transform: uppercase;
   color: var(--text-tertiary);
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .source-name {
@@ -117,8 +111,9 @@
   padding: 0;
   text-align: left;
   font-family: var(--font-heading);
-  font-size: 20px;
-  line-height: 1.35;
+  /* UPDATED: Significantly smaller font size */
+  font-size: 16px; 
+  line-height: 1.4;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
@@ -141,11 +136,10 @@
   font-size: 13px;
   line-height: 1.6;
   color: var(--text-secondary);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin-bottom: auto;
+  
+  /* UPDATED: Removed clamping to show full summary */
+  display: block;
+  margin-bottom: auto; /* Keeps pushing footer down, but text will fill space now */
 }
 
 /* ==================== FOOTER ==================== */
@@ -155,14 +149,14 @@
   border-top: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 /* Stats Row */
 .stats-row {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
   font-size: 11px;
   color: var(--text-tertiary);
 }
@@ -203,7 +197,7 @@
 
 .action-left {
   display: flex;
-  gap: 8px;
+  gap: 4px; /* Tighter gap for actions */
 }
 
 /* Mobile Adjustments */
@@ -217,10 +211,11 @@
   }
   
   .article-image {
-    height: 220px;
+    height: 200px;
   }
   
   .article-headline-btn {
-    font-size: 22px;
+    /* UPDATED: Smaller mobile font size */
+    font-size: 17px; 
   }
 }

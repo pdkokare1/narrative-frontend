@@ -22,26 +22,29 @@
   .articles-grid.mobile-stack {
     display: flex;
     flex-direction: column;
-    gap: 12px; /* Gap between cards */
+    gap: 0; /* Removed gap to ensure perfect 100dvh transitions */
     
-    /* WIDER CARDS: Reduced padding from 16px to 4px */
-    padding: 0 4px 80px 4px; 
+    /* WIDER CARDS: Removed side padding completely */
+    padding: 0 0 85px 0; 
     
     /* SNAP SCROLLING ENGINES */
     overflow-y: scroll;
     scroll-snap-type: y mandatory;
     scroll-behavior: smooth;
     
-    /* Calculate exact height: 100dvh - (Header + Pills + Buffer) */
-    /* Adjust 115px if the header/pills are taller/shorter */
-    height: calc(100dvh - 115px);
+    /* FIX: Use 100dvh to fill the exact mobile screen */
+    height: 100dvh;
     
     /* Hide Scrollbar */
-    scrollbar-width: none; 
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE 10+ */
   }
   
+  /* Hide Scrollbar for Webkit (Chrome/Safari) */
   .articles-grid.mobile-stack::-webkit-scrollbar {
     display: none;
+    width: 0;
+    height: 0;
   }
 
   /* INDIVIDUAL CARD WRAPPER */
@@ -50,12 +53,13 @@
     width: 100%;
     
     /* FORCE SINGLE CARD HEIGHT */
-    /* This ensures the card fills the available view perfectly */
-    height: 100%; 
-    min-height: 100%;
+    /* FIX: Set to 100dvh so it occupies the full screen exactly */
+    height: 100dvh; 
+    min-height: 100dvh;
 
     /* SNAP ALIGNMENT */
-    scroll-snap-align: center;
+    /* FIX: Changed to 'start' so it snaps to the top, hiding the previous card */
+    scroll-snap-align: start;
     scroll-snap-stop: always;
   }
   

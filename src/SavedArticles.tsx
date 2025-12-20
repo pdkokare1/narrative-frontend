@@ -1,10 +1,11 @@
 // src/SavedArticles.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query'; 
 import * as api from './services/api'; 
 import offlineStorage from './services/offlineStorage'; 
 import { useToast } from './context/ToastContext'; 
+import { useRadio } from './context/RadioContext'; // Import Radio
 import ArticleCard from './components/ArticleCard'; 
 import SkeletonCard from './components/ui/SkeletonCard'; 
 import useIsMobile from './hooks/useIsMobile';
@@ -36,6 +37,7 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
   const isMobileView = useIsMobile();
   const { addToast } = useToast(); 
   const { handleShare } = useShare(); 
+  const { updateContextQueue } = useRadio(); // Get smart queue updater
   const queryClient = useQueryClient(); 
 
   const { 
@@ -61,6 +63,13 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
     },
     staleTime: 1000 * 60 * 5, 
   });
+
+  // --- SMART RADIO REGISTRATION ---
+  useEffect(() => {
+    if (savedArticles.length > 0) {
+      updateContextQueue(savedArticles, 'Saved Library');
+    }
+  }, [savedArticles, updateContextQueue]);
 
   const handleLocalToggleSave = (article: IArticle) => {
     onToggleSave(article);

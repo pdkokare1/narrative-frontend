@@ -5,7 +5,7 @@ import * as api from '../services/api';
 import { useRadio } from '../context/RadioContext';
 import { useToast } from '../context/ToastContext';
 import './Header.css'; 
-import { IArticle, IFilters } from '../types';
+import { IArticle, INarrative, IFilters, FeedItem } from '../types';
 import { Capacitor } from '@capacitor/core'; 
 
 interface HeaderProps {
@@ -19,7 +19,9 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false); 
   const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<IArticle[]>([]);
+  
+  // FIX: Allow both Articles and Narratives in suggestions
+  const [suggestions, setSuggestions] = useState<FeedItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   const { isPlaying, isPaused, startRadio, resume, pause, currentArticle, contextQueue, contextLabel } = useRadio();
@@ -51,6 +53,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
         setIsSearching(true);
         try {
           const { data } = await api.searchArticles(searchQuery, { limit: 5 });
+          // Now safely accepts FeedItem[]
           setSuggestions(data.articles || []);
         } catch (error) { console.error("Live search failed", error); } 
         finally { setIsSearching(false); }
@@ -77,7 +80,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
     
     setRadioLoading(true);
 
-    // 1. Context Aware
     if (contextQueue && contextQueue.length > 0) {
         addToast(`Tuning into ${contextLabel}...`, 'info');
         startRadio(contextQueue, 0);
@@ -85,11 +87,13 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
         return;
     }
 
-    // 2. Fallback
     addToast('Tuning into Gamut Radio...', 'info');
     try {
         const { data } = await api.fetchArticles({ limit: 20, offset: 0 });
-        if (data.articles?.length > 0) startRadio(data.articles, 0);
+        // Filter strictly for articles for the radio
+        const audioArticles = (data.articles || []).filter(item => item.type !== 'Narrative') as IArticle[];
+        
+        if (audioArticles.length > 0) startRadio(audioArticles, 0);
         else addToast('No news available for radio.', 'error');
     } catch (err) { addToast('Could not start radio.', 'error'); } 
     finally { setRadioLoading(false); }
@@ -107,7 +111,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
 
       <div className="header-right">
         
-        {/* Hide Radio Button on Native App (Use Bottom Nav) */}
         {!isNative && (
           <button onClick={handleRadioClick} className={`radio-header-btn ${isPlaying ? 'playing' : ''}`} title="Start Radio">
               {radioLoading ? ( 
@@ -128,15 +131,26 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
           <button onClick={() => setIsSearchOpen(!isSearchOpen)} className="search-toggle-btn" title="Search">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           </button>
+          
           {suggestions.length > 0 && isSearchOpen && (
               <div className="live-search-dropdown">
                   <div className="live-search-label">TOP MATCHES</div>
-                  {suggestions.map(article => (
-                      <div key={article._id} className="live-search-item" onClick={handleSearchSubmit}>
-                          <span className="live-item-icon">📄</span>
-                          <div className="live-item-text"><div className="live-item-headline">{article.headline}</div></div>
-                      </div>
-                  ))}
+                  {suggestions.map(item => {
+                      // Handle both Articles and Narratives
+                      const isNarrative = item.type === 'Narrative';
+                      const headline = isNarrative 
+                          ? (item as INarrative).masterHeadline 
+                          : (item as IArticle).headline;
+
+                      return (
+                          <div key={item._id} className="live-search-item" onClick={handleSearchSubmit}>
+                              <span className="live-item-icon">{isNarrative ? '✨' : '📄'}</span>
+                              <div className="live-item-text">
+                                  <div className="live-item-headline">{headline}</div>
+                              </div>
+                          </div>
+                      );
+                  })}
               </div>
           )}
         </div>

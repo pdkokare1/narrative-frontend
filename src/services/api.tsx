@@ -1,5 +1,5 @@
 // src/services/api.tsx
-import axios, { InternalAxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { auth, appCheck } from '../firebaseConfig';
 import { getToken } from "firebase/app-check";
 import offlineStorage from './offlineStorage';
@@ -15,12 +15,17 @@ const api = axios.create({
   },
 });
 
+// Flag to prevent infinite retry loops
+interface CustomRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
 // --- REQUEST INTERCEPTOR ---
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const user = auth.currentUser;
     if (user) {
-      // 1. Add Auth Token
+      // 1. Add Auth Token (This usually gets a valid token, but might be stale by seconds)
       const token = await user.getIdToken();
       if (config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -46,15 +51,36 @@ api.interceptors.request.use(
 // --- RESPONSE INTERCEPTOR ---
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
-  (error) => {
-    const message = error.response?.data?.message || error.response?.data?.error || error.message;
+  async (error: AxiosError) => {
+    const originalRequest = error.config as CustomRequestConfig;
+    
+    // Check if error is 401 (Unauthorized) and we haven't retried yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        const user = auth.currentUser;
+        if (user) {
+            // FORCE refresh the token from Firebase
+            console.log("🔄 Session expired. Refreshing token...");
+            const newToken = await user.getIdToken(true);
+            
+            // Update the header and retry the request
+            if (originalRequest.headers) {
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            }
+            return api(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error("Token refresh failed:", refreshError);
+        // If refresh fails, user really needs to login again
+      }
+    }
+
+    const message = (error.response?.data as any)?.message || (error.response?.data as any)?.error || error.message;
     const cleanError: any = new Error(message);
     cleanError.status = error.response?.status;
     cleanError.original = error;
-
-    if (error.response?.status === 401) {
-      console.warn("Session expired or unauthorized.");
-    }
 
     return Promise.reject(cleanError);
   }

@@ -1,4 +1,3 @@
-// src/hooks/useIsMobile.ts
 import { useState, useEffect } from 'react';
 
 // This hook tracks the window size and returns true if the device is mobile.

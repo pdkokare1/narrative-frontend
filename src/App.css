@@ -17,6 +17,8 @@ body {
   transition: background 0.4s ease, color 0.4s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* --- DISABLE PULL-TO-REFRESH --- */
   overscroll-behavior-y: none;
   
   /* --- MOBILE SAFE AREA SUPPORT --- */
@@ -207,6 +209,8 @@ a:hover {
     height: calc(100vh - 40px); 
     overflow-y: auto; 
     overflow-x: hidden;
+    /* Prevent pull-to-refresh here specifically */
+    overscroll-behavior-y: none;
   }
   
   .articles-grid { display: block; }

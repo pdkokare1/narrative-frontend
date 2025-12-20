@@ -75,7 +75,7 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
       );
   }
 
-  // --- Data Calculations (Omitted for brevity, logic remains identical) ---
+  // --- Data Calculations ---
   const storiesReadData: ChartData<'line'> = {
     labels: statsData?.dailyCounts?.map((item: any) => item.date) || [],
     datasets: [{
@@ -253,7 +253,30 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
                             <div className="chart-container-large"><BiasMap articles={statsData?.allArticles || []} theme={theme} /></div>
                         </Card>
                     )}
-                    {/* Simplified for mobile brevity, full logic in desktop block below */}
+                    {activeTab === 'interests' && (
+                        <>
+                            <Card>
+                                <h3>Top Categories</h3>
+                                <div className="chart-container"><Bar options={getBarChartOptions('', 'Articles', theme)} data={categoryReadData} /></div>
+                            </Card>
+                            <Card>
+                                <h3>Top Sources</h3>
+                                <div className="chart-container"><Bar options={getBarChartOptions('', 'Articles', theme)} data={topSourcesData} /></div>
+                            </Card>
+                        </>
+                    )}
+                    {activeTab === 'quality' && (
+                        <>
+                            <Card>
+                                <h3>Sentiment</h3>
+                                <div className="chart-container"><Doughnut options={getDoughnutChartOptions('', theme)} data={sentimentReadData} /></div>
+                            </Card>
+                            <Card>
+                                <h3>Quality Grade</h3>
+                                <div className="chart-container"><Doughnut options={getDoughnutChartOptions('', theme)} data={qualityReadData} /></div>
+                            </Card>
+                        </>
+                    )}
                 </div>
               </>
           ) : (

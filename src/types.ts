@@ -2,16 +2,17 @@
 
 // --- 1. Badge Interface (Gamification) ---
 export interface IBadge {
-  id: string;        // e.g., 'streak_5'
-  label: string;     // e.g., '5 Day Streak'
-  icon: string;      // e.g., '🔥'
+  id: string;        
+  label: string;     
+  icon: string;      
   description: string;
-  earnedAt: string;  // Dates come as strings from JSON API
+  earnedAt: string;  
 }
 
 // --- 2. Article Interface ---
 export interface IArticle {
   _id: string;
+  type?: 'Article'; // Added discriminator
   headline: string;
   summary: string;
   source: string;
@@ -52,7 +53,40 @@ export interface IArticle {
   suggestionType?: 'Comfort' | 'Challenge';
 }
 
-// --- 3. User Profile Interface ---
+// --- 3. Narrative Interface (NEW: The Story Bundle) ---
+export interface INarrative {
+  _id: string;
+  type: 'Narrative'; // Discriminator
+  clusterId: number;
+  lastUpdated: string;
+  publishedAt: string; // Alias for sorting
+  
+  // The "Meta" Content
+  masterHeadline: string;
+  executiveSummary: string; 
+  
+  // Stats
+  sourceCount: number;
+  sources: string[];
+  
+  // The Deep Analysis
+  consensusPoints: string[]; 
+  divergencePoints: {
+    point: string;
+    perspectives: {
+      source: string;
+      stance: string;
+    }[];
+  }[];
+
+  category: string;
+  country: string;
+}
+
+// Union Type for Feed (NEW)
+export type FeedItem = IArticle | INarrative;
+
+// --- 4. User Profile Interface ---
 export interface IUserProfile {
   userId: string;
   username: string;
@@ -63,7 +97,7 @@ export interface IUserProfile {
   comparisonsViewedCount: number;
   articlesSharedCount: number;
   
-  // Gamification (NEW)
+  // Gamification 
   currentStreak?: number;
   badges?: IBadge[];
   
@@ -72,7 +106,7 @@ export interface IUserProfile {
   notificationsEnabled: boolean;
 }
 
-// --- 4. Filters & Search ---
+// --- 5. Filters & Search ---
 export interface IFilters {
   category?: string;
   lean?: string;
@@ -85,7 +119,7 @@ export interface IFilters {
 }
 
 export interface ISearchResponse {
-  articles: IArticle[];
+  articles: FeedItem[]; // Updated to accept both types
   pagination: {
     total: number;
   };

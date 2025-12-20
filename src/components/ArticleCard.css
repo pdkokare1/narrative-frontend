@@ -58,7 +58,7 @@
 /* ==================== IMAGE ==================== */
 .article-image {
   width: 100%;
-  height: 180px; /* Slightly reduced height to give more room to text */
+  height: 180px;
   background: var(--bg-secondary);
   position: relative;
   overflow: hidden;
@@ -79,7 +79,7 @@
 
 /* ==================== CONTENT BODY ==================== */
 .article-content {
-  padding: 20px; /* Reduced padding slightly for more space */
+  padding: 20px;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -111,7 +111,6 @@
   padding: 0;
   text-align: left;
   font-family: var(--font-heading);
-  /* UPDATED: Significantly smaller font size */
   font-size: 16px; 
   line-height: 1.4;
   font-weight: 600;
@@ -133,13 +132,12 @@
 
 .article-summary {
   font-family: var(--font-body);
-  font-size: 13px;
-  line-height: 1.6;
+  /* UPDATED: Reduced size significantly to create hierarchy */
+  font-size: 11px;
+  line-height: 1.5;
   color: var(--text-secondary);
-  
-  /* UPDATED: Removed clamping to show full summary */
   display: block;
-  margin-bottom: auto; /* Keeps pushing footer down, but text will fill space now */
+  margin-bottom: auto;
 }
 
 /* ==================== FOOTER ==================== */
@@ -197,7 +195,7 @@
 
 .action-left {
   display: flex;
-  gap: 4px; /* Tighter gap for actions */
+  gap: 4px;
 }
 
 /* Mobile Adjustments */
@@ -215,7 +213,11 @@
   }
   
   .article-headline-btn {
-    /* UPDATED: Smaller mobile font size */
     font-size: 17px; 
+  }
+  
+  .article-summary {
+     /* Keep summary small on mobile too */
+     font-size: 12px;
   }
 }

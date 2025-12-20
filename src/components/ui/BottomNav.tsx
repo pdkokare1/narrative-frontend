@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useRadio } from '../../context/RadioContext';
-import * as api from '../../services/api';
+import * as api from '../../services/api'; // Still needed for fallback safety
 import { useToast } from '../../context/ToastContext';
 import useHaptic from '../../hooks/useHaptic'; 
 import './BottomNav.css';
@@ -10,11 +10,12 @@ import { IFilters } from '../../types';
 
 interface BottomNavProps {
   currentFilters?: IFilters;
-  onOpenFilters?: () => void; // New Prop
+  onOpenFilters?: () => void;
 }
 
 const BottomNav: React.FC<BottomNavProps> = ({ currentFilters, onOpenFilters }) => {
-  const { isPlaying, isPaused, startRadio, currentArticle, togglePlayer } = useRadio();
+  // Now we use contextQueue and contextLabel
+  const { isPlaying, isPaused, startRadio, currentArticle, togglePlayer, contextQueue, contextLabel } = useRadio();
   const { addToast } = useToast();
   const vibrate = useHaptic();
   const [loading, setLoading] = useState(false);
@@ -30,10 +31,19 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentFilters, onOpenFilters }) 
     }
 
     setLoading(true);
-    addToast('Tuning into Gamut Radio...', 'info');
+
+    // 1. Check if we have a smart queue registered
+    if (contextQueue && contextQueue.length > 0) {
+        addToast(`Tuning into ${contextLabel}...`, 'info');
+        startRadio(contextQueue, 0);
+        setLoading(false);
+        return;
+    }
     
+    // 2. Fallback: If no queue (e.g., page load error), fetch default
+    addToast('Tuning into Gamut Radio...', 'info');
     try {
-        const { data } = await api.fetchArticles({ ...currentFilters, limit: 20, offset: 0 });
+        const { data } = await api.fetchArticles({ limit: 20, offset: 0 });
         if (data.articles && data.articles.length > 0) {
             startRadio(data.articles, 0);
         } else {
@@ -65,7 +75,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentFilters, onOpenFilters }) 
         <span className="nav-label">Feed</span>
       </NavLink>
 
-      {/* 2. STATS (Chart Icon) - MOVED HERE */}
+      {/* 2. STATS (Chart Icon) */}
       <NavLink to="/my-dashboard" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={vibrate}>
         <div className="nav-icon">
           <svg {...iconProps} viewBox="0 0 24 24">
@@ -98,7 +108,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentFilters, onOpenFilters }) 
         <span className="nav-label radio-label">{loading ? 'Loading' : (isPlaying || isPaused) ? 'Now Playing' : 'Radio'}</span>
       </div>
 
-      {/* 4. FILTERS (Sliders Icon) - NEW POSITION */}
+      {/* 4. FILTERS (Sliders Icon) */}
       <div className="nav-item" onClick={() => { vibrate(); if(onOpenFilters) onOpenFilters(); }}>
         <div className="nav-icon">
           <svg {...iconProps} viewBox="0 0 24 24">

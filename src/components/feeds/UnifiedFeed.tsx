@@ -1,7 +1,6 @@
 // src/components/feeds/UnifiedFeed.tsx
-import React, { useState, useEffect, useMemo, useRef, forwardRef, useCallback } from 'react'; 
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'; 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import { VirtuosoGrid, VirtuosoGridHandle, GridItemContent } from 'react-virtuoso'; 
 import * as api from '../../services/api'; 
 import ArticleCard from '../ArticleCard';
 import SkeletonCard from '../ui/SkeletonCard';
@@ -26,24 +25,17 @@ interface UnifiedFeedProps {
   scrollToTopRef?: React.RefObject<HTMLDivElement>;
 }
 
-// --- CONTEXT INTERFACE ---
-interface FeedContext {
-  mode: string;
-  filters: IFilters;
-  onFilterChange?: (filters: IFilters) => void;
-  vibrate: () => void;
-  metaData: any;
-  isFetchingNextPage: boolean;
-}
-
 // --- STABLE COMPONENTS ---
 
-const FeedHeader: React.FC<{ context?: FeedContext }> = React.memo(({ context }) => {
-  if (!context) return null;
-  const { mode, filters, onFilterChange, vibrate, metaData } = context;
-
+const FeedHeader: React.FC<{ 
+  mode: string; 
+  filters: IFilters; 
+  onFilterChange?: (f: IFilters) => void; 
+  vibrate: () => void; 
+  metaData: any 
+}> = React.memo(({ mode, filters, onFilterChange, vibrate, metaData }) => {
   return (
-    <div style={{ paddingBottom: '5px' }}>
+    <div style={{ paddingBottom: '15px' }}>
         {mode === 'latest' && onFilterChange && (
             <CategoryPills 
               selectedCategory={filters.category || 'All Categories'} 
@@ -65,43 +57,6 @@ const FeedHeader: React.FC<{ context?: FeedContext }> = React.memo(({ context })
   );
 });
 
-const FeedFooter: React.FC<{ context?: FeedContext }> = React.memo(({ context }) => {
-  if (!context) return <div style={{ height: '60px' }} />;
-  
-  // Only show skeletons if strictly fetching next page for infinite scroll
-  if (context.mode === 'latest' && context.isFetchingNextPage) {
-      return (
-        <div className="articles-grid" style={{ marginTop: '20px', paddingBottom: '40px' }}>
-           {[...Array(4)].map((_, i) => ( <div className="article-card-wrapper" key={`skel-${i}`}><SkeletonCard /></div> ))}
-        </div>
-      );
-  }
-  
-  return <div style={{ height: '80px' }} />; // Extra buffer space
-});
-
-const GridList = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ style, children, ...props }, ref) => (
-  <div 
-    ref={ref} 
-    {...props} 
-    style={{ ...style, overflowAnchor: 'none', paddingBottom: '20px' }} 
-    className="articles-grid"
-  >
-    {children}
-  </div>
-));
-
-const GridItem = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ children, style, ...props }, ref) => (
-  <div 
-    {...props} 
-    ref={ref} 
-    className="article-card-wrapper" 
-    style={{ ...style, margin: 0, minHeight: '300px', height: '100%' }}
-  >
-    {children}
-  </div>
-));
-
 const UnifiedFeed: React.FC<UnifiedFeedProps> = ({ 
   mode,
   filters = {}, 
@@ -120,19 +75,19 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const vibrate = useHaptic(); 
   const queryClient = useQueryClient();
   
-  const virtuosoRef = useRef<VirtuosoGridHandle>(null);
-  const [scrollParent, setScrollParent] = useState<HTMLElement | undefined>(undefined);
   const [showNewPill, setShowNewPill] = useState(false); 
   
   // CONSTANTS
-  const BATCH_SIZE = 24; // Increased to ensure screen fill and prevent infinite loops
-  const [isThrottled, setIsThrottled] = useState(false); // New throttle state
+  const BATCH_SIZE = 24; 
 
   // --- PULL TO REFRESH STATE ---
   const [pullY, setPullY] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const touchStartRef = useRef(0);
   const isDraggingRef = useRef(false);
+
+  // --- INFINITE SCROLL OBSERVER ---
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // --- DATA FETCHING ---
   const latestQuery = useInfiniteQuery({
@@ -148,27 +103,19 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage: any, allPages) => {
-      // 1. ROBUST CHECK: Extract items correctly
       const lastPageItems = Array.isArray(lastPage) ? lastPage : (lastPage?.articles || lastPage?.data || []);
-      
-      // 2. STOP if the last page was empty (no more content)
       if (!lastPageItems || lastPageItems.length === 0) return undefined;
-
-      // 3. STOP if we received fewer items than requested (implies end of list)
       if (lastPageItems.length < BATCH_SIZE) return undefined;
 
-      // 4. Calculate next offset
       const loadedCount = allPages.reduce((acc, page: any) => {
           const items = Array.isArray(page) ? page : (page?.articles || page?.data || []);
           return acc + items.length;
       }, 0);
       
-      // 5. Check against total ONLY if total is explicitly provided and valid
       const totalAvailable = lastPage?.pagination?.total || lastPage?.total;
       if (typeof totalAvailable === 'number' && loadedCount >= totalAvailable) {
           return undefined;
       }
-      
       return loadedCount;
     },
     enabled: mode === 'latest',
@@ -235,8 +182,8 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       
       setIsRefreshing(false);
       setPullY(0);
-      if (virtuosoRef.current) {
-          virtuosoRef.current.scrollToIndex({ index: 0, align: 'start', behavior: 'smooth' });
+      if (scrollToTopRef?.current) {
+          scrollToTopRef.current.scrollTop = 0;
       }
   };
 
@@ -310,10 +257,8 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       else if (data?.data && Array.isArray(data.data)) rawList = data.data;
     }
     
-    // FIX: Deduplicate and Sanitization (Prevent Crash)
     const seen = new Set<string>();
     return rawList.filter(a => {
-        // Strict null checks
         if (!a || typeof a !== 'object') return false;
         if (!a._id) return false;
         if (seen.has(a._id)) return false;
@@ -324,64 +269,41 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   const metaData = mode !== 'latest' ? (activeQuery.data as any)?.meta : null;
 
-  // --- SCROLL PARENT LOGIC ---
+  // --- INTERSECTION OBSERVER FOR INFINITE SCROLL ---
   useEffect(() => {
-    if (scrollToTopRef?.current) {
-        setScrollParent(scrollToTopRef.current);
-    } else {
-        setScrollParent(undefined);
-    }
-  }, [scrollToTopRef]);
+    if (mode !== 'latest') return;
 
-  useEffect(() => {
-    if (scrollToTopRef?.current) scrollToTopRef.current.scrollTop = 0;
-  }, [mode, filters, scrollToTopRef]);
-
-  // --- MEMOIZED COMPONENTS ---
-  const gridComponents = useMemo(() => ({
-      Header: FeedHeader,
-      Footer: FeedFooter,
-      List: GridList,
-      Item: GridItem
-  }), []);
-
-  const feedContextValue = useMemo(() => ({
-      mode,
-      filters,
-      onFilterChange,
-      vibrate,
-      metaData,
-      isFetchingNextPage: latestQuery.isFetchingNextPage
-  }), [mode, filters, onFilterChange, vibrate, metaData, latestQuery.isFetchingNextPage]);
-
-  // --- MEMOIZED ITEM CONTENT ---
-  const itemContent: GridItemContent<IArticle, unknown> = useCallback((index, article) => {
-    // Extra safety check
-    if (!article || !article._id) return null;
-    
-    return (
-        <ArticleCard
-          article={article}
-          onCompare={() => onCompare(article)}
-          onAnalyze={onAnalyze}
-          onShare={() => handleShare(article)} 
-          onRead={() => {
-              api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
-              window.open(article.url, '_blank', 'noopener,noreferrer');
-          }}
-          showTooltip={showTooltip}
-          isSaved={savedArticleIds.has(article._id)}
-          onToggleSave={() => onToggleSave(article)}
-          isPlaying={currentArticle?._id === article._id}
-          onPlay={() => playSingle(article)}
-          onStop={stop}
-        />
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting && 
+          latestQuery.hasNextPage && 
+          !latestQuery.isFetchingNextPage && 
+          !latestQuery.isFetching
+        ) {
+          latestQuery.fetchNextPage();
+        }
+      },
+      { 
+        threshold: 0.1,
+        root: scrollToTopRef?.current || null, // Observes visibility within the main scroll area
+        rootMargin: '200px' // Preload before hitting bottom
+      }
     );
-  }, [onCompare, onAnalyze, handleShare, showTooltip, savedArticleIds, onToggleSave, currentArticle, playSingle, stop]);
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [mode, latestQuery.hasNextPage, latestQuery.isFetchingNextPage, latestQuery.isFetching, scrollToTopRef]);
 
   // --- RENDER ---
   return (
     <>
+        {/* PULL INDICATOR */}
         <div 
             className="pull-refresh-indicator" 
             style={{ 
@@ -396,15 +318,21 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             )}
         </div>
 
+        {/* NEW CONTENT PILL */}
         <div className={`new-content-pill ${showNewPill ? 'visible' : ''}`} onClick={handleRefresh}>
             <span>↑ New Articles Available</span>
         </div>
 
+        <FeedHeader 
+            mode={mode} 
+            filters={filters} 
+            onFilterChange={onFilterChange} 
+            vibrate={vibrate} 
+            metaData={metaData} 
+        />
+
         {status === 'pending' ? (
              <div className="articles-grid">
-               <div style={{gridColumn: '1 / -1', paddingBottom: '20px'}}>
-                  <div className="skeleton-pulse" style={{width: '100%', height: '40px', borderRadius: '20px'}}></div>
-               </div>
                {[...Array(8)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) }
              </div>
         ) : status === 'error' ? (
@@ -419,36 +347,56 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                 <button onClick={handleRefresh} className="btn-secondary" style={{ marginTop: '15px' }}>Force Refresh</button>
             </div>
         ) : (
-            <VirtuosoGrid
-              key={mode} 
-              ref={virtuosoRef}
-              useWindowScroll={isMobile ? !scrollParent : false}
-              style={{ height: '100%', width: '100%' }}
-              customScrollParent={scrollParent}
-              data={articles}
-              computeItemKey={(index, article) => article?._id || `temp-${index}`}
-              context={feedContextValue} 
-              initialItemCount={BATCH_SIZE} 
-              endReached={() => { 
-                  // FIX: Throttled guard to prevent infinite loops
-                  if (
-                    mode === 'latest' && 
-                    latestQuery.hasNextPage && 
-                    !latestQuery.isFetching && 
-                    !latestQuery.isFetchingNextPage &&
-                    !isThrottled
-                  ) {
-                      setIsThrottled(true);
-                      latestQuery.fetchNextPage().finally(() => {
-                         // Add a small delay before allowing another fetch
-                         setTimeout(() => setIsThrottled(false), 500);
-                      });
-                  }
-              }}
-              overscan={400} 
-              components={gridComponents} 
-              itemContent={itemContent}   
-            />
+            <>
+                <div className="articles-grid">
+                    {articles.map((article) => (
+                        <div className="article-card-wrapper" key={article._id}>
+                             <ArticleCard
+                                article={article}
+                                onCompare={() => onCompare(article)}
+                                onAnalyze={onAnalyze}
+                                onShare={() => handleShare(article)} 
+                                onRead={() => {
+                                    api.logRead(article._id).catch(err => console.error("Log Read Error:", err));
+                                    window.open(article.url, '_blank', 'noopener,noreferrer');
+                                }}
+                                showTooltip={showTooltip}
+                                isSaved={savedArticleIds.has(article._id)}
+                                onToggleSave={() => onToggleSave(article)}
+                                isPlaying={currentArticle?._id === article._id}
+                                onPlay={() => playSingle(article)}
+                                onStop={stop}
+                            />
+                        </div>
+                    ))}
+                </div>
+
+                {/* SENTINEL & LOADING STATE */}
+                {mode === 'latest' && (
+                    <div style={{ width: '100%', height: '20px', marginTop: '20px' }}>
+                        {latestQuery.isFetchingNextPage ? (
+                            <div className="articles-grid">
+                                {[...Array(4)].map((_, i) => ( 
+                                    <div className="article-card-wrapper" key={`skel-${i}`}><SkeletonCard /></div> 
+                                ))}
+                            </div>
+                        ) : (
+                            // The invisible watcher
+                            <div ref={loadMoreRef} style={{ height: '20px', width: '100%' }} />
+                        )}
+                    </div>
+                )}
+                
+                {/* END OF LIST MESSAGE */}
+                {mode === 'latest' && !latestQuery.hasNextPage && articles.length > 0 && (
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-tertiary)', fontSize: '12px' }}>
+                        <p>You're all caught up</p>
+                    </div>
+                )}
+                 
+                 {/* BUFFER */}
+                <div style={{ height: '80px' }} />
+            </>
         )}
     </>
   );

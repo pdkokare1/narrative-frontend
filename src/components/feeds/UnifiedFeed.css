@@ -1,12 +1,11 @@
 /* src/components/feeds/UnifiedFeed.css */
 
-/* --- GRID LAYOUT --- */
+/* --- GRID LAYOUT (Desktop/Tablet) --- */
 .articles-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
   padding: 10px;
-  /* Native scroll performance */
   will-change: scroll-position;
 }
 
@@ -14,6 +13,32 @@
 .article-card-wrapper {
   height: 100%;
   width: 100%;
+}
+
+/* --- MOBILE STACKED LAYOUT --- */
+@media (max-width: 768px) {
+  /* 1. Turn off grid, use stacked flex column */
+  .articles-grid.mobile-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0; 
+    padding: 0 10px 80px 10px; /* Side padding + Bottom Nav space */
+  }
+
+  /* 2. The Sticky Magic */
+  .articles-grid.mobile-stack .article-card-wrapper {
+    position: sticky;
+    /* This Top value ensures it sticks JUST below your Header (approx 90px) */
+    top: 95px; 
+    
+    /* Height calculation: Viewport - Header(90) - Nav(70) - Buffer */
+    height: calc(100vh - 165px); 
+    min-height: 450px; /* Sanity check */
+    
+    /* Margin creates the scroll distance between stacks */
+    margin-bottom: 25px; 
+    z-index: 1;
+  }
 }
 
 /* --- PULL TO REFRESH --- */
@@ -101,14 +126,9 @@
   font-style: italic;
 }
 
-/* Mobile Adjustment */
+/* Mobile Adjustment for pill */
 @media (max-width: 768px) {
   .new-content-pill {
     top: 130px; 
-  }
-  
-  .articles-grid {
-    gap: 15px;
-    padding: 15px;
   }
 }

@@ -71,7 +71,8 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   scrollToTopRef 
 }) => {
   const { addToast } = useToast();
-  const { startRadio, playSingle, stop, currentArticle, isPlaying } = useRadio();
+  // Destructure updateContextQueue to register this feed
+  const { startRadio, playSingle, stop, currentArticle, isPlaying, updateContextQueue } = useRadio();
   const { handleShare } = useShare(); 
   const isMobile = useIsMobile(); 
   const vibrate = useHaptic(); 
@@ -142,6 +143,53 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     enabled: mode === 'personalized',
     staleTime: 1000 * 60 * 10,
   });
+
+  // --- ROBUST ARTICLE EXTRACTION & DEDUPLICATION ---
+  const activeQuery = mode === 'latest' ? latestQuery : (mode === 'foryou' ? forYouQuery : personalizedQuery);
+  const { status } = activeQuery;
+
+  const articles = useMemo(() => {
+    let rawList: IArticle[] = [];
+    
+    if (mode === 'latest') {
+      if (!latestQuery.data) return [];
+      
+      rawList = latestQuery.data.pages.flatMap((page: any) => {
+        if (Array.isArray(page)) return page;
+        if (page?.articles && Array.isArray(page.articles)) return page.articles;
+        if (page?.data && Array.isArray(page.data)) return page.data;
+        return [];
+      });
+      
+    } else {
+      const data = activeQuery.data as any;
+      if (Array.isArray(data)) rawList = data;
+      else if (data?.articles && Array.isArray(data.articles)) rawList = data.articles;
+      else if (data?.data && Array.isArray(data.data)) rawList = data.data;
+    }
+    
+    // Deduplicate
+    const seen = new Set<string>();
+    return rawList.filter(a => {
+        if (!a || typeof a !== 'object') return false;
+        if (!a._id) return false;
+        if (seen.has(a._id)) return false;
+        seen.add(a._id);
+        return true;
+    });
+  }, [mode, latestQuery.data, activeQuery.data]);
+
+  // --- SMART RADIO REGISTRATION ---
+  useEffect(() => {
+      if (articles.length > 0) {
+          let label = 'Latest News';
+          if (mode === 'foryou') label = 'For You';
+          if (mode === 'personalized') label = 'Your Feed';
+          if (filters?.category && filters.category !== 'All Categories') label = filters.category;
+          
+          updateContextQueue(articles, label);
+      }
+  }, [articles, mode, filters, updateContextQueue]);
 
   // --- LIVE UPDATES ---
   useEffect(() => {
@@ -238,42 +286,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
           container.removeEventListener('touchend', handleTouchEnd);
       };
   }, [isMobile, scrollToTopRef, pullY]);
-
-
-  const activeQuery = mode === 'latest' ? latestQuery : (mode === 'foryou' ? forYouQuery : personalizedQuery);
-  const { status } = activeQuery;
-
-  // --- ROBUST ARTICLE EXTRACTION & DEDUPLICATION ---
-  const articles = useMemo(() => {
-    let rawList: IArticle[] = [];
-    
-    if (mode === 'latest') {
-      if (!latestQuery.data) return [];
-      
-      rawList = latestQuery.data.pages.flatMap((page: any) => {
-        if (Array.isArray(page)) return page;
-        if (page?.articles && Array.isArray(page.articles)) return page.articles;
-        if (page?.data && Array.isArray(page.data)) return page.data;
-        return [];
-      });
-      
-    } else {
-      const data = activeQuery.data as any;
-      if (Array.isArray(data)) rawList = data;
-      else if (data?.articles && Array.isArray(data.articles)) rawList = data.articles;
-      else if (data?.data && Array.isArray(data.data)) rawList = data.data;
-    }
-    
-    // FIX: Deduplicate
-    const seen = new Set<string>();
-    return rawList.filter(a => {
-        if (!a || typeof a !== 'object') return false;
-        if (!a._id) return false;
-        if (seen.has(a._id)) return false;
-        seen.add(a._id);
-        return true;
-    });
-  }, [mode, latestQuery.data, activeQuery.data]);
 
   const metaData = mode !== 'latest' ? (activeQuery.data as any)?.meta : null;
 

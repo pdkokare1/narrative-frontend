@@ -73,13 +73,18 @@ api.interceptors.response.use(
             }
             return api(originalRequest);
         }
-      } catch (refreshError) {
+      } catch (refreshError: any) {
         console.error("Token refresh failed:", refreshError);
-        // CRITICAL FIX: Force Logout if refresh fails
-        try {
-            await auth.signOut();
-        } catch (e) { /* ignore */ }
-        window.location.href = '/login';
+        
+        // CRITICAL FIX: Only logout if it's NOT a network error
+        // Firebase throws 'auth/network-request-failed' if offline. We shouldn't logout then.
+        if (refreshError?.code !== 'auth/network-request-failed') {
+            try {
+                await auth.signOut();
+            } catch (e) { /* ignore */ }
+            window.location.href = '/login';
+        }
+        
         return Promise.reject(refreshError);
       }
     }

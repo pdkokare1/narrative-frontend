@@ -17,27 +17,44 @@
 
 /* --- MOBILE STACKED LAYOUT --- */
 @media (max-width: 768px) {
-  /* 1. Turn off grid, use stacked flex column */
+  
+  /* 1. STICKY FILTER HEADER */
+  /* Keeps the category pills visible while you scroll the stack */
+  .feed-header-sticky {
+    position: sticky;
+    top: 60px; /* Adjust if your Main Header is taller/shorter */
+    z-index: 20;
+    background: var(--bg-default); 
+    padding-bottom: 10px;
+    margin-bottom: 5px;
+    /* Create a fade out effect at bottom of header if desired */
+    /* box-shadow: 0 5px 15px -10px rgba(0,0,0,0.5); */
+  }
+
+  /* 2. STACK CONTAINER */
   .articles-grid.mobile-stack {
     display: flex;
     flex-direction: column;
     gap: 0; 
-    padding: 0 10px 80px 10px; /* Side padding + Bottom Nav space */
+    padding: 0 10px 80px 10px; 
+    overflow: visible; /* Allow sticky to work */
   }
 
-  /* 2. The Sticky Magic */
+  /* 3. THE PERFECTLY CENTERED CARD */
   .articles-grid.mobile-stack .article-card-wrapper {
     position: sticky;
-    /* This Top value ensures it sticks JUST below your Header (approx 90px) */
-    top: 95px; 
     
-    /* Height calculation: Viewport - Header(90) - Nav(70) - Buffer */
-    height: calc(100vh - 165px); 
-    min-height: 450px; /* Sanity check */
+    /* TOP: Main Header (60) + Pills/Padding (~55) = 115px */
+    top: 115px; 
     
-    /* Margin creates the scroll distance between stacks */
-    margin-bottom: 25px; 
-    z-index: 1;
+    /* HEIGHT: 100vh - Top(115) - BottomNav(75) = Center */
+    height: calc(100dvh - 190px);
+    
+    /* Min height to prevent crushing on very small screens */
+    min-height: 400px;
+    
+    margin-bottom: 25px; /* Spacing between stacks */
+    z-index: 10;
   }
 }
 
@@ -48,7 +65,7 @@
   justify-content: center;
   width: 100%;
   overflow: hidden;
-  transition: height 0.1s ease-out; /* Smooth drag */
+  transition: height 0.1s ease-out;
   color: var(--accent-primary);
   font-size: 20px;
   font-weight: 700;
@@ -57,11 +74,10 @@
 /* --- NEW CONTENT PILL --- */
 .new-content-pill {
   position: fixed;
-  top: 90px; /* Below new header */
+  top: 90px;
   left: 50%;
   transform: translateX(-50%) translateY(-20px);
   
-  /* Glass Pill */
   background: rgba(15, 15, 15, 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -126,9 +142,9 @@
   font-style: italic;
 }
 
-/* Mobile Adjustment for pill */
 @media (max-width: 768px) {
   .new-content-pill {
     top: 130px; 
+    z-index: 1000;
   }
 }

@@ -38,6 +38,17 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
   const queryClient = useQueryClient();
   const [showNewPill, setShowNewPill] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Track visibility to pause polling when tab/app is backgrounded
+  const isPageVisible = useRef(true);
+
+  useEffect(() => {
+      const handleVisibilityChange = () => {
+          isPageVisible.current = document.visibilityState === 'visible';
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   // --- QUERIES ---
   const latestQuery = useInfiniteQuery({
@@ -121,10 +132,14 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
     });
   }, [mode, latestQuery.data, activeQuery.data]);
 
-  // --- LIVE UPDATES CHECK ---
+  // --- LIVE UPDATES CHECK (Smart Polling) ---
   useEffect(() => {
       if (mode !== 'latest') return;
+
       const checkForUpdates = async () => {
+          // Optimization: Skip check if page is hidden to save battery/data
+          if (!isPageVisible.current) return;
+
           try {
               const { data } = await api.fetchArticles({ ...filters, limit: 1, offset: 0 });
               let latestItem: FeedItem | null = null;
@@ -145,6 +160,7 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
               }
           } catch (e) { /* Ignore */ }
       };
+      
       const interval = setInterval(checkForUpdates, 60000); 
       return () => clearInterval(interval);
   }, [mode, filters, latestQuery.data]);

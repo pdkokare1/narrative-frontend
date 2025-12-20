@@ -1,11 +1,12 @@
-// src/services/api.ts
+// src/services/api.tsx
 import axios, { InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 import { auth, appCheck } from '../firebaseConfig';
 import { getToken } from "firebase/app-check";
 import offlineStorage from './offlineStorage';
 import { IArticle, IUserProfile, ISearchResponse, IFilters } from '../types';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+// PRODUCTION FIX: Default to real domain if env is missing, not localhost
+const API_URL = process.env.REACT_APP_API_URL || 'https://api.thegamut.in/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -132,11 +133,37 @@ export const deleteAccount = () => api.delete('/profile');
 // Notification Token
 export const saveNotificationToken = (token: string) => api.post('/profile/save-token', { token });
 
-// Activity Logs
-export const logView = (id: string) => api.post('/activity/log-view', { articleId: id });
-export const logCompare = (id: string) => api.post('/activity/log-compare', { articleId: id });
-export const logShare = (id: string) => api.post('/activity/log-share', { articleId: id });
-export const logRead = (id: string) => api.post('/activity/log-read', { articleId: id });
+// --- ANALYTICS: Beacon / Keepalive Implementation ---
+// Replaces api.post for logs to ensure they survive page navigation
+const sendBeaconRequest = async (endpoint: string, body: any) => {
+    const url = `${API_URL}${endpoint}`;
+    const user = auth.currentUser;
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+
+    if (user) {
+        try {
+            const token = await user.getIdToken();
+            headers['Authorization'] = `Bearer ${token}`;
+        } catch (e) { /* Ignore token error for logs */ }
+    }
+
+    // Use fetch with keepalive: true (modern replacement for sendBeacon with headers support)
+    try {
+        fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(body),
+            keepalive: true
+        });
+    } catch (err) {
+        console.warn('Analytics Log Failed:', err);
+    }
+};
+
+export const logView = (id: string) => sendBeaconRequest('/activity/log-view', { articleId: id });
+export const logCompare = (id: string) => sendBeaconRequest('/activity/log-compare', { articleId: id });
+export const logShare = (id: string) => sendBeaconRequest('/activity/log-share', { articleId: id });
+export const logRead = (id: string) => sendBeaconRequest('/activity/log-read', { articleId: id });
 
 // Cluster
 export const fetchCluster = (id: number) => api.get<any>(`/cluster/${id}`);

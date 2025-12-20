@@ -1,5 +1,5 @@
 // src/components/feeds/UnifiedFeed.tsx
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'; 
+import React, { useState, useEffect, useMemo, useRef } from 'react'; 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '../../services/api'; 
 import ArticleCard from '../ArticleCard';
@@ -38,15 +38,15 @@ const FeedHeader: React.FC<{
     <div className="feed-header-sticky">
         {mode === 'latest' && onFilterChange && (
             <CategoryPills 
-              selectedCategory={filters.category || 'All Categories'} 
-              onSelect={(cat) => { vibrate(); onFilterChange({ ...filters, category: cat }); }} 
+              categories={["All", "Technology", "Business", "Science", "Health", "Entertainment", "Sports", "World", "Politics"]}
+              selectedCategory={filters.category || 'All'} 
+              onSelectCategory={(cat) => { vibrate(); onFilterChange({ ...filters, category: cat }); }} 
             />
         )}
         
-        {/* Reduced bottom padding to tighten layout */}
         {mode === 'foryou' && metaData && (
              <div style={{ textAlign: 'center', paddingBottom: '5px', color: 'var(--text-secondary)', fontSize: '12px' }}>
-                <p>Based on your interest in <strong>{metaData.basedOnCategory || 'various topics'}</strong>. Including {metaData.usualLean || 'balanced'} sources and opposing views.</p>
+                <p>Based on your interest in <strong>{metaData.basedOnCategory || 'various topics'}</strong>.</p>
              </div>
         )}
         {mode === 'personalized' && metaData && (
@@ -101,27 +101,19 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage: any, allPages) => {
-      // 1. ROBUST CHECK: Extract items correctly
       const lastPageItems = Array.isArray(lastPage) ? lastPage : (lastPage?.articles || lastPage?.data || []);
-      
-      // 2. STOP if the last page was empty (no more content)
       if (!lastPageItems || lastPageItems.length === 0) return undefined;
-
-      // 3. STOP if we received fewer items than requested (implies end of list)
       if (lastPageItems.length < BATCH_SIZE) return undefined;
 
-      // 4. Calculate next offset
       const loadedCount = allPages.reduce((acc, page: any) => {
           const items = Array.isArray(page) ? page : (page?.articles || page?.data || []);
           return acc + items.length;
       }, 0);
       
-      // 5. Check against total ONLY if total is explicitly provided and valid
       const totalAvailable = lastPage?.pagination?.total || lastPage?.total;
       if (typeof totalAvailable === 'number' && loadedCount >= totalAvailable) {
           return undefined;
       }
-      
       return loadedCount;
     },
     enabled: mode === 'latest',
@@ -194,6 +186,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   };
 
   // --- PULL GESTURE HANDLERS ---
+  // Updated: Attached to the Grid Container for proper snap-scroll interaction
   useEffect(() => {
       if (!isMobile || !scrollToTopRef?.current) return;
       const container = scrollToTopRef.current;
@@ -263,7 +256,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       else if (data?.data && Array.isArray(data.data)) rawList = data.data;
     }
     
-    // FIX: Deduplicate
     const seen = new Set<string>();
     return rawList.filter(a => {
         if (!a || typeof a !== 'object') return false;
@@ -278,7 +270,17 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   // --- RENDER ---
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+        
+        {/* HEADER (Sticky) */}
+        <FeedHeader 
+            mode={mode} 
+            filters={filters} 
+            onFilterChange={onFilterChange} 
+            vibrate={vibrate} 
+            metaData={metaData} 
+        />
+        
         {/* PULL INDICATOR */}
         <div 
             className="pull-refresh-indicator" 
@@ -299,32 +301,29 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             <span>↑ New Articles Available</span>
         </div>
 
-        <FeedHeader 
-            mode={mode} 
-            filters={filters} 
-            onFilterChange={onFilterChange} 
-            vibrate={vibrate} 
-            metaData={metaData} 
-        />
-
-        {status === 'pending' ? (
-             <div className="articles-grid">
-               {[...Array(8)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) }
-             </div>
-        ) : status === 'error' ? (
-            <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
-                <p>Unable to load feed.</p>
-                <button onClick={() => window.location.reload()} className="btn-secondary" style={{ marginTop: '10px' }}>Retry</button>
-            </div>
-        ) : articles.length === 0 ? (
-            <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
-                <h3>No articles found</h3>
-                <p>Try refreshing or checking back later.</p>
-                <button onClick={handleRefresh} className="btn-secondary" style={{ marginTop: '15px' }}>Force Refresh</button>
-            </div>
-        ) : (
-            <>
-                <div className={`articles-grid ${isMobile ? 'mobile-stack' : ''}`}>
+        {/* SCROLLABLE GRID (With Snap) */}
+        {/* The ref is attached here because THIS element scrolls now */}
+        <div 
+            className={`articles-grid ${isMobile ? 'mobile-stack' : ''}`} 
+            ref={scrollToTopRef}
+        >
+            {status === 'pending' ? (
+                 <>
+                   {[...Array(8)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) }
+                 </>
+            ) : status === 'error' ? (
+                <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
+                    <p>Unable to load feed.</p>
+                    <button onClick={() => window.location.reload()} className="btn-secondary" style={{ marginTop: '10px' }}>Retry</button>
+                </div>
+            ) : articles.length === 0 ? (
+                <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
+                    <h3>No articles found</h3>
+                    <p>Try refreshing or checking back later.</p>
+                    <button onClick={handleRefresh} className="btn-secondary" style={{ marginTop: '15px' }}>Force Refresh</button>
+                </div>
+            ) : (
+                <>
                     {articles.map((article) => (
                         <div className="article-card-wrapper" key={article._id}>
                              <ArticleCard
@@ -345,31 +344,28 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                             />
                         </div>
                     ))}
-                </div>
 
-                {/* MANUAL LOAD MORE BUTTON */}
-                {mode === 'latest' && (
-                    <div className="load-more-container">
-                        {latestQuery.isFetchingNextPage ? (
-                            <div className="spinner-small" />
-                        ) : latestQuery.hasNextPage ? (
-                            <button 
-                                className="load-more-btn"
-                                onClick={() => { vibrate(); latestQuery.fetchNextPage(); }}
-                            >
-                                Load More Articles
-                            </button>
-                        ) : (
-                            <div className="end-message">You're all caught up</div>
-                        )}
-                    </div>
-                )}
-                 
-                 {/* BUFFER */}
-                <div style={{ height: '80px' }} />
-            </>
-        )}
-    </>
+                    {/* MANUAL LOAD MORE BUTTON */}
+                    {mode === 'latest' && (
+                        <div className="load-more-container">
+                            {latestQuery.isFetchingNextPage ? (
+                                <div className="spinner-small" />
+                            ) : latestQuery.hasNextPage ? (
+                                <button 
+                                    className="load-more-btn"
+                                    onClick={() => { vibrate(); latestQuery.fetchNextPage(); }}
+                                >
+                                    Load More Articles
+                                </button>
+                            ) : (
+                                <div className="end-message">You're all caught up</div>
+                            )}
+                        </div>
+                    )}
+                </>
+            )}
+        </div>
+    </div>
   );
 };
 

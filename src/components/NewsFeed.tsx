@@ -3,10 +3,11 @@ import React, { useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import UnifiedFeed from './feeds/UnifiedFeed';
 import InFocusBar from './InFocusBar'; 
+import NarrativeModal from './modals/NarrativeModal'; // NEW
 import useIsMobile from '../hooks/useIsMobile';
 import useHaptic from '../hooks/useHaptic';
 import '../App.css'; 
-import { IArticle, IFilters } from '../types';
+import { IArticle, IFilters, INarrative } from '../types';
 
 interface NewsFeedProps {
   filters: IFilters;
@@ -30,8 +31,11 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   showTooltip 
 }) => {
   const [mode, setMode] = useState<FeedMode>('latest'); 
-  const [animDirection, setAnimDirection] = useState<'enter-right' | 'enter-left'>('enter-right'); // NEW state for animation
+  const [animDirection, setAnimDirection] = useState<'enter-right' | 'enter-left'>('enter-right');
   
+  // NEW: Narrative Modal State
+  const [selectedNarrative, setSelectedNarrative] = useState<INarrative | null>(null);
+
   const contentRef = useRef<HTMLDivElement>(null); 
   const isMobile = useIsMobile();
   const vibrate = useHaptic();
@@ -54,7 +58,6 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   const changeMode = (newMode: FeedMode, direction: 'enter-right' | 'enter-left') => {
       vibrate();
       setAnimDirection(direction);
-      // Small timeout to allow state to settle if needed, but usually instant is fine
       setMode(newMode);
   };
 
@@ -64,11 +67,11 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    if (isLeftSwipe) { // Swiping Left -> Go NEXT (Enter from Right)
+    if (isLeftSwipe) { 
         if (mode === 'latest') changeMode('foryou', 'enter-right');
         else if (mode === 'foryou') changeMode('personalized', 'enter-right');
     }
-    if (isRightSwipe) { // Swiping Right -> Go PREV (Enter from Left)
+    if (isRightSwipe) { 
         if (mode === 'personalized') changeMode('foryou', 'enter-left');
         else if (mode === 'foryou') changeMode('latest', 'enter-left');
     }
@@ -109,15 +112,14 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
   // --- MOBILE COLOR BAR TOGGLE ---
   const renderMobileNav = () => {
-      // Logic removed for different colors. Now unified.
       return (
         <div style={{ 
             position: 'sticky', top: 0, zIndex: 900, 
             background: 'var(--bg-primary)', 
             borderBottom: '1px solid var(--border-light)',
-            marginBottom: '5px', // Reduced from 15px
+            marginBottom: '5px', 
             marginTop: 0, 
-            paddingTop: '0px' // Reduced from 5px
+            paddingTop: '0px' 
         }}>
             <div style={{ display: 'flex', width: '100%' }}>
                 {[
@@ -126,7 +128,6 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
                     { id: 'personalized', label: 'For You' }
                 ].map(tab => {
                     const isActive = mode === tab.id;
-                    // Determine animation direction on click
                     const clickDirection = 
                         (mode === 'latest' && tab.id !== 'latest') ? 'enter-right' :
                         (mode === 'personalized' && tab.id !== 'personalized') ? 'enter-left' :
@@ -139,7 +140,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
                                 if (!isActive) changeMode(tab.id as FeedMode, clickDirection); 
                             }}
                             style={{
-                                flex: 1, textAlign: 'center', padding: '8px 0', // Reduced padding
+                                flex: 1, textAlign: 'center', padding: '8px 0', 
                                 cursor: 'pointer', position: 'relative',
                                 color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
                                 fontWeight: isActive ? 700 : 500,
@@ -148,10 +149,9 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
                             }}
                         >
                             {tab.label}
-                            {/* Animated Underline - ALWAYS PRIMARY ACCENT COLOR */}
                             <div style={{ 
                                 position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px',
-                                background: 'var(--accent-primary)', // Changed to fixed variable
+                                background: 'var(--accent-primary)',
                                 opacity: isActive ? 1 : 0,
                                 transform: isActive ? 'scaleX(1)' : 'scaleX(0)',
                                 transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'
@@ -181,11 +181,6 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
       {/* In Focus Bar */}
       <InFocusBar />
 
-      {/* ANIMATION WRAPPER: 
-          We wrap the feed in a div. 
-          The 'key={mode}' forces React to destroy and recreate this div when mode changes.
-          The 'className' determines which CSS animation plays.
-      */}
       <div key={mode} className={`feed-anim-wrapper ${animDirection}`}>
           <UnifiedFeed 
               mode={mode}
@@ -193,12 +188,21 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
               onFilterChange={onFilterChange}
               onAnalyze={onAnalyze}
               onCompare={onCompare}
+              onOpenNarrative={setSelectedNarrative} // PASS HANDLER
               savedArticleIds={savedArticleIds}
               onToggleSave={onToggleSave}
               showTooltip={showTooltip}
               scrollToTopRef={contentRef}
           />
       </div>
+
+      {/* NEW: Narrative Modal */}
+      {selectedNarrative && (
+          <NarrativeModal 
+              data={selectedNarrative} 
+              onClose={() => setSelectedNarrative(null)} 
+          />
+      )}
     </main>
   );
 };

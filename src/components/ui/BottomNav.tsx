@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useRadio } from '../../context/RadioContext';
-import * as api from '../../services/api'; // Still needed for fallback safety
+import * as api from '../../services/api'; 
 import { useToast } from '../../context/ToastContext';
 import useHaptic from '../../hooks/useHaptic'; 
 import './BottomNav.css';
@@ -63,7 +63,12 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentFilters, onOpenFilters }) 
     <nav className="bottom-nav">
       
       {/* 1. FEED (Grid Icon) */}
-      <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} end onClick={vibrate}>
+      <NavLink 
+        to="/" 
+        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} 
+        end 
+        onClick={() => vibrate()}
+      >
         <div className="nav-icon">
           <svg {...iconProps} viewBox="0 0 24 24">
             <rect x="3" y="3" width="7" height="7"></rect>
@@ -76,7 +81,11 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentFilters, onOpenFilters }) 
       </NavLink>
 
       {/* 2. STATS (Chart Icon) */}
-      <NavLink to="/my-dashboard" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={vibrate}>
+      <NavLink 
+        to="/my-dashboard" 
+        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} 
+        onClick={() => vibrate()}
+      >
         <div className="nav-icon">
           <svg {...iconProps} viewBox="0 0 24 24">
             <line x1="18" y1="20" x2="18" y2="10"></line>
@@ -127,7 +136,11 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentFilters, onOpenFilters }) 
       </div>
 
       {/* 5. PROFILE (User Icon) */}
-      <NavLink to="/profile-menu" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} onClick={vibrate}>
+      <NavLink 
+        to="/profile-menu" 
+        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} 
+        onClick={() => vibrate()}
+      >
         <div className="nav-icon">
           <svg {...iconProps} viewBox="0 0 24 24">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>

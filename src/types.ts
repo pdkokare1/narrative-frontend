@@ -1,4 +1,4 @@
-// src/types.ts
+// narrative-frontend/src/types.ts
 
 // --- 1. Badge Interface (Gamification) ---
 export interface IBadge {
@@ -9,12 +9,15 @@ export interface IBadge {
   earnedAt: string;  
 }
 
-// --- 2. Article Interface ---
+// --- 2. Article Interface (Synchronized with Backend) ---
 export interface IArticle {
   _id: string;
-  type?: 'Article'; // Added discriminator
+  type?: 'Article'; // Discriminator
+  
+  // Core Content
   headline: string;
   summary: string;
+  content?: string; 
   source: string;
   category: string;
   politicalLean: string;
@@ -23,11 +26,15 @@ export interface IArticle {
   audioUrl?: string | null;
   publishedAt: string; 
   
+  // Analysis & AI
   analysisType: 'Full' | 'SentimentOnly';
   sentiment: 'Positive' | 'Negative' | 'Neutral';
+  embedding?: number[]; // Vector data
+  analysisVersion?: string;
   
-  // Scores
-  biasScore?: number;
+  // Scores & Metrics
+  biasScore?: number;        // 0-100
+  biasLabel?: string;
   biasComponents?: any; 
 
   credibilityScore?: number;
@@ -39,21 +46,31 @@ export interface IArticle {
   reliabilityComponents?: any; 
 
   trustScore?: number;
+  trustLevel?: string;
+
+  // Coverage Stats
+  coverageLeft?: number;
+  coverageCenter?: number;
+  coverageRight?: number;
   
-  // Clustering
+  // Clustering & Topics
   clusterId?: number;
   clusterCount?: number;
   clusterTopic?: string;
   primaryNoun?: string;
   secondaryNoun?: string;
+  country?: string;
   
-  // Content
+  // Actionable Insights
   keyFindings?: string[];
   recommendations?: string[];
   suggestionType?: 'Comfort' | 'Challenge';
+  
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-// --- 3. Narrative Interface (NEW: The Story Bundle) ---
+// --- 3. Narrative Interface (The Story Bundle) ---
 export interface INarrative {
   _id: string;
   type: 'Narrative'; // Discriminator
@@ -83,7 +100,7 @@ export interface INarrative {
   country: string;
 }
 
-// Union Type for Feed (NEW)
+// Union Type for Feed
 export type FeedItem = IArticle | INarrative;
 
 // --- 4. User Profile Interface ---
@@ -100,10 +117,12 @@ export interface IUserProfile {
   // Gamification 
   currentStreak?: number;
   badges?: IBadge[];
+  lastActiveDate?: string;
   
   // Settings
   savedArticles: string[]; 
   notificationsEnabled: boolean;
+  fcmToken?: string | null;
 }
 
 // --- 5. Filters & Search ---
@@ -119,7 +138,7 @@ export interface IFilters {
 }
 
 export interface ISearchResponse {
-  articles: FeedItem[]; // Updated to accept both types
+  articles: FeedItem[];
   pagination: {
     total: number;
   };

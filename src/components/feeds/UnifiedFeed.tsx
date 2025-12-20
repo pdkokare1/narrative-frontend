@@ -1,9 +1,9 @@
-// src/components/feeds/UnifiedFeed.tsx
-import React, { useState, useEffect, useMemo, useRef } from 'react'; 
+// narrative-frontend/src/components/feeds/UnifiedFeed.tsx
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'; 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '../../services/api'; 
 import ArticleCard from '../ArticleCard';
-import NarrativeCard from '../NarrativeCard'; // NEW
+import NarrativeCard from '../NarrativeCard'; 
 import SkeletonCard from '../ui/SkeletonCard';
 import CategoryPills from '../ui/CategoryPills';
 import { useToast } from '../../context/ToastContext';
@@ -49,7 +49,7 @@ interface UnifiedFeedProps {
   onFilterChange?: (filters: IFilters) => void;
   onAnalyze: (article: IArticle) => void;
   onCompare: (article: IArticle) => void;
-  onOpenNarrative: (narrative: INarrative) => void; // NEW PROP
+  onOpenNarrative: (narrative: INarrative) => void; 
   savedArticleIds: Set<string>;
   onToggleSave: (article: IArticle) => void;
   showTooltip: (text: string, e: React.MouseEvent) => void;
@@ -163,12 +163,13 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
     staleTime: 1000 * 60 * 10,
   });
 
-  // --- INFINITE SCROLL TRIGGER ---
-  const handleLoadMore = () => {
+  // --- INFINITE SCROLL TRIGGER (OPTIMIZED) ---
+  // Fix: Wrapped in useCallback to prevent Observer re-initialization on every render
+  const handleLoadMore = useCallback(() => {
       if (latestQuery.hasNextPage && !latestQuery.isFetchingNextPage) {
           latestQuery.fetchNextPage();
       }
-  };
+  }, [latestQuery.hasNextPage, latestQuery.isFetchingNextPage, latestQuery.fetchNextPage]);
 
   const loadMoreRef = useIntersectionObserver(handleLoadMore);
 
@@ -179,9 +180,10 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const feedItems = useMemo(() => {
     let rawList: FeedItem[] = [];
     
+    // Safety check: only process if success/data exists
+    if (!activeQuery.data) return [];
+
     if (mode === 'latest') {
-      if (!latestQuery.data) return [];
-      
       rawList = latestQuery.data.pages.flatMap((page: any) => {
         if (Array.isArray(page)) return page;
         if (page?.articles && Array.isArray(page.articles)) return page.articles;
@@ -209,7 +211,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   // --- RADIO REGISTRATION ---
   useEffect(() => {
-      // Filter only playable articles for the radio (exclude Narratives)
       const playableArticles = feedItems.filter(item => item.type !== 'Narrative') as IArticle[];
       
       if (playableArticles.length > 0) {

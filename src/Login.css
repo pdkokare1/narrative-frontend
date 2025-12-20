@@ -212,22 +212,25 @@
   text-align: center;
 }
 
+/* REDESIGNED TITLE */
 .login-form-panel h1 {
-  font-family: 'Inter', system-ui, sans-serif; 
-  font-size: 36px;
-  font-weight: 800;
+  font-family: var(--font-logo), serif; /* Matches Header 'The Gamut' font */
+  font-size: 42px; /* Increased slightly for impact */
+  font-weight: 700;
   color: var(--login-text);
-  margin-bottom: 12px;
-  letter-spacing: -1.5px;
+  margin-bottom: 8px;
+  letter-spacing: -1px;
 }
 
 .login-form-panel p {
+  font-family: var(--font-body), sans-serif;
   color: var(--login-subtext);
   font-size: 15px;
   margin-bottom: 45px;
+  font-weight: 400;
 }
 
-/* --- Firebase UI Styling --- */
+/* --- Firebase UI Styling FIXES --- */
 #firebaseui-auth-container .firebaseui-container {
   background: transparent;
   box-shadow: none;
@@ -235,21 +238,32 @@
 }
 #firebaseui-auth-container .firebaseui-card-content { padding: 0; }
 
+/* FIX: Google Button Visibility */
 #firebaseui-auth-container .firebaseui-idp-button.firebaseui-idp-google {
-  background-color: var(--card-bg);
-  border: 1px solid var(--login-border);
+  background-color: var(--bg-elevated) !important;
+  border: 1px solid var(--border-color) !important;
   border-radius: 12px;
   height: 52px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.05);
   width: 100%;
   max-width: 100%;
+  transition: all 0.2s ease;
 }
+
+#firebaseui-auth-container .firebaseui-idp-button.firebaseui-idp-google:hover {
+  background-color: var(--bg-card) !important;
+  border-color: var(--accent-primary) !important;
+  transform: translateY(-1px);
+}
+
+/* FIX: Ensure Text is visible in Dark Mode */
 #firebaseui-auth-container .firebaseui-idp-text.firebaseui-idp-text-long {
-  color: var(--login-text);
-  font-family: system-ui, sans-serif;
+  color: var(--login-text) !important; /* Forces white in dark mode, black in light */
+  font-family: var(--font-body), sans-serif !important;
   font-weight: 600;
   font-size: 15px;
 }
+
 #firebaseui-auth-container .mdl-progress { display: none; }
 
 /* Mobile */
@@ -257,6 +271,7 @@
   .ghost-column.fast { display: none; }
   .login-container { width: 90%; max-width: 380px; }
   .login-sensor-glow { width: 350px; height: 350px; }
+  .login-form-panel h1 { font-size: 32px; }
 }
 @media (max-width: 480px) {
   .ghost-column.medium { display: none; }

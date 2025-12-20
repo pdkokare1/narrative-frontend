@@ -75,7 +75,12 @@ api.interceptors.response.use(
         }
       } catch (refreshError) {
         console.error("Token refresh failed:", refreshError);
-        // Optional: Redirect to login here if refresh fails
+        // CRITICAL FIX: Force Logout if refresh fails
+        try {
+            await auth.signOut();
+        } catch (e) { /* ignore */ }
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
       }
     }
 

@@ -7,7 +7,8 @@ import { getSentimentClass, getOptimizedImageUrl } from '../../utils/helpers';
 import { IArticle } from '../../types';
 import Button from '../ui/Button'; // New
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+// FIXED: Used import.meta.env for Vite
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 interface CompareModalProps {
   clusterId: number | null;

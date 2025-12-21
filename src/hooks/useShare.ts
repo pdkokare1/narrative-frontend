@@ -13,7 +13,8 @@ const useShare = () => {
     api.logShare(article._id).catch(err => console.error("Log Share Error:", err));
 
     // 2. Construct Share Data
-    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+    // FIXED: Used import.meta.env for Vite
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
     const baseUrl = apiUrl.replace(/\/api\/?$/, ''); 
     const shareUrl = `${baseUrl}/share/${article._id}`;
     const shareTitle = article.headline;

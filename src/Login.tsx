@@ -26,7 +26,8 @@ const GHOST_CARDS = [
 const uiConfig = {
   signInFlow: 'popup',
   credentialHelper: firebaseui.auth.CredentialHelper.GOOGLE_YOLO,
-  credentialHelperUrl: `https://${process.env.REACT_APP_AUTH_DOMAIN}`,
+  // FIXED: Used import.meta.env for Vite
+  credentialHelperUrl: `https://${import.meta.env.VITE_AUTH_DOMAIN}`,
   signInOptions: [
     GoogleAuthProvider.PROVIDER_ID
   ],

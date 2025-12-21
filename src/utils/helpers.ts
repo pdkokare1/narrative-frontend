@@ -93,7 +93,7 @@ export const getOptimizedImageUrl = (originalUrl: string | undefined, width: num
   if (originalUrl.includes('cloudinary.com')) return originalUrl;
 
   // 2. Get Cloud Name from Environment Variables
-  const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 
   // 3. Fallback: If no cloud name is set, return the original URL so the app doesn't break.
   if (!cloudName) {
@@ -114,7 +114,7 @@ export const generateImageSrcSet = (originalUrl: string | undefined): string | u
   // If it's internal (already cloudinary), we skip auto-generation for now or assume it's optimized
   if (originalUrl.includes('cloudinary.com')) return undefined;
 
-  const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
   if (!cloudName) return undefined;
 
   // Encode URL to safe string

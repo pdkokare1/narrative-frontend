@@ -60,7 +60,8 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentFontSize, onSe
       try {
           const permission = await Notification.requestPermission();
           if (permission === 'granted') {
-              const token = await getToken(messaging, { vapidKey: process.env.REACT_APP_VAPID_KEY });
+              // FIXED: Used import.meta.env for Vite
+              const token = await getToken(messaging, { vapidKey: import.meta.env.VITE_VAPID_KEY });
               if (token) {
                   await api.saveNotificationToken(token);
                   setNotifStatus('granted');

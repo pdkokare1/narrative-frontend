@@ -3,7 +3,7 @@ import { auth, appCheck } from '../firebaseConfig';
 import { getToken } from "firebase/app-check";
 
 // Default to real domain if env is missing, not localhost
-export const API_URL = process.env.REACT_APP_API_URL || 'https://api.thegamut.in/api';
+export const API_URL = import.meta.env.VITE_API_URL || 'https://api.thegamut.in/api';
 
 const api = axios.create({
   baseURL: API_URL,

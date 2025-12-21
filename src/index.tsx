@@ -1,12 +1,13 @@
 // src/index.tsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './variables.css'; /* NEW: Import Global Variables First */
+import './variables.css'; 
 import './index.css';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import * as serviceWorkerRegistration from './serviceWorkerRegistration'; 
+// PWA Import for Vite
+import { registerSW } from 'virtual:pwa-register';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
@@ -19,4 +20,6 @@ root.render(
   </React.StrictMode>
 );
 
-serviceWorkerRegistration.register();
+// PWA Registration Logic
+// reloadOnOneUp: true will automatically reload the app when a new version is ready
+registerSW({ immediate: true });

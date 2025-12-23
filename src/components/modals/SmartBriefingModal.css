@@ -4,24 +4,54 @@
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1200;
+  padding: 20px;
 }
 
 .smart-brief-modal {
-  max-width: 650px;
+  width: 100%;
+  max-width: 650px; /* Default for tablets/small laptops */
   display: flex;
   flex-direction: column;
   max-height: 85vh;
-  /* Override default modal styles for this specific one if needed */
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-lg);
+  border-radius: 16px;
+  position: relative;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+/* --- DESKTOP SIZING FIX --- */
+@media (min-width: 1024px) {
+  .smart-brief-modal {
+    max-width: 900px; /* Wider on desktop for better readability */
+    height: auto;
+    max-height: 90vh;
+  }
+  
+  /* Make body font slightly larger on big screens for readability */
+  .smart-brief-text {
+    font-size: 17px !important; 
+    max-width: 800px;
+  }
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 /* Header */
 .smart-brief-header {
   background: transparent;
-  border-bottom: none;
-  padding: 30px 30px 10px 30px;
+  border-bottom: 1px solid var(--border-light);
+  padding: 25px 30px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -52,9 +82,23 @@
   font-weight: 600;
 }
 
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  font-size: 28px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 0 0 15px;
+}
+
+.close-btn:hover {
+  color: var(--text-primary);
+}
+
 /* Content Body */
 .smart-brief-body {
-  padding: 10px 30px 30px 30px;
+  padding: 30px;
   overflow-y: auto;
   background: transparent;
 }
@@ -105,9 +149,9 @@
   background: transparent;
   padding: 0;
   border: none;
-  margin-top: 20px;
-  border-left: 2px solid var(--accent-primary); /* Gold vertical line */
-  padding-left: 20px;
+  margin-top: 30px;
+  border-left: 3px solid var(--accent-primary);
+  padding-left: 25px;
 }
 
 .smart-brief-list {
@@ -119,21 +163,21 @@
 .smart-brief-list-item {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 15px;
   font-size: 14px;
   line-height: 1.6;
   color: var(--text-secondary);
 }
 
-/* Custom bullet is removed for the border-left style, 
-   but we can keep a subtle text marker if desired. */
 .smart-brief-bullet {
   color: var(--accent-primary);
   margin-right: 12px;
-  font-weight: 400;
+  font-weight: 700;
   font-size: 12px;
+  font-family: monospace;
   position: relative;
   top: 2px;
+  opacity: 0.7;
 }
 
 /* Footer */
@@ -144,11 +188,13 @@
   padding: 20px 30px;
   display: flex;
   align-items: center;
+  border-radius: 0 0 16px 16px;
 }
 
 .smart-brief-actions-left {
   display: flex;
   gap: 10px;
+  flex: 1;
 }
 
 .clickable {
@@ -162,11 +208,21 @@
 }
 
 @media (max-width: 768px) {
+  .smart-brief-modal {
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+  
+  .smart-brief-overlay {
+    padding: 0;
+  }
+
   .smart-brief-body {
     padding: 20px;
   }
   .smart-brief-header {
-    padding: 20px 20px 10px 20px;
+    padding: 20px;
   }
   .smart-brief-footer {
     flex-direction: column;

@@ -1,0 +1,252 @@
+/* src/components/modals/CompareCoverageModal.css */
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 1100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.compare-modal {
+    background: var(--bg-card);
+    width: 100%;
+    max-width: 900px;
+    height: 90vh;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    overflow: hidden;
+}
+
+/* --- HEADER --- */
+.modal-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-elevated);
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: color 0.2s;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: var(--text-primary);
+}
+
+/* --- TABS --- */
+.modal-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    overflow-x: auto;
+    scrollbar-width: none; /* Hide scrollbar Firefox */
+}
+.modal-tabs::-webkit-scrollbar { display: none; }
+
+.modal-tabs button {
+    flex: 1;
+    min-width: 100px;
+    padding: 15px 10px;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.modal-tabs button:hover {
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+}
+
+.modal-tabs button.active {
+    color: var(--text-primary);
+    background: var(--bg-elevated);
+}
+
+.modal-tabs button.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent-primary);
+}
+
+/* --- BODY --- */
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 25px;
+    background: var(--bg-primary);
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-tertiary);
+    gap: 15px;
+}
+
+.spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid var(--border-light);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- PERSPECTIVE SECTION --- */
+.perspective-section {
+    margin-bottom: 30px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.perspective-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid;
+    display: inline-block;
+}
+
+.perspective-title.left { border-color: #CF5C5C; color: #CF5C5C; }
+.perspective-title.center { border-color: #D4AF37; color: #D4AF37; }
+.perspective-title.right { border-color: #5C8BCF; color: #5C8BCF; }
+.perspective-title.opinions { border-color: var(--accent-secondary); color: var(--accent-secondary); }
+
+/* --- ARTICLE CARDS --- */
+.coverage-article {
+    display: flex;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 15px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.coverage-article:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-color);
+}
+
+.coverage-content {
+    flex: 1;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.coverage-content h4 {
+    font-size: 16px;
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+    line-height: 1.3;
+}
+
+.coverage-content p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 12px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.article-scores {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.accent-text {
+    color: var(--accent-primary);
+}
+
+.coverage-actions {
+    margin-top: auto;
+    display: flex;
+    gap: 10px;
+}
+
+.coverage-image {
+    width: 120px;
+    min-height: 100px;
+    background: var(--bg-secondary);
+    position: relative;
+}
+
+.coverage-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-placeholder-small {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: var(--text-tertiary);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .compare-modal {
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+    .coverage-article {
+        flex-direction: column-reverse;
+    }
+    .coverage-image {
+        width: 100%;
+        height: 140px;
+    }
+}

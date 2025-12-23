@@ -2,11 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import TopicTimeline from '../TopicTimeline'; 
 import '../../App.css';
-import './CompareCoverageModal.css'; // Newly created CSS file
+import './CompareCoverageModal.css'; 
 import { getSentimentClass, getOptimizedImageUrl } from '../../utils/helpers';
 import { IArticle } from '../../types';
 import Button from '../ui/Button';
-import { fetchCluster } from '../../services/articleService'; // Use service instead of direct axios
+import { fetchCluster } from '../../services/articleService'; 
 
 interface CompareModalProps {
   clusterId: number | null;
@@ -38,16 +38,18 @@ const CompareCoverageModal: React.FC<CompareModalProps> = ({ clusterId, articleT
       }
       try {
         setLoading(true);
-        // Using centralized service call
         const response = await fetchCluster(clusterId);
         
-        // Ensure we handle potential nulls if the API response is partial
+        // FIXED: Safely unwrap data. API might return { data: { ... } } or just { ... }
+        // We check response.data.data first (wrapped), then response.data (direct)
+        const data = response.data?.data || response.data || {};
+
         setClusterData({
-            left: response.data.left || [],
-            center: response.data.center || [],
-            right: response.data.right || [],
-            reviews: response.data.reviews || [],
-            stats: response.data.stats || {}
+            left: data.left || [],
+            center: data.center || [],
+            right: data.right || [],
+            reviews: data.reviews || [],
+            stats: data.stats || {}
         });
       } catch (error) {
         console.error(`Error fetching cluster:`, error);

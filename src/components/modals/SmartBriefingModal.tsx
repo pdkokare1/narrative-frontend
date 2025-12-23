@@ -63,13 +63,7 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({ article, onClos
             )}
           </div>
 
-          {/* AI Summary */}
-          <div className="smart-brief-summary-section">
-            <h3 className="smart-brief-section-title">Executive Summary</h3>
-            <p className="smart-brief-text">{article.summary}</p>
-          </div>
-
-          {/* Key Findings */}
+          {/* Key Findings - Now the primary content */}
           {article.keyFindings && article.keyFindings.length > 0 && (
             <div className="smart-brief-findings-box">
               <h3 className="smart-brief-section-title">Key Findings</h3>

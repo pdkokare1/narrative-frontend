@@ -40,17 +40,23 @@ const CompareCoverageModal: React.FC<CompareModalProps> = ({ clusterId, articleT
         setLoading(true);
         const response = await fetchCluster(clusterId);
         
-        // FIXED: Safely unwrap data. API might return { data: { ... } } or just { ... }
-        // We check response.data.data first (wrapped), then response.data (direct)
-        const data = response.data?.data || response.data || {};
+        // FIXED: Robust data checking
+        // 1. Try response.data.data (standard API wrapper)
+        // 2. Try response.data (direct return)
+        // 3. Try response (if interceptor unwrapped it)
+        const rawData = response.data?.data || response.data || response;
+        
+        console.log("Cluster Response:", rawData); // For debugging
 
-        setClusterData({
-            left: data.left || [],
-            center: data.center || [],
-            right: data.right || [],
-            reviews: data.reviews || [],
-            stats: data.stats || {}
-        });
+        if (rawData) {
+            setClusterData({
+                left: Array.isArray(rawData.left) ? rawData.left : [],
+                center: Array.isArray(rawData.center) ? rawData.center : [],
+                right: Array.isArray(rawData.right) ? rawData.right : [],
+                reviews: Array.isArray(rawData.reviews) ? rawData.reviews : [],
+                stats: rawData.stats || {}
+            });
+        }
       } catch (error) {
         console.error(`Error fetching cluster:`, error);
       } finally {
@@ -95,7 +101,7 @@ const CompareCoverageModal: React.FC<CompareModalProps> = ({ clusterId, articleT
       <div className="compare-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '20px' }}>
-            Compare Coverage: "{articleTitle.substring(0, 40)}{articleTitle.length > 40 ? '...' : ''}"
+            Compare Coverage
           </h2>
           <button className="close-btn" onClick={onClose} title="Close">×</button>
         </div>

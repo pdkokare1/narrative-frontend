@@ -27,13 +27,7 @@ interface UnifiedFeedProps {
 }
 
 // --- STABLE UI COMPONENTS ---
-const RefreshIcon = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M23 4v6h-6"></path>
-        <path d="M1 20v-6h6"></path>
-        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-    </svg>
-);
+// Deleted RefreshIcon component
 
 const FeedHeader: React.FC<{ 
   mode: string; 
@@ -41,9 +35,7 @@ const FeedHeader: React.FC<{
   onFilterChange?: (f: IFilters) => void; 
   vibrate: () => void; 
   metaData: any;
-  onRefresh: () => void;
-  isRefreshing: boolean;
-}> = React.memo(({ mode, filters, onFilterChange, vibrate, metaData, onRefresh, isRefreshing }) => {
+}> = React.memo(({ mode, filters, onFilterChange, vibrate, metaData }) => {
   return (
     <div className="feed-header-sticky">
         <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -66,14 +58,7 @@ const FeedHeader: React.FC<{
                  </div>
             )}
         </div>
-
-        <button 
-            className={`refresh-btn ${isRefreshing ? 'spinning' : ''}`} 
-            onClick={onRefresh}
-            aria-label="Refresh Feed"
-        >
-            <RefreshIcon />
-        </button>
+        {/* Removed Refresh Button */}
     </div>
   );
 });
@@ -139,8 +124,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             onFilterChange={onFilterChange} 
             vibrate={vibrate} 
             metaData={metaData}
-            onRefresh={handleRefresh}
-            isRefreshing={isRefreshing}
         />
 
         {/* SCROLLABLE GRID */}

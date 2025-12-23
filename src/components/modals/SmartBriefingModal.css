@@ -132,10 +132,6 @@
   color: var(--accent-primary);
 }
 
-.smart-brief-summary-section {
-  margin-bottom: 20px;
-}
-
 .smart-brief-section-title {
   font-family: var(--font-body);
   font-size: 11px;
@@ -146,19 +142,12 @@
   letter-spacing: 1px;
 }
 
-.smart-brief-text {
-  font-family: var(--font-body);
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--text-primary);
-}
-
 /* Findings Box */
 .smart-brief-findings-box {
   background: transparent;
   padding: 0;
   border: none;
-  margin-top: 20px;
+  margin-top: 0; /* Changed from 20px to 0 since summary is removed */
   border-left: 3px solid var(--accent-primary);
   padding-left: 15px;
 }

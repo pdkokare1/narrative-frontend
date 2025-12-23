@@ -15,7 +15,7 @@
 
 .smart-brief-modal {
   width: 100%;
-  max-width: 650px;
+  max-width: 600px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-lg);
@@ -27,18 +27,13 @@
   display: flex;
   flex-direction: column;
   max-height: 85vh; /* Safe max height for mobile */
+  overflow: hidden; /* Prevents double scrollbars */
 }
 
 @media (min-width: 1024px) {
   .smart-brief-modal {
-    max-width: 900px;
-    height: 80vh; /* Fixed comfortable height on desktop */
-    max-height: 900px;
-  }
-  
-  .smart-brief-text {
-    font-size: 17px !important; 
     max-width: 800px;
+    height: 80vh; 
   }
 }
 
@@ -49,21 +44,22 @@
 
 /* Header - Fixed at top */
 .smart-brief-header {
-  background: var(--bg-card); /* Match card bg */
+  background: var(--bg-card);
   border-bottom: 1px solid var(--border-light);
-  padding: 25px 30px;
+  padding: 20px 25px; /* Reduced padding */
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  flex-shrink: 0; /* Prevent header from squashing */
-  border-radius: 16px 16px 0 0;
+  flex-shrink: 0; /* CRITICAL: Prevent header from squashing */
+  z-index: 10;
 }
 
 .smart-brief-header-content {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
+  padding-right: 10px;
 }
 
 .smart-brief-label {
@@ -77,40 +73,50 @@
 
 .smart-brief-title {
   font-family: var(--font-heading);
-  font-size: 26px;
+  font-size: 20px; /* Reduced from 26px */
   line-height: 1.3;
   margin: 0;
   color: var(--text-primary);
   font-weight: 600;
+  
+  /* prevent overly long titles from breaking layout */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .close-btn {
   background: none;
   border: none;
   color: var(--text-tertiary);
-  font-size: 28px;
+  font-size: 24px;
   cursor: pointer;
   line-height: 1;
-  padding: 0 0 0 15px;
+  padding: 0;
+  margin-top: -5px;
 }
 .close-btn:hover { color: var(--text-primary); }
 
 /* Content Body - SCROLLABLE AREA */
 .smart-brief-body {
-  padding: 30px;
+  padding: 25px;
   background: transparent;
   
   /* FIXED: This ensures only this part scrolls */
   flex: 1;
   overflow-y: auto;
   min-height: 0; /* Critical for flex child scrolling */
+  
+  /* Smooth scrolling */
+  -webkit-overflow-scrolling: touch;
 }
 
 .smart-brief-meta {
   display: flex;
-  gap: 15px;
+  gap: 12px;
   align-items: center;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
   padding-bottom: 15px;
   border-bottom: 1px solid var(--border-light);
   font-size: 11px;
@@ -127,14 +133,14 @@
 }
 
 .smart-brief-summary-section {
-  margin-bottom: 30px;
+  margin-bottom: 25px;
 }
 
 .smart-brief-section-title {
   font-family: var(--font-body);
   font-size: 11px;
   font-weight: 700;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -143,7 +149,7 @@
 .smart-brief-text {
   font-family: var(--font-body);
   font-size: 15px;
-  line-height: 1.8;
+  line-height: 1.6;
   color: var(--text-primary);
 }
 
@@ -152,9 +158,9 @@
   background: transparent;
   padding: 0;
   border: none;
-  margin-top: 30px;
+  margin-top: 25px;
   border-left: 3px solid var(--accent-primary);
-  padding-left: 25px;
+  padding-left: 20px;
 }
 
 .smart-brief-list {
@@ -166,20 +172,20 @@
 .smart-brief-list-item {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.5;
   color: var(--text-secondary);
 }
 
 .smart-brief-bullet {
   color: var(--accent-primary);
-  margin-right: 12px;
+  margin-right: 10px;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 11px;
   font-family: monospace;
   position: relative;
-  top: 2px;
+  top: 1px;
   opacity: 0.7;
 }
 
@@ -188,11 +194,11 @@
   justify-content: space-between;
   background: var(--bg-elevated);
   border-top: 1px solid var(--border-light);
-  padding: 20px 30px;
+  padding: 15px 25px;
   display: flex;
   align-items: center;
-  border-radius: 0 0 16px 16px;
   flex-shrink: 0; /* Prevent footer from squashing */
+  z-index: 10;
 }
 
 .smart-brief-actions-left {
@@ -211,20 +217,26 @@
   border-bottom-color: var(--accent-primary);
 }
 
+/* Mobile Adjustments */
 @media (max-width: 768px) {
   .smart-brief-modal {
     height: 100%;
     max-height: 100%;
     border-radius: 0;
+    width: 100%;
+    max-width: 100%;
   }
   
   .smart-brief-overlay {
     padding: 0;
   }
 
+  .smart-brief-title {
+    font-size: 18px; /* Even smaller on mobile */
+  }
+
   .smart-brief-header {
-    padding: 20px;
-    border-radius: 0;
+    padding: 15px 20px;
   }
   
   .smart-brief-body {
@@ -233,16 +245,11 @@
   
   .smart-brief-footer {
     flex-direction: column;
-    gap: 12px;
-    padding: 20px;
-    border-radius: 0;
+    gap: 10px;
+    padding: 15px 20px;
   }
   
   .smart-brief-actions-left, .smart-brief-footer button {
     width: 100%;
-  }
-  
-  .smart-brief-title {
-    font-size: 22px;
   }
 }

@@ -1,93 +1,134 @@
-// src/utils/constants.ts
+// utils/constants.ts
+import config from './config';
 
-// --- 1. FALLBACK IMAGES (Smart Category Matching) ---
-export const CATEGORY_IMAGES: Record<string, string> = {
-  'Politics': 'https://images.unsplash.com/photo-1529101091760-6149d3c80a9c?auto=format&fit=crop&w=800&q=80',
-  'Global Conflict': 'https://images.unsplash.com/photo-1535905557558-afc4877a26fc?auto=format&fit=crop&w=800&q=80',
-  'Economy': 'https://images.unsplash.com/photo-1611974765270-ca1258634369?auto=format&fit=crop&w=800&q=80',
-  'Business': 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
-  'Justice': 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=800&q=80',
-  'Science': 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=800&q=80',
-  'Tech': 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
-  'Health': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80',
-  'Education': 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80',
-  'Sports': 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=800&q=80',
-  'Entertainment': 'https://images.unsplash.com/photo-1603190287605-e6ade32fa852?auto=format&fit=crop&w=800&q=80',
-  'Lifestyle': 'https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=800&q=80',
-  'Human Interest': 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80',
-  'Other': 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80',
-  'Default': 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=800&q=80'
+export const ONE_MINUTE = 60 * 1000;
+export const FIFTEEN_MINUTES = 15 * 60 * 1000;
+
+// --- CENTRAL CONFIGURATION ---
+export const CONSTANTS = {
+  // Rate Limiting
+  RATE_LIMIT: {
+    WINDOW_MS: FIFTEEN_MINUTES,
+    API_MAX_REQUESTS: 1000,
+    TTS_MAX_REQUESTS: 10,
+  },
+
+  // News Fetching & Processing
+  NEWS: {
+    BATCH_SIZE: 5,
+    FETCH_LIMIT: 15,       // Max articles to fetch per source
+    SEMANTIC_AGE_HOURS: 24, // If a similar article is older than this, re-analyze it
+  },
+
+  // Cache Settings & TTLs (Time To Live in Seconds)
+  CACHE: {
+    TTL_DEFAULT: 900,  // 15 mins
+    TTL_SHORT: 300,    // 5 mins
+    
+    // Specific Use Cases
+    TTL_TRENDING: 1800, // 30 mins
+    TTL_FEED: 300,      // 5 mins
+    TTL_SEARCH: 600,    // 10 mins
+    TTL_PERSONAL: 900,  // 15 mins
+  },
+  
+  // Timeouts (Standardized)
+  TIMEOUTS: {
+    EXTERNAL_API: 90000, // Updated: 90s for Gemini 2.5 Pro Deep Analysis
+  },
+
+  // AI Configuration (Gemini 2.5 Series - Dec 2025 Standard)
+  AI_MODELS: {
+    FAST: config.aiModels.fast,      // Defaults to "gemini-2.5-flash"
+    QUALITY: config.aiModels.pro,    // Defaults to "gemini-2.5-pro"
+    EMBEDDING: config.aiModels.embedding // Defaults to "text-embedding-004"
+  },
+  
+  // Cost Control
+  AI_LIMITS: {
+      MAX_INPUT_CHARS: 300000, // ~75k tokens
+      MIN_CONTENT_CHARS: 100, // Skip analysis if content is too thin
+  },
+
+  // Queue Configuration
+  QUEUE: {
+    NAME: 'news-fetch-queue',
+  },
+
+  // Redis Keys (Prevent typos)
+  REDIS_KEYS: {
+    BANNED_DOMAINS: 'GATEKEEPER:BANNED_DOMAINS',
+    // CHANGED TO V2: This forces the system to ignore old strict "Junk" decisions
+    // and re-evaluate news using the new, relaxed rules.
+    GATEKEEPER_CACHE: 'GATEKEEPER_DECISION_V2_', 
+    TRENDING: 'trending_topics_smart',
+    NEWS_CYCLE: 'news:fetch_cycle',
+    NEWS_SEEN_PREFIX: 'news:seen:',
+  }
 };
 
-/**
- * Returns a fallback image based on the article category.
- */
-export const getFallbackImage = (category?: string): string => {
-  if (!category) return CATEGORY_IMAGES['Default'];
-  // Normalize category string to title case or match keys
-  const key = Object.keys(CATEGORY_IMAGES).find(k => k.toLowerCase() === category.toLowerCase());
-  return key ? CATEGORY_IMAGES[key] : CATEGORY_IMAGES['Default'];
-};
-
-// --- 2. CONFIGURATION LISTS ---
-
-export const CATEGORIES: string[] = [
-  'All Categories',
-  'Politics',
-  'Global Conflict',
-  'Economy',
-  'Business',
-  'Justice',
-  'Science',
-  'Tech',
-  'Health',
-  'Education',
-  'Sports',
-  'Entertainment',
-  'Lifestyle',
-  'Human Interest',
-  'Other'
+// --- NEWS FETCH CYCLES ---
+export const FETCH_CYCLES = [
+    { name: 'US-Focus', gnews: { country: 'us' }, newsapi: { country: 'us' } },
+    { name: 'IN-Focus', gnews: { country: 'in' }, newsapi: { country: 'in' } },
+    { name: 'World-Focus', gnews: { topic: 'world' }, newsapi: { q: 'international', language: 'en' } }
 ];
 
-export const LEANS: string[] = [
-  'All Leans', 
-  'Left', 
-  'Left-Leaning', 
-  'Center', 
-  'Right-Leaning', 
-  'Right', 
-  'Not Applicable'
+// --- TRUSTED SOURCES ---
+export const TRUSTED_SOURCES = [
+    'reuters', 'associated press', 'bloomberg', 'bbc', 'npr', 'pbs', 
+    'the wall street journal', 'financial times', 'deutsche welle', 
+    'al jazeera', 'the economist', 'nature', 'science',
+    'the indian express', 'the hindu', 'livemint', 'ndtv', 'business standard',
+    'techcrunch', 'wired', 'ars technica', 'the verge', 'nasa'
 ];
 
-export interface IOption {
-  value: string;
-  label: string;
-}
-
-export const REGIONS: IOption[] = [
-  { value: 'All', label: 'All Regions' },
-  { value: 'Global', label: 'Global' },
-  { value: 'India', label: 'India' }
+// --- GLOBAL BLOCKLISTS ---
+export const DEFAULT_BANNED_DOMAINS = [
+    // Tabloids & Gossip
+    'dailymail.co.uk', 'thesun.co.uk', 'nypost.com', 'tmz.com', 'perezhilton.com', 
+    'mirror.co.uk', 'express.co.uk', 'dailystar.co.uk', 'radaronline.com',
+    
+    // Clickbait & Viral
+    'buzzfeed.com', 'upworthy.com', 'viralnova.com', 'clickhole.com', 
+    'ladbible.com', 'unilad.com', 'boredpanda.com',
+    
+    // Satire
+    'theonion.com', 'babylonbee.com', 'duffelblog.com', 'newyorker.com/humor',
+    
+    // Propaganda / Extreme Bias
+    'infowars.com', 'sputniknews.com', 'rt.com', 'breitbart.com', 'naturalnews.com',
+    
+    // Shopping / PR Wires
+    'prweb.com', 'businesswire.com', 'prnewswire.com', 'globenewswire.com',
+    'marketwatch.com'
 ];
 
-export const ARTICLE_TYPES: IOption[] = [
-  { value: 'All Types', label: 'All Article Types' },
-  { value: 'Hard News', label: 'Hard News (Deep Analysis)' },
-  { value: 'Opinion & Reviews', label: 'Opinion & Reviews (Tone Only)' }
-];
-
-export const SORT_OPTIONS: string[] = [
-  'Latest First', 
-  'Highest Quality', 
-  'Most Covered', 
-  'Lowest Bias'
-];
-
-export const QUALITY_LEVELS: IOption[] = [
-  { value: 'All Quality Levels', label: 'All Quality Levels' },
-  { value: 'A+ Excellent (90-100)', label: 'A+ : Excellent' },
-  { value: 'A High (80-89)', label: 'A : High' },
-  { value: 'B Professional (70-79)', label: 'B : Professional' },
-  { value: 'C Acceptable (60-69)', label: 'C : Acceptable' },
-  { value: 'D-F Poor (0-59)', label: 'D-F : Poor' }
+// --- JUNK KEYWORDS (Safe List) ---
+// Note: "Live", "Watch", "Video" are REMOVED to allow breaking news.
+export const JUNK_KEYWORDS = [
+    // Shopping & Deals
+    'coupon', 'promo code', 'discount', 'deal of the day', 'price drop', 'bundle',
+    'shopping', 'gift guide', 'best buy', 'amazon prime', 'black friday', 
+    'cyber monday', 'sale', '% off', 'where to buy', 'restock', 'clearance',
+    'bargain', 'doorbuster', 'cheapest', 'affiliate link',
+    
+    // Gaming Guides
+    'wordle', 'connections hint', 'connections answer', 'crossword', 'sudoku', 
+    'daily mini', 'spoilers', 'walkthrough', 'guide', 'today\'s answer', 'quordle',
+    'patch notes', 'loadout', 'tier list', 'how to get', 'where to find', 
+    'twitch drops', 'codes for',
+    
+    // Fluff & Lifestyle
+    'horoscope', 'zodiac', 'astrology', 'tarot', 'psychic', 'manifesting',
+    'celeb look', 'red carpet', 'outfit', 'dress', 'fashion', 'makeup',
+    'royal family', 'kardashian', 'jenner', 'relationship timeline', 'net worth',
+    
+    // Gambling
+    'powerball', 'mega millions', 'lottery results', 'winning numbers', 
+    'betting odds', 'prediction', 'parlay', 'gambling',
+    
+    // Admin / Paywall
+    'subscribe now', 'sign up', 'newsletter', 'login', 'register',
+    'have an account?', 'exclusive content', 'premium', 'giveaway'
 ];

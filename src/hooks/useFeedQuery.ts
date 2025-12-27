@@ -1,3 +1,4 @@
+// src/hooks/useFeedQuery.ts
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '../services/api';
@@ -39,35 +40,17 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
   const [showNewPill, setShowNewPill] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Track visibility to pause polling when tab/app is backgrounded
-  const isPageVisible = useRef(true);
-
-  useEffect(() => {
-      const handleVisibilityChange = () => {
-          isPageVisible.current = document.visibilityState === 'visible';
-      };
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-      return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  // --- QUERIES ---
+  // --- MAIN FEED QUERY ---
   const latestQuery = useInfiniteQuery({
     queryKey: ['latestFeed', JSON.stringify(filters)],
     queryFn: async ({ pageParam = 0 }) => {
-      try {
         const { data } = await api.fetchArticles({ ...filters, limit: BATCH_SIZE, offset: pageParam as number });
         return data;
-      } catch (error) {
-        console.error('[FeedQuery] Fetch Error:', error);
-        throw error;
-      }
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage: any, allPages) => {
       const lastPageItems = Array.isArray(lastPage) ? lastPage : (lastPage?.articles || lastPage?.data || []);
-      
-      if (!lastPageItems || lastPageItems.length === 0) return undefined;
-      if (lastPageItems.length < BATCH_SIZE) return undefined;
+      if (!lastPageItems || lastPageItems.length < BATCH_SIZE) return undefined;
 
       const loadedCount = allPages.reduce((acc, page: any) => {
           const items = Array.isArray(page) ? page : (page?.articles || page?.data || []);
@@ -75,9 +58,7 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
       }, 0);
       
       const totalAvailable = lastPage?.pagination?.total || lastPage?.total;
-      if (typeof totalAvailable === 'number' && loadedCount >= totalAvailable) {
-          return undefined;
-      }
+      if (typeof totalAvailable === 'number' && loadedCount >= totalAvailable) return undefined;
       
       return loadedCount;
     },
@@ -109,61 +90,51 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
 
     if (mode === 'latest') {
       rawList = latestQuery.data?.pages.flatMap((page: any) => {
-        if (Array.isArray(page)) return page;
-        if (page?.articles && Array.isArray(page.articles)) return page.articles;
-        if (page?.data && Array.isArray(page.data)) return page.data;
-        return [];
+        const p = page;
+        return Array.isArray(p) ? p : (p?.articles || p?.data || []);
       }) || [];
     } else {
       const data = activeQuery.data as any;
-      if (Array.isArray(data)) rawList = data;
-      else if (data?.articles && Array.isArray(data.articles)) rawList = data.articles;
-      else if (data?.data && Array.isArray(data.data)) rawList = data.data;
+      rawList = Array.isArray(data) ? data : (data?.articles || data?.data || []);
     }
     
     // Deduplicate
     const seen = new Set<string>();
     return rawList.filter(item => {
-        if (!item || typeof item !== 'object') return false;
-        if (!item._id) return false;
+        if (!item?._id) return false;
         if (seen.has(item._id)) return false;
         seen.add(item._id);
         return true;
     });
   }, [mode, latestQuery.data, activeQuery.data]);
 
-  // --- LIVE UPDATES CHECK (Smart Polling) ---
-  useEffect(() => {
-      if (mode !== 'latest') return;
 
-      const checkForUpdates = async () => {
-          // Optimization: Skip check if page is hidden to save battery/data
-          if (!isPageVisible.current) return;
-
-          try {
-              const { data } = await api.fetchArticles({ ...filters, limit: 1, offset: 0 });
-              let latestItem: FeedItem | null = null;
-              
-              if (data?.articles && data.articles.length > 0) latestItem = data.articles[0];
-              // @ts-ignore
-              else if (Array.isArray(data) && data.length > 0) latestItem = data[0];
-
-              if (latestItem) {
-                  const latestRemote = new Date(latestItem.publishedAt).getTime();
-                  const currentPages = latestQuery.data?.pages;
-                  const firstPage = currentPages?.[0] as any;
-                  const currentTop = (Array.isArray(firstPage) ? firstPage[0] : firstPage?.articles?.[0]);
-                  
-                  if (currentTop && latestRemote > new Date(currentTop.publishedAt).getTime()) {
-                      setShowNewPill(true);
-                  }
-              }
-          } catch (e) { /* Ignore */ }
-      };
-      
-      const interval = setInterval(checkForUpdates, 60000); 
-      return () => clearInterval(interval);
-  }, [mode, filters, latestQuery.data]);
+  // --- SMART POLLING (Refactored) ---
+  // A lightweight query that checks the "Head" of the feed every 60s
+  // React Query automatically handles window focus/blur pausing!
+  useQuery({
+    queryKey: ['latestHeadCheck', JSON.stringify(filters)],
+    queryFn: async () => {
+        // Fetch just 1 item to minimize bandwidth
+        const { data } = await api.fetchArticles({ ...filters, limit: 1, offset: 0 });
+        return data?.articles?.[0] || null;
+    },
+    // Only run this check if we are on the 'latest' tab and have existing data
+    enabled: mode === 'latest' && feedItems.length > 0 && !isRefreshing,
+    refetchInterval: 60000, // 60 seconds
+    notifyOnChangeProps: ['data'], // Only re-render if data changes
+    select: (latestItem) => {
+        if (!latestItem || !feedItems[0]) return null;
+        const remoteTime = new Date(latestItem.publishedAt).getTime();
+        const localTime = new Date(feedItems[0].publishedAt).getTime();
+        
+        // If remote is newer, show pill
+        if (remoteTime > localTime) {
+            setShowNewPill(true);
+        }
+        return null;
+    }
+  });
 
   // --- ACTIONS ---
   const handleLoadMore = useCallback(() => {
@@ -181,6 +152,8 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
       if (mode === 'latest') {
           queryClient.resetQueries({ queryKey: ['latestFeed'] });
           await latestQuery.refetch();
+          // Also reset the checker
+          queryClient.invalidateQueries({ queryKey: ['latestHeadCheck'] });
       } else if (mode === 'foryou') {
           await forYouQuery.refetch();
       } else {

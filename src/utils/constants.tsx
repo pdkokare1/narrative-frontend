@@ -1,5 +1,5 @@
-// utils/constants.ts
-import config from './config';
+// src/utils/constants.tsx
+// Removed import config from './config' as it does not exist.
 
 export const ONE_MINUTE = 60 * 1000;
 export const FIFTEEN_MINUTES = 15 * 60 * 1000;
@@ -39,9 +39,9 @@ export const CONSTANTS = {
 
   // AI Configuration (Gemini 2.5 Series - Dec 2025 Standard)
   AI_MODELS: {
-    FAST: config.aiModels.fast,      // Defaults to "gemini-2.5-flash"
-    QUALITY: config.aiModels.pro,    // Defaults to "gemini-2.5-pro"
-    EMBEDDING: config.aiModels.embedding // Defaults to "text-embedding-004"
+    FAST: "gemini-2.5-flash",      // Hardcoded defaults to fix missing config import
+    QUALITY: "gemini-2.5-pro",    
+    EMBEDDING: "text-embedding-004" 
   },
   
   // Cost Control
@@ -132,3 +132,76 @@ export const JUNK_KEYWORDS = [
     'subscribe now', 'sign up', 'newsletter', 'login', 'register',
     'have an account?', 'exclusive content', 'premium', 'giveaway'
 ];
+
+// --- MISSING EXPORTS FIXED BELOW ---
+
+export const CATEGORIES = [
+  'All Categories',
+  'Technology',
+  'Politics',
+  'Business',
+  'Health',
+  'Science',
+  'Sports',
+  'Entertainment',
+  'World',
+  'General'
+];
+
+export const LEANS = [
+  'All Leans',
+  'Left',
+  'Center-Left',
+  'Center',
+  'Center-Right',
+  'Right'
+];
+
+export const REGIONS = [
+  'Global',
+  'United States',
+  'India',
+  'Europe',
+  'Asia',
+  'Africa'
+];
+
+export const ARTICLE_TYPES = [
+  'All Types',
+  'News',
+  'Opinion',
+  'Analysis',
+  'Feature',
+  'Narrative'
+];
+
+export const QUALITY_LEVELS = [
+  'All Quality Levels',
+  'High',
+  'Medium',
+  'Low'
+];
+
+export const SORT_OPTIONS = [
+  'Latest First',
+  'Oldest First',
+  'Highest Bias',
+  'Lowest Bias',
+  'Most Referenced'
+];
+
+// Fallback image helper
+export const getFallbackImage = (category: string | undefined): string => {
+  const cat = (category || 'general').toLowerCase();
+  
+  // You can replace these with your own default assets or Cloudinary URLs
+  if (cat.includes('tech')) return 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80';
+  if (cat.includes('politic')) return 'https://images.unsplash.com/photo-1529101091760-61df51603896?auto=format&fit=crop&w=800&q=80';
+  if (cat.includes('business') || cat.includes('financ')) return 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80';
+  if (cat.includes('health')) return 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=800&q=80';
+  if (cat.includes('science')) return 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=800&q=80';
+  if (cat.includes('sport')) return 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=800&q=80';
+  
+  // Default General
+  return 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=800&q=80';
+};

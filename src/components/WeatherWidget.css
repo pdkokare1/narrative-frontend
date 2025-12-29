@@ -4,41 +4,48 @@
   flex-direction: column;
   justify-content: center;
   
-  /* Glassmorphism style matching header buttons */
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  /* Match Header Button/Input Styling exactly */
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   
-  padding: 4px 10px; /* Tighter padding */
-  border-radius: 12px; /* Slightly less rounded than buttons for a "panel" look */
+  padding: 4px 14px; /* Slightly wider for pill shape */
+  border-radius: 20px; /* Matching Header.css radius */
+  
   color: var(--text-primary);
   transition: all 0.2s ease;
   cursor: default;
-  margin-right: 10px;
-  min-width: 90px; /* Ensure minimum width for stability */
+  margin-right: 12px; /* Consistent spacing */
+  min-width: 100px; /* Stability */
+  height: 38px; /* Fixed height to match buttons */
 }
 
 .weather-widget:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Top Row: Location & Date */
 .weather-meta {
   display: flex;
-  flex-direction: column;
-  font-size: 0.7rem;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.65rem;
   color: var(--text-secondary);
-  line-height: 1.1;
-  margin-bottom: 2px;
+  line-height: 1;
+  margin-bottom: 3px;
+  width: 100%;
 }
 
 .weather-city {
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  max-width: 70px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 110px; /* Truncate very long city names */
 }
 
 .weather-date {
@@ -51,35 +58,27 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  line-height: 1;
 }
 
 .weather-icon {
-  font-size: 1.2rem;
-  line-height: 1;
+  font-size: 0.95rem; 
+  /* Emojis can be vertically misaligned, this fixes it */
+  display: flex; 
+  align-items: center;
+  height: 100%;
 }
 
 .weather-temp {
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-primary);
 }
 
-/* Adjustments for mobile header */
+/* --- Mobile --- */
 @media (max-width: 768px) {
   .weather-widget {
-     /* On mobile, we might want to hide the date to save space, or keep it small */
-     padding: 4px 8px;
-     margin-right: 6px;
-  }
-
-  .weather-city {
-      max-width: 80px;
-  }
-}
-
-/* Hide on very small screens if needed, though the new compact design fits better */
-@media (max-width: 380px) {
-  .weather-widget {
-    display: none;
+     display: none; /* Hide on mobile to save space, or reduce size */
   }
 }

@@ -61,39 +61,41 @@ export default function MainLayout({ profile }: MainLayoutProps) {
   // --- LOGIC HOOKS ---
   const { savedArticleIds, handleToggleSave } = useArticleSave(profile.savedArticles || []);
 
-  // --- EFFECTS ---
+  // --- EFFECTS (FIXED) ---
+
+  // 1. INITIALIZATION (Runs ONCE on mount)
   useEffect(() => {
+    // Load Theme Preference
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
       setTheme(savedTheme);
-      document.body.className = `${savedTheme}-mode font-${fontSize}`;
     } else {
       const userPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const initialTheme = userPrefersDark ? 'dark' : 'light';
-      setTheme(initialTheme);
-      document.body.className = `${initialTheme}-mode font-${fontSize}`;
+      setTheme(userPrefersDark ? 'dark' : 'light');
     }
 
+    // Load Font Size Preference
     const savedFont = localStorage.getItem('fontSize');
     if (savedFont) {
         setFontSize(savedFont);
-        document.body.classList.remove('font-medium', 'font-large', 'font-xl');
-        document.body.classList.add(`font-${savedFont}`);
     }
-  }, [fontSize]);
+  }, []); // Empty dependency array = No loops!
 
+  // 2. STATE SYNC (Runs whenever theme or fontSize changes)
+  // This replaces the conflicting effects and manual updates in handlers
   useEffect(() => {
-      document.body.classList.remove('font-medium', 'font-large', 'font-xl');
-      document.body.classList.add(`font-${fontSize}`);
+      // Update DOM
+      document.body.className = `${theme}-mode font-${fontSize}`;
+
+      // Persist to Storage
+      localStorage.setItem('theme', theme);
       localStorage.setItem('fontSize', fontSize);
-  }, [fontSize]);
+  }, [theme, fontSize]);
 
   // --- HANDLERS ---
   const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    document.body.className = `${newTheme}-mode font-${fontSize}`;
-    localStorage.setItem('theme', newTheme);
+    // Simplified: Just update state, Effect handles the rest
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
   const handleFilterChange = (newFilters: IFilters) => {

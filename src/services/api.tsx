@@ -12,8 +12,9 @@ export const getTrendingTopics = () => {
 };
 
 // --- EMERGENCY ---
-export const fetchEmergencyContacts = () => {
-    return api.get('/emergency/contacts');
+// Fixed: Now accepts optional params to match usage in EmergencyResources.tsx
+export const fetchEmergencyContacts = (params?: any) => {
+    return api.get('/emergency/contacts', { params });
 };
 
 // --- AUDIO / TTS ---

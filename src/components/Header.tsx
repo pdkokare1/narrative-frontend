@@ -7,7 +7,7 @@ import { useToast } from '../context/ToastContext';
 import './Header.css'; 
 import { IArticle, INarrative, IFilters, FeedItem } from '../types';
 import { Capacitor } from '@capacitor/core'; 
-import WeatherWidget from './WeatherWidget'; // [ADDED]
+import WeatherWidget from './WeatherWidget'; 
 
 interface HeaderProps {
   theme: string;
@@ -21,7 +21,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   const [isSearchOpen, setIsSearchOpen] = useState(false); 
   const [searchQuery, setSearchQuery] = useState('');
   
-  // FIX: Allow both Articles and Narratives in suggestions
   const [suggestions, setSuggestions] = useState<FeedItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -54,7 +53,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
         setIsSearching(true);
         try {
           const { data } = await api.searchArticles(searchQuery, { limit: 5 });
-          // Now safely accepts FeedItem[]
           setSuggestions(data.articles || []);
         } catch (error) { console.error("Live search failed", error); } 
         finally { setIsSearching(false); }
@@ -91,7 +89,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
     addToast('Tuning into Gamut Radio...', 'info');
     try {
         const { data } = await api.fetchArticles({ limit: 20, offset: 0 });
-        // Filter strictly for articles for the radio
         const audioArticles = (data.articles || []).filter(item => item.type !== 'Narrative') as IArticle[];
         
         if (audioArticles.length > 0) startRadio(audioArticles, 0);
@@ -112,7 +109,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
 
       <div className="header-right">
 
-        {/* --- Weather Widget (Added) --- */}
+        {/* Weather Widget (Desktop Only handled by CSS) */}
         <WeatherWidget />
         
         {!isNative && (
@@ -140,7 +137,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
               <div className="live-search-dropdown">
                   <div className="live-search-label">TOP MATCHES</div>
                   {suggestions.map(item => {
-                      // Handle both Articles and Narratives
                       const isNarrative = item.type === 'Narrative';
                       const headline = isNarrative 
                           ? (item as INarrative).masterHeadline 

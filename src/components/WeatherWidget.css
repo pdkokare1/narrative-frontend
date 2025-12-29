@@ -1,19 +1,21 @@
 /* src/components/WeatherWidget.css */
 .weather-widget {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  justify-content: center;
+  
+  /* Glassmorphism style matching header buttons */
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
-  padding: 6px 12px;
-  border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 0.9rem;
-  font-weight: 500;
+  
+  padding: 4px 10px; /* Tighter padding */
+  border-radius: 12px; /* Slightly less rounded than buttons for a "panel" look */
   color: var(--text-primary);
   transition: all 0.2s ease;
   cursor: default;
   margin-right: 10px;
+  min-width: 90px; /* Ensure minimum width for stability */
 }
 
 .weather-widget:hover {
@@ -21,16 +23,62 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+/* Top Row: Location & Date */
+.weather-meta {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  line-height: 1.1;
+  margin-bottom: 2px;
+}
+
+.weather-city {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px; /* Truncate very long city names */
+}
+
+.weather-date {
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+/* Bottom Row: Icon & Temp */
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .weather-icon {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  line-height: 1;
 }
 
 .weather-temp {
   font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
-/* Hide on very small screens to save space */
-@media (max-width: 480px) {
+/* Adjustments for mobile header */
+@media (max-width: 768px) {
+  .weather-widget {
+     /* On mobile, we might want to hide the date to save space, or keep it small */
+     padding: 4px 8px;
+     margin-right: 6px;
+  }
+
+  .weather-city {
+      max-width: 80px;
+  }
+}
+
+/* Hide on very small screens if needed, though the new compact design fits better */
+@media (max-width: 380px) {
   .weather-widget {
     display: none;
   }

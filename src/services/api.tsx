@@ -1,11 +1,12 @@
 // src/services/api.tsx
-// This file now acts as a central export point (Barrel File)
-// to maintain backward compatibility with imports.
-
 import api from './axiosInstance';
 
-export default api; // Default export for the axios instance
+// Weather API Call
+export const getWeather = (lat: number, lon: number) => {
+    return api.get(`/weather?lat=${lat}&lon=${lon}`);
+};
 
+export default api; 
 export * from './articleService';
 export * from './userService';
 export * from './logService';

@@ -70,6 +70,15 @@ export interface IArticle {
   updatedAt?: string;
 }
 
+// BACKWARDS COMPATIBILITY
+export type Article = IArticle;
+
+// NEW: Coverage Response for Modal
+export interface CoverageResponse {
+    timeline: { publishedAt: string; sentimentScore: number }[];
+    articles: any[];
+}
+
 // --- 3. Narrative Interface (The Story Bundle) ---
 export interface INarrative {
   _id: string;

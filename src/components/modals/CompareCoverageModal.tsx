@@ -1,226 +1,343 @@
-// src/components/modals/CompareCoverageModal.tsx
-import React, { useState, useEffect } from 'react';
-import TopicTimeline from '../TopicTimeline'; 
-import '../../App.css';
-import './CompareCoverageModal.css'; 
-import { getSentimentClass, getOptimizedImageUrl } from '../../utils/helpers';
-import { IArticle } from '../../types';
-import Button from '../ui/Button';
-import { fetchCluster } from '../../services/articleService'; 
+import React, { useState, useMemo } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  IconButton,
+  Box,
+  Typography,
+  Tabs,
+  Tab,
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemText,
+  Chip,
+  Divider,
+  useTheme,
+  Button
+} from '@mui/material';
+import {
+  Close as CloseIcon,
+  Timeline as TimelineIcon,
+  Article as ArticleIcon,
+  Launch as LaunchIcon
+} from '@mui/icons-material';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  TimeScale,
+  ChartOptions
+} from 'chart.js';
+import 'chartjs-adapter-date-fns';
+import { useQuery } from '@tanstack/react-query';
+import { articleService } from '../../services/articleService';
+import { format } from 'date-fns';
 
-interface CompareModalProps {
-  clusterId: number | null;
-  articleTitle: string;
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  TimeScale
+);
+
+interface CompareCoverageModalProps {
+  open: boolean;
   onClose: () => void;
-  onAnalyze: (article: IArticle) => void;
-  showTooltip: (text: string, e: React.MouseEvent) => void;
+  articleId: string;
+  articleTitle?: string;
 }
 
-interface ClusterData {
-  left: IArticle[];
-  center: IArticle[];
-  right: IArticle[];
-  reviews: IArticle[];
-  stats: any;
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
 }
 
-const CompareCoverageModal: React.FC<CompareModalProps> = ({ clusterId, articleTitle, onClose, onAnalyze, showTooltip }) => {
-  const [clusterData, setClusterData] = useState<ClusterData>({ left: [], center: [], right: [], reviews: [], stats: {} });
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'timeline' | 'left' | 'center' | 'right' | 'reviews'>('timeline'); 
-
-  useEffect(() => {
-    const loadClusterData = async () => {
-      if (!clusterId) {
-          setLoading(false);
-          setClusterData({ left: [], center: [], right: [], reviews: [], stats: {} });
-          return;
-      }
-      try {
-        setLoading(true);
-        const response = await fetchCluster(clusterId);
-        
-        // FIXED: Robust data checking
-        // 1. Try response.data.data (standard API wrapper)
-        // 2. Try response.data (direct return)
-        // 3. Try response (if interceptor unwrapped it)
-        const rawData = response.data?.data || response.data || response;
-        
-        console.log("Cluster Response:", rawData); // For debugging
-
-        if (rawData) {
-            setClusterData({
-                left: Array.isArray(rawData.left) ? rawData.left : [],
-                center: Array.isArray(rawData.center) ? rawData.center : [],
-                right: Array.isArray(rawData.right) ? rawData.right : [],
-                reviews: Array.isArray(rawData.reviews) ? rawData.reviews : [],
-                stats: rawData.stats || {}
-            });
-        }
-      } catch (error) {
-        console.error(`Error fetching cluster:`, error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadClusterData();
-  }, [clusterId]);
-
-   const totalArticles = (clusterData.left?.length || 0) + (clusterData.center?.length || 0) + (clusterData.right?.length || 0) + (clusterData.reviews?.length || 0);
-   
-   const handleOverlayClick = (e: React.MouseEvent) => { 
-     if (e.target === e.currentTarget) { onClose(); } 
-   };
-
-   // --- SPECTRUM BAR COMPONENT ---
-   const SpectrumBar = () => {
-       if (totalArticles === 0) return null;
-       const left = clusterData.left?.length || 0;
-       const center = clusterData.center?.length || 0;
-       const right = clusterData.right?.length || 0;
-       const total = left + center + right || 1; 
-
-       return (
-           <div style={{ padding: '0 25px 20px 25px', background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border-light)' }}>
-               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-tertiary)', marginBottom: '8px', textTransform: 'uppercase', fontWeight: 700 }}>
-                   <span style={{color: '#CF5C5C'}}>Left Lean</span>
-                   <span style={{color: '#D4AF37'}}>Balanced</span>
-                   <span style={{color: '#5C8BCF'}}>Right Lean</span>
-               </div>
-               <div style={{ display: 'flex', height: '8px', borderRadius: '4px', overflow: 'hidden', background: 'var(--bg-secondary)' }}>
-                   {left > 0 && <div style={{ width: `${(left/total)*100}%`, background: '#CF5C5C', transition: 'width 0.5s' }}></div>}
-                   {center > 0 && <div style={{ width: `${(center/total)*100}%`, background: '#D4AF37', transition: 'width 0.5s' }}></div>}
-                   {right > 0 && <div style={{ width: `${(right/total)*100}%`, background: '#5C8BCF', transition: 'width 0.5s' }}></div>}
-               </div>
-           </div>
-       );
-   };
+function CustomTabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="compare-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '20px' }}>
-            Compare Coverage
-          </h2>
-          <button className="close-btn" onClick={onClose} title="Close">×</button>
-        </div>
-        
-        {!loading && <SpectrumBar />}
-
-        <div className="modal-tabs">
-          <button className={activeTab === 'timeline' ? 'active' : ''} onClick={() => setActiveTab('timeline')}>Timeline</button>
-          <button className={activeTab === 'left' ? 'active' : ''} onClick={() => setActiveTab('left')}>Left ({clusterData.left.length})</button>
-          <button className={activeTab === 'center' ? 'active' : ''} onClick={() => setActiveTab('center')}>Center ({clusterData.center.length})</button>
-          <button className={activeTab === 'right' ? 'active' : ''} onClick={() => setActiveTab('right')}>Right ({clusterData.right.length})</button>
-          <button className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>Opinions ({clusterData.reviews.length})</button>
-        </div>
-
-        <div className="modal-body">
-          {loading ? ( 
-            <div className="loading-container">
-                <div className="spinner"></div>
-                <p>Gathering coverage from across the web...</p>
-            </div> 
-          ) : totalArticles === 0 ? ( 
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-tertiary)' }}>
-                <p style={{ fontSize: '16px', marginBottom: '10px' }}>No related coverage found.</p>
-                <p style={{ fontSize: '13px' }}>This might be a unique story or breaking news with limited sources yet.</p>
-            </div> 
-          ) : (
-            <>
-              {activeTab === 'timeline' && (
-                 <div className="perspective-section">
-                    <TopicTimeline clusterData={clusterData} />
-                 </div>
-              )}
-
-              {activeTab === 'left' && renderArticleGroup(clusterData.left, 'Left', onAnalyze, showTooltip)}
-              {activeTab === 'center' && renderArticleGroup(clusterData.center, 'Center', onAnalyze, showTooltip)}
-              {activeTab === 'right' && renderArticleGroup(clusterData.right, 'Right', onAnalyze, showTooltip)}
-              {activeTab === 'reviews' && renderArticleGroup(clusterData.reviews, 'Opinions', onAnalyze, showTooltip)}
-              
-              {activeTab !== 'timeline' && (clusterData[activeTab] as IArticle[])?.length === 0 && ( 
-                  <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-tertiary)' }}>
-                      <p>No articles found for the '{activeTab}' perspective.</p>
-                  </div> 
-              )}
-            </>
-          )}
-        </div>
-      </div>
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`coverage-tabpanel-${index}`}
+      aria-labelledby={`coverage-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 2 }}>
+          {children}
+        </Box>
+      )}
     </div>
+  );
+}
+
+const CompareCoverageModal: React.FC<CompareCoverageModalProps> = ({
+  open,
+  onClose,
+  articleId,
+  articleTitle
+}) => {
+  const theme = useTheme();
+  const [tabValue, setTabValue] = useState(0);
+
+  // Fetch coverage data
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['coverage', articleId],
+    queryFn: () => articleService.getCoverageAnalysis(articleId),
+    enabled: open && !!articleId,
+  });
+
+  // Debugging: Check if data is arriving
+  if (data) {
+    console.log('Coverage Data Received:', data);
+  }
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
+
+  // Process data for Chart
+  const chartData = useMemo(() => {
+    if (!data?.timeline || data.timeline.length === 0) return null;
+
+    return {
+      datasets: [
+        {
+          label: 'Coverage Sentiment',
+          data: data.timeline.map((item: any) => ({
+            x: new Date(item.publishedAt),
+            y: item.sentimentScore // -1 to 1
+          })),
+          borderColor: theme.palette.primary.main,
+          backgroundColor: theme.palette.primary.light,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          tension: 0.3
+        }
+      ]
+    };
+  }, [data, theme]);
+
+  const chartOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        type: 'time',
+        time: {
+          unit: 'day',
+          displayFormats: {
+            day: 'MMM d'
+          }
+        },
+        grid: {
+          display: false
+        }
+      },
+      y: {
+        min: -1,
+        max: 1,
+        grid: {
+          color: theme.palette.divider
+        },
+        ticks: {
+          callback: (value) => {
+            if (value === 1) return 'Positive';
+            if (value === -1) return 'Negative';
+            if (value === 0) return 'Neutral';
+            return '';
+          }
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const val = context.parsed.y;
+            return `Sentiment: ${val.toFixed(2)}`;
+          }
+        }
+      }
+    }
+  };
+
+  // Filter articles based on Tab (Left, Center, Right)
+  const getArticlesByBias = (bias: string) => {
+    if (!data?.articles) return [];
+    if (bias === 'all') return data.articles;
+    // Normalize comparison to handle 'LEFT', 'Left', 'left'
+    return data.articles.filter((article: any) => 
+      article.bias?.toLowerCase() === bias.toLowerCase()
+    );
+  };
+
+  const renderArticleList = (articles: any[]) => {
+    if (articles.length === 0) {
+      return (
+        <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+          <Typography variant="body1">No articles found for this category.</Typography>
+        </Box>
+      );
+    }
+
+    return (
+      <List>
+        {articles.map((article: any, index: number) => (
+          <React.Fragment key={article.id || index}>
+            <ListItem
+              alignItems="flex-start"
+              secondaryAction={
+                <IconButton edge="end" href={article.url} target="_blank">
+                  <LaunchIcon />
+                </IconButton>
+              }
+            >
+              <ListItemText
+                primary={article.title}
+                secondary={
+                  <Box component="span" sx={{ display: 'flex', gap: 1, mt: 0.5, alignItems: 'center' }}>
+                    <Typography component="span" variant="caption" color="text.secondary">
+                      {article.source}
+                    </Typography>
+                    <Typography component="span" variant="caption" color="text.secondary">
+                      • {format(new Date(article.publishedAt), 'MMM d, yyyy')}
+                    </Typography>
+                    <Chip 
+                      label={article.bias} 
+                      size="small" 
+                      color={
+                        article.bias?.toLowerCase() === 'left' ? 'primary' :
+                        article.bias?.toLowerCase() === 'right' ? 'error' : 'default'
+                      }
+                      sx={{ height: 20, fontSize: '0.7rem' }}
+                    />
+                  </Box>
+                }
+              />
+            </ListItem>
+            {index < articles.length - 1 && <Divider component="li" />}
+          </React.Fragment>
+        ))}
+      </List>
+    );
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: 2, minHeight: '60vh' }
+      }}
+    >
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box>
+          <Typography variant="h6">Coverage Analysis</Typography>
+          {articleTitle && (
+            <Typography variant="subtitle2" color="text.secondary" noWrap sx={{ maxWidth: 400 }}>
+              {articleTitle}
+            </Typography>
+          )}
+        </Box>
+        <IconButton onClick={onClose}>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent dividers>
+        {isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography color="error">Failed to load coverage data.</Typography>
+            <Button onClick={() => window.location.reload()} sx={{ mt: 2 }}>Retry</Button>
+          </Box>
+        ) : !data || (!data.timeline && !data.articles) ? (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography variant="body1" color="text.secondary">
+              No coverage data available for this topic yet.
+            </Typography>
+          </Box>
+        ) : (
+          <>
+            {/* Timeline Section */}
+            <Box sx={{ mb: 4, height: 250 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <TimelineIcon color="action" sx={{ mr: 1 }} />
+                <Typography variant="subtitle1">Coverage Timeline</Typography>
+              </Box>
+              {chartData ? (
+                <Line data={chartData} options={chartOptions} />
+              ) : (
+                <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'action.hover', borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">Not enough data for timeline</Typography>
+                </Box>
+              )}
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            {/* Articles by Bias Section */}
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <ArticleIcon color="action" sx={{ mr: 1 }} />
+                <Typography variant="subtitle1">Sources by Bias</Typography>
+              </Box>
+              
+              <Tabs 
+                value={tabValue} 
+                onChange={handleTabChange} 
+                variant="fullWidth"
+                textColor="primary"
+                indicatorColor="primary"
+              >
+                <Tab label="All" />
+                <Tab label="Left" />
+                <Tab label="Center" />
+                <Tab label="Right" />
+              </Tabs>
+
+              <CustomTabPanel value={tabValue} index={0}>
+                {renderArticleList(getArticlesByBias('all'))}
+              </CustomTabPanel>
+              <CustomTabPanel value={tabValue} index={1}>
+                {renderArticleList(getArticlesByBias('left'))}
+              </CustomTabPanel>
+              <CustomTabPanel value={tabValue} index={2}>
+                {renderArticleList(getArticlesByBias('center'))}
+              </CustomTabPanel>
+              <CustomTabPanel value={tabValue} index={3}>
+                {renderArticleList(getArticlesByBias('right'))}
+              </CustomTabPanel>
+            </Box>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };
-
-function renderArticleGroup(articleList: IArticle[], perspective: string, onAnalyze: (a: IArticle) => void, showTooltip: (t: string, e: React.MouseEvent) => void) {
-  if (!articleList || articleList.length === 0) return null;
-  
-  return (
-    <div className="perspective-section">
-      <h3 className={`perspective-title ${perspective.toLowerCase()}`}>{perspective} Perspective</h3>
-      {articleList.map(article => {
-        const isReview = article.analysisType === 'SentimentOnly';
-        const optimizedImg = getOptimizedImageUrl(article.imageUrl, 200);
-
-        return (
-          <div key={article._id || article.url} className="coverage-article">
-            <div className="coverage-content">
-              <a href={article.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                  <h4 style={{ fontFamily: 'var(--font-heading)' }}>{article.headline || 'No Headline'}</h4>
-              </a>
-              <p>{(article.summary || '').substring(0, 150)}...</p>
-              
-              <div className="article-scores">
-                <span className="smart-brief-source" style={{ marginRight: 'auto', color: 'var(--text-secondary)' }}>
-                    {article.source}
-                </span>
-                {!isReview ? (
-                  <>
-                    <span 
-                        style={{ cursor: 'help', borderBottom: '1px dotted' }} 
-                        title="Bias Score" 
-                        onClick={(e) => showTooltip("Bias Score: 0-100 (Lower is less biased)", e)}
-                    >
-                        Bias: <span className="accent-text">{article.biasScore}</span>
-                    </span>
-                    <span 
-                        style={{ cursor: 'help', borderBottom: '1px dotted' }}
-                        title="Trust Score" 
-                        onClick={(e) => showTooltip("Trust Score: Based on factual reporting history", e)}
-                    >
-                        Trust: <span className="accent-text">{article.trustScore}</span>
-                    </span>
-                  </>
-                ) : (
-                  <span title="Sentiment" onClick={(e) => showTooltip("Sentiment Analysis", e)}>
-                      Sentiment: <span className={getSentimentClass(article.sentiment)}>{article.sentiment}</span>
-                  </span>
-                )}
-              </div>
-              
-              <div className="coverage-actions">
-                <a href={article.url} target="_blank" rel="noopener noreferrer" style={{flex: 1, textDecoration:'none'}}>
-                    <Button variant="secondary" style={{width: '100%', fontSize: '12px', padding: '8px 0'}}>Read Source</Button>
-                </a>
-                {!isReview && ( 
-                    <Button variant="primary" onClick={() => onAnalyze(article)} style={{width: '100%', fontSize: '12px', padding: '8px 0'}}>Deep Analyze</Button>
-                )}
-              </div>
-            </div>
-            
-            <div className="coverage-image">
-              {article.imageUrl ? ( 
-                  <img src={optimizedImg || article.imageUrl} alt="thumbnail" loading="lazy" /> 
-              ) : ( 
-                  <div className="image-placeholder-small">📰</div> 
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export default CompareCoverageModal;

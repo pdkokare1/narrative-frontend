@@ -1,3 +1,4 @@
+// src/layouts/MainLayout.tsx
 import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 
@@ -193,6 +194,8 @@ export default function MainLayout({ profile }: MainLayoutProps) {
       <Suspense fallback={null}>
         {compareModal.open && (
           <CompareCoverageModal 
+            open={compareModal.open}
+            articleId={compareModal.articleId}
             clusterId={compareModal.clusterId} 
             articleTitle={compareModal.articleTitle} 
             onClose={() => setCompareModal({ ...compareModal, open: false })} 

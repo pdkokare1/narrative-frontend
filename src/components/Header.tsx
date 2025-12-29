@@ -7,6 +7,7 @@ import { useToast } from '../context/ToastContext';
 import './Header.css'; 
 import { IArticle, INarrative, IFilters, FeedItem } from '../types';
 import { Capacitor } from '@capacitor/core'; 
+import WeatherWidget from './WeatherWidget'; // [ADDED]
 
 interface HeaderProps {
   theme: string;
@@ -110,6 +111,9 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
       </div>
 
       <div className="header-right">
+
+        {/* --- Weather Widget (Added) --- */}
+        <WeatherWidget />
         
         {!isNative && (
           <button onClick={handleRadioClick} className={`radio-header-btn ${isPlaying ? 'playing' : ''}`} title="Start Radio">

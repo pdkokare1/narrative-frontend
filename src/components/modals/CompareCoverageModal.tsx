@@ -1,3 +1,4 @@
+// src/components/modals/CompareCoverageModal.tsx
 import React, { useState, useMemo } from 'react';
 import {
   Dialog,
@@ -38,8 +39,9 @@ import {
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { useQuery } from '@tanstack/react-query';
-import { articleService } from '../../services/articleService';
+import { getCoverageAnalysis } from '../../services/articleService'; // Updated import
 import { format } from 'date-fns';
+import { IArticle } from '../../types';
 
 // Register ChartJS components
 ChartJS.register(
@@ -56,8 +58,12 @@ ChartJS.register(
 interface CompareCoverageModalProps {
   open: boolean;
   onClose: () => void;
-  articleId: string;
+  // Updated to match MainLayout usage
+  articleId?: string | null;
+  clusterId?: number | null; 
   articleTitle?: string;
+  onAnalyze?: (article: IArticle) => void;
+  showTooltip?: (text: string, e: any) => void;
 }
 
 interface TabPanelProps {
@@ -98,14 +104,9 @@ const CompareCoverageModal: React.FC<CompareCoverageModalProps> = ({
   // Fetch coverage data
   const { data, isLoading, error } = useQuery({
     queryKey: ['coverage', articleId],
-    queryFn: () => articleService.getCoverageAnalysis(articleId),
+    queryFn: () => getCoverageAnalysis(articleId!),
     enabled: open && !!articleId,
   });
-
-  // Debugging: Check if data is arriving
-  if (data) {
-    console.log('Coverage Data Received:', data);
-  }
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -157,6 +158,7 @@ const CompareCoverageModal: React.FC<CompareCoverageModalProps> = ({
         },
         ticks: {
           callback: (value) => {
+            // Fixed null check
             if (value === 1) return 'Positive';
             if (value === -1) return 'Negative';
             if (value === 0) return 'Neutral';

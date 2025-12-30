@@ -1,5 +1,5 @@
 // src/components/feeds/UnifiedFeed.tsx
-import React, { useEffect, useRef } from 'react'; 
+import React, { useEffect, useRef, useMemo } from 'react'; 
 import CategoryPills from '../ui/CategoryPills';
 import SkeletonCard from '../ui/SkeletonCard';
 import { useRadio } from '../../context/RadioContext';
@@ -87,28 +87,34 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   // Ref to prevent infinite loops by tracking the signature of data sent to context
   const prevSentIds = useRef<string>('');
 
-  // 3. Radio Synchronization (Side Effect)
-  useEffect(() => {
-      const playableArticles = feedItems.filter(item => item.type !== 'Narrative') as IArticle[];
-      
-      if (playableArticles.length > 0) {
-          // Create a unique signature for this list of articles
-          const currentIds = playableArticles.map(a => a._id).join(',');
+  // 3. Radio Synchronization (Stabilized)
+  // Memoize the list of playable articles to ensure stability
+  const playableArticles = useMemo(() => {
+    return feedItems.filter(item => item.type !== 'Narrative') as IArticle[];
+  }, [feedItems]);
 
-          // Only update the context if the content has actually changed
-          if (currentIds !== prevSentIds.current) {
-              let label = 'Latest News';
-              if (mode === 'foryou') label = 'For You';
-              if (mode === 'personalized') label = 'Your Feed';
-              if (filters?.category && filters.category !== 'All Categories') label = filters.category;
-              
-              updateContextQueue(playableArticles, label);
-              
-              // Update our ref so we don't trigger this again for the same data
-              prevSentIds.current = currentIds;
-          }
+  // Create a stable string signature of the IDs
+  const contentSignature = useMemo(() => {
+    return playableArticles.map(a => a._id).join(',');
+  }, [playableArticles]);
+
+  useEffect(() => {
+      // If no articles, nothing to sync
+      if (!contentSignature) return;
+
+      // Only proceed if the content signature has actually changed
+      if (contentSignature !== prevSentIds.current) {
+          let label = 'Latest News';
+          if (mode === 'foryou') label = 'For You';
+          if (mode === 'personalized') label = 'Your Feed';
+          if (filters?.category && filters.category !== 'All Categories') label = filters.category;
+          
+          updateContextQueue(playableArticles, label);
+          
+          // Update ref to lock this signature
+          prevSentIds.current = contentSignature;
       }
-  }, [feedItems, mode, filters, updateContextQueue]);
+  }, [contentSignature, playableArticles, mode, filters, updateContextQueue]);
 
   // 4. Handle Manual Refresh
   const handleRefresh = () => {

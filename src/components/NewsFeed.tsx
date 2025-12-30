@@ -36,7 +36,10 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   // NEW: Narrative Modal State
   const [selectedNarrative, setSelectedNarrative] = useState<INarrative | null>(null);
 
+  // Ref passed to UnifiedFeed for scrolling. 
+  // NOTE: Do not attach this ref to elements in this file to avoid Ref Collision.
   const contentRef = useRef<HTMLDivElement>(null); 
+  
   const isMobile = useIsMobile();
   const vibrate = useHaptic();
 
@@ -167,7 +170,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   return (
     <main 
         className="content" 
-        ref={contentRef}
+        // ref={contentRef} <--- REMOVED TO PREVENT COLLISION. Ref is now only on UnifiedFeed's grid.
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -188,7 +191,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
               onFilterChange={onFilterChange}
               onAnalyze={onAnalyze}
               onCompare={onCompare}
-              onOpenNarrative={setSelectedNarrative} // PASS HANDLER
+              onOpenNarrative={setSelectedNarrative} 
               savedArticleIds={savedArticleIds}
               onToggleSave={onToggleSave}
               showTooltip={showTooltip}

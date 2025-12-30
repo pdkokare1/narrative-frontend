@@ -39,9 +39,8 @@ import {
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { useQuery } from '@tanstack/react-query';
-import { getCoverageAnalysis } from '../../services/articleService'; // Updated import
+import { getCoverageAnalysis } from '../../services/articleService'; // Ensure named import
 import { format } from 'date-fns';
-import { IArticle } from '../../types';
 
 // Register ChartJS components
 ChartJS.register(
@@ -58,11 +57,10 @@ ChartJS.register(
 interface CompareCoverageModalProps {
   open: boolean;
   onClose: () => void;
-  // Updated to match MainLayout usage
   articleId?: string | null;
   clusterId?: number | null; 
   articleTitle?: string;
-  onAnalyze?: (article: IArticle) => void;
+  onAnalyze?: (article: any) => void;
   showTooltip?: (text: string, e: any) => void;
 }
 
@@ -158,7 +156,6 @@ const CompareCoverageModal: React.FC<CompareCoverageModalProps> = ({
         },
         ticks: {
           callback: (value) => {
-            // Fixed null check
             if (value === 1) return 'Positive';
             if (value === -1) return 'Negative';
             if (value === 0) return 'Neutral';
@@ -173,9 +170,10 @@ const CompareCoverageModal: React.FC<CompareCoverageModalProps> = ({
       },
       tooltip: {
         callbacks: {
+          // FIX: Check for null value to satisfy strict type checking
           label: (context) => {
             const val = context.parsed.y;
-            return `Sentiment: ${val.toFixed(2)}`;
+            return val !== null ? `Sentiment: ${val.toFixed(2)}` : '';
           }
         }
       }

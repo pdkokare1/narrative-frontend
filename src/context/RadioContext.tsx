@@ -24,7 +24,6 @@ export const useRadio = (): IRadioContext => {
   // We use a global state for the context queue (managed by the Provider below usually, 
   // but since we are composing hooks, we need to access the Context we created).
   // However, since useRadio is the consumer, we need the state to live in the Provider.
-  // See the implementation below in RadioProviderWrapper.
   const context = React.useContext(RadioStateContext);
   if (!context) throw new Error("useRadio must be used within RadioProvider");
 
@@ -69,12 +68,27 @@ export const RadioProvider = ({ children }: { children: ReactNode }) => {
   const [label, setLabel] = useState<string>('Latest News');
 
   const updateQueue = useCallback((articles: IArticle[], sourceLabel: string) => {
-      // Simple de-dupe check to prevent infinite loops if the array reference changes but content doesn't
-      if (articles.length > 0) {
-          setQueue(articles);
-          setLabel(sourceLabel);
-          // console.log(`📻 Radio Context Updated: ${sourceLabel} (${articles.length} tracks)`);
-      }
+      setQueue((prevQueue) => {
+          // 1. Check length
+          if (articles.length !== prevQueue.length) {
+              return articles;
+          }
+
+          // 2. Check IDs (Deep comparison of identity)
+          const isSame = articles.every((item, index) => item._id === prevQueue[index]?._id);
+          
+          // If the list is effectively the same, return the *previous* reference.
+          // This prevents React from triggering a re-render.
+          if (isSame) {
+              return prevQueue;
+          }
+
+          return articles;
+      });
+
+      setLabel((prevLabel) => {
+          return prevLabel === sourceLabel ? prevLabel : sourceLabel;
+      });
   }, []);
 
   return (

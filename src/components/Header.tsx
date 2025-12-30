@@ -89,7 +89,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
     addToast('Tuning into Gamut Radio...', 'info');
     try {
         const { data } = await api.fetchArticles({ limit: 20, offset: 0 });
-        const audioArticles = (data.articles || []).filter((item: FeedItem) => item.type !== 'Narrative') as IArticle[];
+        // FIX: Cast to FeedItem[] to allow filtering mixed types
+        const audioArticles = (data.articles as FeedItem[] || []).filter(item => item.type !== 'Narrative') as IArticle[];
         
         if (audioArticles.length > 0) startRadio(audioArticles, 0);
         else addToast('No news available for radio.', 'error');
@@ -136,7 +137,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
           {suggestions.length > 0 && isSearchOpen && (
               <div className="live-search-dropdown">
                   <div className="live-search-label">TOP MATCHES</div>
-                  {suggestions.map((item: FeedItem) => {
+                  {suggestions.map(item => {
                       const isNarrative = item.type === 'Narrative';
                       const headline = isNarrative 
                           ? (item as INarrative).masterHeadline 

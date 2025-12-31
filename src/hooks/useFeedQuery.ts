@@ -110,9 +110,8 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
 
 
   // --- SMART POLLING (Refactored) ---
-  // A lightweight query that checks the "Head" of the feed every 60s
-  // React Query automatically handles window focus/blur pausing!
-  useQuery({
+  // We fetch the head item, but we DO NOT set state in the select callback.
+  const { data: latestHeadItem } = useQuery({
     queryKey: ['latestHeadCheck', JSON.stringify(filters)],
     queryFn: async () => {
         // Fetch just 1 item to minimize bandwidth
@@ -122,19 +121,20 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
     // Only run this check if we are on the 'latest' tab and have existing data
     enabled: mode === 'latest' && feedItems.length > 0 && !isRefreshing,
     refetchInterval: 60000, // 60 seconds
-    notifyOnChangeProps: ['data'], // Only re-render if data changes
-    select: (latestItem) => {
-        if (!latestItem || !feedItems[0]) return null;
-        const remoteTime = new Date(latestItem.publishedAt).getTime();
+  });
+
+  // Handle the side effect (showing the pill) in a useEffect
+  useEffect(() => {
+    if (latestHeadItem && feedItems[0]) {
+        const remoteTime = new Date(latestHeadItem.publishedAt).getTime();
         const localTime = new Date(feedItems[0].publishedAt).getTime();
         
         // If remote is newer, show pill
         if (remoteTime > localTime) {
             setShowNewPill(true);
         }
-        return null;
     }
-  });
+  }, [latestHeadItem, feedItems]);
 
   // --- ACTIONS ---
   const handleLoadMore = useCallback(() => {

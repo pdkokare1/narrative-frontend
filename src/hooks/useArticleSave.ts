@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
+// src/hooks/useArticleSave.ts
+import { useState, useRef, useCallback, useEffect } from 'react';
 import * as api from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { IArticle } from '../types';
@@ -8,49 +9,67 @@ export default function useArticleSave(initialSavedIds: string[] = []) {
   const [savedArticleIds, setSavedArticleIds] = useState<Set<string>>(new Set(initialSavedIds));
   const pendingDeletesRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
+  // Cleanup timers on unmount to prevent memory leaks
+  useEffect(() => {
+      return () => {
+          pendingDeletesRef.current.forEach(timeout => clearTimeout(timeout));
+      };
+  }, []);
+
   const handleToggleSave = useCallback(async (article: IArticle) => {
     const articleId = article._id;
     const isCurrentlySaved = savedArticleIds.has(articleId);
 
     if (isCurrentlySaved) {
-        // Optimistic Remove
+        // 1. Optimistic Remove
         setSavedArticleIds(prev => {
             const next = new Set(prev);
             next.delete(articleId);
             return next;
         });
 
-        // Delay actual API call to allow Undo
+        // 2. Schedule API Call (Allows Undo)
         const timeoutId = setTimeout(async () => {
             try {
                 await api.saveArticle(articleId); // API toggle (save/unsave)
                 pendingDeletesRef.current.delete(articleId);
             } catch (error) {
                 console.error('Unsave failed:', error);
-                // Revert if API fails
+                // Rollback on failure
                 setSavedArticleIds(prev => new Set(prev).add(articleId));
+                addToast('Failed to sync. Article restored.', 'error');
             }
         }, 3500);
 
         pendingDeletesRef.current.set(articleId, timeoutId);
 
+        // 3. Show Toast with Undo
         addToast('Article removed', 'info', {
             label: 'UNDO',
             onClick: () => {
-                clearTimeout(timeoutId);
-                pendingDeletesRef.current.delete(articleId);
-                setSavedArticleIds(prev => new Set(prev).add(articleId));
+                const pendingTimeout = pendingDeletesRef.current.get(articleId);
+                if (pendingTimeout) {
+                    clearTimeout(pendingTimeout);
+                    pendingDeletesRef.current.delete(articleId);
+                    // Immediate Restore
+                    setSavedArticleIds(prev => new Set(prev).add(articleId));
+                }
             }
         });
 
     } else {
-        // Cancel pending delete if re-saved immediately
+        // Case: Saving an article
+        
+        // Check if we are "Undoing" a pending delete manually (via re-click)
         if (pendingDeletesRef.current.has(articleId)) {
             clearTimeout(pendingDeletesRef.current.get(articleId)!);
             pendingDeletesRef.current.delete(articleId);
+            setSavedArticleIds(prev => new Set(prev).add(articleId));
+            addToast('Removal cancelled', 'success');
+            return;
         }
 
-        // Optimistic Add
+        // Standard Save
         setSavedArticleIds(prev => new Set(prev).add(articleId));
 
         try {
@@ -58,7 +77,7 @@ export default function useArticleSave(initialSavedIds: string[] = []) {
             addToast('Article saved', 'success');
         } catch (error) {
             console.error('Save failed:', error);
-            // Revert
+            // Rollback
             setSavedArticleIds(prev => {
                 const next = new Set(prev);
                 next.delete(articleId);

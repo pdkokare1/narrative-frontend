@@ -34,7 +34,9 @@ const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({
 
   // --- Type Guard ---
   const isNarrative = (item: any): item is INarrative => {
-    return (item as INarrative).clusterId !== undefined;
+    // FIX: Relies on the 'type' property injected by the backend.
+    // Previous check for 'clusterId' was flawed because Articles also have clusterId.
+    return item.type === 'Narrative';
   };
 
   // --- Handler for "Read Source" ---

@@ -32,11 +32,11 @@ export const useAudioPlayer = (user: any) => {
   
   const [currentSpeaker, setCurrentSpeaker] = useState<Speaker | null>(null);
   const [isVisible, setIsVisible] = useState(false); 
+  
+  // NEW: Timer States
   const [isWaitingForNext, setIsWaitingForNext] = useState(false);
   const [autoplayTimer, setAutoplayTimer] = useState(0);
-  
-  // NEW: State to track if we need the 3s delay on the first transition
-  const [shouldTimerTrigger, setShouldTimerTrigger] = useState(false);
+  const [shouldTimerTrigger, setShouldTimerTrigger] = useState(false); // Controls the 3s delay
 
   // Refs
   const audioRef = useRef(new Audio());
@@ -73,18 +73,26 @@ export const useAudioPlayer = (user: any) => {
       return `${cleanHeadline}. . . . . . ${summary}`;
   };
 
-  const getGreetingTrack = (firstArticle: IArticle) => {
-      const userId = user?.uid || 'guest';
+  // UPDATED: Logic to determine if greeting should play (30 min rule)
+  const checkGreetingNeeded = (userId: string) => {
       const storageKey = `lastRadioSession_${userId}`;
       const lastSessionStr = localStorage.getItem(storageKey);
-      const lastSession = lastSessionStr ? parseInt(lastSessionStr) : 0;
       const now = Date.now();
       const THIRTY_MINS = 30 * 60 * 1000;
 
+      // Update session time immediately
       localStorage.setItem(storageKey, now.toString());
 
-      if (lastSession && (now - lastSession < THIRTY_MINS)) return null; 
+      if (lastSessionStr) {
+          const lastSession = parseInt(lastSessionStr);
+          if (now - lastSession < THIRTY_MINS) {
+              return false; // Less than 30 mins, skip greeting
+          }
+      }
+      return true; // Play greeting
+  };
 
+  const getGreetingTrack = (firstArticle: IArticle) => {
       const persona = getPersonaForCategory(firstArticle.category);
       const hostKey = persona.name.toUpperCase(); 
       const hour = new Date().getHours();
@@ -211,18 +219,18 @@ export const useAudioPlayer = (user: any) => {
 
       } catch (error) {
           console.error("Radio Error:", error);
-          // If error, wait 1s then skip
-          setTimeout(() => playNext(), 1000);
+          setTimeout(() => playNext(), 1000); // Skip on error
       }
   }, [playbackRate, getPersonaForCategory, currentIndex, playlist]);
 
   // --- CONTROLS ---
   const playNext = useCallback(() => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
       setIsWaitingForNext(false);
       setAutoplayTimer(0);
       
-      // Once we move past the first article, disable the specific "First Timer" logic
+      // IMPORTANT: Once we move past the first article, we DISABLE the timer logic
+      // so subsequent articles play continuously.
       setShouldTimerTrigger(false); 
       
       setCurrentIndex(prevIndex => prevIndex + 1);
@@ -246,7 +254,7 @@ export const useAudioPlayer = (user: any) => {
       setIsWaitingForNext(false);
       setShouldTimerTrigger(false);
 
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
       
       setCurrentArticle(null);
       setCurrentIndex(-1);
@@ -295,7 +303,7 @@ export const useAudioPlayer = (user: any) => {
       options: { skipGreeting?: boolean; enableFirstTimer?: boolean } = {}
   ) => {
       if (!articles || articles.length === 0) return;
-      stop(); // Reset everything
+      stop(); 
       
       const userQueue = articles.slice(startIndex);
       const connectedQueue = injectSegues(userQueue);
@@ -303,7 +311,11 @@ export const useAudioPlayer = (user: any) => {
       let finalPlaylist = connectedQueue;
 
       // Handle Greeting
-      if (!options.skipGreeting) {
+      const userId = user?.uid || 'guest';
+      const needsGreeting = checkGreetingNeeded(userId);
+
+      // Only play greeting if it's NOT skipped via options AND the time rule allows it
+      if (!options.skipGreeting && needsGreeting) {
           const firstArticle = articles[startIndex];
           const greetingTrack = getGreetingTrack(firstArticle);
           if (greetingTrack) {
@@ -313,15 +325,15 @@ export const useAudioPlayer = (user: any) => {
 
       setPlaylist(finalPlaylist);
       
-      // Handle Timer Logic (Only for the FIRST transition)
+      // Handle Timer Logic (Only for the FIRST transition if enabled)
       setShouldTimerTrigger(!!options.enableFirstTimer);
 
       setCurrentIndex(0); 
-  }, [injectSegues, stop]);
+  }, [injectSegues, stop, user]);
 
   const cancelAutoplay = useCallback(() => {
       setIsWaitingForNext(false);
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
       stop();
   }, [stop]);
 
@@ -349,8 +361,10 @@ export const useAudioPlayer = (user: any) => {
 
   // --- EFFECT: Smart Prefetching ---
   useEffect(() => {
+      // Look ahead to the NEXT item
       if (currentIndex >= 0 && currentIndex < playlist.length - 1) {
           const nextTrack = playlist[currentIndex + 1];
+          
           if (!nextTrack || nextTrack.isSystemAudio || prefetchedIdsRef.current.has(nextTrack._id)) return;
 
           // Start Prefetch
@@ -364,7 +378,6 @@ export const useAudioPlayer = (user: any) => {
       }
   }, [currentIndex, playlist, getPersonaForCategory]);
 
-
   // --- EFFECT: Audio Event Listeners ---
   useEffect(() => {
       const audio = audioRef.current;
@@ -376,9 +389,7 @@ export const useAudioPlayer = (user: any) => {
       
       const handleEnded = () => {
           // --- CONDITIONAL TIMER LOGIC ---
-          // If 'shouldTimerTrigger' is true (user clicked Play Icon), we wait 3s.
-          // Otherwise (Radio mode or subsequent tracks), we play instantly (0s).
-          
+          // If 'shouldTimerTrigger' is true (User clicked Card Play), we wait 3s.
           if (shouldTimerTrigger) {
               setIsWaitingForNext(true);
               setAutoplayTimer(3);
@@ -394,6 +405,7 @@ export const useAudioPlayer = (user: any) => {
                   }
               }, 1000);
           } else {
+              // Otherwise play instantly
               playNext();
           }
       };

@@ -22,8 +22,8 @@ export interface IAudioContext {
   duration: number;
   playbackRate: number;
   
-  startRadio: (articles: IArticle[], startIndex?: number) => void;
-  playSingle: (article: IArticle) => void;
+  // Updated Signature
+  startRadio: (articles: IArticle[], startIndex?: number, options?: { skipGreeting?: boolean; enableFirstTimer?: boolean }) => void;
   stop: () => void;
   pause: () => void;
   resume: () => void;
@@ -33,7 +33,7 @@ export interface IAudioContext {
   changeSpeed: (speed: number) => void;
   cancelAutoplay: () => void;
   
-  isVisible: boolean; // Does audio exist? (Not UI visibility)
+  isVisible: boolean; 
   isWaitingForNext?: boolean;
   autoplayTimer?: number;
 }

@@ -1,55 +1,85 @@
 // src/components/feeds/FeedItemRenderer.tsx
-import React from 'react';
+import React, { useCallback } from 'react';
 import ArticleCard from '../ArticleCard';
 import NarrativeCard from '../NarrativeCard';
 import { IArticle, INarrative } from '../../types';
-import { useRadio } from '../../context/RadioContext';
 
 interface FeedItemRendererProps {
   item: IArticle | INarrative;
-  index: number;
-  feedContext: IArticle[]; // Full list for the queue
+  onOpenNarrative: (narrative: INarrative) => void;
+  onCompare: (article: IArticle) => void;
+  onAnalyze: (article: IArticle) => void;
+  onShare: (article: IArticle) => void;
+  savedArticleIds: Set<string>;
+  onToggleSave: (article: IArticle) => void;
+  showTooltip: (text: string, e: React.MouseEvent) => void;
+  currentArticleId?: string;
+  playSingle: (article: IArticle) => void;
+  stop: () => void;
 }
 
-const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({ item, index, feedContext }) => {
-  const { startRadio, currentArticle, isPlaying } = useRadio();
+const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({ 
+  item, 
+  onOpenNarrative,
+  onCompare,
+  onAnalyze,
+  onShare,
+  savedArticleIds,
+  onToggleSave,
+  showTooltip,
+  currentArticleId,
+  playSingle,
+  stop
+}) => {
 
   // --- Type Guard ---
   const isNarrative = (item: any): item is INarrative => {
     return (item as INarrative).clusterId !== undefined;
   };
 
+  // --- Handler for "Read Source" ---
+  const handleRead = useCallback((article: IArticle) => {
+    if (article.url) {
+      window.open(article.url, '_blank', 'noopener,noreferrer');
+    }
+  }, []);
+
+  // --- Render Narrative ---
   if (isNarrative(item)) {
     return (
        <div className="feed-item-wrapper" style={{ marginBottom: '1.5rem' }}>
-          <NarrativeCard narrative={item} />
+          <NarrativeCard 
+            data={item} 
+            onClick={() => onOpenNarrative(item)} 
+          />
        </div>
     );
   }
 
-  // --- Article Handling ---
+  // --- Render Article ---
   const article = item as IArticle;
-  
-  const handlePlayClick = () => {
-      // START RADIO FROM HERE
-      // Options: Skip the "Good Morning" greeting, but Enable the "Up Next" timer for the first transition.
-      startRadio(feedContext, index, { skipGreeting: true, enableFirstTimer: true });
-  };
-
-  const isCurrent = currentArticle?._id === article._id;
+  const isCurrent = currentArticleId === article._id;
+  const isSaved = savedArticleIds.has(article._id);
 
   return (
     <div 
       className="feed-item-wrapper" 
       style={{ marginBottom: '1rem' }}
-      id={article._id} // Added ID for Auto-Scroll
-      data-article-id={article._id} // Added Data Attribute for Viewport Detection
+      id={article._id} 
+      data-article-id={article._id}
     >
       <ArticleCard 
         article={article}
-        onPlay={handlePlayClick}
-        isPlaying={isCurrent && isPlaying}
-        isBuffering={isCurrent && !isPlaying} // Simplification, could link to isLoading
+        onCompare={onCompare}
+        onAnalyze={onAnalyze}
+        onShare={onShare}
+        onRead={handleRead}
+        showTooltip={showTooltip}
+        isSaved={isSaved}
+        onToggleSave={onToggleSave}
+        isPlaying={isCurrent} // Passed simply as boolean
+        onPlay={() => playSingle(article)}
+        onStop={stop}
       />
     </div>
   );

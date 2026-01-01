@@ -1,7 +1,8 @@
-// src/components/NarrativeCard.tsx
 import React, { memo } from 'react';
-import './NarrativeCard.css';
+import './ArticleCard.css'; // Reusing ArticleCard styles for 1:1 consistency
 import { INarrative } from '../types';
+import { getFallbackImage } from '../utils/constants';
+import Button from './ui/Button';
 
 interface NarrativeCardProps {
   data: INarrative;
@@ -9,53 +10,81 @@ interface NarrativeCardProps {
 }
 
 const NarrativeCard: React.FC<NarrativeCardProps> = memo(({ data, onClick }) => {
-  // Safety: Ensure we have strings/arrays to work with to prevent crashes
+  // 1. Safety & Data Prep
   const summaryText = data.executiveSummary || "No summary available.";
-  const sourceList = data.sources || [];
+  const fallbackImg = getFallbackImage(data.category);
+  const displayDate = data.lastUpdated ? new Date(data.lastUpdated).toLocaleDateString() : '';
+
+  // 2. Interaction Helper
+  const preventBubble = (e: React.MouseEvent) => e.stopPropagation();
 
   return (
-    <div className="narrative-wrapper" onClick={onClick}>
-      
-      {/* Visual Stack Effect */}
-      <div className="narrative-stack-layer layer-2"></div>
-      <div className="narrative-stack-layer layer-1"></div>
-
-      {/* Main Card */}
-      <div className="narrative-card">
+    <article 
+        className="article-card narrative-card-variant" 
+        onClick={onClick}
+        style={{ cursor: 'pointer' }}
+    >
         
-        {/* Header Badge */}
-        <div className="narrative-header">
-           <div className="narrative-badge">
-              <span className="pulse-dot"></span>
-              AI Narrative
-           </div>
-           <span className="source-count">{data.sourceCount || 0} Sources Analyzed</span>
+        {/* --- BADGES --- */}
+        <div className="card-badges">
+          {/* Custom style to distinguish Narrative from standard articles, but keeping layout */}
+          <span className="badge challenge" style={{ background: '#6366f1', color: 'white' }}>
+            AI Narrative
+          </span>
         </div>
-
-        {/* Headline */}
-        <h3 className="narrative-headline">{data.masterHeadline || "Untitled Narrative"}</h3>
         
-        {/* Preview Text - Fixed Substring Crash */}
-        <div className="narrative-preview">
-           <p>{summaryText.substring(0, 140)}{summaryText.length > 140 ? '...' : ''}</p>
+        {/* --- IMAGE --- */}
+        {/* Uses fallback image to maintain same height/layout as ArticleCard */}
+        <div className="article-image">
+          <img 
+            src={fallbackImg}
+            alt={data.category}
+            loading="lazy" 
+          />
         </div>
+        
+        {/* --- CONTENT --- */}
+        <div className="article-content">
+          <div className="article-meta-top">
+             <span className="source-name">{data.sourceCount} Sources Analyzed</span>
+             {displayDate && <time className="date">{displayDate}</time>}
+          </div>
 
-        {/* Footer: Sources & CTA */}
-        <div className="narrative-footer">
-           <div className="source-pills-row">
-              {sourceList.slice(0, 3).map((s, idx) => (
-                  <span key={idx} className="source-pill">{s}</span>
-              ))}
-              {sourceList.length > 3 && (
-                  <span className="source-pill more">+{sourceList.length - 3}</span>
-              )}
-           </div>
-           <div className="open-btn">
-              Open Briefing →
-           </div>
+          {/* Headline - Styled as button for consistency, but triggers main click */}
+          <button 
+            className="article-headline-btn"
+            onClick={(e) => { 
+                preventBubble(e); 
+                onClick(); 
+            }}
+          >
+            {data.masterHeadline || "Untitled Narrative"}
+          </button>
+
+          <p className="article-summary">
+             {summaryText.length > 140 ? `${summaryText.substring(0, 140)}...` : summaryText}
+          </p>
+          
+          {/* --- FOOTER --- */}
+          <div className="article-footer">
+            
+            {/* Empty stats/left-actions to push button to right */}
+            <div className="action-bar">
+                <div className="action-left"></div>
+
+                <Button 
+                    variant="text"
+                    onClick={(e) => { 
+                        preventBubble(e); 
+                        onClick(); 
+                    }}
+                >
+                    Open Briefing →
+                </Button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+    </article>
   );
 });
 

@@ -190,7 +190,7 @@ export const useAudioPlayer = (user: any) => {
               if (response.data && response.data.audioUrl) {
                   audio.src = optimizeUrl(response.data.audioUrl) || "";
               } else {
-                  throw new Error("No audio URL");
+                  throw new Error("No audio URL received from server");
               }
           }
 
@@ -219,7 +219,10 @@ export const useAudioPlayer = (user: any) => {
 
       } catch (error) {
           console.error("Radio Error:", error);
-          setTimeout(() => playNext(), 1000); // Skip on error
+          // CRITICAL FIX: Stop playback on error to prevent infinite API loops
+          // Do NOT call playNext() here automatically.
+          stop(); 
+          setIsLoading(false);
       }
   }, [playbackRate, getPersonaForCategory, currentIndex, playlist]);
 

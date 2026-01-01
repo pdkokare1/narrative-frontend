@@ -34,6 +34,9 @@ export const useAudioPlayer = (user: any) => {
   const [isVisible, setIsVisible] = useState(false); 
   const [isWaitingForNext, setIsWaitingForNext] = useState(false);
   const [autoplayTimer, setAutoplayTimer] = useState(0);
+  
+  // NEW: State to track if we need the 3s delay on the first transition
+  const [shouldTimerTrigger, setShouldTimerTrigger] = useState(false);
 
   // Refs
   const audioRef = useRef(new Audio());
@@ -161,13 +164,21 @@ export const useAudioPlayer = (user: any) => {
           setCurrentSpeaker(persona);
           const audio = audioRef.current;
 
+          // 1. Check Blob Cache (Prefetched)
           if (preloadedBlobsRef.current[article._id]) {
               audio.src = preloadedBlobsRef.current[article._id];
-          } else if (article.isSystemAudio && article.audioUrl) {
+          } 
+          // 2. Check System Audio / Direct URL
+          else if (article.isSystemAudio && article.audioUrl) {
               audio.src = optimizeUrl(article.audioUrl) || "";
-          } else {
+          } 
+          // 3. Check existing database URL (if any) or Fetch New
+          else if (article.audioUrl) {
+              audio.src = optimizeUrl(article.audioUrl) || "";
+          }
+          else {
               const textToSpeak = prepareAudioText(article.headline, article.summary);
-              const response = await getAudio(textToSpeak, persona.id, article._id);
+              const response = await getAudio(textToSpeak, persona.id, article._id, false);
               if (response.data && response.data.audioUrl) {
                   audio.src = optimizeUrl(response.data.audioUrl) || "";
               } else {
@@ -190,7 +201,7 @@ export const useAudioPlayer = (user: any) => {
               navigator.mediaSession.playbackState = "playing";
           }
 
-          // Cleanup Memory
+          // Cleanup Previous Memory
           const prevId = playlist[currentIndex - 1]?._id;
           if (prevId && preloadedBlobsRef.current[prevId]) {
               URL.revokeObjectURL(preloadedBlobsRef.current[prevId]);
@@ -200,7 +211,8 @@ export const useAudioPlayer = (user: any) => {
 
       } catch (error) {
           console.error("Radio Error:", error);
-          playNext(); 
+          // If error, wait 1s then skip
+          setTimeout(() => playNext(), 1000);
       }
   }, [playbackRate, getPersonaForCategory, currentIndex, playlist]);
 
@@ -208,6 +220,11 @@ export const useAudioPlayer = (user: any) => {
   const playNext = useCallback(() => {
       if (timerRef.current) clearTimeout(timerRef.current);
       setIsWaitingForNext(false);
+      setAutoplayTimer(0);
+      
+      // Once we move past the first article, disable the specific "First Timer" logic
+      setShouldTimerTrigger(false); 
+      
       setCurrentIndex(prevIndex => prevIndex + 1);
   }, []);
 
@@ -227,6 +244,8 @@ export const useAudioPlayer = (user: any) => {
       setIsLoading(false);
       setIsVisible(false);
       setIsWaitingForNext(false);
+      setShouldTimerTrigger(false);
+
       if (timerRef.current) clearTimeout(timerRef.current);
       
       setCurrentArticle(null);
@@ -269,23 +288,36 @@ export const useAudioPlayer = (user: any) => {
       }
   }, [currentSpeaker]);
 
-  const startRadio = useCallback(async (articles: IArticle[], startIndex = 0) => {
+  // --- UNIFIED START LOGIC ---
+  const startRadio = useCallback(async (
+      articles: IArticle[], 
+      startIndex = 0, 
+      options: { skipGreeting?: boolean; enableFirstTimer?: boolean } = {}
+  ) => {
       if (!articles || articles.length === 0) return;
-      stop(); // Reset
+      stop(); // Reset everything
+      
       const userQueue = articles.slice(startIndex);
       const connectedQueue = injectSegues(userQueue);
-      const firstArticle = articles[startIndex];
-      const greetingTrack = getGreetingTrack(firstArticle);
-      let finalPlaylist = greetingTrack ? [greetingTrack, ...connectedQueue] : connectedQueue;
-      setPlaylist(finalPlaylist);
-      setCurrentIndex(0); 
-  }, [injectSegues]); // Correct dependency
+      
+      let finalPlaylist = connectedQueue;
 
-  const playSingle = useCallback((article: IArticle) => {
-      stop(); // Reset
-      setPlaylist([article]);
-      setCurrentIndex(0);
-  }, [stop]);
+      // Handle Greeting
+      if (!options.skipGreeting) {
+          const firstArticle = articles[startIndex];
+          const greetingTrack = getGreetingTrack(firstArticle);
+          if (greetingTrack) {
+              finalPlaylist = [greetingTrack, ...connectedQueue];
+          }
+      }
+
+      setPlaylist(finalPlaylist);
+      
+      // Handle Timer Logic (Only for the FIRST transition)
+      setShouldTimerTrigger(!!options.enableFirstTimer);
+
+      setCurrentIndex(0); 
+  }, [injectSegues, stop]);
 
   const cancelAutoplay = useCallback(() => {
       setIsWaitingForNext(false);
@@ -298,6 +330,7 @@ export const useAudioPlayer = (user: any) => {
       if (currentIndex >= 0 && playlist.length > 0) {
           if (currentIndex < playlist.length) {
               const nextTrack = playlist[currentIndex];
+              
               // Small delay for segues to feel natural
               const delay = (nextTrack.isSystemAudio && nextTrack.summary === "Segue") ? 500 : 0;
               
@@ -314,7 +347,25 @@ export const useAudioPlayer = (user: any) => {
       }
   }, [currentIndex, playlist, playArticle, stop]);
 
-  // --- EFFECT: Event Listeners ---
+  // --- EFFECT: Smart Prefetching ---
+  useEffect(() => {
+      if (currentIndex >= 0 && currentIndex < playlist.length - 1) {
+          const nextTrack = playlist[currentIndex + 1];
+          if (!nextTrack || nextTrack.isSystemAudio || prefetchedIdsRef.current.has(nextTrack._id)) return;
+
+          // Start Prefetch
+          prefetchedIdsRef.current.add(nextTrack._id);
+          const persona = getPersonaForCategory(nextTrack.category);
+          const text = prepareAudioText(nextTrack.headline, nextTrack.summary);
+
+          // Call API with prefetch=true
+          getAudio(text, persona.id, nextTrack._id, true)
+              .catch(err => console.warn(`Prefetch failed for ${nextTrack._id}`, err));
+      }
+  }, [currentIndex, playlist, getPersonaForCategory]);
+
+
+  // --- EFFECT: Audio Event Listeners ---
   useEffect(() => {
       const audio = audioRef.current;
 
@@ -324,20 +375,27 @@ export const useAudioPlayer = (user: any) => {
       const handlePlaying = () => { setIsLoading(false); setIsPlaying(true); };
       
       const handleEnded = () => {
-          // Trigger "Up Next" visual state for 3 seconds before playing
-          setIsWaitingForNext(true);
-          setAutoplayTimer(3);
+          // --- CONDITIONAL TIMER LOGIC ---
+          // If 'shouldTimerTrigger' is true (user clicked Play Icon), we wait 3s.
+          // Otherwise (Radio mode or subsequent tracks), we play instantly (0s).
           
-          let count = 3;
-          timerRef.current = setInterval(() => {
-              count--;
-              setAutoplayTimer(count);
-              if (count <= 0) {
-                  if (timerRef.current) clearInterval(timerRef.current);
-                  setIsWaitingForNext(false);
-                  playNext();
-              }
-          }, 1000);
+          if (shouldTimerTrigger) {
+              setIsWaitingForNext(true);
+              setAutoplayTimer(3);
+              
+              let count = 3;
+              timerRef.current = setInterval(() => {
+                  count--;
+                  setAutoplayTimer(count);
+                  if (count <= 0) {
+                      if (timerRef.current) clearInterval(timerRef.current);
+                      setIsWaitingForNext(false);
+                      playNext();
+                  }
+              }, 1000);
+          } else {
+              playNext();
+          }
       };
 
       audio.addEventListener('timeupdate', handleTimeUpdate);
@@ -354,13 +412,13 @@ export const useAudioPlayer = (user: any) => {
           audio.removeEventListener('ended', handleEnded);
           if (timerRef.current) clearInterval(timerRef.current);
       };
-  }, [playNext]);
+  }, [playNext, shouldTimerTrigger]);
 
   return {
       currentArticle, currentSpeaker, isPlaying, isPaused, isLoading, isVisible,
       isWaitingForNext, autoplayTimer,
       currentTime, duration, playbackRate,
-      startRadio, playSingle, stop, pause, resume, playNext, playPrevious,
+      startRadio, stop, pause, resume, playNext, playPrevious,
       seekTo, changeSpeed, cancelAutoplay
   };
 };

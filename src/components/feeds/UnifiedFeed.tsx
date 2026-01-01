@@ -1,5 +1,5 @@
 // src/components/feeds/UnifiedFeed.tsx
-import React, { useEffect, useRef, useMemo } from 'react'; 
+import React, { useEffect, useRef, useMemo, useCallback } from 'react'; 
 import CategoryPills from '../ui/CategoryPills';
 import SkeletonCard from '../ui/SkeletonCard';
 import { useRadio } from '../../context/RadioContext';
@@ -79,30 +79,32 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   } = useFeedQuery(mode, filters);
 
   // 2. UI Hooks
-  const { startRadio, playSingle, stop, currentArticle, updateContextQueue } = useRadio();
+  const { 
+      startRadio, playSingle, stop, 
+      currentArticle, updateContextQueue, 
+      updateVisibleArticle, isPlaying 
+  } = useRadio();
+  
   const { handleShare } = useShare(); 
   const isMobile = useIsMobile(); 
   const vibrate = useHaptic(); 
   
-  // Ref to prevent infinite loops by tracking the signature of data sent to context
+  // Refs
   const prevSentIds = useRef<string>('');
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const articleRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // 3. Radio Synchronization (Stabilized)
-  // Memoize the list of playable articles to ensure stability
   const playableArticles = useMemo(() => {
     return feedItems.filter(item => item.type !== 'Narrative') as IArticle[];
   }, [feedItems]);
 
-  // Create a stable string signature of the IDs
   const contentSignature = useMemo(() => {
     return playableArticles.map(a => a._id).join(',');
   }, [playableArticles]);
 
   useEffect(() => {
-      // If no articles, nothing to sync
       if (!contentSignature) return;
-
-      // Only proceed if the content signature has actually changed
       if (contentSignature !== prevSentIds.current) {
           let label = 'Latest News';
           if (mode === 'foryou') label = 'For You';
@@ -110,13 +112,62 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
           if (filters?.category && filters.category !== 'All Categories') label = filters.category;
           
           updateContextQueue(playableArticles, label);
-          
-          // Update ref to lock this signature
           prevSentIds.current = contentSignature;
       }
   }, [contentSignature, playableArticles, mode, filters, updateContextQueue]);
 
-  // 4. Handle Manual Refresh
+  // 4. SMART START: Intersection Observer to track visible article
+  useEffect(() => {
+      if (status !== 'success') return;
+
+      const options = {
+          root: null,
+          rootMargin: '0px',
+          threshold: 0.6 // 60% visibility required to be "active"
+      };
+
+      observerRef.current = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                  const id = entry.target.getAttribute('data-article-id');
+                  if (id) {
+                      updateVisibleArticle(id);
+                  }
+              }
+          });
+      }, options);
+
+      // Attach to all current article refs
+      articleRefs.current.forEach((element) => {
+          if (element) observerRef.current?.observe(element);
+      });
+
+      return () => {
+          observerRef.current?.disconnect();
+      };
+  }, [feedItems, status, updateVisibleArticle]);
+
+  // 5. AUTO-SCROLL: When Radio changes tracks, scroll feed to that article
+  useEffect(() => {
+      if (isPlaying && currentArticle && currentArticle._id) {
+          const element = articleRefs.current.get(currentArticle._id);
+          if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+      }
+  }, [currentArticle, isPlaying]);
+
+  // Helper to manage refs
+  const setArticleRef = useCallback((el: HTMLDivElement | null, id: string) => {
+      if (el) {
+          articleRefs.current.set(id, el);
+          // If the observer is active, observe this new element
+          if (observerRef.current) observerRef.current.observe(el);
+      } else {
+          articleRefs.current.delete(id);
+      }
+  }, []);
+
   const handleRefresh = () => {
       vibrate();
       refresh();
@@ -165,20 +216,26 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             ) : (
                 <>
                     {feedItems.map((item) => (
-                        <FeedItemRenderer
-                            key={item._id}
-                            item={item}
-                            onOpenNarrative={onOpenNarrative}
-                            onCompare={onCompare}
-                            onAnalyze={onAnalyze}
-                            onShare={handleShare}
-                            savedArticleIds={savedArticleIds}
-                            onToggleSave={onToggleSave}
-                            showTooltip={showTooltip}
-                            currentArticleId={currentArticle?._id}
-                            playSingle={playSingle}
-                            stop={stop}
-                        />
+                        <div 
+                            key={item._id} 
+                            ref={(el) => setArticleRef(el, item._id)} // Attach Ref
+                            data-article-id={item._id} // For Observer
+                            className={currentArticle?._id === item._id ? 'now-playing-highlight' : ''} // Optional visual cue
+                        >
+                            <FeedItemRenderer
+                                item={item}
+                                onOpenNarrative={onOpenNarrative}
+                                onCompare={onCompare}
+                                onAnalyze={onAnalyze}
+                                onShare={handleShare}
+                                savedArticleIds={savedArticleIds}
+                                onToggleSave={onToggleSave}
+                                showTooltip={showTooltip}
+                                currentArticleId={currentArticle?._id}
+                                playSingle={playSingle} // This now triggers smart start
+                                stop={stop}
+                            />
+                        </div>
                     ))}
 
                     {/* AUTOMATIC LOAD MORE SENSOR */}

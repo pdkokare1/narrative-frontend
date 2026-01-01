@@ -19,7 +19,8 @@ export const fetchEmergencyContacts = (params?: any) => {
 
 // --- AUDIO / TTS ---
 export const getAudio = (text: string, voiceId: string, articleId?: string) => {
-    return api.post('/tts/generate', { text, voiceId, articleId });
+    // UPDATED: Changed from '/tts/generate' to '/tts/get-audio' to match backend routes
+    return api.post('/tts/get-audio', { text, voiceId, articleId });
 };
 
 export default api; 

@@ -9,6 +9,10 @@ interface NarrativeCardProps {
 }
 
 const NarrativeCard: React.FC<NarrativeCardProps> = memo(({ data, onClick }) => {
+  // Safety: Ensure we have strings/arrays to work with to prevent crashes
+  const summaryText = data.executiveSummary || "No summary available.";
+  const sourceList = data.sources || [];
+
   return (
     <div className="narrative-wrapper" onClick={onClick}>
       
@@ -25,25 +29,25 @@ const NarrativeCard: React.FC<NarrativeCardProps> = memo(({ data, onClick }) => 
               <span className="pulse-dot"></span>
               AI Narrative
            </div>
-           <span className="source-count">{data.sourceCount} Sources Analyzed</span>
+           <span className="source-count">{data.sourceCount || 0} Sources Analyzed</span>
         </div>
 
         {/* Headline */}
-        <h3 className="narrative-headline">{data.masterHeadline}</h3>
+        <h3 className="narrative-headline">{data.masterHeadline || "Untitled Narrative"}</h3>
         
-        {/* Preview Text */}
+        {/* Preview Text - Fixed Substring Crash */}
         <div className="narrative-preview">
-           <p>{data.executiveSummary.substring(0, 140)}...</p>
+           <p>{summaryText.substring(0, 140)}{summaryText.length > 140 ? '...' : ''}</p>
         </div>
 
         {/* Footer: Sources & CTA */}
         <div className="narrative-footer">
            <div className="source-pills-row">
-              {data.sources.slice(0, 3).map((s, idx) => (
+              {sourceList.slice(0, 3).map((s, idx) => (
                   <span key={idx} className="source-pill">{s}</span>
               ))}
-              {data.sources.length > 3 && (
-                  <span className="source-pill more">+{data.sources.length - 3}</span>
+              {sourceList.length > 3 && (
+                  <span className="source-pill more">+{sourceList.length - 3}</span>
               )}
            </div>
            <div className="open-btn">

@@ -148,6 +148,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   }, [feedItems, status, updateVisibleArticle]);
 
   // 5. AUTO-SCROLL: When Radio changes tracks, scroll feed to that article
+  // FIXED: Dependency array now checks currentArticle?._id to prevent infinite loops on data fetch
   useEffect(() => {
       if (isPlaying && currentArticle && currentArticle._id) {
           const element = articleRefs.current.get(currentArticle._id);
@@ -155,7 +156,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
               element.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
       }
-  }, [currentArticle, isPlaying]);
+  }, [currentArticle?._id, isPlaying]);
 
   // Helper to manage refs
   const setArticleRef = useCallback((el: HTMLDivElement | null, id: string) => {

@@ -157,6 +157,7 @@
 .stats-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap; /* Allow wrapping if content is too wide */
   gap: 12px;
   font-size: 11px;
   color: var(--text-tertiary);
@@ -186,6 +187,15 @@
   font-weight: 600;
   font-family: var(--font-body);
 }
+
+/* --- STATS COLORS (New) --- */
+.lean-left { color: var(--color-lean-left); }
+.lean-center { color: var(--color-lean-center); }
+.lean-right { color: var(--color-lean-right); }
+
+.sentiment-pos { color: var(--color-sentiment-pos); }
+.sentiment-neg { color: var(--color-sentiment-neg); }
+.sentiment-neu { color: var(--color-sentiment-neu); }
 
 .divider { opacity: 0.5; }
 

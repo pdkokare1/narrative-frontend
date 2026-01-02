@@ -93,6 +93,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const prevSentIds = useRef<string>('');
   const observerRef = useRef<IntersectionObserver | null>(null);
   const articleRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const lastScrolledId = useRef<string | null>(null); // New Guard Ref
 
   // 3. Radio Synchronization (Stabilized)
   const playableArticles = useMemo(() => {
@@ -148,13 +149,21 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   }, [feedItems, status, updateVisibleArticle]);
 
   // 5. AUTO-SCROLL: When Radio changes tracks, scroll feed to that article
-  // FIXED: Dependency array now checks currentArticle?._id to prevent infinite loops on data fetch
+  // FIXED: Added strict guard (lastScrolledId) to prevent repeated scrolling loops
   useEffect(() => {
-      if (isPlaying && currentArticle && currentArticle._id) {
-          const element = articleRefs.current.get(currentArticle._id);
-          if (element) {
-              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
+      const currentId = currentArticle?._id;
+      
+      // Guard 1: Must be playing and have a valid ID
+      if (!isPlaying || !currentId) return;
+
+      // Guard 2: If we already scrolled for this exact article ID, do NOT scroll again.
+      // This breaks the loop if data fetching causes currentArticle to "refresh" or re-render.
+      if (currentId === lastScrolledId.current) return;
+
+      const element = articleRefs.current.get(currentId);
+      if (element) {
+          lastScrolledId.current = currentId; // Mark this ID as handled
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
   }, [currentArticle?._id, isPlaying]);
 

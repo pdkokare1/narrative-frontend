@@ -76,6 +76,22 @@ const ArticleCard = memo(function ArticleCard({
       action();
   };
 
+  // --- Visual Helpers for Stats ---
+  const getLeanClass = (lean: string) => {
+    if (!lean) return '';
+    if (lean.includes('Left')) return 'lean-left';
+    if (lean.includes('Right')) return 'lean-right';
+    if (lean === 'Center') return 'lean-center';
+    return '';
+  };
+
+  const getSentimentClass = (sentiment: string) => {
+    if (!sentiment) return 'sentiment-neu';
+    if (sentiment === 'Positive') return 'sentiment-pos';
+    if (sentiment === 'Negative') return 'sentiment-neg';
+    return 'sentiment-neu';
+  };
+
   if (!article) return null;
 
   return (
@@ -126,17 +142,30 @@ const ArticleCard = memo(function ArticleCard({
           {/* --- FOOTER --- */}
           <div className="article-footer">
             
-            {/* Stats */}
+            {/* Stats - Now showing Bias, Lean, AND Sentiment */}
             {isHardNews && (
                 <div className="stats-row">
                     <button className="stat-item-btn" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
                         <span>Bias:</span>
                         <span className="stat-val accent-text">{article.biasScore}</span>
                     </button>
+                    
                     <span className="divider">•</span>
+                    
                     <div className="stat-item">
                         <span>Lean:</span>
-                        <span className={`stat-val ${article.politicalLean === 'Center' ? 'accent-text' : ''}`}>{article.politicalLean}</span>
+                        <span className={`stat-val ${getLeanClass(article.politicalLean)}`}>
+                            {article.politicalLean}
+                        </span>
+                    </div>
+
+                    <span className="divider">•</span>
+
+                    <div className="stat-item">
+                        <span>Sent:</span>
+                        <span className={`stat-val ${getSentimentClass(article.sentiment)}`}>
+                            {article.sentiment}
+                        </span>
                     </div>
                 </div>
             )}

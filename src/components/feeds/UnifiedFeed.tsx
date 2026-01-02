@@ -93,7 +93,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const prevSentIds = useRef<string>('');
   const observerRef = useRef<IntersectionObserver | null>(null);
   const articleRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const lastScrolledId = useRef<string | null>(null); // New Guard Ref
+  const lastScrolledId = useRef<string | null>(null); // Guard Ref for Scroll Loop
 
   // 3. Radio Synchronization (Stabilized)
   const playableArticles = useMemo(() => {
@@ -122,7 +122,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       if (status !== 'success') return;
 
       const options = {
-          root: null,
+          root: null, // viewport
           rootMargin: '0px',
           threshold: 0.6 // 60% visibility required to be "active"
       };
@@ -149,21 +149,20 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   }, [feedItems, status, updateVisibleArticle]);
 
   // 5. AUTO-SCROLL: When Radio changes tracks, scroll feed to that article
-  // FIXED: Added strict guard (lastScrolledId) to prevent repeated scrolling loops
+  // FIXED: Strictly guarded to run ONCE per article ID
   useEffect(() => {
       const currentId = currentArticle?._id;
-      
-      // Guard 1: Must be playing and have a valid ID
-      if (!isPlaying || !currentId) return;
 
-      // Guard 2: If we already scrolled for this exact article ID, do NOT scroll again.
-      // This breaks the loop if data fetching causes currentArticle to "refresh" or re-render.
-      if (currentId === lastScrolledId.current) return;
+      if (isPlaying && currentId) {
+          // If we already scrolled for this exact article ID, stop.
+          // This prevents the "infinite fetch" loop where re-renders trigger repeated scrolls.
+          if (currentId === lastScrolledId.current) return;
 
-      const element = articleRefs.current.get(currentId);
-      if (element) {
-          lastScrolledId.current = currentId; // Mark this ID as handled
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const element = articleRefs.current.get(currentId);
+          if (element) {
+              lastScrolledId.current = currentId; // Mark handled
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
       }
   }, [currentArticle?._id, isPlaying]);
 
@@ -171,7 +170,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const setArticleRef = useCallback((el: HTMLDivElement | null, id: string) => {
       if (el) {
           articleRefs.current.set(id, el);
-          // If the observer is active, observe this new element
           if (observerRef.current) observerRef.current.observe(el);
       } else {
           articleRefs.current.delete(id);
@@ -228,9 +226,10 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                     {feedItems.map((item) => (
                         <div 
                             key={item._id} 
-                            ref={(el) => setArticleRef(el, item._id)} // Attach Ref
-                            data-article-id={item._id} // For Observer
-                            className={currentArticle?._id === item._id ? 'now-playing-highlight' : ''} // Optional visual cue
+                            ref={(el) => setArticleRef(el, item._id)} 
+                            data-article-id={item._id} 
+                            // Added class 'feed-article-wrapper' for CSS targeting
+                            className={`feed-article-wrapper ${currentArticle?._id === item._id ? 'now-playing-highlight' : ''}`}
                         >
                             <FeedItemRenderer
                                 item={item}
@@ -242,7 +241,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                                 onToggleSave={onToggleSave}
                                 showTooltip={showTooltip}
                                 currentArticleId={currentArticle?._id}
-                                playSingle={playSingle} // This now triggers smart start
+                                playSingle={playSingle}
                                 stop={stop}
                             />
                         </div>
@@ -261,6 +260,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                         </div>
                     )}
                     
+                    {/* Extra padding at bottom to ensure last item can be scrolled fully */}
                     <div style={{ height: '80px', flexShrink: 0, scrollSnapAlign: 'none' }} />
                 </>
             )}

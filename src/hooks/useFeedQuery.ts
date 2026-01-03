@@ -98,11 +98,15 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
       rawList = Array.isArray(data) ? data : (data?.articles || data?.data || []);
     }
     
-    // Deduplicate
+    // Deduplicate & Filter Safety Check
     const seen = new Set<string>();
     return rawList.filter(item => {
         if (!item?._id) return false;
         if (seen.has(item._id)) return false;
+        
+        // SAFETY: Filter out pending analysis that might have slipped through cache
+        if (item.type === 'Article' && item.analysisVersion === 'pending') return false;
+
         seen.add(item._id);
         return true;
     });

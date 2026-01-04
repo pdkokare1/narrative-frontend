@@ -33,6 +33,7 @@ export function useIntersectionObserver(
   return targetRef;
 }
 
+// MATCHED WITH BACKEND CONTROLLER
 const BATCH_SIZE = 24;
 
 export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters: IFilters) => {
@@ -44,6 +45,7 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
   const latestQuery = useInfiniteQuery({
     queryKey: ['latestFeed', JSON.stringify(filters)],
     queryFn: async ({ pageParam = 0 }) => {
+        // Backend now accepts limit=24 for caching optimization
         const { data } = await api.fetchArticles({ ...filters, limit: BATCH_SIZE, offset: pageParam as number });
         return data;
     },
@@ -58,6 +60,7 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
       }, 0);
       
       const totalAvailable = lastPage?.pagination?.total || lastPage?.total;
+      
       if (typeof totalAvailable === 'number' && loadedCount >= totalAvailable) return undefined;
       
       return loadedCount;
@@ -104,7 +107,7 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
         if (!item?._id) return false;
         if (seen.has(item._id)) return false;
         
-        // SAFETY: Filter out pending analysis that might have slipped through cache
+        // SAFETY: Filter out pending analysis
         if (item.type === 'Article' && item.analysisVersion === 'pending') return false;
 
         seen.add(item._id);
@@ -113,27 +116,23 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
   }, [mode, latestQuery.data, activeQuery.data]);
 
 
-  // --- SMART POLLING (Refactored) ---
-  // We fetch the head item, but we DO NOT set state in the select callback.
+  // --- SMART POLLING ---
   const { data: latestHeadItem } = useQuery({
     queryKey: ['latestHeadCheck', JSON.stringify(filters)],
     queryFn: async () => {
-        // Fetch just 1 item to minimize bandwidth
+        // Fetch just 1 item to check for updates (bypasses cache usually due to different query sig)
         const { data } = await api.fetchArticles({ ...filters, limit: 1, offset: 0 });
         return data?.articles?.[0] || null;
     },
-    // Only run this check if we are on the 'latest' tab and have existing data
     enabled: mode === 'latest' && feedItems.length > 0 && !isRefreshing,
-    refetchInterval: 60000, // 60 seconds
+    refetchInterval: 30000, // Reduced to 30s for snappier "New Articles" feel
   });
 
-  // Handle the side effect (showing the pill) in a useEffect
   useEffect(() => {
     if (latestHeadItem && feedItems[0]) {
         const remoteTime = new Date(latestHeadItem.publishedAt).getTime();
         const localTime = new Date(feedItems[0].publishedAt).getTime();
         
-        // If remote is newer, show pill
         if (remoteTime > localTime) {
             setShowNewPill(true);
         }
@@ -156,7 +155,6 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
       if (mode === 'latest') {
           queryClient.resetQueries({ queryKey: ['latestFeed'] });
           await latestQuery.refetch();
-          // Also reset the checker
           queryClient.invalidateQueries({ queryKey: ['latestHeadCheck'] });
       } else if (mode === 'foryou') {
           await forYouQuery.refetch();

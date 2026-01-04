@@ -9,7 +9,6 @@ import useHaptic from '../../hooks/useHaptic';
 import { IArticle, INarrative, IFilters } from '../../types';
 import './UnifiedFeed.css'; 
 
-// --- Refactored Imports ---
 import { useFeedQuery } from '../../hooks/useFeedQuery';
 import FeedItemRenderer from './FeedItemRenderer';
 
@@ -149,13 +148,10 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   }, [feedItems, status, updateVisibleArticle]);
 
   // 5. AUTO-SCROLL: When Radio changes tracks, scroll feed to that article
-  // FIXED: Strictly guarded to run ONCE per article ID
   useEffect(() => {
       const currentId = currentArticle?._id;
 
       if (isPlaying && currentId) {
-          // If we already scrolled for this exact article ID, stop.
-          // This prevents the "infinite fetch" loop where re-renders trigger repeated scrolls.
           if (currentId === lastScrolledId.current) return;
 
           const element = articleRefs.current.get(currentId);
@@ -228,7 +224,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                             key={item._id} 
                             ref={(el) => setArticleRef(el, item._id)} 
                             data-article-id={item._id} 
-                            // Added class 'feed-article-wrapper' for CSS targeting
                             className={`feed-article-wrapper ${currentArticle?._id === item._id ? 'now-playing-highlight' : ''}`}
                         >
                             <FeedItemRenderer

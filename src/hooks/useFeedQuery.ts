@@ -120,12 +120,19 @@ export const useFeedQuery = (mode: 'latest' | 'foryou' | 'personalized', filters
   const { data: latestHeadItem } = useQuery({
     queryKey: ['latestHeadCheck', JSON.stringify(filters)],
     queryFn: async () => {
-        // Fetch just 1 item to check for updates (bypasses cache usually due to different query sig)
-        const { data } = await api.fetchArticles({ ...filters, limit: 1, offset: 0 });
+        // FETCH 1 ITEM TO CHECK UPDATES
+        // FIX: Added _t (Timestamp) to force network fetch (Bypasses Browser/CDN Cache)
+        const { data } = await api.fetchArticles({ 
+            ...filters, 
+            limit: 1, 
+            offset: 0,
+            // @ts-ignore - Explicitly injecting cache buster that API might not natively type, but will serialize
+            _t: Date.now() 
+        });
         return data?.articles?.[0] || null;
     },
     enabled: mode === 'latest' && feedItems.length > 0 && !isRefreshing,
-    refetchInterval: 30000, // Reduced to 30s for snappier "New Articles" feel
+    refetchInterval: 30000, // 30s polling
   });
 
   useEffect(() => {

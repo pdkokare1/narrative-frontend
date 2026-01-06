@@ -1,5 +1,6 @@
 // src/components/modals/SmartBriefingModal.tsx
 import React from 'react';
+import ReactDOM from 'react-dom'; // ADDED: Required for Portal
 import '../../App.css'; 
 import './SmartBriefingModal.css'; 
 import { IArticle } from '../../types';
@@ -20,7 +21,8 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({ article, onClos
 
   const isReview = article.analysisType === 'SentimentOnly';
 
-  return (
+  // WRAPPED CONTENT: We assign the JSX to a variable first for clarity
+  const modalContent = (
     <div className="modal-overlay smart-brief-overlay" onClick={handleOverlayClick}>
       <div className="analysis-modal smart-brief-modal" onClick={(e) => e.stopPropagation()}>
         
@@ -98,6 +100,9 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({ article, onClos
       </div>
     </div>
   );
+
+  // CHANGED: Use Portal to render outside the parent hierarchy
+  return ReactDOM.createPortal(modalContent, document.body);
 };
 
 export default SmartBriefingModal;

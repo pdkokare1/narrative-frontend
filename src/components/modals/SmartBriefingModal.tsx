@@ -42,10 +42,12 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
   const fetchBriefing = async () => {
     setLoading(true);
     setError(null);
+    const startTime = Date.now();
     
     // Timeout to prevent hanging
+    // UPDATED: Increased to 60 seconds (60000ms) to allow for AI generation and cold starts
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Request timed out')), 15000)
+      setTimeout(() => reject(new Error('Request timed out')), 60000)
     );
 
     try {
@@ -57,7 +59,8 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
       
       if (!mounted.current) return;
 
-      console.log('Briefing API Response:', response);
+      const duration = (Date.now() - startTime) / 1000;
+      console.log(`Briefing API Response (took ${duration}s):`, response);
 
       if (response.data && response.data.status === 'success') {
         setData(response.data.data);
@@ -73,7 +76,7 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
       let errorMessage = 'Unable to generate your briefing.';
       
       if (err.message === 'Request timed out') {
-        errorMessage = 'The briefing is taking longer than usual. Please try again.';
+        errorMessage = 'The briefing is taking longer than usual. The AI is still thinking, please try again.';
       } else if (err.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx

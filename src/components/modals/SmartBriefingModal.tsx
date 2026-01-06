@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Close as CloseIcon, 
   AutoAwesome as SparklesIcon, 
@@ -83,9 +84,21 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
     fetchBriefing();
   }, []);
 
-  return (
+  // We use a Portal to render this component at the document.body level.
+  // This breaks it out of any stacking contexts or overflow:hidden containers.
+  return createPortal(
     <div className="smart-briefing-overlay" onClick={onClose}>
-      <div className="smart-briefing-modal" onClick={(e) => e.stopPropagation()}>
+      <div 
+        className="smart-briefing-modal" 
+        onClick={(e) => e.stopPropagation()}
+        // Inline styles to guarantee visibility against any global CSS conflicts
+        style={{ 
+          opacity: 1, 
+          visibility: 'visible', 
+          display: 'flex',
+          transform: 'none' 
+        }}
+      >
         
         {/* Header - Always visible */}
         <div className="smart-briefing-header">
@@ -93,7 +106,7 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
             <SparklesIcon sx={{ color: '#8b5cf6', fontSize: 24 }} />
             <h2>{article ? 'Smart Analysis' : 'Smart Briefing'}</h2>
           </div>
-          <button className="close-button" onClick={onClose}>
+          <button className="close-button" onClick={onClose} aria-label="Close">
             <CloseIcon sx={{ fontSize: 24 }} />
           </button>
         </div>
@@ -149,7 +162,8 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body // Target container
   );
 };
 

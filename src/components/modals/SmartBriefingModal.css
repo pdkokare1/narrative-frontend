@@ -7,6 +7,7 @@
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -15,9 +16,12 @@
 }
 
 .smart-briefing-modal {
+    position: relative;
+    z-index: 1001;
     background: var(--bg-card, #ffffff);
     width: 90%;
     max-width: 500px;
+    min-height: 300px; /* Prevents collapse if content is empty */
     border-radius: 16px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     display: flex;
@@ -40,6 +44,7 @@
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--divider, #eee);
+    flex-shrink: 0; /* Prevents header from collapsing */
 }
 
 .header-title {
@@ -77,6 +82,7 @@
 .smart-briefing-content {
     padding: 20px;
     overflow-y: auto;
+    flex-grow: 1;
 }
 
 /* Loading State */
@@ -84,6 +90,14 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.loading-text {
+    font-size: 0.9rem;
+    color: #8b5cf6;
+    font-weight: 500;
+    margin-bottom: 4px;
+    animation: pulse 2s infinite;
 }
 
 .skeleton-title {
@@ -133,6 +147,11 @@
     text-align: center;
     padding: 20px 0;
     color: var(--text-secondary, #666);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 .retry-button {

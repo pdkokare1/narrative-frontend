@@ -42,15 +42,13 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
     setLoading(true);
     setError(null);
     
-    // Create a timeout promise to handle cold starts
+    // Timeout to prevent hanging
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error('Request timed out')), 15000)
     );
 
     try {
       // Race between the API call and the timeout
-      // Note: Currently fetches a global daily briefing. 
-      // Future enhancement: Pass article.id to get a specific summary if needed.
       const response: any = await Promise.race([
         api.get('/articles/smart-briefing'),
         timeoutPromise
@@ -70,9 +68,9 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
       console.error('Failed to load smart briefing:', err);
       
       if (err.message === 'Request timed out') {
-        setError('The briefing is taking longer than usual to generate. Please try again.');
+        setError('The briefing is taking longer than usual. Please try again.');
       } else {
-        setError('Unable to generate your briefing at this moment. Please try again.');
+        setError('Unable to generate your briefing at this moment.');
       }
     } finally {
       if (mounted.current) {
@@ -88,9 +86,11 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
   return (
     <div className="smart-briefing-overlay" onClick={onClose}>
       <div className="smart-briefing-modal" onClick={(e) => e.stopPropagation()}>
+        
+        {/* Header - Always visible */}
         <div className="smart-briefing-header">
           <div className="header-title">
-            <SparklesIcon className="sparkle-icon" sx={{ color: '#8b5cf6', fontSize: 24 }} />
+            <SparklesIcon sx={{ color: '#8b5cf6', fontSize: 24 }} />
             <h2>{article ? 'Smart Analysis' : 'Smart Briefing'}</h2>
           </div>
           <button className="close-button" onClick={onClose}>
@@ -98,19 +98,15 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
           </button>
         </div>
 
+        {/* Content Body */}
         <div className="smart-briefing-content">
           {loading ? (
             <div className="briefing-loading">
-              <p className="loading-text">Analysing current events...</p>
+              <p className="loading-text">Analyzing current events...</p>
               <div className="skeleton-title"></div>
               <div className="skeleton-line"></div>
               <div className="skeleton-line"></div>
               <div className="skeleton-line short"></div>
-              <div className="skeleton-list">
-                 <div className="skeleton-bullet"></div>
-                 <div className="skeleton-bullet"></div>
-                 <div className="skeleton-bullet"></div>
-              </div>
             </div>
           ) : error ? (
             <div className="briefing-error">
@@ -122,8 +118,6 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
             </div>
           ) : data ? (
             <div className="briefing-body">
-              {/* If an article was clicked, we can show its headline as context, 
-                  otherwise show the daily briefing title */}
               <h3 className="briefing-headline">
                 {article ? `Context: ${article.headline}` : data.title}
               </h3>
@@ -146,7 +140,6 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
               </div>
             </div>
           ) : (
-             // Fallback if data is null but no error
              <div className="briefing-error">
                 <p>No briefing data available.</p>
                 <button className="retry-button" onClick={fetchBriefing}>

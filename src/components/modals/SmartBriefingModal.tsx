@@ -68,11 +68,28 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
       if (!mounted.current) return;
       console.error('Failed to load smart briefing:', err);
       
+      // DIAGNOSTIC ERROR HANDLING
+      // We are unmasking the error to see exactly what is happening
+      let errorMessage = 'Unable to generate your briefing.';
+      
       if (err.message === 'Request timed out') {
-        setError('The briefing is taking longer than usual. Please try again.');
+        errorMessage = 'The briefing is taking longer than usual. Please try again.';
+      } else if (err.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        errorMessage = `Server Error (${err.response.status}): ${err.response.statusText || 'Unknown Error'}`;
+        if (err.response.status === 404) {
+             errorMessage = 'Feature not found on server (404). Please check backend routes.';
+        }
+      } else if (err.request) {
+        // The request was made but no response was received
+        errorMessage = 'No response from server. Please check your connection.';
       } else {
-        setError('Unable to generate your briefing at this moment.');
+        // Something happened in setting up the request that triggered an Error
+        errorMessage = `Request Error: ${err.message}`;
       }
+
+      setError(errorMessage);
     } finally {
       if (mounted.current) {
         setLoading(false);
@@ -124,7 +141,7 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
           ) : error ? (
             <div className="briefing-error">
               <AlertIcon sx={{ fontSize: 48, color: '#ef4444', marginBottom: '1rem' }} />
-              <p>{error}</p>
+              <p style={{ maxWidth: '80%', lineHeight: '1.4' }}>{error}</p>
               <button className="retry-button" onClick={fetchBriefing}>
                 <RefreshIcon sx={{ fontSize: 16, marginRight: '8px' }} /> Retry
               </button>

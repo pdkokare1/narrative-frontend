@@ -51,9 +51,14 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
     );
 
     try {
+      // Determine endpoint based on whether we are analyzing a specific article or fetching the global brief
+      const endpoint = article && article._id
+        ? `/articles/smart-briefing?articleId=${article._id}` 
+        : '/articles/smart-briefing';
+
       // Race between the API call and the timeout
       const response: any = await Promise.race([
-        api.get('/articles/smart-briefing'),
+        api.get(endpoint),
         timeoutPromise
       ]);
       

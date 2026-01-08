@@ -7,7 +7,7 @@
     white-space: nowrap;
     
     /* Layout & Spacing */
-    /* Reduced bottom padding from 12px to 4px to decrease gap with Newsfeed */
+    /* Mobile/Tablet padding */
     padding: 8px 16px 4px 16px; 
     margin-bottom: 0;
     align-items: center;
@@ -40,8 +40,8 @@
     /* Shape */
     border-radius: var(--radius-pill, 50px);
     
-    /* Default State (Inactive) - Glass/Subtle Look */
-    background: var(--bg-elevated);
+    /* Default State (Inactive) - FIXED: Transparent background */
+    background: transparent;
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
     
@@ -74,6 +74,25 @@
 /* Press Animation */
 .pill:active {
     transform: scale(0.96);
+}
+
+/* ================= DESKTOP OPTIMIZATIONS (1200px+) ================= */
+@media (min-width: 1200px) {
+    .category-pills-container {
+        /* Spread items evenly across the container */
+        justify-content: space-between;
+        
+        /* Remove side padding here because the Header container 
+           in UnifiedFeed.css now handles the exact alignment */
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .pill {
+        /* Allow pills to grow and fill the space */
+        flex: 1; 
+        text-align: center;
+    }
 }
 
 /* ================= MOBILE OPTIMIZATIONS ================= */

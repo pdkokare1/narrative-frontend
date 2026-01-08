@@ -8,6 +8,7 @@ interface ClusterData {
   center: IArticle[];
   right: IArticle[];
   reviews: IArticle[];
+  others?: IArticle[]; // Added to catch unclassified/neutral articles
 }
 
 interface TopicTimelineProps {
@@ -18,11 +19,13 @@ const TopicTimeline: React.FC<TopicTimelineProps> = ({ clusterData }) => {
   if (!clusterData) return null;
 
   // 1. Merge all articles into a single array
+  // Included 'others' to ensure no data is hidden from the user
   const allArticles = [
     ...(clusterData.left || []),
     ...(clusterData.center || []),
     ...(clusterData.right || []),
-    ...(clusterData.reviews || [])
+    ...(clusterData.reviews || []),
+    ...(clusterData.others || [])
   ];
 
   if (allArticles.length === 0) {
@@ -44,7 +47,7 @@ const TopicTimeline: React.FC<TopicTimelineProps> = ({ clusterData }) => {
     <div className="timeline-container">
       {sortedArticles.map((article, index) => (
         <div key={article._id || index} className="timeline-item">
-          {/* Dot Color based on Lean */}
+          {/* Dot Color based on Lean - Fallback to Neutral if missing */}
           <div className={`timeline-dot ${article.politicalLean || 'Neutral'}`}></div>
           
           <div className="timeline-content">
@@ -56,7 +59,7 @@ const TopicTimeline: React.FC<TopicTimelineProps> = ({ clusterData }) => {
               <span style={{ fontWeight: '600' }}>{article.source}</span>
               <span>•</span>
               <span className={article.politicalLean !== 'Not Applicable' ? 'accent-text' : ''}>
-                {article.politicalLean}
+                {article.politicalLean || 'Neutral'}
               </span>
             </div>
           </div>

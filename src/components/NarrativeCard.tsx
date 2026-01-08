@@ -1,3 +1,4 @@
+// src/components/NarrativeCard.tsx
 import React, { memo } from 'react';
 import './ArticleCard.css'; // Reusing ArticleCard styles for 1:1 consistency
 import { INarrative } from '../types';
@@ -27,9 +28,9 @@ const NarrativeCard: React.FC<NarrativeCardProps> = memo(({ data, onClick }) => 
         
         {/* --- BADGES --- */}
         <div className="card-badges">
-          {/* Custom style to distinguish Narrative from standard articles, but keeping layout */}
-          <span className="badge challenge" style={{ background: '#6366f1', color: 'white' }}>
-            AI Narrative
+          {/* FIXED: Changed to Adaptive Theme Color and Renamed Label */}
+          <span className="badge challenge" style={{ background: 'var(--accent-primary)', color: 'white' }}>
+            Narrative In Focus
           </span>
         </div>
         

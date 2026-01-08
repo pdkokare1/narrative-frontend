@@ -119,20 +119,35 @@ const GlobalPlayerBar: React.FC = () => {
       <Fade in={true}>
         <Box className="global-player-bar up-next-mode" onClick={resetAutoHide}>
             <Box sx={{ flex: 1, mr: 2 }}>
-                <Typography variant="overline" color="primary" sx={{ fontWeight: 700, letterSpacing: 1 }}>
+                <Typography variant="overline" sx={{ fontWeight: 700, letterSpacing: 1, color: 'var(--accent-primary)' }}>
                     Up Next in {autoplayTimer}s...
                 </Typography>
                 <LinearProgress 
                     variant="determinate" 
                     value={((autoplayTimer || 0)/5)*100} 
-                    sx={{ height: 4, borderRadius: 2, mt: 0.5, backgroundColor: 'rgba(255,255,255,0.1)' }} 
+                    sx={{ 
+                      height: 4, 
+                      borderRadius: 2, 
+                      mt: 0.5, 
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      '& .MuiLinearProgress-bar': { backgroundColor: 'var(--accent-primary)' }
+                    }} 
                 />
             </Box>
             <Stack direction="row" spacing={1}>
-                <Fab size="small" variant="extended" color="primary" onClick={handleControl(playNext)}>
+                <Fab 
+                  size="small" 
+                  variant="extended" 
+                  onClick={handleControl(playNext)}
+                  sx={{ 
+                    bgcolor: 'var(--accent-primary)', 
+                    color: 'var(--bg-primary)',
+                    '&:hover': { bgcolor: 'var(--accent-hover)' }
+                  }}
+                >
                     <PlayArrowRounded sx={{ mr: 1, fontSize: 18 }} /> Play Now
                 </Fab>
-                <IconButton size="small" onClick={handleControl(cancelAutoplay)} sx={{ color: 'text.secondary' }}>
+                <IconButton size="small" onClick={handleControl(cancelAutoplay)} sx={{ color: 'var(--text-secondary)' }}>
                     <CloseRounded />
                 </IconButton>
             </Stack>
@@ -150,13 +165,13 @@ const GlobalPlayerBar: React.FC = () => {
         <Box className="player-section left">
            {currentSpeaker && (
              <Typography variant="caption" sx={{ 
-                 color: 'primary.main', // Use Theme Primary Color
+                 color: 'var(--accent-primary)', // FIXED: Matches theme Gold/Bronze
                  fontWeight: 700, 
                  display: 'flex', 
                  alignItems: 'center', 
                  gap: 0.5 
              }}>
-                <Box className={`pulse-dot-small ${isPlaying ? 'active' : ''}`} sx={{ bgcolor: 'primary.main' }} />
+                <Box className={`pulse-dot-small ${isPlaying ? 'active' : ''}`} sx={{ bgcolor: 'var(--accent-primary)' }} />
                 {currentSpeaker.name}
              </Typography>
            )}
@@ -167,7 +182,7 @@ const GlobalPlayerBar: React.FC = () => {
                textOverflow: 'ellipsis',
                maxWidth: '100%',
                lineHeight: 1.2,
-               color: 'text.primary' // Ensure high contrast text
+               color: 'var(--text-primary)' // FIXED: High contrast text from variables
            }}>
              {isLoading ? "Buffering..." : currentArticle?.headline}
            </Typography>
@@ -177,36 +192,39 @@ const GlobalPlayerBar: React.FC = () => {
         <Box className="player-section center">
             <Stack direction="row" alignItems="center" spacing={isMobile ? 1 : 2} sx={{ mb: 0 }}>
                 
-                {/* PREVIOUS Button - Matches Theme Text */}
-                <IconButton size="small" onClick={handleControl(playPrevious)} sx={{ color: 'text.primary' }}>
+                {/* PREVIOUS Button */}
+                <IconButton size="small" onClick={handleControl(playPrevious)} sx={{ color: 'var(--text-primary)' }}>
                     <SkipPreviousRounded />
                 </IconButton>
 
-                {/* PLAY/PAUSE FAB - Uses Theme Primary Color */}
+                {/* PLAY/PAUSE FAB */}
                 <Fab 
                     size={isMobile ? "small" : "medium"} 
-                    color="primary" 
                     onClick={handleControl(isPaused ? resume : pause)}
                     sx={{ 
                         boxShadow: '0 4px 12px rgba(0,0,0,0.3)', 
                         zIndex: 10,
-                        width: isMobile ? 40 : 48,  // Slightly smaller FAB
+                        width: isMobile ? 40 : 48,
                         height: isMobile ? 40 : 48,
-                        minHeight: 'auto' 
+                        minHeight: 'auto',
+                        // FIXED: Uses Theme Variables for Adaptive Color
+                        bgcolor: 'var(--accent-primary)',
+                        color: 'var(--bg-primary)', 
+                        '&:hover': { bgcolor: 'var(--accent-hover)' }
                     }}
                 >
                     {isPaused ? <PlayArrowRounded fontSize="medium" /> : <PauseRounded fontSize="medium" />}
                 </Fab>
 
-                {/* NEXT Button - Matches Theme Text */}
-                <IconButton size="small" onClick={handleControl(playNext)} sx={{ color: 'text.primary' }}>
+                {/* NEXT Button */}
+                <IconButton size="small" onClick={handleControl(playNext)} sx={{ color: 'var(--text-primary)' }}>
                     <SkipNextRounded />
                 </IconButton>
             </Stack>
             
             {/* Scrubber Row */}
             <Stack direction="row" alignItems="center" spacing={2} sx={{ width: '100%', mt: 0.5 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ minWidth: 35, textAlign: 'right', fontSize: '0.7rem' }}>
+                <Typography variant="caption" sx={{ minWidth: 35, textAlign: 'right', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
                     {formatTime(dragTime)}
                 </Typography>
                 <Slider
@@ -219,20 +237,20 @@ const GlobalPlayerBar: React.FC = () => {
                     onMouseDown={handleSeekStart}
                     onTouchStart={handleSeekStart}
                     sx={{
-                        color: 'primary.main', // Slider matches theme
+                        color: 'var(--accent-primary)', // FIXED: Slider matches theme
                         height: 3,
-                        padding: '10px 0', // Reduce touch target padding to reduce height perception
+                        padding: '10px 0', 
                         '& .MuiSlider-thumb': {
                             width: 8,
                             height: 8,
                             transition: '0.2s',
-                            '&:hover, &.Mui-focusVisible': { boxShadow: `0px 0px 0px 6px ${theme.palette.primary.main}20` }, // adaptive shadow
+                            '&:hover, &.Mui-focusVisible': { boxShadow: `0px 0px 0px 6px var(--accent-glow)` }, 
                             '&.Mui-active': { width: 12, height: 12 },
                         },
-                        '& .MuiSlider-rail': { opacity: 0.3, backgroundColor: 'text.secondary' },
+                        '& .MuiSlider-rail': { opacity: 0.3, backgroundColor: 'var(--text-secondary)' },
                     }}
                 />
-                <Typography variant="caption" color="text.secondary" sx={{ minWidth: 35, fontSize: '0.7rem' }}>
+                <Typography variant="caption" sx={{ minWidth: 35, fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
                     {formatTime(duration)}
                 </Typography>
             </Stack>
@@ -245,20 +263,20 @@ const GlobalPlayerBar: React.FC = () => {
                     fontSize: '0.7rem', 
                     fontWeight: 700, 
                     border: '1px solid',
-                    borderColor: 'divider',
+                    borderColor: 'var(--border-color)', // FIXED: Adaptive border
                     borderRadius: 2,
                     px: 1,
                     py: 0.5,
                     width: 'auto',
                     mr: 1,
-                    color: 'text.secondary'
+                    color: 'var(--text-secondary)' // FIXED: Adaptive text
                 }}>
                    {playbackRate}x
                 </IconButton>
             </Tooltip>
             
             {isMobile && (
-                <IconButton onClick={() => { vibrate(); closePlayer(); }} size="small" sx={{ color: 'text.secondary' }}>
+                <IconButton onClick={() => { vibrate(); closePlayer(); }} size="small" sx={{ color: 'var(--text-secondary)' }}>
                     <CloseRounded fontSize="small" />
                 </IconButton>
             )}

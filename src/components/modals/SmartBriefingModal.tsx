@@ -44,19 +44,15 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
     setError(null);
     const startTime = Date.now();
     
-    // Timeout to prevent hanging
-    // UPDATED: Increased to 60 seconds (60000ms) to allow for AI generation and cold starts
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error('Request timed out')), 60000)
     );
 
     try {
-      // Determine endpoint based on whether we are analyzing a specific article or fetching the global brief
       const endpoint = article && article._id
         ? `/articles/smart-briefing?articleId=${article._id}` 
         : '/articles/smart-briefing';
 
-      // Race between the API call and the timeout
       const response: any = await Promise.race([
         api.get(endpoint),
         timeoutPromise
@@ -76,24 +72,18 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
       if (!mounted.current) return;
       console.error('Failed to load smart briefing:', err);
       
-      // DIAGNOSTIC ERROR HANDLING
-      // We are unmasking the error to see exactly what is happening
       let errorMessage = 'Unable to generate your briefing.';
       
       if (err.message === 'Request timed out') {
         errorMessage = 'The briefing is taking longer than usual. The AI is still thinking, please try again.';
       } else if (err.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
         errorMessage = `Server Error (${err.response.status}): ${err.response.statusText || 'Unknown Error'}`;
         if (err.response.status === 404) {
              errorMessage = 'Feature not found on server (404). Please check backend routes.';
         }
       } else if (err.request) {
-        // The request was made but no response was received
         errorMessage = 'No response from server. Please check your connection.';
       } else {
-        // Something happened in setting up the request that triggered an Error
         errorMessage = `Request Error: ${err.message}`;
       }
 
@@ -109,14 +99,11 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
     fetchBriefing();
   }, []);
 
-  // We use a Portal to render this component at the document.body level.
-  // This breaks it out of any stacking contexts or overflow:hidden containers.
   return createPortal(
     <div className="smart-briefing-overlay" onClick={onClose}>
       <div 
         className="smart-briefing-modal" 
         onClick={(e) => e.stopPropagation()}
-        // Inline styles to guarantee visibility against any global CSS conflicts
         style={{ 
           opacity: 1, 
           visibility: 'visible', 
@@ -128,7 +115,8 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
         {/* Header - Always visible */}
         <div className="smart-briefing-header">
           <div className="header-title">
-            <SparklesIcon sx={{ color: '#8b5cf6', fontSize: 24 }} />
+            {/* UPDATED: Use variable color for sparkles */}
+            <SparklesIcon sx={{ color: 'var(--accent-primary)', fontSize: 24 }} />
             <h2>{article ? 'Smart Analysis' : 'Smart Briefing'}</h2>
           </div>
           <button className="close-button" onClick={onClose} aria-label="Close">
@@ -148,7 +136,8 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
             </div>
           ) : error ? (
             <div className="briefing-error">
-              <AlertIcon sx={{ fontSize: 48, color: '#ef4444', marginBottom: '1rem' }} />
+              {/* UPDATED: Use variable color for error icon */}
+              <AlertIcon sx={{ fontSize: 48, color: 'var(--color-error)', marginBottom: '1rem' }} />
               <p style={{ maxWidth: '80%', lineHeight: '1.4' }}>{error}</p>
               <button className="retry-button" onClick={fetchBriefing}>
                 <RefreshIcon sx={{ fontSize: 16, marginRight: '8px' }} /> Retry
@@ -188,7 +177,7 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
         </div>
       </div>
     </div>,
-    document.body // Target container
+    document.body
   );
 };
 

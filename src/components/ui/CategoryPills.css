@@ -7,16 +7,15 @@
     white-space: nowrap;
     
     /* Layout & Spacing */
-    /* Mobile/Tablet padding */
+    /* Kept reduced bottom padding */
     padding: 8px 16px 4px 16px; 
     margin-bottom: 0;
     align-items: center;
     
     /* Hide scrollbars for cleaner UI */
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE 10+ */
+    scrollbar-width: none; 
+    -ms-overflow-style: none; 
     
-    /* Smooth scrolling */
     scroll-behavior: smooth;
     
     width: 100%;
@@ -24,23 +23,24 @@
 }
 
 .category-pills-container::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
+    display: none;
 }
 
 .pill {
-    /* Base Desktop Size */
-    padding: 8px 16px;
+    /* ADJUSTMENT: Made smaller (was 8px 16px) */
+    padding: 6px 14px;
     
     /* Typography */
     font-family: var(--font-body, sans-serif);
-    font-size: 0.85rem;
+    /* ADJUSTMENT: Slightly smaller font size (was 0.85rem) */
+    font-size: 0.8rem;
     font-weight: 500;
     letter-spacing: 0.01em;
     
     /* Shape */
     border-radius: var(--radius-pill, 50px);
     
-    /* Default State (Inactive) - FIXED: Transparent background */
+    /* Default State (Inactive) - FIXED: Transparent background as per previous request */
     background: transparent;
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
@@ -62,7 +62,7 @@
     transform: translateY(-1px);
 }
 
-/* Active State - Luxury Look */
+/* Active State */
 .pill.active {
     background: var(--gradient-accent);
     color: var(--text-inverse);
@@ -83,13 +83,13 @@
         justify-content: space-between;
         
         /* Remove side padding here because the Header container 
-           in UnifiedFeed.css now handles the exact alignment */
+           in UnifiedFeed.css handles alignment */
         padding-left: 0;
         padding-right: 0;
     }
 
     .pill {
-        /* Allow pills to grow and fill the space */
+        /* Allow pills to grow */
         flex: 1; 
         text-align: center;
     }
@@ -98,16 +98,15 @@
 /* ================= MOBILE OPTIMIZATIONS ================= */
 @media (max-width: 768px) {
     .category-pills-container {
-        /* Tighter side padding on mobile */
         padding-left: 12px;
         padding-right: 12px;
         gap: 6px;
     }
 
     .pill {
-        /* Smaller Size for Mobile */
-        padding: 6px 12px;
-        font-size: 0.75rem; /* Smaller text (12px approx) */
+        /* Even smaller for mobile */
+        padding: 5px 12px;
+        font-size: 0.75rem; 
         border-radius: 20px;
     }
 }

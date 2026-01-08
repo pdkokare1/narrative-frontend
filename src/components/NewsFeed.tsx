@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import UnifiedFeed from './feeds/UnifiedFeed';
 import InFocusBar from './InFocusBar'; 
-import NarrativeModal from './modals/NarrativeModal'; // NEW
+import NarrativeModal from './modals/NarrativeModal'; 
 import useIsMobile from '../hooks/useIsMobile';
 import useHaptic from '../hooks/useHaptic';
 import '../App.css'; 
@@ -33,11 +33,10 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   const [mode, setMode] = useState<FeedMode>('latest'); 
   const [animDirection, setAnimDirection] = useState<'enter-right' | 'enter-left'>('enter-right');
   
-  // NEW: Narrative Modal State
+  // Narrative Modal State
   const [selectedNarrative, setSelectedNarrative] = useState<INarrative | null>(null);
 
   // Ref passed to UnifiedFeed for scrolling. 
-  // NOTE: Do not attach this ref to elements in this file to avoid Ref Collision.
   const contentRef = useRef<HTMLDivElement>(null); 
   
   const isMobile = useIsMobile();
@@ -89,7 +88,8 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
   // --- DESKTOP TOGGLE (Pills) ---
   const renderDesktopToggle = () => (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', marginTop: '20px' }}>
+    // ADJUSTMENT: Reduced marginBottom from 20px to 4px to decrease gap to category pills
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px', marginTop: '20px' }}>
       <div style={{ 
         display: 'flex', background: 'var(--bg-elevated)', borderRadius: '25px', 
         padding: '4px', border: '1px solid var(--border-color)', position: 'relative' 
@@ -170,7 +170,6 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   return (
     <main 
         className="content" 
-        // ref={contentRef} <--- REMOVED TO PREVENT COLLISION. Ref is now only on UnifiedFeed's grid.
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -199,7 +198,6 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
           />
       </div>
 
-      {/* NEW: Narrative Modal */}
       {selectedNarrative && (
           <NarrativeModal 
               data={selectedNarrative} 

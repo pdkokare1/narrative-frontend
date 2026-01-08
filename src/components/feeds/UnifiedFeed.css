@@ -13,20 +13,19 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    flex-shrink: 0; /* Prevents header from shrinking */
+    flex-shrink: 0; 
 }
 
 /* --- Main Grid --- */
 .articles-grid {
-    flex: 1; /* Takes all remaining height between header and bottom nav */
-    padding: 15px;
+    flex: 1; 
+    padding: 20px 24px; /* Increased padding for desktop breathing room */
     overflow-y: auto;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 20px;
+    /* Default: Responsive auto-fill for tablets/small laptops */
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px; /* Consistent gap */
     scroll-behavior: smooth;
-    
-    /* Hide scrollbar for cleaner look */
     scrollbar-width: none; 
     -ms-overflow-style: none;
 }
@@ -35,10 +34,25 @@
     display: none;
 }
 
+/* --- Wrapper for Equal Height --- */
+/* This ensures the card takes the full height of the grid cell */
+.feed-article-wrapper {
+    height: 100%;
+    min-height: 100%;
+}
+
+/* --- DESKTOP ENFORCEMENT (4 Articles per row) --- */
+@media (min-width: 1200px) {
+    .articles-grid {
+        /* Strictly 4 columns as requested */
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
 /* --- New Content Pill --- */
 .new-content-pill {
     position: absolute;
-    top: 70px; /* Below header */
+    top: 70px;
     left: 50%;
     transform: translateX(-50%) translateY(-20px);
     background: var(--accent-primary);
@@ -86,42 +100,30 @@
     text-align: center;
 }
 
-/* --- Mobile Specific Layout (The Fix) --- */
+/* --- Mobile Specific Layout --- */
 @media (max-width: 768px) {
     .articles-grid {
         display: flex;
         flex-direction: column;
-        padding: 0; /* Remove padding to allow full edge-to-edge width */
-        gap: 0;     /* Remove gap, rely on snap */
-        
-        /* Enforce Snap */
+        padding: 0; 
+        gap: 0;    
         scroll-snap-type: y mandatory;
         overscroll-behavior-y: contain;
     }
 
-    /* The wrapper for each article */
     .feed-article-wrapper {
-        /* Height 100% forces it to fill the articles-grid exactly */
-        /* articles-grid fills the space between Header and BottomNav */
         height: 100%; 
         min-height: 100%;
         width: 100%;
-        
-        /* Snap Logic */
         scroll-snap-align: start;
         scroll-snap-stop: always;
-
-        /* Center the card vertically */
         display: flex;
         flex-direction: column;
         justify-content: center;
-        
-        /* Add internal padding so card doesn't touch edges */
         padding: 10px 15px; 
         box-sizing: border-box;
     }
 
-    /* Adjust Skeleton wrapper similarly */
     .article-card-wrapper {
         height: 100%;
         scroll-snap-align: start;
@@ -131,7 +133,6 @@
         justify-content: center;
     }
 
-    /* Ensure highlight is visible */
     .now-playing-highlight {
         position: relative;
     }

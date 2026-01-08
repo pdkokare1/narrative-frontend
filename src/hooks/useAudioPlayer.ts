@@ -43,6 +43,7 @@ export const useAudioPlayer = (user: any) => {
   const prefetchedIdsRef = useRef(new Set<string>());
   const preloadedBlobsRef = useRef<Record<string, string>>({});
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const consecutiveFailures = useRef(0); // UPDATED: Track failures to prevent infinite loops
 
   // --- HELPERS ---
   const optimizeUrl = (url?: string | null) => {
@@ -153,6 +154,45 @@ export const useAudioPlayer = (user: any) => {
       return processed;
   }, [getPersonaForCategory]);
 
+  // --- CONTROLS DEFINED EARLY FOR USAGE IN PLAYARTICLE ---
+  const stop = useCallback(() => {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setIsPlaying(false);
+      setIsPaused(false);
+      setIsLoading(false);
+      setIsVisible(false);
+      setIsWaitingForNext(false);
+      setShouldTimerTrigger(false);
+
+      if (timerRef.current) clearInterval(timerRef.current);
+      
+      setCurrentArticle(null);
+      setCurrentIndex(-1);
+      setPlaylist([]);
+      setCurrentTime(0);
+      setDuration(0);
+      consecutiveFailures.current = 0;
+      
+      prefetchedIdsRef.current.clear();
+      Object.values(preloadedBlobsRef.current).forEach(url => URL.revokeObjectURL(url));
+      preloadedBlobsRef.current = {};
+      
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "none";
+  }, []);
+
+  const playNext = useCallback(() => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setIsWaitingForNext(false);
+      setAutoplayTimer(0);
+      
+      // IMPORTANT: Once we move past the first article, we DISABLE the timer logic
+      // so subsequent articles play continuously.
+      setShouldTimerTrigger(false); 
+      
+      setCurrentIndex(prevIndex => prevIndex + 1);
+  }, []);
+
   // --- CORE PLAYBACK ---
   const playArticle = useCallback(async (article: any) => {
       if (!article) return;
@@ -198,6 +238,9 @@ export const useAudioPlayer = (user: any) => {
           audio.playbackRate = baseSpeed * playbackRate;
           
           await audio.play();
+          
+          // UPDATED: Reset failure count on successful play
+          consecutiveFailures.current = 0; 
 
           if ('mediaSession' in navigator) {
               // @ts-ignore 
@@ -217,27 +260,35 @@ export const useAudioPlayer = (user: any) => {
               prefetchedIdsRef.current.delete(prevId); 
           }
 
-      } catch (error) {
+      } catch (error: any) {
           console.error("Radio Error:", error);
-          // CRITICAL FIX: Stop playback on error to prevent infinite API loops
-          // Do NOT call playNext() here automatically.
-          stop(); 
+
+          // UPDATED: Resilient Error Handling
+          
+          // 1. If Browser blocked Autoplay, we MUST stop.
+          if (error.name === 'NotAllowedError') {
+              console.warn("Autoplay blocked. Stopping radio.");
+              stop();
+              return;
+          }
+
+          // 2. If it's a content error (fetch failed, network, etc.), try to Skip.
+          consecutiveFailures.current += 1;
+          
+          if (consecutiveFailures.current >= 3) {
+              console.error("Too many consecutive failures. Stopping.");
+              stop();
+          } else {
+              console.log(`Skipping article due to error (Attempt ${consecutiveFailures.current}/3)`);
+              // Small delay to prevent CPU spinning in case of immediate sync errors
+              setTimeout(() => {
+                 playNext();
+              }, 1000);
+          }
+          
           setIsLoading(false);
       }
-  }, [playbackRate, getPersonaForCategory, currentIndex, playlist]);
-
-  // --- CONTROLS ---
-  const playNext = useCallback(() => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      setIsWaitingForNext(false);
-      setAutoplayTimer(0);
-      
-      // IMPORTANT: Once we move past the first article, we DISABLE the timer logic
-      // so subsequent articles play continuously.
-      setShouldTimerTrigger(false); 
-      
-      setCurrentIndex(prevIndex => prevIndex + 1);
-  }, []);
+  }, [playbackRate, getPersonaForCategory, currentIndex, playlist, playNext, stop]);
 
   const playPrevious = useCallback(() => {
       if (audioRef.current.currentTime > 3) {
@@ -245,31 +296,6 @@ export const useAudioPlayer = (user: any) => {
           return;
       }
       setCurrentIndex(prev => Math.max(0, prev - 1));
-  }, []);
-
-  const stop = useCallback(() => {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-      setIsPaused(false);
-      setIsLoading(false);
-      setIsVisible(false);
-      setIsWaitingForNext(false);
-      setShouldTimerTrigger(false);
-
-      if (timerRef.current) clearInterval(timerRef.current);
-      
-      setCurrentArticle(null);
-      setCurrentIndex(-1);
-      setPlaylist([]);
-      setCurrentTime(0);
-      setDuration(0);
-      
-      prefetchedIdsRef.current.clear();
-      Object.values(preloadedBlobsRef.current).forEach(url => URL.revokeObjectURL(url));
-      preloadedBlobsRef.current = {};
-      
-      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "none";
   }, []);
 
   const pause = useCallback(() => {
@@ -327,6 +353,7 @@ export const useAudioPlayer = (user: any) => {
       }
 
       setPlaylist(finalPlaylist);
+      consecutiveFailures.current = 0;
       
       // Handle Timer Logic (Only for the FIRST transition if enabled)
       setShouldTimerTrigger(!!options.enableFirstTimer);

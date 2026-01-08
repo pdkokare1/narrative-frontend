@@ -1,11 +1,30 @@
-// src/components/GlobalPlayerBar.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useRadio } from '../context/RadioContext';
 import useHaptic from '../hooks/useHaptic';
-import useIsMobile from '../hooks/useIsMobile'; // [!code ++]
+import useIsMobile from '../hooks/useIsMobile';
+import { 
+  Box, 
+  Typography, 
+  IconButton, 
+  Slider, 
+  Stack, 
+  Fab, 
+  useTheme, 
+  Fade, 
+  LinearProgress,
+  Tooltip
+} from '@mui/material';
+import { 
+  PlayArrowRounded, 
+  PauseRounded, 
+  SkipNextRounded, 
+  SkipPreviousRounded, 
+  CloseRounded
+} from '@mui/icons-material';
 import './GlobalPlayerBar.css';
 
 const GlobalPlayerBar: React.FC = () => {
+  const theme = useTheme();
   const { 
     currentArticle, 
     currentSpeaker, 
@@ -31,7 +50,7 @@ const GlobalPlayerBar: React.FC = () => {
   } = useRadio();
 
   const vibrate = useHaptic();
-  const isMobile = useIsMobile(); // [!code ++]
+  const isMobile = useIsMobile();
   const [isDragging, setIsDragging] = useState(false);
   const [dragTime, setDragTime] = useState(0);
   const autoHideRef = useRef<NodeJS.Timeout | null>(null);
@@ -39,8 +58,6 @@ const GlobalPlayerBar: React.FC = () => {
   // --- AUTO-HIDE LOGIC ---
   const resetAutoHide = () => {
     if (autoHideRef.current) clearTimeout(autoHideRef.current);
-    
-    // Only enable auto-hide if we are on mobile [!code ++]
     if (isMobile && isPlaying && playerOpen) { 
         autoHideRef.current = setTimeout(() => {
             closePlayer();
@@ -49,13 +66,10 @@ const GlobalPlayerBar: React.FC = () => {
   };
 
   useEffect(() => {
-    if (playerOpen) {
-        resetAutoHide();
-    } else {
-        if (autoHideRef.current) clearTimeout(autoHideRef.current);
-    }
+    if (playerOpen) resetAutoHide();
+    else if (autoHideRef.current) clearTimeout(autoHideRef.current);
+    
     return () => { if (autoHideRef.current) clearTimeout(autoHideRef.current); };
-  // Add isMobile to dependencies to update behavior if screen resizes [!code ++]
   }, [playerOpen, isPlaying, isMobile]); 
 
   useEffect(() => {
@@ -64,30 +78,24 @@ const GlobalPlayerBar: React.FC = () => {
 
   if (!isVisible || !playerOpen) return null;
 
-  // --- HANDLERS (Combine Haptic + Logic + Timer Reset) ---
+  // --- HANDLERS ---
   const handleControl = (fn: () => void) => () => { 
       vibrate(); 
       fn(); 
       resetAutoHide(); 
   };
 
-  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDragTime(Number(e.target.value));
+  const handleSeekChange = (_: Event, value: number | number[]) => {
+    setDragTime(value as number);
     resetAutoHide();
   };
 
   const handleSeekStart = () => { setIsDragging(true); resetAutoHide(); };
-  const handleSeekEnd = (e: any) => {
+  
+  const handleSeekEnd = (_: any, value: number | number[]) => {
     setIsDragging(false);
-    seekTo(Number(e.currentTarget.value));
+    seekTo(value as number);
     resetAutoHide();
-  };
-
-  const formatTime = (time: number) => {
-    if (!time || isNaN(time)) return "0:00";
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
   const handleSpeedClick = () => {
@@ -98,86 +106,146 @@ const GlobalPlayerBar: React.FC = () => {
     resetAutoHide();
   };
 
+  const formatTime = (time: number) => {
+    if (!time || isNaN(time)) return "0:00";
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
+
   // --- UP NEXT BUBBLE ---
   if (isWaitingForNext) {
     return (
-      <div className="global-player-bar up-next-mode bubble-mode" onClick={resetAutoHide}>
-        <div className="up-next-content">
-          <span className="up-next-label">Up Next in {autoplayTimer}s...</span>
-          <div className="up-next-loader-track">
-             <div className="up-next-loader-fill" style={{ width: `${((autoplayTimer || 0)/5)*100}%` }}></div>
-          </div>
-        </div>
-        <div className="player-controls">
-            <button onClick={handleControl(playNext)} className="player-btn primary">Play Now</button>
-            <button onClick={handleControl(cancelAutoplay)} className="player-btn secondary">Cancel</button>
-        </div>
-      </div>
+      <Fade in={true}>
+        <Box className="global-player-bar up-next-mode" onClick={resetAutoHide}>
+            <Box sx={{ flex: 1, mr: 2 }}>
+                <Typography variant="overline" color="primary" sx={{ fontWeight: 700, letterSpacing: 1 }}>
+                    Up Next in {autoplayTimer}s...
+                </Typography>
+                <LinearProgress 
+                    variant="determinate" 
+                    value={((autoplayTimer || 0)/5)*100} 
+                    sx={{ height: 4, borderRadius: 2, mt: 0.5, backgroundColor: 'rgba(255,255,255,0.1)' }} 
+                />
+            </Box>
+            <Stack direction="row" spacing={1}>
+                <Fab size="small" variant="extended" color="primary" onClick={handleControl(playNext)}>
+                    <PlayArrowRounded sx={{ mr: 1, fontSize: 18 }} /> Play Now
+                </Fab>
+                <IconButton size="small" onClick={handleControl(cancelAutoplay)} sx={{ color: 'text.secondary' }}>
+                    <CloseRounded />
+                </IconButton>
+            </Stack>
+        </Box>
+      </Fade>
     );
   }
 
   // --- ACTIVE PLAYER BUBBLE ---
   return (
-    <div className="global-player-bar bubble-mode" onClick={resetAutoHide}>
-      <div className="scrubber-container">
-        <input 
-            type="range" 
-            min="0" 
-            max={duration || 100} 
-            value={dragTime}
-            onChange={handleSeekChange}
-            onMouseDown={handleSeekStart}
-            onTouchStart={handleSeekStart}
-            onMouseUp={handleSeekEnd}
-            onTouchEnd={handleSeekEnd}
-            className="scrubber-range"
-            style={{ backgroundSize: `${(dragTime / (duration || 1)) * 100}% 100%` }}
-        />
-      </div>
+    <Fade in={true}>
+      <Box className="global-player-bar" onClick={resetAutoHide}>
+        
+        {/* SECTION 1: CONTEXT (Left) */}
+        <Box className="player-section left">
+           {currentSpeaker && (
+             <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box className={`pulse-dot-small ${isPlaying ? 'active' : ''}`} />
+                {currentSpeaker.name}
+             </Typography>
+           )}
+           <Typography variant="subtitle2" sx={{ 
+               fontWeight: 600, 
+               whiteSpace: 'nowrap', 
+               overflow: 'hidden', 
+               textOverflow: 'ellipsis',
+               maxWidth: '100%',
+               lineHeight: 1.2
+           }}>
+             {isLoading ? "Buffering..." : currentArticle?.headline}
+           </Typography>
+        </Box>
 
-      <div className="player-main-row">
-        <div className="player-info">
-            <div className="player-meta-top">
-                {currentSpeaker && (
-                    <span className="speaker-name-small">
-                        <span className={`pulse-dot-small ${isPlaying ? 'active' : ''}`}></span>
-                        {currentSpeaker.name}
-                    </span>
-                )}
-                <span className="time-display">
-                    {formatTime(dragTime)} / {formatTime(duration)}
-                </span>
-            </div>
-            <div className="player-text-content">
-                <span className="player-headline">
-                    {isLoading ? "Buffering..." : currentArticle?.headline}
-                </span>
-            </div>
-        </div>
+        {/* SECTION 2: CONTROLS (Center) */}
+        <Box className="player-section center">
+            <Stack direction="row" alignItems="center" spacing={isMobile ? 1 : 2} sx={{ mb: 0.5 }}>
+                <IconButton size="small" onClick={handleControl(playPrevious)} sx={{ color: 'text.secondary' }}>
+                    <SkipPreviousRounded />
+                </IconButton>
 
-        <div className="player-controls">
-            {isLoading ? (
-                <div className="spinner-small white"></div>
-            ) : (
-                <>
-                   <button onClick={handleSpeedClick} className="player-btn text-btn">{playbackRate}x</button>
-                   <button onClick={handleControl(playPrevious)} className="player-btn icon-only">⏮</button>
-                   {isPaused ? (
-                     <button onClick={handleControl(resume)} className="player-btn icon-only primary-play">▶</button>
-                   ) : (
-                     <button onClick={handleControl(pause)} className="player-btn icon-only primary-play">⏸</button>
-                   )}
-                   <button onClick={handleControl(playNext)} className="player-btn icon-only">⏭</button>
-                   
-                   {/* Only show the hide/close button on Mobile */}
-                   {isMobile && (
-                     <button onClick={() => { vibrate(); closePlayer(); }} className="player-btn close-action" title="Hide Player">⌄</button>
-                   )}
-                </>
+                <Fab 
+                    size={isMobile ? "small" : "medium"} 
+                    color="primary" 
+                    onClick={handleControl(isPaused ? resume : pause)}
+                    sx={{ boxShadow: '0 4px 12px rgba(0,0,0,0.3)', zIndex: 10 }}
+                >
+                    {isPaused ? <PlayArrowRounded fontSize="large" /> : <PauseRounded fontSize="large" />}
+                </Fab>
+
+                <IconButton size="small" onClick={handleControl(playNext)} sx={{ color: 'text.secondary' }}>
+                    <SkipNextRounded />
+                </IconButton>
+            </Stack>
+            
+            {/* Scrubber Row */}
+            <Stack direction="row" alignItems="center" spacing={2} sx={{ width: '100%' }}>
+                <Typography variant="caption" color="text.secondary" sx={{ minWidth: 35, textAlign: 'right' }}>
+                    {formatTime(dragTime)}
+                </Typography>
+                <Slider
+                    size="small"
+                    value={dragTime}
+                    min={0}
+                    max={duration || 100}
+                    onChange={handleSeekChange}
+                    onChangeCommitted={handleSeekEnd}
+                    onMouseDown={handleSeekStart}
+                    onTouchStart={handleSeekStart}
+                    sx={{
+                        color: theme.palette.mode === 'dark' ? '#fff' : 'primary.main',
+                        height: 4,
+                        '& .MuiSlider-thumb': {
+                            width: 8,
+                            height: 8,
+                            transition: '0.3s cubic-bezier(.47,1.64,.41,.8)',
+                            '&:before': { boxShadow: '0 2px 12px 0 rgba(0,0,0,0.4)' },
+                            '&:hover, &.Mui-focusVisible': { boxShadow: `0px 0px 0px 8px ${'rgba(255,255,255,0.16)'}` },
+                            '&.Mui-active': { width: 12, height: 12 },
+                        },
+                        '& .MuiSlider-rail': { opacity: 0.28 },
+                    }}
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ minWidth: 35 }}>
+                    {formatTime(duration)}
+                </Typography>
+            </Stack>
+        </Box>
+
+        {/* SECTION 3: UTILITY (Right) */}
+        <Box className="player-section right">
+            <Tooltip title="Playback Speed">
+                <IconButton onClick={handleSpeedClick} size="small" sx={{ 
+                    fontSize: '0.75rem', 
+                    fontWeight: 700, 
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: 2,
+                    px: 1,
+                    width: 'auto',
+                    mr: 1
+                }}>
+                   {playbackRate}x
+                </IconButton>
+            </Tooltip>
+            
+            {isMobile && (
+                <IconButton onClick={() => { vibrate(); closePlayer(); }} size="small">
+                    <CloseRounded fontSize="small" />
+                </IconButton>
             )}
-        </div>
-      </div>
-    </div>
+        </Box>
+
+      </Box>
+    </Fade>
   );
 };
 

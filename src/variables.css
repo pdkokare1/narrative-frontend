@@ -103,7 +103,8 @@ body.light-mode {
   --bg-card-flat: #F9F9F9;
 
   /* Glassmorphism Tokens */
-  --glass-bg: rgba(255, 255, 255, 0.85);
+  /* FIXED: Lowered opacity from 0.85 to 0.7 to ensure glass effect is visible */
+  --glass-bg: rgba(255, 255, 255, 0.7); 
   --glass-border: rgba(0, 0, 0, 0.06);
   --glass-blur: 16px;
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
@@ -154,7 +155,7 @@ body.light-mode {
     --glass-border: rgba(255, 255, 255, 0.1);
   }
   body.light-mode {
-    --glass-bg: #FFFFFF;
+    --glass-bg: #FFFFFF; /* Solid opaque */
     --glass-blur: 0px;
   }
 }

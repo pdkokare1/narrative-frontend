@@ -10,7 +10,7 @@
   flex-direction: column;
   overflow: hidden;
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
-  height: 100%;
+  height: 100%; /* Critical for equal height grid */
 }
 
 .article-card:hover {
@@ -52,17 +52,10 @@
 .badge.comfort { background: rgba(255, 255, 255, 0.9); color: #000; }
 .badge.opinion { background: #EAEAEA; color: #000; border: 1px solid #999; }
 
-/* ==================== IMAGE (LAYOUT STABLE) ==================== */
+/* ==================== IMAGE ==================== */
 .article-image {
   width: 100%;
-  
-  /* LAYOUT STABILITY FIX (Desktop): 
-     Use aspect-ratio instead of fixed height. 
-     This reserves the correct space immediately before the image loads. 
-  */
-  aspect-ratio: 16 / 9; 
-  height: auto; 
-  
+  aspect-ratio: 16 / 9; /* Enforces consistent image height */
   background: var(--bg-secondary);
   position: relative;
   overflow: hidden;
@@ -87,7 +80,7 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
-  flex: 1; 
+  flex: 1; /* Pushes footer to bottom */
   gap: 10px;
 }
 
@@ -109,6 +102,12 @@
   font-weight: 700;
 }
 
+/* RESTORED: Date style */
+.date {
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
 .article-headline-btn {
   background: none;
   border: none;
@@ -122,6 +121,12 @@
   margin: 0;
   cursor: pointer;
   transition: color 0.2s ease;
+
+  /* Desktop Clamp: Keeps cards same height */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .article-headline-btn:hover {
@@ -140,39 +145,27 @@
   line-height: 1.5;
   color: var(--text-secondary);
   display: block;
-  margin-bottom: auto; 
-}
-
-
-
-/* src/components/ArticleCard.css */
-
-/* ... (Keep existing styles above .article-summary) ... */
-
-/* UPDATED: article-summary needs to handle flex correctly */
-.article-summary {
-  font-family: var(--font-body);
-  font-size: 11px;
-  line-height: 1.5;
-  color: var(--text-secondary);
-  display: block;
-  /* Ensure it fills space but respects margins */
-  margin-bottom: auto; 
+  
+  margin-bottom: auto; /* Pushes footer down */
   flex-grow: 1;
+
+  /* Desktop Clamp */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* ==================== INLINE BRIEF STYLES (NEW) ==================== */
+/* ==================== INLINE BRIEF STYLES ==================== */
 .inline-brief-container {
   font-family: var(--font-body);
   flex-grow: 1;
   margin-bottom: auto;
   overflow-y: auto;
-  /* Give it a subtle background to distinguish from summary */
   background: var(--bg-card-flat);
   padding: 10px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-light);
-  /* Ensure it doesn't get too tall on desktop, but fills on mobile */
   max-height: 160px; 
 }
 
@@ -204,7 +197,6 @@
   font-size: 10px;
 }
 
-/* Loading State for Inline Brief */
 .inline-brief-loading {
   display: flex;
   flex-direction: column;
@@ -213,7 +205,6 @@
   flex-grow: 1;
 }
 
-/* Error State for Inline Brief */
 .inline-brief-error {
   display: flex;
   flex-direction: column;
@@ -245,10 +236,6 @@
   background: var(--bg-elevated);
 }
 
-/* ... (Keep existing footer/mobile styles below) ... */
-
-
-
 /* ==================== FOOTER ==================== */
 .article-footer {
   margin-top: 15px;
@@ -263,7 +250,7 @@
 .stats-row {
   display: flex;
   align-items: center;
-  flex-wrap: wrap; /* Allow wrapping if content is too wide */
+  flex-wrap: wrap;
   gap: 12px;
   font-size: 11px;
   color: var(--text-tertiary);
@@ -294,7 +281,12 @@
   font-family: var(--font-body);
 }
 
-/* --- STATS COLORS (New) --- */
+/* RESTORED: Accent Text */
+.accent-text {
+  color: var(--accent-primary);
+}
+
+/* --- STATS COLORS --- */
 .lean-left { color: var(--color-lean-left); }
 .lean-center { color: var(--color-lean-center); }
 .lean-right { color: var(--color-lean-right); }
@@ -319,37 +311,21 @@
 /* ==================== MOBILE ADJUSTMENTS ==================== */
 @media (max-width: 768px) {
   .article-card {
-    border: 1px solid var(--border-color);
-    
-    /* FIX: Fully rounded corners for isolated snap cards */
     border-radius: 16px; 
-    
-    /* Ensure no weird overflow */
-    overflow: hidden;
-    
-    /* Shadow for depth */
     box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
     background: var(--bg-card); 
-    
-    /* FORCE FULL HEIGHT */
     height: 100%;
   }
   
   .article-image {
-    /* FIX: Mobile Snap Layout needs fixed height percentages */
-    /* Override aspect-ratio for mobile vertical stack */
     aspect-ratio: unset;
     height: auto;
-    flex: 0 0 35%; 
+    flex: 0 0 35%; /* Fixed height for Snap View */
     width: 100%;
-    min-height: unset; 
   }
   
   .article-content {
-    /* Tighter padding for mobile */
     padding: 16px 12px;
-    
-    /* Flex grow to fill the rest */
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -360,35 +336,19 @@
   .article-headline-btn {
     font-size: 1.1rem; 
     line-height: 1.3;
-    
-    /* Limit headline lines */
-    display: -webkit-box;
     -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
   }
   
   .article-summary {
      font-size: 0.9rem;
      line-height: 1.4;
-     
-     /* FIX: Clamp summary based on remaining space */
-     /* This prevents pushing the footer off screen */
-     display: -webkit-box;
      -webkit-line-clamp: 4;
-     -webkit-box-orient: vertical;
-     overflow: hidden;
-     
-     /* Ensure it takes available space but doesn't overflow */
      flex-grow: 1; 
   }
   
   .article-footer {
-      /* Ensure footer is always stuck to bottom */
       margin-top: auto;
       padding-top: 12px;
-      padding-bottom: 4px; /* Small buffer */
+      padding-bottom: 4px; 
   }
 }
-
-

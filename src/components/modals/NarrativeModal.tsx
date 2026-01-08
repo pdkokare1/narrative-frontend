@@ -1,17 +1,41 @@
 // src/components/modals/NarrativeModal.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './NarrativeModal.css';
 import { INarrative } from '../../types';
+import { getClusterById } from '../../services/articleService';
+import TopicTimeline from '../TopicTimeline';
 
 interface NarrativeModalProps {
   data: INarrative | null;
   onClose: () => void;
 }
 
-type Tab = 'consensus' | 'divergence' | 'sources';
+// CHANGED: Renamed 'sources' to 'timeline'
+type Tab = 'consensus' | 'divergence' | 'timeline';
 
 const NarrativeModal: React.FC<NarrativeModalProps> = ({ data, onClose }) => {
   const [activeTab, setActiveTab] = useState<Tab>('consensus');
+  
+  // NEW: State for Timeline Data
+  const [clusterData, setClusterData] = useState<any>(null);
+  const [loadingTimeline, setLoadingTimeline] = useState(false);
+
+  // NEW: Fetch timeline data when tab is active
+  useEffect(() => {
+    if (activeTab === 'timeline' && !clusterData && data?.clusterId) {
+        setLoadingTimeline(true);
+        getClusterById(data.clusterId)
+            .then(res => {
+                setClusterData(res.data);
+            })
+            .catch(err => {
+                console.error("Failed to load timeline", err);
+            })
+            .finally(() => {
+                setLoadingTimeline(false);
+            });
+    }
+  }, [activeTab, data, clusterData]);
 
   if (!data) return null;
 
@@ -49,11 +73,12 @@ const NarrativeModal: React.FC<NarrativeModalProps> = ({ data, onClose }) => {
             >
                 The Conflict
             </button>
+            {/* CHANGED: Label to Timeline */}
             <button 
-                className={`nm-tab ${activeTab === 'sources' ? 'active' : ''}`}
-                onClick={() => setActiveTab('sources')}
+                className={`nm-tab ${activeTab === 'timeline' ? 'active' : ''}`}
+                onClick={() => setActiveTab('timeline')}
             >
-                Sources
+                Timeline
             </button>
         </div>
 
@@ -106,19 +131,21 @@ const NarrativeModal: React.FC<NarrativeModalProps> = ({ data, onClose }) => {
                 </div>
             )}
 
-            {/* TAB: SOURCES */}
-            {activeTab === 'sources' && (
+            {/* TAB: TIMELINE (Replaces Sources) */}
+            {activeTab === 'timeline' && (
                 <div className="nm-tab-content fade-in">
-                    <p className="nm-intro-text">Sources analyzed for this narrative:</p>
-                    <div className="nm-sources-grid">
-                        {data.sources.map((s, i) => (
-                            <div key={i} className="nm-source-chip">
-                                {s}
-                            </div>
-                        ))}
-                    </div>
-                    <div className="nm-note">
-                        * Individual articles for this story are bundled here to reduce feed noise.
+                    <p className="nm-intro-text">Timeline of coverage for this story:</p>
+                    
+                    {loadingTimeline ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+                            Loading timeline data...
+                        </div>
+                    ) : (
+                        <TopicTimeline clusterData={clusterData} />
+                    )}
+
+                    <div className="nm-note" style={{ marginTop: '15px' }}>
+                        * Articles are sorted by publication time to show how the story developed.
                     </div>
                 </div>
             )}

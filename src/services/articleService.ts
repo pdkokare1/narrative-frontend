@@ -54,6 +54,13 @@ export const analyzeBias = async (text: string) => {
   return response.data;
 };
 
+// --- Clusters / Narratives ---
+// NEW: Fetch full cluster data (Timeline) for a narrative
+export const getClusterById = async (clusterId: number) => {
+  // Returns { left: [], center: [], right: [], reviews: [], stats: {} }
+  return apiClient.get<any>(`/cluster/${clusterId}`);
+};
+
 // Legacy Object Export (for backward compatibility if needed locally)
 export const articleService = {
   fetchArticles,
@@ -66,5 +73,6 @@ export const articleService = {
   unsaveArticle,
   getArticleById,
   getCoverageAnalysis,
-  analyzeBias
+  analyzeBias,
+  getClusterById
 };

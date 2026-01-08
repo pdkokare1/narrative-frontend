@@ -223,7 +223,7 @@ const GlobalPlayerBar: React.FC = () => {
             </Stack>
             
             {/* Scrubber Row */}
-            <Stack direction="row" alignItems="center" spacing={2} sx={{ width: '100%', mt: 0.5 }}>
+            <Stack direction="row" alignItems="center" spacing={2} sx={{ width: '100%', mt: 0 }}>
                 <Typography variant="caption" sx={{ minWidth: 35, textAlign: 'right', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
                     {formatTime(dragTime)}
                 </Typography>
@@ -239,7 +239,7 @@ const GlobalPlayerBar: React.FC = () => {
                     sx={{
                         color: 'var(--accent-primary)', // FIXED: Slider matches theme
                         height: 3,
-                        padding: '10px 0', 
+                        padding: '6px 0', 
                         '& .MuiSlider-thumb': {
                             width: 8,
                             height: 8,

@@ -3,9 +3,9 @@ import React, { useState, useEffect, memo } from 'react';
 import './ArticleCard.css'; 
 import { isOpinion, getOptimizedImageUrl, generateImageSrcSet } from '../utils/helpers'; 
 import { getFallbackImage } from '../utils/constants'; 
-import SmartBriefingModal from './modals/SmartBriefingModal';
 import { IArticle } from '../types';
-import useHaptic from '../hooks/useHaptic'; // Import Haptics
+import useHaptic from '../hooks/useHaptic'; 
+import InlineSmartBrief from './InlineSmartBrief'; // Import the new component
 
 // --- UI Components ---
 import Button from './ui/Button';
@@ -38,15 +38,14 @@ const ArticleCard = memo(function ArticleCard({
   onPlay, 
   onStop 
 }: ArticleCardProps) {
-  const [showBriefing, setShowBriefing] = useState(false);
+  // CHANGED: Replaced showBriefing modal state with inline showBrief toggle
+  const [showBrief, setShowBrief] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const triggerHaptic = useHaptic(); // Initialize Haptics
+  const triggerHaptic = useHaptic(); 
 
-  // 1. Calculate values safely
   const isHardNews = article?.analysisType === 'Full';
   const isOpEd = isOpinion(article);
   
-  // 2. Image Logic
   const fallbackImg = getFallbackImage(article?.category);
   const defaultSrc = getOptimizedImageUrl(article?.imageUrl, 600) || fallbackImg;
   const srcSet = article?.imageUrl ? generateImageSrcSet(article.imageUrl) : undefined;
@@ -61,7 +60,9 @@ const ArticleCard = memo(function ArticleCard({
       setCurrentSrc(newDefault);
       setCurrentSrcSet(newSrcSet);
       setImageLoaded(false); 
-  }, [article?.imageUrl, article?.category]);
+      // Reset brief view when article changes
+      setShowBrief(false); 
+  }, [article?.imageUrl, article?.category, article?._id]);
 
   const handleImageError = () => {
       setCurrentSrc(getFallbackImage(article?.category));
@@ -70,13 +71,11 @@ const ArticleCard = memo(function ArticleCard({
 
   const preventBubble = (e: React.MouseEvent) => e.stopPropagation();
 
-  // Helper for Haptic Interaction
   const handleInteraction = (action: () => void, type: 'light' | 'medium' = 'light') => {
       triggerHaptic(type);
       action();
   };
 
-  // --- Visual Helpers for Stats ---
   const getLeanClass = (lean: string) => {
     if (!lean) return '';
     if (lean.includes('Left')) return 'lean-left';
@@ -92,7 +91,6 @@ const ArticleCard = memo(function ArticleCard({
     return 'sentiment-neu';
   };
 
-  // Check if we have enough data to show the stats row
   const hasStats = article && (
     article.biasScore !== undefined || 
     (article.politicalLean && article.politicalLean !== 'Unknown') || 
@@ -105,13 +103,11 @@ const ArticleCard = memo(function ArticleCard({
     <>
       <article className={`article-card ${isPlaying ? 'now-playing' : ''}`}>
         
-        {/* --- BADGES --- */}
         <div className="card-badges">
           {article.suggestionType === 'Challenge' && <span className="badge challenge">Perspective</span>}
           {isOpEd && <span className="badge opinion">Opinion</span>}
         </div>
         
-        {/* --- IMAGE --- */}
         <div className="article-image">
           <img 
             src={currentSrc}
@@ -125,35 +121,35 @@ const ArticleCard = memo(function ArticleCard({
           />
         </div>
         
-        {/* --- CONTENT --- */}
         <div className="article-content">
           <div className="article-meta-top">
              <span className="source-name">{article.source}</span>
              <time className="date">{new Date(article.publishedAt).toLocaleDateString()}</time>
           </div>
 
-          {/* ACCESSIBILITY FIX: Use button for interactive headline */}
           <button 
             className="article-headline-btn"
             onClick={(e) => { 
                 preventBubble(e); 
-                handleInteraction(() => setShowBriefing(true)); 
+                // Clicking headline now also toggles brief if available, or just opens details
+                handleInteraction(() => isHardNews ? setShowBrief(!showBrief) : null); 
             }}
             aria-label={`Read analysis for ${article.headline}`}
           >
             {article.headline}
           </button>
 
-          <p className="article-summary">{article.summary}</p>
+          {/* CHANGED: Conditional rendering for Summary vs Inline Brief */}
+          {showBrief && isHardNews ? (
+             <InlineSmartBrief articleId={article._id} />
+          ) : (
+             <p className="article-summary">{article.summary}</p>
+          )}
           
-          {/* --- FOOTER --- */}
           <div className="article-footer">
             
-            {/* Stats - Now shows if data exists, regardless of analysisType */}
             {hasStats && (
                 <div className="stats-row">
-                    
-                    {/* Bias Score */}
                     {article.biasScore !== undefined && (
                         <>
                             <button className="stat-item-btn" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
@@ -164,7 +160,6 @@ const ArticleCard = memo(function ArticleCard({
                         </>
                     )}
                     
-                    {/* Political Lean */}
                     {article.politicalLean && (
                         <>
                             <div className="stat-item">
@@ -177,7 +172,6 @@ const ArticleCard = memo(function ArticleCard({
                         </>
                     )}
 
-                    {/* Sentiment */}
                     {article.sentiment && (
                         <div className="stat-item">
                             <span>Sent:</span>
@@ -189,7 +183,6 @@ const ArticleCard = memo(function ArticleCard({
                 </div>
             )}
 
-            {/* Action Bar */}
             <div className="action-bar">
                 <div className="action-left">
                     <Button 
@@ -197,7 +190,6 @@ const ArticleCard = memo(function ArticleCard({
                         isActive={isPlaying}
                         onClick={(e) => { 
                             preventBubble(e); 
-                            // Medium impact for Play/Pause as it's a primary action
                             handleInteraction(() => (isPlaying && onStop ? onStop() : onPlay?.()), 'medium'); 
                         }}
                         title={isPlaying ? "Stop" : "Listen"}
@@ -211,7 +203,6 @@ const ArticleCard = memo(function ArticleCard({
                         isActive={isSaved}
                         onClick={(e) => { 
                             preventBubble(e); 
-                            // Light impact for Save (immediate feedback)
                             handleInteraction(() => onToggleSave(article)); 
                         }}
                         title={isSaved ? "Remove" : "Save"}
@@ -247,28 +238,27 @@ const ArticleCard = memo(function ArticleCard({
                     )}
                 </div>
 
+                {/* CHANGED: Updated Button Logic for Smart Brief Toggle */}
                 <Button 
                     variant="text"
                     onClick={(e) => { 
                         preventBubble(e); 
-                        handleInteraction(() => isHardNews ? setShowBriefing(true) : onRead(article)); 
+                        handleInteraction(() => {
+                           if (isHardNews) {
+                               setShowBrief(!showBrief);
+                           } else {
+                               onRead(article);
+                           }
+                        }); 
                     }}
                 >
-                    {isHardNews ? 'Smart Brief' : 'Read Source'}
+                    {isHardNews ? (showBrief ? 'Close Brief' : 'Smart Brief') : 'Read Source'}
                 </Button>
             </div>
           </div>
         </div>
       </article>
-
-      {showBriefing && (
-        <SmartBriefingModal 
-            article={article} 
-            onClose={() => setShowBriefing(false)} 
-            onCompare={onCompare}
-            showTooltip={showTooltip}
-        />
-      )}
+      {/* Removed the external SmartBriefingModal component */}
     </>
   );
 });

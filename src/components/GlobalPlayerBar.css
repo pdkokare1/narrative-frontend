@@ -14,8 +14,8 @@
   border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
   box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.2);
   
-  /* Reduced Height: Padding 8px top/bottom */
-  padding: 8px 24px;
+  /* Reduced Height: Padding 4px top/bottom (was 8px) */
+  padding: 4px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -62,7 +62,7 @@
     left: 10px;
     right: 10px;
     border-radius: 16px;
-    padding: 8px 12px; /* Tighter padding on mobile */
+    padding: 4px 12px; /* Tighter padding on mobile (was 8px) */
     
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(15, 15, 15, 0.95);

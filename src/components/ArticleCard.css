@@ -143,6 +143,112 @@
   margin-bottom: auto; 
 }
 
+
+
+/* src/components/ArticleCard.css */
+
+/* ... (Keep existing styles above .article-summary) ... */
+
+/* UPDATED: article-summary needs to handle flex correctly */
+.article-summary {
+  font-family: var(--font-body);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  display: block;
+  /* Ensure it fills space but respects margins */
+  margin-bottom: auto; 
+  flex-grow: 1;
+}
+
+/* ==================== INLINE BRIEF STYLES (NEW) ==================== */
+.inline-brief-container {
+  font-family: var(--font-body);
+  flex-grow: 1;
+  margin-bottom: auto;
+  overflow-y: auto;
+  /* Give it a subtle background to distinguish from summary */
+  background: var(--bg-card-flat);
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  /* Ensure it doesn't get too tall on desktop, but fills on mobile */
+  max-height: 160px; 
+}
+
+.inline-brief-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+  margin-bottom: 8px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.inline-brief-list {
+  padding-left: 14px;
+  margin: 0;
+  list-style-type: disc;
+}
+
+.inline-brief-list li {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  padding-left: 2px;
+}
+
+.inline-brief-list li::marker {
+  color: var(--accent-primary);
+  font-size: 10px;
+}
+
+/* Loading State for Inline Brief */
+.inline-brief-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  flex-grow: 1;
+}
+
+/* Error State for Inline Brief */
+.inline-brief-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 15px;
+  background: var(--bg-card-flat);
+  border-radius: var(--radius-sm);
+  color: var(--color-error);
+  font-size: 11px;
+  text-align: center;
+}
+
+.inline-retry-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 4px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+}
+
+.inline-retry-btn:hover {
+  background: var(--bg-elevated);
+}
+
+/* ... (Keep existing footer/mobile styles below) ... */
+
+
+
 /* ==================== FOOTER ==================== */
 .article-footer {
   margin-top: 15px;
@@ -284,3 +390,5 @@
       padding-bottom: 4px; /* Small buffer */
   }
 }
+
+

@@ -1,7 +1,8 @@
 // src/components/GlobalPlayerBar.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useRadio } from '../context/RadioContext';
-import useHaptic from '../hooks/useHaptic'; // NEW
+import useHaptic from '../hooks/useHaptic';
+import useIsMobile from '../hooks/useIsMobile'; // [!code ++]
 import './GlobalPlayerBar.css';
 
 const GlobalPlayerBar: React.FC = () => {
@@ -29,7 +30,8 @@ const GlobalPlayerBar: React.FC = () => {
     changeSpeed
   } = useRadio();
 
-  const vibrate = useHaptic(); // NEW
+  const vibrate = useHaptic();
+  const isMobile = useIsMobile(); // [!code ++]
   const [isDragging, setIsDragging] = useState(false);
   const [dragTime, setDragTime] = useState(0);
   const autoHideRef = useRef<NodeJS.Timeout | null>(null);
@@ -37,7 +39,9 @@ const GlobalPlayerBar: React.FC = () => {
   // --- AUTO-HIDE LOGIC ---
   const resetAutoHide = () => {
     if (autoHideRef.current) clearTimeout(autoHideRef.current);
-    if (isPlaying && playerOpen) { 
+    
+    // Only enable auto-hide if we are on mobile [!code ++]
+    if (isMobile && isPlaying && playerOpen) { 
         autoHideRef.current = setTimeout(() => {
             closePlayer();
         }, 7000); 
@@ -51,7 +55,8 @@ const GlobalPlayerBar: React.FC = () => {
         if (autoHideRef.current) clearTimeout(autoHideRef.current);
     }
     return () => { if (autoHideRef.current) clearTimeout(autoHideRef.current); };
-  }, [playerOpen, isPlaying]);
+  // Add isMobile to dependencies to update behavior if screen resizes [!code ++]
+  }, [playerOpen, isPlaying, isMobile]); 
 
   useEffect(() => {
     if (!isDragging) setDragTime(currentTime);
@@ -163,7 +168,11 @@ const GlobalPlayerBar: React.FC = () => {
                      <button onClick={handleControl(pause)} className="player-btn icon-only primary-play">⏸</button>
                    )}
                    <button onClick={handleControl(playNext)} className="player-btn icon-only">⏭</button>
-                   <button onClick={() => { vibrate(); closePlayer(); }} className="player-btn close-action" title="Hide Player">⌄</button>
+                   
+                   {/* Only show the hide/close button on Mobile */}
+                   {isMobile && (
+                     <button onClick={() => { vibrate(); closePlayer(); }} className="player-btn close-action" title="Hide Player">⌄</button>
+                   )}
                 </>
             )}
         </div>

@@ -12,16 +12,18 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
-  box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.2);
   
-  padding: 12px 24px;
+  /* Reduced Height: Padding 8px top/bottom */
+  padding: 8px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
   
   z-index: 2000;
-  color: var(--text-primary, #fff);
+  /* Remove hardcoded color, let MUI handle text.primary */
+  color: inherit; 
   transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -56,17 +58,17 @@
 /* --- MOBILE BUBBLE MODE --- */
 @media (max-width: 768px) {
   .global-player-bar {
-    bottom: 90px; /* Float above bottom nav */
-    left: 12px;
-    right: 12px;
-    border-radius: 20px;
-    padding: 12px 16px;
+    bottom: 85px; /* Float above bottom nav */
+    left: 10px;
+    right: 10px;
+    border-radius: 16px;
+    padding: 8px 12px; /* Tighter padding on mobile */
     
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(15, 15, 15, 0.95);
     box-shadow: 0 8px 32px rgba(0,0,0,0.6);
 
-    flex-direction: row; /* Keep row but adjust widths */
+    flex-direction: row; 
     gap: 10px;
   }
 
@@ -74,8 +76,8 @@
   .player-section.center { width: 65%; }
   .player-section.right { 
       position: absolute; 
-      top: 8px; 
-      right: 8px; 
+      top: 6px; 
+      right: 6px; 
       width: auto; 
   }
 }
@@ -83,7 +85,6 @@
 /* --- ANIMATIONS --- */
 .pulse-dot-small { 
   width: 6px; height: 6px; 
-  background-color: var(--accent-primary, #D4AF37); 
   border-radius: 50%; 
   margin-right: 6px;
 }
@@ -97,6 +98,6 @@
 
 /* --- UP NEXT MODE --- */
 .global-player-bar.up-next-mode {
-    border-top: 2px solid var(--accent-primary, #D4AF37);
+    border-top: 2px solid currentColor; /* Uses text/primary color */
     justify-content: center;
 }

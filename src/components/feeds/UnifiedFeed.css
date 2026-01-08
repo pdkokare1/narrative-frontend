@@ -5,11 +5,17 @@
     position: sticky;
     top: 0;
     z-index: 20;
-    background: rgba(10, 10, 10, 0.95);
+    
+    /* FIX: Use theme variable instead of hardcoded black */
+    background: var(--bg-primary); 
+    
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
+    
+    /* Default Padding */
     padding: 10px 15px;
+    
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -46,6 +52,12 @@
     .articles-grid {
         /* Strictly 4 columns as requested */
         grid-template-columns: repeat(4, 1fr);
+    }
+
+    /* ALIGNMENT FIX: Match Header padding to Grid padding (24px) */
+    .feed-header-sticky {
+        padding-left: 24px;
+        padding-right: 24px;
     }
 }
 

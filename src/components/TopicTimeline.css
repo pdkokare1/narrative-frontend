@@ -1,0 +1,130 @@
+/* src/components/TopicTimeline.css */
+
+/* Container for the entire timeline */
+.timeline-container {
+  position: relative;
+  padding: 1rem 0 1rem 1.5rem; /* Space for the line on the left */
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* Gap handled by item margin for tighter control */
+}
+
+/* The Vertical Spine Line */
+.timeline-line {
+  position: absolute;
+  top: 1rem;
+  bottom: 0;
+  left: 19px; /* Aligned with the center of the dots */
+  width: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  z-index: 0;
+  border-radius: 2px;
+}
+
+/* Individual Event Item */
+.timeline-item {
+  position: relative;
+  margin-bottom: 1.5rem;
+  padding-left: 2rem; /* Space between dot and card */
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* The Dot/Node on the Timeline */
+.timeline-dot {
+  position: absolute;
+  left: 0;
+  top: 16px; /* Aligned visually with card header */
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  z-index: 2;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.3); /* Dark halo for separation from line */
+}
+
+/* Bias Colors for Dots & Tags */
+.timeline-dot.Left, .bias-tag.Left { background-color: #60a5fa; color: #fff; } /* Blue */
+.timeline-dot.Right, .bias-tag.Right { background-color: #f87171; color: #fff; } /* Red */
+.timeline-dot.Center, .bias-tag.Center { background-color: #c084fc; color: #fff; } /* Purple */
+.timeline-dot.Neutral, .bias-tag.Neutral { background-color: #9ca3af; color: #fff; } /* Gray */
+.timeline-dot.Mixed, .bias-tag.Mixed { background-color: #fcd34d; color: #000; } /* Yellow */
+
+/* Glassmorphism Card */
+.timeline-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1rem;
+  transition: transform 0.2s ease, background 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.timeline-card:hover {
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Card Header: Source and Date */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.source-name {
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Main Headline */
+.timeline-headline {
+  color: #fff;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.4;
+  margin: 0;
+  display: block;
+}
+
+.timeline-headline:hover {
+  color: #60a5fa; /* Accent color on hover */
+  text-decoration: underline;
+}
+
+/* Card Footer: Bias Tag */
+.card-footer {
+  display: flex;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+.bias-tag {
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+/* Empty State */
+.no-data-msg {
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+  padding: 1rem;
+  text-align: center;
+}

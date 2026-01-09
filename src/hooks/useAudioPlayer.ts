@@ -43,7 +43,7 @@ export const useAudioPlayer = (user: any) => {
   const prefetchedIdsRef = useRef(new Set<string>());
   const preloadedBlobsRef = useRef<Record<string, string>>({});
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const consecutiveFailures = useRef(0); // UPDATED: Track failures to prevent infinite loops
+  const consecutiveFailures = useRef(0); 
 
   // --- HELPERS ---
   const optimizeUrl = (url?: string | null) => {
@@ -69,9 +69,12 @@ export const useAudioPlayer = (user: any) => {
       }
   };
 
-  const prepareAudioText = (headline: string, summary: string) => {
-      const cleanHeadline = headline.replace(/[.]+$/, '');
-      return `${cleanHeadline}. . . . . . ${summary}`;
+  // UPDATED: Robust text preparation to prevent crashes on missing data
+  const prepareAudioText = (headline?: string, summary?: string) => {
+      const h = headline || "News Update";
+      const s = summary || "Content currently unavailable.";
+      const cleanHeadline = h.replace(/[.]+$/, '');
+      return `${cleanHeadline}. . . . . . ${s}`;
   };
 
   // UPDATED: Logic to determine if greeting should play (30 min rule)
@@ -154,7 +157,6 @@ export const useAudioPlayer = (user: any) => {
       return processed;
   }, [getPersonaForCategory]);
 
-  // --- CONTROLS DEFINED EARLY FOR USAGE IN PLAYARTICLE ---
   const stop = useCallback(() => {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -225,12 +227,16 @@ export const useAudioPlayer = (user: any) => {
               audio.src = optimizeUrl(article.audioUrl) || "";
           }
           else {
+              // UPDATED: Defensive Text Prep
               const textToSpeak = prepareAudioText(article.headline, article.summary);
+              
+              // Call API
               const response = await getAudio(textToSpeak, persona.id, article._id, false);
+              
               if (response.data && response.data.audioUrl) {
                   audio.src = optimizeUrl(response.data.audioUrl) || "";
               } else {
-                  throw new Error("No audio URL received from server");
+                  throw new Error(`No audio URL received for ${article._id}`);
               }
           }
 
@@ -239,13 +245,16 @@ export const useAudioPlayer = (user: any) => {
           
           await audio.play();
           
-          // UPDATED: Reset failure count on successful play
-          consecutiveFailures.current = 0; 
+          // UPDATED: Only reset failures if it's a REAL article (not a segue)
+          // This prevents the "Segue Loop" where system audio keeps the radio alive infinitely
+          if (!article.isSystemAudio) {
+              consecutiveFailures.current = 0; 
+          }
 
           if ('mediaSession' in navigator) {
               // @ts-ignore 
               navigator.mediaSession.metadata = new MediaMetadata({
-                  title: article.headline,
+                  title: article.headline || "Narrative News",
                   artist: `The Gamut • ${persona.name}`,
                   artwork: article.imageUrl ? [{ src: article.imageUrl, sizes: '512x512', type: 'image/jpeg' }] : []
               });
@@ -261,10 +270,8 @@ export const useAudioPlayer = (user: any) => {
           }
 
       } catch (error: any) {
-          console.error("Radio Error:", error);
+          console.error("Radio Playback Error:", error);
 
-          // UPDATED: Resilient Error Handling
-          
           // 1. If Browser blocked Autoplay, we MUST stop.
           if (error.name === 'NotAllowedError') {
               console.warn("Autoplay blocked. Stopping radio.");
@@ -272,15 +279,16 @@ export const useAudioPlayer = (user: any) => {
               return;
           }
 
-          // 2. If it's a content error (fetch failed, network, etc.), try to Skip.
+          // 2. Handle Skip Logic
           consecutiveFailures.current += 1;
           
+          // Allow max 3 failures. Note: Segues no longer reset this counter.
           if (consecutiveFailures.current >= 3) {
               console.error("Too many consecutive failures. Stopping.");
               stop();
           } else {
-              console.log(`Skipping article due to error (Attempt ${consecutiveFailures.current}/3)`);
-              // Small delay to prevent CPU spinning in case of immediate sync errors
+              console.log(`Skipping due to error (Attempt ${consecutiveFailures.current}/3)`);
+              // Small delay to prevent CPU spinning
               setTimeout(() => {
                  playNext();
               }, 1000);

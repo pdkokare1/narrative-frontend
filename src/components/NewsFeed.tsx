@@ -2,7 +2,6 @@
 import React, { useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import UnifiedFeed from './feeds/UnifiedFeed';
-import InFocusBar from './InFocusBar'; 
 import NarrativeModal from './modals/NarrativeModal'; 
 import useIsMobile from '../hooks/useIsMobile';
 import useHaptic from '../hooks/useHaptic';
@@ -19,8 +18,8 @@ interface NewsFeedProps {
   showTooltip: (text: string, e: React.MouseEvent) => void;
 }
 
-// FIX: Aligned 'balanced' with useFeedQuery and UnifiedFeed types
-type FeedMode = 'latest' | 'balanced' | 'personalized';
+// UPDATE: Changed modes to match new hierarchy
+type FeedMode = 'latest' | 'infocus' | 'balanced';
 
 const NewsFeed: React.FC<NewsFeedProps> = ({ 
   filters, 
@@ -70,20 +69,20 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    // FIX: Updated logic to use 'balanced' instead of 'foryou'
+    // UPDATE: New Swipe Logic for Latest -> In Focus -> Balanced
     if (isLeftSwipe) { 
-        if (mode === 'latest') changeMode('balanced', 'enter-right');
-        else if (mode === 'balanced') changeMode('personalized', 'enter-right');
+        if (mode === 'latest') changeMode('infocus', 'enter-right');
+        else if (mode === 'infocus') changeMode('balanced', 'enter-right');
     }
     if (isRightSwipe) { 
-        if (mode === 'personalized') changeMode('balanced', 'enter-left');
-        else if (mode === 'balanced') changeMode('latest', 'enter-left');
+        if (mode === 'balanced') changeMode('infocus', 'enter-left');
+        else if (mode === 'infocus') changeMode('latest', 'enter-left');
     }
   };
 
   const getPageTitle = () => {
     if (mode === 'balanced') return 'Balanced Perspectives | The Gamut';
-    if (mode === 'personalized') return 'My Mix | The Gamut';
+    if (mode === 'infocus') return 'In Focus | The Gamut';
     if (filters.category && filters.category !== 'All Categories') return `${filters.category} News | The Gamut`;
     return 'The Gamut - Analyse The Full Spectrum';
   };
@@ -95,7 +94,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
         display: 'flex', background: 'var(--bg-elevated)', borderRadius: '25px', 
         padding: '4px', border: '1px solid var(--border-color)', position: 'relative' 
       }}>
-        {['latest', 'balanced', 'personalized'].map((m) => (
+        {['latest', 'infocus', 'balanced'].map((m) => (
             <button
               key={m}
               onClick={() => { vibrate(); setMode(m as FeedMode); }}
@@ -107,7 +106,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
                 textTransform: 'capitalize'
               }}
             >
-              {m === 'balanced' ? 'Balanced' : m === 'personalized' ? 'For You' : 'Top Stories'}
+              {m === 'infocus' ? 'In Focus' : m === 'balanced' ? 'Balanced' : 'Top Stories'}
             </button>
         ))}
       </div>
@@ -128,14 +127,18 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
             <div style={{ display: 'flex', width: '100%' }}>
                 {[
                     { id: 'latest', label: 'Latest' },
-                    { id: 'balanced', label: 'Balanced' }, // FIX: id is 'balanced'
-                    { id: 'personalized', label: 'For You' }
+                    { id: 'infocus', label: 'In Focus' },
+                    { id: 'balanced', label: 'Balanced' }
                 ].map(tab => {
                     const isActive = mode === tab.id;
-                    const clickDirection = 
-                        (mode === 'latest' && tab.id !== 'latest') ? 'enter-right' :
-                        (mode === 'personalized' && tab.id !== 'personalized') ? 'enter-left' :
-                        (mode === 'balanced' && tab.id === 'personalized') ? 'enter-right' : 'enter-left';
+                    // Smart direction calculation for animation
+                    let clickDirection: 'enter-right' | 'enter-left' = 'enter-right';
+                    
+                    if (mode === 'latest') clickDirection = 'enter-right';
+                    else if (mode === 'balanced') clickDirection = 'enter-left';
+                    else if (mode === 'infocus') {
+                        clickDirection = tab.id === 'balanced' ? 'enter-right' : 'enter-left';
+                    }
 
                     return (
                         <div 
@@ -181,8 +184,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
       {isMobile ? renderMobileNav() : renderDesktopToggle()}
 
-      {/* In Focus Bar */}
-      <InFocusBar />
+      {/* Removed InFocusBar - Now integrated as a main tab */}
 
       <div key={mode} className={`feed-anim-wrapper ${animDirection}`}>
           <UnifiedFeed 

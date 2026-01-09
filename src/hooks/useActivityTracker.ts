@@ -29,8 +29,7 @@ export const useActivityTracker = (activeArticleId: string | undefined, articles
         return acc;
     }, {} as Record<string, ActivityQueueItem>);
 
-    // Send individual heartbeats (or batch endpoint if backend supported it)
-    // For now we loop, assuming low volume (1-2 items per flush)
+    // Send individual heartbeats 
     Object.values(aggregated).forEach(item => {
         apiClient.post('/activity/heartbeat', item).catch(console.error);
     });

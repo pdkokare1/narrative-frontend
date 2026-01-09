@@ -2,9 +2,24 @@
 import apiClient from './axiosInstance';
 import { Article, CoverageResponse, FeedItem, IArticle } from '../types';
 
-// --- Fetch Articles (Feed) ---
+// --- 1. Main Feed (Triple Zone) ---
 export const fetchArticles = async (params?: any) => {
   return apiClient.get<{ articles: IArticle[]; pagination: any }>('/articles', { params });
+};
+
+// --- 2. In Focus (Narratives) ---
+export const fetchInFocusArticles = async (params?: any) => {
+  return apiClient.get<{ articles: FeedItem[]; meta: any }>('/articles/infocus', { params });
+};
+
+// --- 3. Balanced (Anti-Echo) ---
+export const fetchBalancedArticles = async () => {
+  return apiClient.get<{ articles: IArticle[]; meta: any }>('/articles/balanced');
+};
+
+// --- Legacy / Personalized ---
+export const fetchPersonalizedArticles = async () => {
+  return apiClient.get<{ articles: IArticle[] }>('/articles/personalized');
 };
 
 // --- Search ---
@@ -14,16 +29,7 @@ export const searchArticles = async (query: string, params?: any) => {
   });
 };
 
-// --- For You / Personalized ---
-export const fetchForYouArticles = async () => {
-  return apiClient.get<{ articles: IArticle[] }>('/articles/for-you');
-};
-
-export const fetchPersonalizedArticles = async () => {
-  return apiClient.get<{ articles: IArticle[] }>('/articles/personalized');
-};
-
-// --- Saved Articles ---
+// --- Saved ---
 export const fetchSavedArticles = async () => {
   return apiClient.get<{ articles: IArticle[] }>('/users/saved-articles');
 };
@@ -38,7 +44,7 @@ export const unsaveArticle = async (id: string) => {
   return response.data;
 };
 
-// --- Single Article & Analysis ---
+// --- Single Article ---
 export const getArticleById = async (id: string) => {
   const response = await apiClient.get<Article>(`/articles/${id}`);
   return response.data;
@@ -54,19 +60,15 @@ export const analyzeBias = async (text: string) => {
   return response.data;
 };
 
-// --- Clusters / Narratives ---
-// NEW: Fetch full cluster data (Timeline) for a narrative
 export const getClusterById = async (clusterId: number) => {
-  // Returns { left: [], center: [], right: [], reviews: [], stats: {} }
   return apiClient.get<any>(`/cluster/${clusterId}`);
 };
 
-// Legacy Object Export (for backward compatibility if needed locally)
+// Legacy Export
 export const articleService = {
   fetchArticles,
-  getArticles: fetchArticles, // Alias
-  searchArticles,
-  fetchForYouArticles,
+  fetchInFocusArticles, 
+  fetchBalancedArticles, 
   fetchPersonalizedArticles,
   fetchSavedArticles,
   saveArticle,

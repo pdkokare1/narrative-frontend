@@ -22,12 +22,15 @@ export function useIntersectionObserver(
 
 const BATCH_SIZE = 20;
 
-export const useFeedQuery = (mode: 'latest' | 'infocus' | 'balanced' | 'personalized', filters: IFilters) => {
+// FIX: Explicitly defined all valid modes including 'balanced'
+type FeedQueryMode = 'latest' | 'infocus' | 'balanced' | 'personalized';
+
+export const useFeedQuery = (mode: FeedQueryMode, filters: IFilters) => {
   const queryClient = useQueryClient();
   const [showNewPill, setShowNewPill] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // 1. Latest Feed (Triple Zone - Infinite)
+  // 1. Latest Feed (Weighted Merge - Infinite)
   const latestQuery = useInfiniteQuery({
     queryKey: ['latestFeed', JSON.stringify(filters)],
     queryFn: async ({ pageParam = 0 }) => {
@@ -41,7 +44,7 @@ export const useFeedQuery = (mode: 'latest' | 'infocus' | 'balanced' | 'personal
       return allPages.length * BATCH_SIZE;
     },
     enabled: mode === 'latest',
-    staleTime: 1000 * 60 * 5, 
+    staleTime: 1000 * 60 * 2, // 2 mins (Fresher for breaking news)
   });
 
   // 2. In Focus (Narratives - Single Page)
@@ -57,7 +60,7 @@ export const useFeedQuery = (mode: 'latest' | 'infocus' | 'balanced' | 'personal
     queryKey: ['balancedFeed'],
     queryFn: async () => { const { data } = await api.fetchBalancedArticles(); return data; },
     enabled: mode === 'balanced',
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 5, // 5 mins (Refresh as user bias stats update)
   });
 
   // 4. Personalized (Legacy/Fallback)

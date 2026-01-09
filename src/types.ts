@@ -1,4 +1,4 @@
-// narrative-frontend/src/types.ts
+// src/types.ts
 
 // --- 1. Badge Interface (Gamification) ---
 export interface IBadge {
@@ -144,6 +144,12 @@ export interface IFilters {
   sort?: string;
   limit?: number;
   offset?: number;
+  // Added fields to fix build errors:
+  sentiment?: string;
+  politicalLean?: string;
+  source?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface ISearchResponse {

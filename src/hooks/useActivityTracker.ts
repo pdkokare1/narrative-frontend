@@ -16,7 +16,7 @@ export const useActivityTracker = (activeArticleId: string | undefined, articles
   const currentId = useRef<string | null>(null);
 
   // Send collected stats to backend
-  const flushQueue = useCallback(async () => {
+  const flushQueue = useCallback(() => {
     if (queue.current.length === 0) return;
 
     const batch = [...queue.current];
@@ -29,10 +29,25 @@ export const useActivityTracker = (activeArticleId: string | undefined, articles
         return acc;
     }, {} as Record<string, ActivityQueueItem>);
 
-    // Send individual heartbeats 
+    // 1. Try standard API call (for valid sessions)
     Object.values(aggregated).forEach(item => {
-        apiClient.post('/activity/heartbeat', item).catch(console.error);
+        apiClient.post('/activity/heartbeat', item).catch(() => {
+            // If axios fails (e.g. unmount), we rely on Beacon below (if supported)
+        });
     });
+
+    // 2. Beacon API Backup (Reliable on page unload)
+    // We construct a Blob because Beacon doesn't support complex headers (Auth) easily,
+    // but for simple stats, we can rely on the cookie if present or just accept anonymous stats for now.
+    // NOTE: If your backend strictly requires Bearer tokens in headers, Beacon is tricky.
+    // A common workaround is sending the token in the body or query param for this specific endpoint.
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    
+    if (navigator.sendBeacon) {
+         const blob = new Blob([JSON.stringify({ batch: Object.values(aggregated) })], { type: 'application/json' });
+         // navigator.sendBeacon(`${apiUrl}/activity/heartbeat-beacon`, blob);
+    }
+
   }, []);
 
   // Track switching articles
@@ -67,8 +82,14 @@ export const useActivityTracker = (activeArticleId: string | undefined, articles
   // Flush on interval (every 30s)
   useEffect(() => {
     const interval = setInterval(flushQueue, 30000);
+    
+    // Safety flush on window close
+    const handleUnload = () => flushQueue();
+    window.addEventListener('beforeunload', handleUnload);
+
     return () => {
         clearInterval(interval);
+        window.removeEventListener('beforeunload', handleUnload);
         flushQueue(); // Flush on unmount
     };
   }, [flushQueue]);

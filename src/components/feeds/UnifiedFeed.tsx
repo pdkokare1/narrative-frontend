@@ -6,14 +6,14 @@ import { useRadio } from '../../context/RadioContext';
 import useShare from '../../hooks/useShare'; 
 import useIsMobile from '../../hooks/useIsMobile'; 
 import useHaptic from '../../hooks/useHaptic'; 
-import { useActivityTracker } from '../../hooks/useActivityTracker'; // NEW
+import { useActivityTracker } from '../../hooks/useActivityTracker'; 
 import { IArticle, INarrative, IFilters } from '../../types';
 import './UnifiedFeed.css'; 
 import { useFeedQuery } from '../../hooks/useFeedQuery';
 import FeedItemRenderer from './FeedItemRenderer';
 
 interface UnifiedFeedProps {
-  mode: 'latest' | 'infocus' | 'balanced' | 'personalized';
+  mode: 'latest' | 'infocus' | 'balanced'; // UPDATED: Strict mode typing
   filters?: IFilters; 
   onFilterChange?: (filters: IFilters) => void;
   onAnalyze: (article: IArticle) => void;
@@ -46,7 +46,7 @@ const FeedHeader: React.FC<{
             
             {mode === 'infocus' && (
                  <div style={{ padding: '8px 12px', background: 'var(--surface-paper)', borderBottom: '1px solid var(--border-color)' }}>
-                    <p style={{margin:0, fontSize: '0.9rem', color: 'var(--primary-color)', fontWeight: 600 }}>
+                    <p style={{margin:0, fontSize: '0.9rem', color: 'var(--accent-primary)', fontWeight: 600 }}>
                         Developing Narratives
                     </p>
                  </div>
@@ -100,15 +100,14 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const articleRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const lastScrolledId = useRef<string | null>(null);
 
-  // 4. NEW: Activity Tracking
-  // We maintain a map for O(1) lookups inside the tracker
+  // 4. Activity Tracking
+  // We filter map to only articles to avoid tracking time on Narratives (collections)
   const articlesMap = useMemo(() => {
       const map = new Map();
       feedItems.forEach(i => { if(i.type === 'Article') map.set(i._id, i); });
       return map;
   }, [feedItems]);
 
-  // We track local visibility for stats (separate from Radio's global active article)
   const [trackerVisibleId, setTrackerVisibleId] = React.useState<string>();
   useActivityTracker(trackerVisibleId, articlesMap);
 

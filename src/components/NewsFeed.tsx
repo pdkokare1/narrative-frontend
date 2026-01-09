@@ -19,7 +19,8 @@ interface NewsFeedProps {
   showTooltip: (text: string, e: React.MouseEvent) => void;
 }
 
-type FeedMode = 'latest' | 'foryou' | 'personalized';
+// FIX: Aligned 'balanced' with useFeedQuery and UnifiedFeed types
+type FeedMode = 'latest' | 'balanced' | 'personalized';
 
 const NewsFeed: React.FC<NewsFeedProps> = ({ 
   filters, 
@@ -69,18 +70,19 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
+    // FIX: Updated logic to use 'balanced' instead of 'foryou'
     if (isLeftSwipe) { 
-        if (mode === 'latest') changeMode('foryou', 'enter-right');
-        else if (mode === 'foryou') changeMode('personalized', 'enter-right');
+        if (mode === 'latest') changeMode('balanced', 'enter-right');
+        else if (mode === 'balanced') changeMode('personalized', 'enter-right');
     }
     if (isRightSwipe) { 
-        if (mode === 'personalized') changeMode('foryou', 'enter-left');
-        else if (mode === 'foryou') changeMode('latest', 'enter-left');
+        if (mode === 'personalized') changeMode('balanced', 'enter-left');
+        else if (mode === 'balanced') changeMode('latest', 'enter-left');
     }
   };
 
   const getPageTitle = () => {
-    if (mode === 'foryou') return 'Balanced For You | The Gamut';
+    if (mode === 'balanced') return 'Balanced Perspectives | The Gamut';
     if (mode === 'personalized') return 'My Mix | The Gamut';
     if (filters.category && filters.category !== 'All Categories') return `${filters.category} News | The Gamut`;
     return 'The Gamut - Analyse The Full Spectrum';
@@ -88,13 +90,12 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
   // --- DESKTOP TOGGLE (Pills) ---
   const renderDesktopToggle = () => (
-    // ADJUSTMENT: Reduced marginBottom from 20px to 4px to decrease gap to category pills
     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px', marginTop: '20px' }}>
       <div style={{ 
         display: 'flex', background: 'var(--bg-elevated)', borderRadius: '25px', 
         padding: '4px', border: '1px solid var(--border-color)', position: 'relative' 
       }}>
-        {['latest', 'foryou', 'personalized'].map((m) => (
+        {['latest', 'balanced', 'personalized'].map((m) => (
             <button
               key={m}
               onClick={() => { vibrate(); setMode(m as FeedMode); }}
@@ -106,7 +107,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
                 textTransform: 'capitalize'
               }}
             >
-              {m === 'foryou' ? 'Balanced' : m === 'personalized' ? 'For You' : 'Latest'}
+              {m === 'balanced' ? 'Balanced' : m === 'personalized' ? 'For You' : 'Top Stories'}
             </button>
         ))}
       </div>
@@ -127,14 +128,14 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
             <div style={{ display: 'flex', width: '100%' }}>
                 {[
                     { id: 'latest', label: 'Latest' },
-                    { id: 'foryou', label: 'Balanced' },
+                    { id: 'balanced', label: 'Balanced' }, // FIX: id is 'balanced'
                     { id: 'personalized', label: 'For You' }
                 ].map(tab => {
                     const isActive = mode === tab.id;
                     const clickDirection = 
                         (mode === 'latest' && tab.id !== 'latest') ? 'enter-right' :
                         (mode === 'personalized' && tab.id !== 'personalized') ? 'enter-left' :
-                        (mode === 'foryou' && tab.id === 'personalized') ? 'enter-right' : 'enter-left';
+                        (mode === 'balanced' && tab.id === 'personalized') ? 'enter-right' : 'enter-left';
 
                     return (
                         <div 

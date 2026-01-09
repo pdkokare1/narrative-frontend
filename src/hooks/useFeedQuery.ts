@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import apiClient from '../services/axiosInstance';
 import { IArticle, INarrative, IFilters } from '../types';
 
-type FeedMode = 'latest' | 'infocus' | 'balanced';
+type FeedMode = 'latest' | 'infocus' | 'balanced' | 'personalized';
 
 interface FeedData {
   items: (IArticle | INarrative)[];
@@ -68,6 +68,7 @@ export const useFeedQuery = (mode: FeedMode, filters: IFilters) => {
   } = useInfiniteQuery({
     queryKey: ['feed', mode, filters], // Unique key per mode/filter combo
     queryFn: fetchFeed,
+    initialPageParam: 0, // <--- FIXED: Required in TanStack Query v5
     getNextPageParam: (lastPage, allPages) => {
       // Logic for infinite scroll
       const currentCount = allPages.flatMap(p => p.items).length;
@@ -85,7 +86,6 @@ export const useFeedQuery = (mode: FeedMode, filters: IFilters) => {
 
     const interval = setInterval(async () => {
         // Simple check: Is there a newer article than our first one?
-        // In production, use a dedicated lightweight endpoint (e.g., /articles/latest-timestamp)
         try {
             const firstItem = data?.pages[0]?.items[0];
             if (!firstItem || !('publishedAt' in firstItem)) return;

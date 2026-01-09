@@ -42,7 +42,7 @@ const TopicTimeline: React.FC<TopicTimelineProps> = ({ clusterData }) => {
    * Returns: 'left-aligned' | 'right-aligned' | 'center-aligned'
    */
   const getAlignmentClass = (lean?: string) => {
-    if (!lean) return 'center-aligned'; // Fallback
+    if (!lean) return 'center-aligned'; 
     const lowerLean = lean.toLowerCase();
     
     if (lowerLean.includes('left')) return 'left-aligned';
@@ -53,6 +53,7 @@ const TopicTimeline: React.FC<TopicTimelineProps> = ({ clusterData }) => {
 
   /**
    * Helper for standardized bias color naming
+   * Note: Colors are handled in CSS (Left=Red, Right=Blue, Center=Yellow)
    */
   const getBiasClass = (lean?: string) => {
     if (!lean) return 'Neutral';

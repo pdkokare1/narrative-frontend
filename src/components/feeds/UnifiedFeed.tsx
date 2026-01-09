@@ -6,14 +6,14 @@ import { useRadio } from '../../context/RadioContext';
 import useShare from '../../hooks/useShare'; 
 import useIsMobile from '../../hooks/useIsMobile'; 
 import useHaptic from '../../hooks/useHaptic'; 
+import { useActivityTracker } from '../../hooks/useActivityTracker'; // NEW
 import { IArticle, INarrative, IFilters } from '../../types';
 import './UnifiedFeed.css'; 
-
 import { useFeedQuery } from '../../hooks/useFeedQuery';
 import FeedItemRenderer from './FeedItemRenderer';
 
 interface UnifiedFeedProps {
-  mode: 'latest' | 'foryou' | 'personalized';
+  mode: 'latest' | 'infocus' | 'balanced' | 'personalized';
   filters?: IFilters; 
   onFilterChange?: (filters: IFilters) => void;
   onAnalyze: (article: IArticle) => void;
@@ -25,7 +25,7 @@ interface UnifiedFeedProps {
   scrollToTopRef?: React.RefObject<HTMLDivElement>;
 }
 
-// --- STABLE UI COMPONENTS ---
+// --- HEADER COMPONENT ---
 const FeedHeader: React.FC<{ 
   mode: string; 
   filters: IFilters; 
@@ -44,14 +44,19 @@ const FeedHeader: React.FC<{
                 />
             )}
             
-            {mode === 'foryou' && metaData && (
-                 <div style={{ paddingBottom: '5px', color: 'var(--text-secondary)', fontSize: '12px' }}>
-                    <p>Based on interest in <strong>{metaData.basedOnCategory || 'various topics'}</strong>.</p>
+            {mode === 'infocus' && (
+                 <div style={{ padding: '8px 12px', background: 'var(--surface-paper)', borderBottom: '1px solid var(--border-color)' }}>
+                    <p style={{margin:0, fontSize: '0.9rem', color: 'var(--primary-color)', fontWeight: 600 }}>
+                        Developing Narratives
+                    </p>
                  </div>
             )}
-            {mode === 'personalized' && metaData && (
-                 <div style={{ paddingBottom: '5px', color: 'var(--text-secondary)', fontSize: '12px' }}>
-                    <p>Curated from <strong>{metaData.topCategories?.join(', ') || 'your history'}</strong>.</p>
+
+            {mode === 'balanced' && metaData && (
+                 <div style={{ padding: '8px 12px', background: 'var(--surface-paper)', borderBottom: '1px solid var(--border-color)' }}>
+                    <p style={{margin:0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        {metaData.reason || 'Broadening your perspective'}
+                    </p>
                  </div>
             )}
         </div>
@@ -59,6 +64,7 @@ const FeedHeader: React.FC<{
   );
 });
 
+// --- MAIN COMPONENT ---
 const UnifiedFeed: React.FC<UnifiedFeedProps> = ({ 
   mode,
   filters = {}, 
@@ -71,13 +77,13 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   showTooltip, 
   scrollToTopRef 
 }) => {
-  // 1. Logic via Hook
+  // 1. Data Query Hook
   const { 
       feedItems, status, isRefreshing, refresh, loadMoreRef, showNewPill, 
       metaData, isFetchingNextPage, hasNextPage 
   } = useFeedQuery(mode, filters);
 
-  // 2. UI Hooks
+  // 2. Radio & UI Hooks
   const { 
       startRadio, playSingle, stop, 
       currentArticle, updateContextQueue, 
@@ -88,13 +94,25 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const isMobile = useIsMobile(); 
   const vibrate = useHaptic(); 
   
-  // Refs
+  // 3. Refs & State
   const prevSentIds = useRef<string>('');
   const observerRef = useRef<IntersectionObserver | null>(null);
   const articleRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const lastScrolledId = useRef<string | null>(null); // Guard Ref for Scroll Loop
+  const lastScrolledId = useRef<string | null>(null);
 
-  // 3. Radio Synchronization (Stabilized)
+  // 4. NEW: Activity Tracking
+  // We maintain a map for O(1) lookups inside the tracker
+  const articlesMap = useMemo(() => {
+      const map = new Map();
+      feedItems.forEach(i => { if(i.type === 'Article') map.set(i._id, i); });
+      return map;
+  }, [feedItems]);
+
+  // We track local visibility for stats (separate from Radio's global active article)
+  const [trackerVisibleId, setTrackerVisibleId] = React.useState<string>();
+  useActivityTracker(trackerVisibleId, articlesMap);
+
+  // 5. Radio Queue Synchronization
   const playableArticles = useMemo(() => {
     return feedItems.filter(item => item.type !== 'Narrative') as IArticle[];
   }, [feedItems]);
@@ -107,23 +125,23 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       if (!contentSignature) return;
       if (contentSignature !== prevSentIds.current) {
           let label = 'Latest News';
-          if (mode === 'foryou') label = 'For You';
-          if (mode === 'personalized') label = 'Your Feed';
-          if (filters?.category && filters.category !== 'All Categories') label = filters.category;
+          if (mode === 'balanced') label = 'Balanced View';
+          if (mode === 'infocus') label = 'In Focus';
+          if (filters?.category && filters.category !== 'All') label = filters.category;
           
           updateContextQueue(playableArticles, label);
           prevSentIds.current = contentSignature;
       }
   }, [contentSignature, playableArticles, mode, filters, updateContextQueue]);
 
-  // 4. SMART START: Intersection Observer to track visible article
+  // 6. Intersection Observer (Merged Radio + Stats)
   useEffect(() => {
       if (status !== 'success') return;
 
       const options = {
-          root: null, // viewport
+          root: null, 
           rootMargin: '0px',
-          threshold: 0.6 // 60% visibility required to be "active"
+          threshold: 0.6 // 60% visibility required
       };
 
       observerRef.current = new IntersectionObserver((entries) => {
@@ -131,13 +149,14 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
               if (entry.isIntersecting) {
                   const id = entry.target.getAttribute('data-article-id');
                   if (id) {
-                      updateVisibleArticle(id);
+                      updateVisibleArticle(id); // Radio Context
+                      setTrackerVisibleId(id);  // Activity Tracker
                   }
               }
           });
       }, options);
 
-      // Attach to all current article refs
+      // Attach to all refs
       articleRefs.current.forEach((element) => {
           if (element) observerRef.current?.observe(element);
       });
@@ -147,7 +166,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       };
   }, [feedItems, status, updateVisibleArticle]);
 
-  // 5. AUTO-SCROLL: When Radio changes tracks, scroll feed to that article
+  // 7. Auto-Scroll to Active Radio Article
   useEffect(() => {
       const currentId = currentArticle?._id;
 
@@ -156,13 +175,13 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
           const element = articleRefs.current.get(currentId);
           if (element) {
-              lastScrolledId.current = currentId; // Mark handled
+              lastScrolledId.current = currentId; 
               element.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
       }
   }, [currentArticle?._id, isPlaying]);
 
-  // Helper to manage refs
+  // Ref Helper
   const setArticleRef = useCallback((el: HTMLDivElement | null, id: string) => {
       if (el) {
           articleRefs.current.set(id, el);
@@ -197,19 +216,19 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             metaData={metaData}
         />
 
-        {/* SCROLLABLE GRID */}
+        {/* GRID */}
         <div 
             className={`articles-grid ${isMobile ? 'mobile-stack' : ''}`} 
             ref={scrollToTopRef}
         >
             {status === 'pending' && !isRefreshing ? (
                  <>
-                   {[...Array(8)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) }
+                   {[...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) }
                  </>
             ) : status === 'error' ? (
                 <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
                     <p>Unable to load feed.</p>
-                    <button onClick={() => window.location.reload()} className="btn-secondary" style={{ marginTop: '10px' }}>Retry</button>
+                    <button onClick={handleRefresh} className="btn-secondary" style={{ marginTop: '10px' }}>Retry</button>
                 </div>
             ) : feedItems.length === 0 && !isRefreshing ? (
                 <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
@@ -242,7 +261,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                         </div>
                     ))}
 
-                    {/* AUTOMATIC LOAD MORE SENSOR */}
+                    {/* LOAD MORE (Only for Latest) */}
                     {mode === 'latest' && (
                         <div className="load-more-container" ref={loadMoreRef}>
                             {isFetchingNextPage ? (
@@ -255,7 +274,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                         </div>
                     )}
                     
-                    {/* Extra padding at bottom to ensure last item can be scrolled fully */}
                     <div style={{ height: '80px', flexShrink: 0, scrollSnapAlign: 'none' }} />
                 </>
             )}

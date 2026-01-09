@@ -1,6 +1,7 @@
 // src/components/TopicTimeline.tsx
 import React from 'react';
-import '../App.css'; 
+import { format } from 'date-fns';
+import './TopicTimeline.css'; // Import the new specific styles
 import { IArticle } from '../types';
 
 interface ClusterData {
@@ -37,34 +38,53 @@ const TopicTimeline: React.FC<TopicTimelineProps> = ({ clusterData }) => {
     new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
 
-  // 3. Format Date Helper
-  const formatDate = (dateString: string | Date) => {
-    const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-    return new Date(dateString).toLocaleDateString('en-US', options);
-  };
-
   return (
     <div className="timeline-container">
-      {sortedArticles.map((article, index) => (
-        <div key={article._id || index} className="timeline-item">
-          {/* Dot Color based on Lean - Fallback to Neutral if missing */}
-          <div className={`timeline-dot ${article.politicalLean || 'Neutral'}`}></div>
-          
-          <div className="timeline-content">
-            <span className="timeline-date">{formatDate(article.publishedAt)}</span>
-            <a href={article.url} target="_blank" rel="noopener noreferrer" className="timeline-headline">
-              {article.headline}
-            </a>
-            <div className="timeline-meta">
-              <span style={{ fontWeight: '600' }}>{article.source}</span>
-              <span>•</span>
-              <span className={article.politicalLean !== 'Not Applicable' ? 'accent-text' : ''}>
-                {article.politicalLean || 'Neutral'}
-              </span>
+      {/* The Visual Spine of the timeline */}
+      <div className="timeline-line" />
+
+      {sortedArticles.map((article, index) => {
+        // Fallback for bias if missing
+        const leanClass = article.politicalLean || 'Neutral';
+        const formattedDate = article.publishedAt 
+          ? format(new Date(article.publishedAt), 'MMM d • h:mm a') 
+          : 'Unknown Date';
+
+        return (
+          <div key={article._id || index} className="timeline-item">
+            {/* Color-coded Dot */}
+            <div className={`timeline-dot ${leanClass}`} title={`Bias: ${leanClass}`}></div>
+            
+            {/* Glassmorphism Card */}
+            <div className="timeline-card">
+              
+              {/* Header: Source Name & Time */}
+              <div className="card-header">
+                <span className="source-name">{article.source}</span>
+                <span className="date-display">{formattedDate}</span>
+              </div>
+
+              {/* Content: Clickable Headline */}
+              <a 
+                href={article.url} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="timeline-headline"
+              >
+                {article.headline}
+              </a>
+
+              {/* Footer: Visual Bias Tag */}
+              <div className="card-footer">
+                <span className={`bias-tag ${leanClass}`}>
+                  {leanClass}
+                </span>
+              </div>
+
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

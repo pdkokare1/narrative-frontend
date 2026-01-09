@@ -1,145 +1,147 @@
 // src/hooks/useFeedQuery.ts
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import * as api from '../services/api';
-import { IFilters, FeedItem } from '../types';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
+import apiClient from '../services/axiosInstance';
+import { IArticle, INarrative, IFilters } from '../types';
 
-export function useIntersectionObserver(
-  callback: () => void,
-  options: IntersectionObserverInit = { threshold: 0.1, rootMargin: '100px' }
-) {
-  const targetRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) callback();
-    }, options);
-    const curr = targetRef.current;
-    if (curr) observer.observe(curr);
-    return () => { if (curr) observer.unobserve(curr); };
-  }, [callback, options]);
-  return targetRef;
+type FeedMode = 'latest' | 'infocus' | 'balanced';
+
+interface FeedData {
+  items: (IArticle | INarrative)[];
+  meta?: any;
+  total?: number;
 }
 
-const BATCH_SIZE = 20;
-
-// FIX: Explicitly defined all valid modes including 'balanced'
-type FeedQueryMode = 'latest' | 'infocus' | 'balanced' | 'personalized';
-
-export const useFeedQuery = (mode: FeedQueryMode, filters: IFilters) => {
+export const useFeedQuery = (mode: FeedMode, filters: IFilters) => {
   const queryClient = useQueryClient();
   const [showNewPill, setShowNewPill] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // 1. Latest Feed (Weighted Merge - Infinite)
-  const latestQuery = useInfiniteQuery({
-    queryKey: ['latestFeed', JSON.stringify(filters)],
-    queryFn: async ({ pageParam = 0 }) => {
-        const { data } = await api.fetchArticles({ ...filters, limit: BATCH_SIZE, offset: pageParam as number });
-        return data;
-    },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage: any, allPages) => {
-      const items = lastPage?.articles || [];
-      if (items.length < BATCH_SIZE) return undefined;
-      return allPages.length * BATCH_SIZE;
-    },
-    enabled: mode === 'latest',
-    staleTime: 1000 * 60 * 2, // 2 mins (Fresher for breaking news)
-  });
+  // Track the last refresh time to show "New Articles" pill
+  const lastFetchTime = useRef(Date.now());
 
-  // 2. In Focus (Narratives - Single Page)
-  const inFocusQuery = useQuery({
-    queryKey: ['inFocusFeed', JSON.stringify(filters)],
-    queryFn: async () => { const { data } = await api.fetchInFocusArticles(filters); return data; },
-    enabled: mode === 'infocus',
-    staleTime: 1000 * 60 * 15,
-  });
+  // --- 1. Fetch Function ---
+  const fetchFeed = async ({ pageParam = 0 }): Promise<FeedData> => {
+    let endpoint = '/articles';
+    const params: any = { 
+      limit: 20, 
+      offset: pageParam 
+    };
 
-  // 3. Balanced (User Stats - Single Page)
-  const balancedQuery = useQuery({
-    queryKey: ['balancedFeed'],
-    queryFn: async () => { const { data } = await api.fetchBalancedArticles(); return data; },
-    enabled: mode === 'balanced',
-    staleTime: 1000 * 60 * 5, // 5 mins (Refresh as user bias stats update)
-  });
-
-  // 4. Personalized (Legacy/Fallback)
-  const personalizedQuery = useQuery({
-    queryKey: ['personalizedFeed'],
-    queryFn: async () => { const { data } = await api.fetchPersonalizedArticles(); return data; },
-    enabled: mode === 'personalized',
-    staleTime: 1000 * 60 * 10,
-  });
-
-  const activeQuery = mode === 'latest' ? latestQuery : (mode === 'infocus' ? inFocusQuery : (mode === 'balanced' ? balancedQuery : personalizedQuery));
-  const { status, error } = activeQuery;
-
-  const feedItems = useMemo(() => {
-    if (!activeQuery.data) return [];
-    let raw: FeedItem[] = [];
-
-    if (mode === 'latest') {
-      raw = latestQuery.data?.pages.flatMap((p: any) => p.articles || []) || [];
+    // Endpoint & Param Mapping
+    if (mode === 'balanced') {
+        endpoint = '/articles/balanced';
+        // Balanced feed is curated by backend, standard sorts don't apply
+    } else if (mode === 'infocus') {
+        endpoint = '/articles/infocus';
+        if (filters.category && filters.category !== 'All') {
+            params.category = filters.category;
+        }
     } else {
-      raw = (activeQuery.data as any)?.articles || [];
+        // Mode: 'latest'
+        endpoint = '/articles';
+        // Apply all filters
+        if (filters.category && filters.category !== 'All') params.category = filters.category;
+        if (filters.sort) params.sort = filters.sort;
+        if (filters.sentiment) params.sentiment = filters.sentiment;
+        if (filters.politicalLean) params.politicalLean = filters.politicalLean;
+        if (filters.source) params.source = filters.source;
     }
-    
-    // Dedup
-    const seen = new Set<string>();
-    return raw.filter(i => {
-        if (!i?._id || seen.has(i._id)) return false;
-        seen.add(i._id);
-        return true;
-    });
-  }, [mode, activeQuery.data, latestQuery.data]);
 
-  // --- SMART POLLING (Latest Only) ---
-  const { data: latestHeadItem } = useQuery({
-    queryKey: ['latestHeadCheck', JSON.stringify(filters)],
-    queryFn: async () => {
-        const { data } = await api.fetchArticles({ 
-            ...filters, limit: 1, offset: 0, _t: Date.now() 
-        });
-        return data?.articles?.[0] || null;
+    const { data } = await apiClient.get(endpoint, { params });
+
+    return {
+      items: data.data || [],
+      meta: data.meta || {},
+      total: data.total || 0
+    };
+  };
+
+  // --- 2. Query Hook ---
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+    refetch,
+    isRefetching
+  } = useInfiniteQuery({
+    queryKey: ['feed', mode, filters], // Unique key per mode/filter combo
+    queryFn: fetchFeed,
+    getNextPageParam: (lastPage, allPages) => {
+      // Logic for infinite scroll
+      const currentCount = allPages.flatMap(p => p.items).length;
+      if (lastPage.items.length < 20) return undefined; // No more data
+      return currentCount; // Use current count as offset
     },
-    enabled: mode === 'latest' && feedItems.length > 0 && !isRefreshing,
-    refetchInterval: 30000, // 30s
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    refetchOnWindowFocus: false,
   });
+
+  // --- 3. "New Content" Polling Logic ---
+  // Only poll if we are at the top of the feed and in 'latest' mode
+  useEffect(() => {
+    if (mode !== 'latest') return;
+
+    const interval = setInterval(async () => {
+        // Simple check: Is there a newer article than our first one?
+        // In production, use a dedicated lightweight endpoint (e.g., /articles/latest-timestamp)
+        try {
+            const firstItem = data?.pages[0]?.items[0];
+            if (!firstItem || !('publishedAt' in firstItem)) return;
+
+            const latestRes = await apiClient.get('/articles', { params: { limit: 1, ...filters } });
+            const serverLatest = latestRes.data.data[0];
+
+            if (serverLatest && serverLatest._id !== firstItem._id) {
+                setShowNewPill(true);
+            }
+        } catch (err) {
+            // Silent fail
+        }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [mode, filters, data]);
+
+  // --- 4. Load More Observer ---
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (latestHeadItem && feedItems[0] && mode === 'latest') {
-        const remoteTime = new Date(latestHeadItem.publishedAt).getTime();
-        const localTime = new Date(feedItems[0].publishedAt).getTime();
-        if (remoteTime > localTime) setShowNewPill(true);
-    }
-  }, [latestHeadItem, feedItems, mode]);
+    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return;
 
-  // Actions
-  const handleLoadMore = useCallback(() => {
-      if (mode === 'latest' && latestQuery.hasNextPage && !latestQuery.isFetchingNextPage) {
-          latestQuery.fetchNextPage();
-      }
-  }, [mode, latestQuery]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
 
-  const loadMoreRef = useIntersectionObserver(handleLoadMore);
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const refresh = async () => {
-      setIsRefreshing(true);
+  // --- 5. Helper: Flatten Data ---
+  const feedItems = data?.pages.flatMap(page => page.items) || [];
+  const metaData = data?.pages[0]?.meta || {};
+
+  const refresh = () => {
       setShowNewPill(false);
-      await activeQuery.refetch();
-      setIsRefreshing(false);
+      lastFetchTime.current = Date.now();
+      refetch();
   };
 
   return {
     feedItems,
+    metaData,
     status,
-    error,
-    isRefreshing,
+    isRefreshing: isRefetching,
     refresh,
     loadMoreRef,
     showNewPill,
-    metaData: (activeQuery.data as any)?.meta,
-    isFetchingNextPage: latestQuery.isFetchingNextPage,
-    hasNextPage: latestQuery.hasNextPage
+    isFetchingNextPage,
+    hasNextPage
   };
 };

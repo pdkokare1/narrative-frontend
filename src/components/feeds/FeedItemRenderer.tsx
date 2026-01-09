@@ -33,10 +33,9 @@ const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({
 }) => {
 
   // --- Type Guard ---
-  const isNarrative = (item: any): item is INarrative => {
-    // FIX: Relies on the 'type' property injected by the backend.
-    // Previous check for 'clusterId' was flawed because Articles also have clusterId.
-    return item.type === 'Narrative';
+  // Safely distinguishes between Article and Narrative based on the backend 'type' field
+  const isNarrative = (item: IArticle | INarrative): item is INarrative => {
+    return (item as any).type === 'Narrative';
   };
 
   // --- Handler for "Read Source" ---
@@ -59,6 +58,7 @@ const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({
   }
 
   // --- Render Article ---
+  // Cast is safe here due to the guard above
   const article = item as IArticle;
   const isCurrent = currentArticleId === article._id;
   const isSaved = savedArticleIds.has(article._id);
@@ -79,7 +79,7 @@ const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({
         showTooltip={showTooltip}
         isSaved={isSaved}
         onToggleSave={onToggleSave}
-        isPlaying={isCurrent} // Passed simply as boolean
+        isPlaying={isCurrent} 
         onPlay={() => playSingle(article)}
         onStop={stop}
       />

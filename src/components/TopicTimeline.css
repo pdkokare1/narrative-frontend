@@ -29,9 +29,10 @@
 .timeline-row {
   display: grid;
   grid-template-columns: 1fr 40px 1fr; /* Left | Spine-Zone | Right */
-  align-items: center; /* STRICTLY CENTERS DOT VERTICALLY */
+  align-items: center; /* Primary alignment */
   position: relative;
   width: 100%;
+  min-height: min-content; /* Ensure row respects content height */
 }
 
 /* --- Pulse Animations --- */
@@ -60,9 +61,15 @@
   height: 12px;
   border-radius: 50%;
   background: #4b5563; /* Default gray */
-  margin: 0 auto;
   z-index: 2;
   position: relative;
+  
+  /* FORCE VERTICAL CENTERING */
+  align-self: center;
+  margin-top: auto;
+  margin-bottom: auto;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Node Colors & Pulses (User Map: Left=Red, Right=Blue, Center=Yellow) */

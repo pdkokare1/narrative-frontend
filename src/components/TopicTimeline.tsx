@@ -1,7 +1,7 @@
 // src/components/TopicTimeline.tsx
 import React from 'react';
 import { format } from 'date-fns';
-import './TopicTimeline.css'; // Import the new specific styles
+import './TopicTimeline.css'; 
 import { IArticle } from '../types';
 
 interface ClusterData {
@@ -9,7 +9,7 @@ interface ClusterData {
   center: IArticle[];
   right: IArticle[];
   reviews: IArticle[];
-  others?: IArticle[]; // Added to catch unclassified/neutral articles
+  others?: IArticle[]; 
 }
 
 interface TopicTimelineProps {
@@ -19,8 +19,7 @@ interface TopicTimelineProps {
 const TopicTimeline: React.FC<TopicTimelineProps> = ({ clusterData }) => {
   if (!clusterData) return null;
 
-  // 1. Merge all articles into a single array
-  // Included 'others' to ensure no data is hidden from the user
+  // 1. Merge all articles to ensure no data loss
   const allArticles = [
     ...(clusterData.left || []),
     ...(clusterData.center || []),
@@ -30,7 +29,7 @@ const TopicTimeline: React.FC<TopicTimelineProps> = ({ clusterData }) => {
   ];
 
   if (allArticles.length === 0) {
-    return <p className="no-data-msg">No articles available for timeline.</p>;
+    return <div className="no-data-msg">No articles available for timeline.</div>;
   }
 
   // 2. Sort by Date (Newest first)
@@ -38,33 +37,62 @@ const TopicTimeline: React.FC<TopicTimelineProps> = ({ clusterData }) => {
     new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
 
+  /**
+   * Helper to determine alignment based on political stance.
+   * Returns: 'left-aligned' | 'right-aligned' | 'center-aligned'
+   */
+  const getAlignmentClass = (lean?: string) => {
+    if (!lean) return 'center-aligned'; // Fallback
+    const lowerLean = lean.toLowerCase();
+    
+    if (lowerLean.includes('left')) return 'left-aligned';
+    if (lowerLean.includes('right')) return 'right-aligned';
+    // Center, Neutral, Mixed, etc. go to center
+    return 'center-aligned';
+  };
+
+  /**
+   * Helper for standardized bias color naming
+   */
+  const getBiasClass = (lean?: string) => {
+    if (!lean) return 'Neutral';
+    const lowerLean = lean.toLowerCase();
+    if (lowerLean.includes('left')) return 'Left';
+    if (lowerLean.includes('right')) return 'Right';
+    if (lowerLean.includes('center')) return 'Center';
+    return 'Neutral';
+  };
+
   return (
     <div className="timeline-container">
-      {/* The Visual Spine of the timeline */}
-      <div className="timeline-line" />
+      {/* The Central Spine (Hidden on Mobile via CSS) */}
+      <div className="timeline-spine" />
 
       {sortedArticles.map((article, index) => {
-        // Fallback for bias if missing
-        const leanClass = article.politicalLean || 'Neutral';
+        const lean = article.politicalLean || 'Neutral';
+        const alignClass = getAlignmentClass(lean);
+        const biasClass = getBiasClass(lean);
+        
         const formattedDate = article.publishedAt 
           ? format(new Date(article.publishedAt), 'MMM d • h:mm a') 
-          : 'Unknown Date';
+          : '';
 
         return (
-          <div key={article._id || index} className="timeline-item">
-            {/* Color-coded Dot */}
-            <div className={`timeline-dot ${leanClass}`} title={`Bias: ${leanClass}`}></div>
+          <div key={article._id || index} className={`timeline-row ${alignClass}`}>
             
-            {/* Glassmorphism Card */}
+            {/* The Dot (Visual Node) - Only shows for Left/Right in CSS */}
+            <div className={`timeline-node ${biasClass}`} />
+            
+            {/* The Content Card */}
             <div className="timeline-card">
               
-              {/* Header: Source Name & Time */}
+              {/* Header: Source & Date */}
               <div className="card-header">
                 <span className="source-name">{article.source}</span>
-                <span className="date-display">{formattedDate}</span>
+                <span>{formattedDate}</span>
               </div>
 
-              {/* Content: Clickable Headline */}
+              {/* Headline */}
               <a 
                 href={article.url} 
                 target="_blank" 
@@ -74,13 +102,13 @@ const TopicTimeline: React.FC<TopicTimelineProps> = ({ clusterData }) => {
                 {article.headline}
               </a>
 
-              {/* Footer: Visual Bias Tag */}
+              {/* Footer: Bias Tag */}
               <div className="card-footer">
-                <span className={`bias-tag ${leanClass}`}>
-                  {leanClass}
+                <span className={`bias-tag ${biasClass}`}>
+                  {lean}
                 </span>
               </div>
-
+              
             </div>
           </div>
         );

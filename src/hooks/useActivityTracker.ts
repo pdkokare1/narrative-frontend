@@ -29,23 +29,28 @@ export const useActivityTracker = (activeArticleId: string | undefined, articles
         return acc;
     }, {} as Record<string, ActivityQueueItem>);
 
-    // 1. Try standard API call (for valid sessions)
-    Object.values(aggregated).forEach(item => {
+    const payload = Object.values(aggregated);
+    if (payload.length === 0) return;
+
+    // 1. Try standard API call (for active sessions)
+    payload.forEach(item => {
         apiClient.post('/activity/heartbeat', item).catch(() => {
-            // If axios fails (e.g. unmount), we rely on Beacon below (if supported)
+            // Silently fail on axios error (likely unmount)
         });
     });
 
-    // 2. Beacon API Backup (Reliable on page unload)
-    // We construct a Blob because Beacon doesn't support complex headers (Auth) easily,
-    // but for simple stats, we can rely on the cookie if present or just accept anonymous stats for now.
-    // NOTE: If your backend strictly requires Bearer tokens in headers, Beacon is tricky.
-    // A common workaround is sending the token in the body or query param for this specific endpoint.
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    
+    // 2. Beacon API Backup (Reliable on page unload/close)
     if (navigator.sendBeacon) {
-         const blob = new Blob([JSON.stringify({ batch: Object.values(aggregated) })], { type: 'application/json' });
-         // navigator.sendBeacon(`${apiUrl}/activity/heartbeat-beacon`, blob);
+        // Use Blob to send JSON data via Beacon
+        const blob = new Blob(
+            [JSON.stringify({ batch: payload })], 
+            { type: 'application/json' }
+        );
+        // Note: You might need to adjust your backend to handle bulk batch if strictly needed,
+        // but for now we send the beacon to the heartbeat endpoint. 
+        // Since Beacon is "fire and forget", exact reliability varies, but it's better than nothing.
+        const apiUrl = (import.meta.env.VITE_API_URL || 'https://api.thegamut.in') + '/activity/heartbeat-beacon';
+        navigator.sendBeacon(apiUrl, blob);
     }
 
   }, []);
@@ -79,13 +84,16 @@ export const useActivityTracker = (activeArticleId: string | undefined, articles
     }
   }, [activeArticleId, articlesMap]);
 
-  // Flush on interval (every 30s)
+  // Flush on interval (every 30s) and on Unload
   useEffect(() => {
     const interval = setInterval(flushQueue, 30000);
     
     // Safety flush on window close
     const handleUnload = () => flushQueue();
-    window.addEventListener('beforeunload', handleUnload);
+    window.addEventListener('beforeunload', handleUnload); // Desktop
+    window.addEventListener('visibilitychange', () => {    // Mobile
+        if (document.visibilityState === 'hidden') flushQueue();
+    });
 
     return () => {
         clearInterval(interval);

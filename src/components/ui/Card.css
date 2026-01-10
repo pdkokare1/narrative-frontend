@@ -1,43 +1,83 @@
-/* src/components/ui/Card.css */
-
-.ui-card {
-  border-radius: var(--radius-md);
-  position: relative;
+/* Card Base Styles */
+.card {
+  background-color: var(--bg-card);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
 }
 
-/* --- VARIANTS --- */
-
-/* 1. GLASS (Default Premium Look) - STANDARDIZED */
-.card-glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-}
-
-.card-glass:hover {
-  border-color: var(--accent-primary);
-  box-shadow: var(--shadow-md);
-}
-
-/* 2. SOLID (For high contrast areas) */
-.card-solid {
-  background: var(--bg-elevated);
+/* Variants */
+.card-variant-default {
+  background-color: var(--bg-card);
   border: 1px solid var(--border-color);
 }
 
-/* 3. FLAT (For internal grouping) */
-.card-flat {
-  background: transparent;
-  border: 1px dashed var(--border-color);
-  box-shadow: none;
+.card-variant-outlined {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
 }
 
-/* --- PADDING UTILS --- */
-.pad-none { padding: 0; }
-.pad-sm   { padding: 15px; }
-.pad-md   { padding: 25px; }
-.pad-lg   { padding: 40px; }
+.card-variant-elevated {
+  background-color: var(--bg-card);
+  border: none;
+  box-shadow: var(--shadow-md);
+}
+
+.card-variant-glass {
+  background: rgba(20, 20, 20, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Padding Sizes */
+.card-padding-none {
+  padding: 0;
+}
+
+.card-padding-sm {
+  padding: 0.75rem;
+}
+
+.card-padding-md {
+  padding: 1.25rem;
+}
+
+.card-padding-lg {
+  padding: 2rem;
+}
+
+/* FIXED: Added XL padding support */
+.card-padding-xl {
+  padding: 3rem;
+}
+
+/* Interactive State */
+.card-interactive {
+  cursor: pointer;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Header Styles */
+.card-header {
+  margin-bottom: 1rem;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.card-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0.25rem 0 0 0;
+}

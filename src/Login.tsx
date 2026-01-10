@@ -1,5 +1,5 @@
 // src/Login.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   RecaptchaVerifier, 
   signInWithPhoneNumber, 
@@ -35,30 +35,41 @@ const Login: React.FC = () => {
   
   const { addToast } = useToast();
   const navigate = useNavigate();
+  
+  // Ref to track if recaptcha is currently rendering to prevent duplicates
+  const recaptchaRendered = useRef(false);
 
   // --- 1. INITIALIZE RECAPTCHA ON MOUNT ---
-  // We do this once when the page loads, not every time the button is clicked.
+  // Strictly follows Firebase Docs: Init once, then reuse.
   useEffect(() => {
     const initRecaptcha = async () => {
+      // prevent double-init in Strict Mode
+      if (recaptchaRendered.current || window.recaptchaVerifier) return;
+
       const container = document.getElementById('recaptcha-container');
       
-      // Only create if container exists and verifier is not already set
-      if (container && !window.recaptchaVerifier) {
+      if (container) {
         console.log("Initializing RecaptchaVerifier...");
         try {
+          // Initialize
           window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
             'size': 'invisible',
             'callback': (response: any) => {
-              console.log("Recaptcha Solved!");
+              console.log("Recaptcha Solved via Callback");
             },
             'expired-callback': () => {
               addToast('Security check expired. Please refresh.', 'error');
+              if (window.recaptchaVerifier) {
+                window.recaptchaVerifier.clear();
+                recaptchaRendered.current = false;
+              }
             }
           });
           
-          // Pre-render to ensure it is ready
+          // Render immediately so it is ready for the click
           await window.recaptchaVerifier.render();
-          console.log("Recaptcha Ready.");
+          recaptchaRendered.current = true;
+          console.log("Recaptcha Rendered & Ready.");
         } catch (err) {
           console.error("Recaptcha Init Error:", err);
         }
@@ -72,8 +83,13 @@ const Login: React.FC = () => {
     return () => {
       clearTimeout(timer);
       if (window.recaptchaVerifier) {
-        try { window.recaptchaVerifier.clear(); } catch(e) {}
+        try { 
+          window.recaptchaVerifier.clear(); 
+        } catch(e) {
+          console.warn("Recaptcha clear error", e);
+        }
         window.recaptchaVerifier = undefined;
+        recaptchaRendered.current = false;
       }
     };
   }, [addToast]);
@@ -94,51 +110,54 @@ const Login: React.FC = () => {
       if (!formattedNumber.startsWith('+')) {
          formattedNumber = `+1${formattedNumber.replace(/\D/g, '')}`; 
       }
-      console.log("Sending to:", formattedNumber);
+      console.log("Attempting to send to:", formattedNumber);
 
-      // 2. Ensure Verifier Exists (Fallback)
+      // 2. Ensure Verifier Exists (Fallback check)
       if (!window.recaptchaVerifier) {
-        throw new Error("Security check not initialized. Please refresh the page.");
+        console.error("Verifier missing, attempting to re-init...");
+        // Emergency re-init if something wiped it
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+             'size': 'invisible'
+        });
       }
 
-      // 3. Send SMS with a 20s Timeout Race
-      const sendPromise = signInWithPhoneNumber(auth, formattedNumber, window.recaptchaVerifier);
+      // 3. Send SMS
+      // note: signInWithPhoneNumber returns a Promise that resolves with the confirmation object
+      const confirmation = await signInWithPhoneNumber(auth, formattedNumber, window.recaptchaVerifier);
       
-      const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Request timed out. Check connection.")), 20000)
-      );
-
-      const confirmation = await Promise.race([sendPromise, timeoutPromise]) as ConfirmationResult;
-      
-      console.log("SMS Sent!", confirmation);
+      console.log("SMS Sent Successfully!", confirmation);
       setConfirmationResult(confirmation);
       setStep('OTP');
       addToast('Secure access code sent.', 'success');
 
     } catch (error: any) {
-      console.error("SMS Error:", error);
+      console.error("SMS Error Full Object:", error);
       
       let msg = 'Failed to send code.';
       if (error.message && error.message.includes('timed out')) msg = 'Connection timed out. Please retry.';
       if (error.code === 'auth/invalid-phone-number') msg = 'Invalid phone number format.';
       if (error.code === 'auth/quota-exceeded') msg = 'SMS quota exceeded.';
       if (error.code === 'auth/network-request-failed') msg = 'Network error. Check connection.';
+      if (error.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
       if (error.message && error.message.includes('authorized domain')) {
         msg = 'Domain not authorized. Check Firebase Console.';
       }
-      if (error.code === 'auth/internal-error') msg = 'Security Check Failed. Refreshing...';
+      
+      // Internal error often means the Recaptcha Token was invalid or used
+      if (error.code === 'auth/internal-error') {
+         msg = 'Security Check Failed. Refreshing page...';
+         setTimeout(() => window.location.reload(), 2500);
+      }
 
       addToast(msg, 'error');
       
-      // Only clear/reset if it was a catastrophic error
-      if (error.code === 'auth/internal-error' || error.message.includes('verifier')) {
-         if (window.recaptchaVerifier) {
-            try { window.recaptchaVerifier.clear(); } catch(e) {}
-            window.recaptchaVerifier = undefined;
-            // Force reload to recover
-            setTimeout(() => window.location.reload(), 2000);
-         }
+      // If the verifier was "used up" or broken, clear it so the user can try again (after refresh usually)
+      if (window.recaptchaVerifier && error.code !== 'auth/invalid-phone-number') {
+         window.recaptchaVerifier.clear();
+         window.recaptchaVerifier = undefined;
+         recaptchaRendered.current = false;
       }
+
     } finally {
       setLoading(false);
     }
@@ -216,7 +235,7 @@ const Login: React.FC = () => {
             </div>
 
             {/* Hidden Recaptcha Container - Must be present in DOM */}
-            {/* We keep this outside conditional rendering so it persists */}
+            {/* The invisible widget will be rendered here by the useEffect */}
             <div id="recaptcha-container"></div>
 
             {/* STEP 1: PHONE INPUT */}
@@ -281,7 +300,7 @@ const Login: React.FC = () => {
             <div className="social-row">
                 {/* Google Button */}
                 <button className="social-btn google" onClick={handleGoogleLogin}>
-                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="#fff" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="#fff" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
                 </button>
                 
                 {/* Apple Button - Verified Logo */}

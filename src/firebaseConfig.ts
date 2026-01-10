@@ -2,7 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
-// import { initializeAppCheck, ReCaptchaV3Provider, onTokenChanged } from "firebase/app-check"; // DISABLED FOR DEBUGGING
+import { initializeAppCheck, ReCaptchaV3Provider, onTokenChanged } from "firebase/app-check";
 import { getMessaging } from "firebase/messaging";
 
 const firebaseConfig = {
@@ -33,24 +33,21 @@ try {
   console.warn("Firebase Messaging failed to initialize:", err);
 }
 
-// App Check Logic - TEMPORARILY DISABLED
-// We are disabling this to isolate if App Check is blocking the SMS verification.
+// App Check Logic
+// RESTORED: This is required for Google Login and Backend requests to pass security checks.
 let appCheck: any;
 export const appCheckReady = new Promise<void>((resolve) => {
-    // RESOLVE IMMEDIATELY WITHOUT LOADING APP CHECK
-    console.log("App Check temporarily disabled for debugging.");
-    resolve();
-
-  /* // ORIGINAL CODE - KEEPING FOR RESTORATION LATER
   if (typeof window !== 'undefined') {
     const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
     if (siteKey) {
       try {
+        console.log("Initializing App Check...");
         appCheck = initializeAppCheck(app, {
           provider: new ReCaptchaV3Provider(siteKey),
           isTokenAutoRefreshEnabled: true 
         });
         
+        // Wait for the first token to ensure backend requests don't fail immediately
         const unsubscribe = onTokenChanged(appCheck, (token: any) => {
           if (token) {
             console.log("App Check token received.");
@@ -59,17 +56,17 @@ export const appCheckReady = new Promise<void>((resolve) => {
           }
         });
       } catch (e) {
-        console.warn("App Check failed:", e);
+        console.warn("App Check initialization failed:", e);
+        // Resolve anyway so the app doesn't hang, even if requests might fail later
         resolve();
       }
     } else {
-      console.warn("App Check: Site Key missing.");
+      console.warn("App Check: VITE_RECAPTCHA_SITE_KEY is missing in .env");
       resolve(); 
     }
   } else {
     resolve(); 
   }
-  */
 });
 
 export const auth = getAuth(app);

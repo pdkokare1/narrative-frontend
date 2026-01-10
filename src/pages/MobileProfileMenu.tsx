@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Card from '../components/ui/Card';
 import SectionHeader from '../components/ui/SectionHeader';
-import Button from '../components/ui/Button';
 import '../App.css';
 
 // Simple Icons for the menu list
@@ -27,6 +26,7 @@ const MobileProfileMenu: React.FC = () => {
     { label: 'Saved Articles', path: '/saved-articles', icon: '🔖', desc: 'Your personal library' },
     { label: 'Emergency Help', path: '/emergency-resources', icon: '🚨', desc: 'Critical resources' },
     { label: 'Account Settings', path: '/account-settings', icon: '⚙️', desc: 'Manage profile & preferences' },
+    { label: 'Legal & Privacy', path: '/legal', icon: '⚖️', desc: 'Terms & Privacy Policy' },
   ];
 
   return (

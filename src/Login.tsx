@@ -17,7 +17,7 @@ import Input from './components/ui/Input';
 import { useToast } from './context/ToastContext';
 import './Login.css';
 
-// --- VISUAL ASSETS ---
+// --- CONSTANTS ---
 const GHOST_CARDS = [
   { category: "POLITICS", title: "Summit Talks: New Climate Agreements Signed", color: "linear-gradient(135deg, #FF6B6B 0%, #EE5D5D 100%)" },
   { category: "TECH", title: "Quantum Leap: Silicon Valley's New Bet", color: "linear-gradient(135deg, #4FACFE 0%, #00F2FE 100%)" },
@@ -26,8 +26,20 @@ const GHOST_CARDS = [
   { category: "SCIENCE", title: "Mars Mission: Phase 2 Funding Secured", color: "linear-gradient(135deg, #667EEA 0%, #764BA2 100%)" },
 ];
 
+const COUNTRY_CODES = [
+  { code: '+1', label: 'US/CA (+1)' },
+  { code: '+91', label: 'India (+91)' },
+  { code: '+44', label: 'UK (+44)' },
+  { code: '+61', label: 'Aus (+61)' },
+  { code: '+81', label: 'Japan (+81)' },
+  { code: '+49', label: 'Germany (+49)' },
+  { code: '+33', label: 'France (+33)' },
+  { code: '+86', label: 'China (+86)' },
+];
+
 const Login: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [countryCode, setCountryCode] = useState('+1'); // Default to +1, user can change
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'PHONE' | 'OTP'>('PHONE');
   const [loading, setLoading] = useState(false);
@@ -40,7 +52,6 @@ const Login: React.FC = () => {
   const recaptchaRendered = useRef(false);
 
   // --- 1. INITIALIZE RECAPTCHA ON MOUNT ---
-  // Strictly follows Firebase Docs: Init once, then reuse.
   useEffect(() => {
     const initRecaptcha = async () => {
       // prevent double-init in Strict Mode
@@ -97,7 +108,7 @@ const Login: React.FC = () => {
   // --- HANDLERS ---
 
   const handleSendCode = async () => {
-    if (!phoneNumber || phoneNumber.length < 8) {
+    if (!phoneNumber || phoneNumber.length < 4) {
         addToast('Please enter a valid phone number.', 'error');
         return;
     }
@@ -105,30 +116,27 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      // 1. Format Number (Default to +1 if missing)
-      let formattedNumber = phoneNumber.trim();
-      if (!formattedNumber.startsWith('+')) {
-         formattedNumber = `+1${formattedNumber.replace(/\D/g, '')}`; 
-      }
+      // 1. Format Number: Combine Country Code + Digits
+      const cleanNumber = phoneNumber.replace(/\D/g, ''); // Remove existing non-digits
+      const formattedNumber = `${countryCode}${cleanNumber}`;
+      
       console.log("Attempting to send to:", formattedNumber);
 
       // 2. Ensure Verifier Exists (Fallback check)
       if (!window.recaptchaVerifier) {
         console.error("Verifier missing, attempting to re-init...");
-        // Emergency re-init if something wiped it
         window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
              'size': 'invisible'
         });
       }
 
       // 3. Send SMS
-      // note: signInWithPhoneNumber returns a Promise that resolves with the confirmation object
       const confirmation = await signInWithPhoneNumber(auth, formattedNumber, window.recaptchaVerifier);
       
       console.log("SMS Sent Successfully!", confirmation);
       setConfirmationResult(confirmation);
       setStep('OTP');
-      addToast('Secure access code sent.', 'success');
+      addToast(`Code sent to ${formattedNumber}`, 'success');
 
     } catch (error: any) {
       console.error("SMS Error Full Object:", error);
@@ -234,22 +242,49 @@ const Login: React.FC = () => {
                 <p>Analyze the full spectrum of the narrative.</p>
             </div>
 
-            {/* Hidden Recaptcha Container - Must be present in DOM */}
-            {/* The invisible widget will be rendered here by the useEffect */}
+            {/* Hidden Recaptcha Container */}
             <div id="recaptcha-container"></div>
 
             {/* STEP 1: PHONE INPUT */}
             {step === 'PHONE' && (
                 <div className="login-step fade-in">
-                    <div className="input-group">
+                    <div className="input-group" style={{ display: 'flex', gap: '8px' }}>
+                        
+                        {/* Country Code Selector */}
+                        <select 
+                          className="login-country-select"
+                          value={countryCode}
+                          onChange={(e) => setCountryCode(e.target.value)}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '8px',
+                            color: 'white',
+                            padding: '0 8px',
+                            height: '50px',
+                            cursor: 'pointer',
+                            outline: 'none',
+                            fontSize: '0.9rem'
+                          }}
+                        >
+                          {COUNTRY_CODES.map((c) => (
+                            <option key={c.code} value={c.code} style={{ color: 'black' }}>
+                              {c.label}
+                            </option>
+                          ))}
+                        </select>
+
+                        {/* Phone Number Input */}
                         <Input 
                             type="tel" 
-                            placeholder="(555) 123-4567" 
+                            placeholder="123 456 7890" 
                             value={phoneNumber}
                             onChange={(e) => setPhoneNumber(e.target.value)}
                             className="login-input-large"
+                            style={{ flex: 1 }}
                         />
                     </div>
+
                     <Button 
                         variant="primary" 
                         onClick={handleSendCode} 

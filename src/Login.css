@@ -1,296 +1,264 @@
 /* src/Login.css */
 
-/* --- 1. System Theme Variables --- */
-:root {
-  --login-bg: #f0f2f5;
-  --login-glass: rgba(255, 255, 255, 0.65);
-  --login-border: rgba(255, 255, 255, 0.6);
-  --login-text: #1a1a1a;
-  --login-subtext: #555;
-  
-  --card-bg: #ffffff;
-  --card-shadow: 0 4px 15px rgba(0,0,0,0.06);
-  
-  --vignette: radial-gradient(circle at center, rgba(240,242,245, 0.2) 0%, rgba(240,242,245, 1) 85%);
-  --glow-color: radial-gradient(circle, rgba(66, 135, 245, 0.4) 0%, rgba(66, 135, 245, 0) 70%);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --login-bg: #050505;
-    --login-glass: rgba(20, 20, 20, 0.65);
-    --login-border: rgba(255, 255, 255, 0.1);
-    --login-text: #ffffff;
-    --login-subtext: #a0a0a0;
-    
-    --card-bg: #121212;
-    --card-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    
-    --vignette: radial-gradient(circle at center, rgba(5,5,5, 0.3) 0%, rgba(5,5,5, 1) 90%);
-    --glow-color: radial-gradient(circle, rgba(60, 100, 255, 0.35) 0%, rgba(60, 100, 255, 0) 70%);
-  }
-}
-
-/* --- 2. Page Layout --- */
 .login-page-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #000;
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  position: relative;
-  background-color: var(--login-bg);
-  overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* --- 3. The Stream (Background) --- */
+/* --- BACKGROUND STREAM (Ghost Cards) --- */
 .narrative-stream-bg {
   position: absolute;
-  top: -15%;
-  left: 0;
-  width: 100%;
-  height: 130%;
-  z-index: 1;
+  top: -10%;
+  left: -10%;
+  width: 120%;
+  height: 120%;
   display: flex;
-  justify-content: center;
-  /* Cinematic tilt */
-  transform: perspective(1200px) rotateX(8deg) scale(1.05);
-  opacity: 0.6; /* Default dim state */
-  transition: opacity 0.5s ease;
+  gap: 20px;
+  opacity: 0.25; /* Subtle background */
+  transform: rotate(-12deg);
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(2px) grayscale(80%); /* De-emphasize background */
 }
 
 .stream-vignette {
   position: absolute;
   inset: 0;
-  background: var(--vignette);
-  z-index: 5;
-  pointer-events: none;
+  background: radial-gradient(circle at center, transparent 0%, #000 80%);
+  z-index: 2;
 }
 
 .stream-columns {
   display: flex;
-  gap: 24px;
-  width: 140%;
-  max-width: 1800px;
-  justify-content: center;
+  width: 100%;
+  justify-content: space-around;
 }
 
-/* Columns & Animation */
 .ghost-column {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  width: 260px;
-  flex-shrink: 0;
-  animation: scrollUp 90s linear infinite;
-  will-change: transform;
-}
-.ghost-column.medium { animation-duration: 110s; }
-.ghost-column.fast { animation-duration: 80s; }
-.ghost-column.reverse { animation-name: scrollDown; }
-
-@keyframes scrollUp {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-25%); }
-}
-@keyframes scrollDown {
-  0% { transform: translateY(-25%); }
-  100% { transform: translateY(0); }
+  gap: 20px;
 }
 
-/* The Ghost Cards */
+/* Animations */
+@keyframes scrollUp { from { transform: translateY(0); } to { transform: translateY(-50%); } }
+@keyframes scrollDown { from { transform: translateY(-50%); } to { transform: translateY(0); } }
+
+.ghost-column.slow { animation: scrollUp 60s linear infinite; }
+.ghost-column.medium { animation: scrollDown 45s linear infinite; }
+.ghost-column.fast { animation: scrollUp 30s linear infinite; }
+
 .ghost-card {
-  background: var(--card-bg);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: var(--card-shadow);
+  width: 240px;
+  height: 140px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  height: 280px;
-  border: 1px solid rgba(255,255,255,0.05);
-  
-  /* Start slightly dim, they will glow when hitting the sensor */
-  filter: grayscale(40%);
-  transition: filter 0.3s ease;
+  gap: 8px;
 }
 
 .ghost-image {
-  height: 140px;
+  height: 60px;
+  border-radius: 6px;
   width: 100%;
 }
 
 .ghost-content {
-  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  flex: 1;
+  gap: 4px;
 }
 
 .ghost-category {
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  color: #888;
+  font-size: 0.6rem;
   letter-spacing: 1px;
+  font-weight: 700;
+  opacity: 0.6;
 }
 
 .ghost-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--login-text);
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.ghost-meta {
-  margin-top: auto;
-  display: flex;
-  gap: 6px;
-}
-.ghost-pill {
-  height: 6px;
-  width: 40px;
-  background: currentColor;
-  opacity: 0.1;
+  height: 8px;
+  background: rgba(255,255,255,0.2);
   border-radius: 4px;
+  width: 80%;
 }
-.ghost-pill.short { width: 20px; }
 
-
-/* --- 4. The Stage (Center) --- */
+/* --- LOGIN STAGE --- */
 .login-stage {
   position: relative;
   z-index: 10;
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+}
+
+.login-sensor-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+  filter: blur(40px);
+  z-index: -1;
+  animation: pulseGlow 4s infinite ease-in-out;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+/* --- CARD CONTENT --- */
+.login-card-custom {
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-header h1 {
+  font-family: 'Playfair Display', serif; /* Or your theme font */
+  font-size: 2.5rem;
+  margin: 0;
+  letter-spacing: -1px;
+  background: linear-gradient(to right, #fff, #aaa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.login-header p {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.5rem;
+}
+
+/* INPUTS & BUTTONS */
+.login-step {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.input-group {
+  position: relative;
+}
+
+.login-input-large input {
+  font-size: 1.2rem !important;
+  padding: 1.2rem !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.login-input-large input:focus {
+  border-color: #fff !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+.login-btn-wide {
+  width: 100%;
+  padding: 1rem !important;
+  font-size: 1rem !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.text-link-button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: -10px;
+}
+
+.text-link-button:hover {
+  color: white;
+}
+
+/* DIVIDER */
+.login-divider {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  margin: 2.5rem 0 1.5rem 0;
+  position: relative;
 }
 
-/* THE MAGIC GLOW SENSOR */
-/* This sits behind the login card. 
-   Anything passing through it gets blended with 'overlay', making it pop/glow. */
-.login-sensor-glow {
+.login-divider::before {
+  content: '';
   position: absolute;
-  width: 600px;
-  height: 600px;
-  background: var(--glow-color);
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 1;
+}
+
+.login-divider span {
+  background: #111; /* Match card bg approx */
+  padding: 0 15px;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.4);
+  z-index: 2;
+  position: relative;
+}
+
+/* SOCIAL ROW */
+.social-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.social-btn {
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  pointer-events: none;
-  z-index: -1; /* Behind the login card, but in front of background stream contextually */
-  
-  /* This creates the interaction */
-  mix-blend-mode: overlay; 
-  filter: blur(40px);
-  animation: breathe 6s ease-in-out infinite alternate;
-}
-
-@keyframes breathe {
-  0% { transform: scale(0.9); opacity: 0.8; }
-  100% { transform: scale(1.1); opacity: 1; }
-}
-
-.login-container {
-  width: 400px;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  
-  /* Frosted Glass */
-  background-color: var(--login-glass);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--login-border);
-}
-
-.login-form-panel {
-  padding: 60px 40px;
-  text-align: center;
-}
-
-/* REDESIGNED TITLE */
-.login-form-panel h1 {
-  font-family: var(--font-logo), serif; /* Matches Header 'The Gamut' font */
-  font-size: 42px; /* Increased slightly for impact */
-  font-weight: 700;
-  color: var(--login-text);
-  margin-bottom: 8px;
-  letter-spacing: -1px;
-}
-
-.login-form-panel p {
-  font-family: var(--font-body), sans-serif;
-  color: var(--login-subtext);
-  font-size: 15px;
-  margin-bottom: 45px;
-  font-weight: 400;
-}
-
-/* --- Firebase UI Styling FIXES --- */
-#firebaseui-auth-container .firebaseui-container {
-  background: transparent;
-  box-shadow: none;
-  max-width: 100%;
-}
-#firebaseui-auth-container .firebaseui-card-content { padding: 0; }
-
-/* FIX: Google Button Visibility and Alignment */
-#firebaseui-auth-container .firebaseui-idp-button.firebaseui-idp-google {
-  background-color: var(--bg-elevated) !important;
-  border: 1px solid var(--border-color) !important;
-  border-radius: 12px;
-  height: 52px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-  width: 100%;
-  max-width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   transition: all 0.2s ease;
-  
-  /* Flex Centering to fix alignment */
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 12px;
-  padding: 0 !important;
 }
 
-#firebaseui-auth-container .firebaseui-idp-button.firebaseui-idp-google:hover {
-  background-color: var(--bg-card) !important;
-  border-color: var(--accent-primary) !important;
-  transform: translateY(-1px);
+.social-btn:hover {
+  background: white;
+  transform: translateY(-2px);
 }
 
-/* Reset Icon Positioning to play nice with Flexbox */
-#firebaseui-auth-container .firebaseui-idp-icon {
-  position: static !important;
-  margin: 0 !important;
-  display: block;
+.social-btn:hover svg path {
+  fill: black;
 }
 
-/* FIX: Ensure Text is visible and centered */
-#firebaseui-auth-container .firebaseui-idp-text.firebaseui-idp-text-long {
-  color: var(--login-text) !important; 
-  font-family: var(--font-body), sans-serif !important;
-  font-weight: 600;
-  font-size: 15px;
-  position: static !important;
-  display: inline-block !important;
-  padding: 0 !important;
-  line-height: 1 !important;
+/* ANIMATION UTILS */
+.fade-in {
+  animation: fadeIn 0.4s ease-out;
 }
 
-#firebaseui-auth-container .mdl-progress { display: none; }
-
-/* Mobile */
-@media (max-width: 768px) {
-  .ghost-column.fast { display: none; }
-  .login-container { width: 90%; max-width: 380px; }
-  .login-sensor-glow { width: 350px; height: 350px; }
-  .login-form-panel h1 { font-size: 32px; }
-}
-@media (max-width: 480px) {
-  .ghost-column.medium { display: none; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

@@ -20,10 +20,12 @@ const InFocusBar: React.FC = () => {
     const fetchTopics = async () => {
       try {
         const { data } = await api.getTrendingTopics();
-        // FIXED: Backend returns { data: [...] }, not data.topics
-        setTopics(data.data || []);
+        // FIXED: Safely access data.data from the response structure
+        // Backend returns: { status: 'success', data: [...] }
+        setTopics(data?.data || []);
       } catch (error) {
         console.error("Failed to load In Focus topics", error);
+        setTopics([]); // Fallback to empty
       } finally {
         setLoading(false);
       }
@@ -41,6 +43,7 @@ const InFocusBar: React.FC = () => {
     }
   };
 
+  // If loading, show skeleton. If loaded and empty, hide component.
   if (!loading && topics.length === 0) return null;
 
   return (

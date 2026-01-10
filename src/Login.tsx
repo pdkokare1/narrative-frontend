@@ -43,6 +43,7 @@ const Login: React.FC = () => {
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'PHONE' | 'OTP'>('PHONE');
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null); // Explicit error state
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   
   const { addToast } = useToast();
@@ -50,7 +51,7 @@ const Login: React.FC = () => {
   
   const recaptchaRendered = useRef(false);
 
-  // Cleanup on unmount
+  // Cleanup on unmount only
   useEffect(() => {
     return () => {
       if (window.recaptchaVerifier) {
@@ -63,20 +64,20 @@ const Login: React.FC = () => {
   // --- HANDLERS ---
 
   const setupRecaptcha = async () => {
-    // If it exists, return it
+    // Return existing verifier if ready
     if (window.recaptchaVerifier) return window.recaptchaVerifier;
 
     try {
-      console.log("Initializing Visible Recaptcha...");
-      
-      // We use 'normal' size (Visible Checkbox) to prevent conflicts with App Check
+      console.log("Initializing Recaptcha...");
+      // We use 'normal' (Visible) because it is the most robust
       const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'normal', 
+        'size': 'normal',
         'callback': (response: any) => {
-          console.log("Captcha Solved");
+          console.log("ReCAPTCHA Solved");
+          setErrorMsg(null); // Clear errors when user solves it
         },
         'expired-callback': () => {
-          addToast("Security check expired. Please check the box again.", 'error');
+          setErrorMsg("Security check expired. Please check the box again.");
         }
       });
       
@@ -85,17 +86,18 @@ const Login: React.FC = () => {
       recaptchaRendered.current = true;
       return verifier;
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Recaptcha Setup Error:", err);
-      // If it fails, it usually means the element isn't in DOM or network issue
-      // We don't throw immediately, we let the button try again
+      setErrorMsg("Could not load security check. Please refresh.");
       return null;
     }
   };
 
   const handleSendCode = async () => {
+    setErrorMsg(null);
+
     if (!phoneNumber || phoneNumber.length < 4) {
-        addToast('Please enter a valid phone number.', 'error');
+        setErrorMsg('Please enter a valid phone number.');
         return;
     }
 
@@ -107,14 +109,11 @@ const Login: React.FC = () => {
       const formattedNumber = `${countryCode}${cleanNumber}`;
       console.log("Sending to:", formattedNumber);
 
-      // 2. Ensure Recaptcha is Ready (Visible)
+      // 2. Ensure Recaptcha is Ready
       const verifier = await setupRecaptcha();
-      if (!verifier) {
-          throw new Error("Could not load security check. Please refresh.");
-      }
+      if (!verifier) throw new Error("Security check failed to load.");
 
       // 3. Send SMS
-      // Note: User might need to solve the captcha *after* clicking if not already solved
       const confirmation = await signInWithPhoneNumber(auth, formattedNumber, window.recaptchaVerifier);
       
       setConfirmationResult(confirmation);
@@ -126,20 +125,27 @@ const Login: React.FC = () => {
       
       let msg = 'Failed to send code.';
       if (error.code === 'auth/invalid-phone-number') msg = 'Invalid phone number format.';
-      if (error.code === 'auth/quota-exceeded') msg = 'SMS quota exceeded.';
-      if (error.code === 'auth/billing-not-enabled') msg = 'Billing not enabled in Firebase.';
+      if (error.code === 'auth/quota-exceeded') msg = 'SMS quota exceeded for this project.';
+      if (error.code === 'auth/billing-not-enabled') msg = 'Billing is not enabled in Firebase Console.';
       if (error.code === 'auth/network-request-failed') msg = 'Network error. Check connection.';
       if (error.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
-      if (error.message && error.message.includes('authorized domain')) {
+      if (error.code === 'auth/app-not-authorized' || (error.message && error.message.includes('domain'))) {
         msg = 'Domain not authorized in Firebase Console.';
       }
       
-      if (error.code === 'auth/internal-error' || error.message.includes('internal-error')) {
-         msg = 'Security check interrupted. Reloading...';
-         setTimeout(() => window.location.reload(), 2000);
-      }
-
+      // We display the specific error text on screen so you can see it
+      setErrorMsg(msg);
       addToast(msg, 'error');
+
+      // Note: We DO NOT clear the verifier here automatically anymore.
+      // This allows the user to see the error without the box resetting immediately.
+      // If it's a specific internal error, we might need to reset, but let's be passive.
+      if (error.code === 'auth/internal-error') {
+         if (window.recaptchaVerifier) {
+             window.recaptchaVerifier.clear();
+             window.recaptchaVerifier = undefined;
+         }
+      }
 
     } finally {
       setLoading(false);
@@ -155,7 +161,7 @@ const Login: React.FC = () => {
       navigate('/');
     } catch (error) {
       console.error("OTP Error:", error);
-      addToast('Invalid code. Please try again.', 'error');
+      setErrorMsg('Invalid code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -195,7 +201,6 @@ const Login: React.FC = () => {
   return (
     <div className="login-page-wrapper">
       
-      {/* Background Animation */}
       <div className="narrative-stream-bg">
         <div className="stream-vignette"></div>
         <div className="stream-columns">
@@ -205,7 +210,6 @@ const Login: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Login Stage */}
       <div className="login-stage">
         <div className="login-sensor-glow"></div>
 
@@ -254,23 +258,20 @@ const Login: React.FC = () => {
                             style={{ flex: 1 }}
                         />
                     </div>
-                    
-                    {/* VISIBLE RECAPTCHA CONTAINER */}
-                    <div 
-                      id="recaptcha-container" 
-                      style={{ 
-                          margin: '16px auto', 
-                          display: 'flex', 
-                          justifyContent: 'center',
-                          minHeight: '78px' // Prevents layout shift
-                      }}
-                    ></div>
+
+                    {/* ERROR MESSAGE DISPLAY */}
+                    {errorMsg && (
+                        <div style={{ color: '#ff6b6b', fontSize: '0.85rem', marginTop: '8px', textAlign: 'center' }}>
+                            {errorMsg}
+                        </div>
+                    )}
 
                     <Button 
                         variant="primary" 
                         onClick={handleSendCode} 
                         disabled={loading}
                         className="login-btn-wide"
+                        style={{ marginTop: '16px' }}
                     >
                         {loading ? 'Processing...' : 'Get Access Code'}
                     </Button>
@@ -290,6 +291,13 @@ const Login: React.FC = () => {
                             maxLength={6}
                         />
                     </div>
+                    
+                    {errorMsg && (
+                        <div style={{ color: '#ff6b6b', fontSize: '0.85rem', marginTop: '8px', textAlign: 'center' }}>
+                            {errorMsg}
+                        </div>
+                    )}
+
                     <Button 
                         variant="primary" 
                         onClick={handleVerifyOtp} 
@@ -300,7 +308,10 @@ const Login: React.FC = () => {
                     </Button>
                     <button 
                         className="text-link-button" 
-                        onClick={() => setStep('PHONE')}
+                        onClick={() => {
+                            setStep('PHONE');
+                            setErrorMsg(null);
+                        }}
                     >
                         Wrong number?
                     </button>
@@ -324,6 +335,21 @@ const Login: React.FC = () => {
                     </svg>
                 </button>
             </div>
+
+            {/* CRITICAL FIX: 
+               Moved this div OUTSIDE the conditional rendering ({step === 'PHONE'}).
+               It now exists in the DOM at all times, hidden by CSS if step is not PHONE.
+               This prevents ReCAPTCHA from crashing/resetting when the component updates.
+            */}
+            <div 
+              id="recaptcha-container" 
+              style={{ 
+                  margin: '16px auto', 
+                  display: step === 'PHONE' ? 'flex' : 'none', 
+                  justifyContent: 'center',
+                  minHeight: '78px'
+              }}
+            ></div>
 
           </Card>
         </div>

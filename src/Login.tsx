@@ -1,5 +1,5 @@
 // src/Login.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   RecaptchaVerifier, 
   signInWithPhoneNumber, 
@@ -39,7 +39,7 @@ const COUNTRY_CODES = [
 
 const Login: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [countryCode, setCountryCode] = useState('+1'); // Default to +1, user can change
+  const [countryCode, setCountryCode] = useState('+1');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'PHONE' | 'OTP'>('PHONE');
   const [loading, setLoading] = useState(false);
@@ -48,64 +48,34 @@ const Login: React.FC = () => {
   const { addToast } = useToast();
   const navigate = useNavigate();
   
-  // Ref to track if recaptcha is currently rendering to prevent duplicates
+  // Track if recaptcha is rendered
   const recaptchaRendered = useRef(false);
 
-  // --- 1. INITIALIZE RECAPTCHA ON MOUNT ---
-  useEffect(() => {
-    const initRecaptcha = async () => {
-      // prevent double-init in Strict Mode
-      if (recaptchaRendered.current || window.recaptchaVerifier) return;
-
-      const container = document.getElementById('recaptcha-container');
-      
-      if (container) {
-        console.log("Initializing RecaptchaVerifier...");
-        try {
-          // Initialize
-          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            'size': 'invisible',
-            'callback': (response: any) => {
-              console.log("Recaptcha Solved via Callback");
-            },
-            'expired-callback': () => {
-              addToast('Security check expired. Please refresh.', 'error');
-              if (window.recaptchaVerifier) {
-                window.recaptchaVerifier.clear();
-                recaptchaRendered.current = false;
-              }
-            }
-          });
-          
-          // Render immediately so it is ready for the click
-          await window.recaptchaVerifier.render();
-          recaptchaRendered.current = true;
-          console.log("Recaptcha Rendered & Ready.");
-        } catch (err) {
-          console.error("Recaptcha Init Error:", err);
-        }
-      }
-    };
-
-    // Small delay to ensure DOM is painted
-    const timer = setTimeout(initRecaptcha, 500);
-
-    // Cleanup on component unmount
-    return () => {
-      clearTimeout(timer);
-      if (window.recaptchaVerifier) {
-        try { 
-          window.recaptchaVerifier.clear(); 
-        } catch(e) {
-          console.warn("Recaptcha clear error", e);
-        }
-        window.recaptchaVerifier = undefined;
-        recaptchaRendered.current = false;
-      }
-    };
-  }, [addToast]);
-
   // --- HANDLERS ---
+
+  const initRecaptcha = () => {
+    if (!window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          'size': 'invisible',
+          'callback': (response: any) => {
+            console.log("Recaptcha Verified");
+          },
+          'expired-callback': () => {
+            console.warn("Recaptcha Expired");
+            if (window.recaptchaVerifier) {
+              window.recaptchaVerifier.clear();
+              window.recaptchaVerifier = undefined;
+              recaptchaRendered.current = false;
+            }
+          }
+        });
+        recaptchaRendered.current = true;
+      } catch (err) {
+        console.error("Recaptcha Init Error:", err);
+      }
+    }
+  };
 
   const handleSendCode = async () => {
     if (!phoneNumber || phoneNumber.length < 4) {
@@ -116,19 +86,13 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      // 1. Format Number: Combine Country Code + Digits
-      const cleanNumber = phoneNumber.replace(/\D/g, ''); // Remove existing non-digits
-      const formattedNumber = `${countryCode}${cleanNumber}`;
-      
-      console.log("Attempting to send to:", formattedNumber);
+      // 1. Initialize Recaptcha Lazily (Just in time)
+      initRecaptcha();
 
-      // 2. Ensure Verifier Exists (Fallback check)
-      if (!window.recaptchaVerifier) {
-        console.error("Verifier missing, attempting to re-init...");
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-             'size': 'invisible'
-        });
-      }
+      // 2. Format Number
+      const cleanNumber = phoneNumber.replace(/\D/g, ''); 
+      const formattedNumber = `${countryCode}${cleanNumber}`;
+      console.log("Attempting to send to:", formattedNumber);
 
       // 3. Send SMS
       const confirmation = await signInWithPhoneNumber(auth, formattedNumber, window.recaptchaVerifier);
@@ -151,20 +115,19 @@ const Login: React.FC = () => {
         msg = 'Domain not authorized. Check Firebase Console.';
       }
       
-      // Internal error often means the Recaptcha Token was invalid or used
       if (error.code === 'auth/internal-error') {
-         msg = 'Security Check Failed. Refreshing page...';
-         setTimeout(() => window.location.reload(), 2500);
+         // Often solved by clearing the verifier and trying again
+         msg = 'Security check failed. Please click again.';
+         if (window.recaptchaVerifier) {
+             try {
+                window.recaptchaVerifier.clear();
+             } catch(e) { console.warn(e) }
+             window.recaptchaVerifier = undefined;
+             recaptchaRendered.current = false;
+         }
       }
 
       addToast(msg, 'error');
-      
-      // If the verifier was "used up" or broken, clear it so the user can try again (after refresh usually)
-      if (window.recaptchaVerifier && error.code !== 'auth/invalid-phone-number') {
-         window.recaptchaVerifier.clear();
-         window.recaptchaVerifier = undefined;
-         recaptchaRendered.current = false;
-      }
 
     } finally {
       setLoading(false);

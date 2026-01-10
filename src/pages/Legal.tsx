@@ -86,7 +86,7 @@ const Legal: React.FC = () => {
             <p>This Privacy Policy is governed by the laws of India.</p>
 
             <h3>9. Contact Us</h3>
-            <p>If you have questions or comments about this Privacy Policy, please contact us at: <strong>support@thegamut.app</strong></p>
+            <p>If you have questions or comments about this Privacy Policy, please contact us at: <strong>support@thegamut.in</strong></p>
           </div>
         </section>
 
@@ -166,7 +166,7 @@ const Legal: React.FC = () => {
               In order to resolve a complaint regarding the application or to receive further information regarding use of the application, please contact us at:<br/>
               <strong>Stalingrad Technologies (OPC) Pvt Ltd</strong><br/>
               Pune, Maharashtra, India<br/>
-              Email: support@thegamut.app
+              Email: support@thegamut.in
             </p>
           </div>
         </section>

@@ -1,28 +1,46 @@
-// src/components/ui/Card.tsx
-import React from 'react';
+import React, { ReactNode } from 'react';
 import './Card.css';
 
 interface CardProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  title?: string;
+  subtitle?: string;
+  // FIXED: Added 'xl' to the allowed padding types
+  padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl'; 
+  variant?: 'default' | 'outlined' | 'elevated' | 'glass';
   className?: string;
-  variant?: 'glass' | 'solid' | 'flat';
-  padding?: 'none' | 'sm' | 'md' | 'lg';
   onClick?: () => void;
 }
 
-const Card: React.FC<CardProps> = ({ 
-  children, 
-  className = '', 
-  variant = 'glass', 
+const Card: React.FC<CardProps> = ({
+  children,
+  title,
+  subtitle,
   padding = 'md',
-  onClick 
+  variant = 'default',
+  className = '',
+  onClick
 }) => {
   return (
     <div 
-      className={`ui-card card-${variant} pad-${padding} ${className}`}
+      className={`
+        card 
+        card-variant-${variant} 
+        card-padding-${padding} 
+        ${onClick ? 'card-interactive' : ''} 
+        ${className}
+      `}
       onClick={onClick}
     >
-      {children}
+      {(title || subtitle) && (
+        <div className="card-header">
+          {title && <h3 className="card-title">{title}</h3>}
+          {subtitle && <p className="card-subtitle">{subtitle}</p>}
+        </div>
+      )}
+      <div className="card-content">
+        {children}
+      </div>
     </div>
   );
 };

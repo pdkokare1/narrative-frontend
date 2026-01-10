@@ -204,6 +204,22 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ currentFontSize, onSe
                 </div>
             </Card>
 
+            {/* --- LEGAL --- */}
+            <Card className="settings-card mt-20">
+                <h2 className="settings-section-title">Legal</h2>
+                <div className="settings-field">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                         <div>
+                            <span className="settings-label">Privacy & Terms</span>
+                            <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Read our policies.</p>
+                        </div>
+                        <Button variant="secondary" onClick={() => navigate('/legal')}>
+                            View
+                        </Button>
+                    </div>
+                </div>
+            </Card>
+
             {/* --- DANGER ZONE --- */}
             <Card className="settings-card danger-card mt-30">
                 <h2 className="settings-section-title danger-title">Danger Zone</h2>

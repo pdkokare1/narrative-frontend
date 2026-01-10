@@ -1,3 +1,4 @@
+// src/components/ui/Card.tsx
 import React, { ReactNode } from 'react';
 import './Card.css';
 
@@ -5,7 +6,7 @@ interface CardProps {
   children: ReactNode;
   title?: string;
   subtitle?: string;
-  // FIXED: Added 'xl' to the allowed padding types
+  // FIXED: Added 'xl' to enable the luxurious padding in Login
   padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl'; 
   variant?: 'default' | 'outlined' | 'elevated' | 'glass';
   className?: string;

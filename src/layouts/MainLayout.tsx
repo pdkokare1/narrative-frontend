@@ -1,6 +1,6 @@
 // src/layouts/MainLayout.tsx
 import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, Navigate } from 'react-router-dom';
 
 import '../App.css'; 
 import '../DashboardPages.css';
@@ -15,6 +15,7 @@ import GlobalPlayerBar from '../components/GlobalPlayerBar';
 import BottomNav from '../components/ui/BottomNav';
 import CustomTooltip from '../components/ui/CustomTooltip';
 import PageLoader from '../components/PageLoader';
+import { useAuth } from '../context/AuthContext'; // To check guest status
 
 import { IFilters, IArticle, IUserProfile, INarrative } from '../types';
 
@@ -31,8 +32,15 @@ const CompareCoverageModal = lazy(() => import('../components/modals/CompareCove
 const DetailedAnalysisModal = lazy(() => import('../components/modals/DetailedAnalysisModal'));
 const FilterModal = lazy(() => import('../components/modals/FilterModal'));
 
+// Protected Route Wrapper for inner routes
+const RequireAuth = ({ children }: { children: JSX.Element }) => {
+    const { user } = useAuth();
+    if (!user) return <Navigate to="/login" replace />;
+    return children;
+};
+
 interface MainLayoutProps {
-  profile: IUserProfile;
+  profile: IUserProfile | null; // UPDATED: Can be null for guests
 }
 
 export default function MainLayout({ profile }: MainLayoutProps) {
@@ -61,13 +69,11 @@ export default function MainLayout({ profile }: MainLayoutProps) {
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
   // --- LOGIC HOOKS ---
-  const { savedArticleIds, handleToggleSave } = useArticleSave(profile.savedArticles || []);
+  // FIXED: Provide empty array if profile is null (Guest)
+  const { savedArticleIds, handleToggleSave } = useArticleSave(profile?.savedArticles || []);
 
-  // --- EFFECTS (FIXED) ---
-
-  // 1. INITIALIZATION (Runs ONCE on mount)
+  // --- EFFECTS ---
   useEffect(() => {
-    // Load Theme Preference
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
       setTheme(savedTheme);
@@ -76,27 +82,20 @@ export default function MainLayout({ profile }: MainLayoutProps) {
       setTheme(userPrefersDark ? 'dark' : 'light');
     }
 
-    // Load Font Size Preference
     const savedFont = localStorage.getItem('fontSize');
     if (savedFont) {
         setFontSize(savedFont);
     }
-  }, []); // Empty dependency array = No loops!
+  }, []);
 
-  // 2. STATE SYNC (Runs whenever theme or fontSize changes)
-  // This replaces the conflicting effects and manual updates in handlers
   useEffect(() => {
-      // Update DOM
       document.body.className = `${theme}-mode font-${fontSize}`;
-
-      // Persist to Storage
       localStorage.setItem('theme', theme);
       localStorage.setItem('fontSize', fontSize);
   }, [theme, fontSize]);
 
   // --- HANDLERS ---
   const toggleTheme = () => {
-    // Simplified: Just update state, Effect handles the rest
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
@@ -139,7 +138,7 @@ export default function MainLayout({ profile }: MainLayoutProps) {
       <Header 
         theme={theme} 
         toggleTheme={toggleTheme} 
-        username={profile.username} 
+        username={profile?.username || 'Guest'} // Handle Guest name
         currentFilters={filters}
       />
       
@@ -148,6 +147,7 @@ export default function MainLayout({ profile }: MainLayoutProps) {
       <div className="main-container">
         <Suspense fallback={<PageLoader />}>
           <Routes>
+            {/* PUBLIC ROUTES */}
             <Route path="/" element={
               <NewsFeed
                 filters={filters}
@@ -168,26 +168,33 @@ export default function MainLayout({ profile }: MainLayoutProps) {
                 showTooltip={showTooltip}
               /> 
             } />
-            <Route path="/my-dashboard" element={<MyDashboard theme={theme} />} />
-            <Route path="/saved-articles" element={ 
-                <SavedArticles 
-                  onToggleSave={handleToggleSave}
-                  onCompare={handleCompareClick}
-                  onAnalyze={handleAnalyzeClick}
-                  onShare={() => {}} 
-                  onRead={() => {}} 
-                  showTooltip={showTooltip}
-                /> 
-            } />
             <Route path="/emergency-resources" element={<EmergencyResources />} />
-            <Route path="/account-settings" element={
-              <AccountSettings 
-                  currentFontSize={fontSize} 
-                  onSetFontSize={setFontSize} 
-              />
-            } />
             <Route path="/legal" element={<Legal />} />
-            <Route path="/profile-menu" element={<MobileProfileMenu />} />
+
+            {/* PROTECTED ROUTES */}
+            <Route path="/my-dashboard" element={<RequireAuth><MyDashboard theme={theme} /></RequireAuth>} />
+            <Route path="/saved-articles" element={ 
+                <RequireAuth>
+                  <SavedArticles 
+                    onToggleSave={handleToggleSave}
+                    onCompare={handleCompareClick}
+                    onAnalyze={handleAnalyzeClick}
+                    onShare={() => {}} 
+                    onRead={() => {}} 
+                    showTooltip={showTooltip}
+                  /> 
+                </RequireAuth>
+            } />
+            <Route path="/account-settings" element={
+              <RequireAuth>
+                <AccountSettings 
+                    currentFontSize={fontSize} 
+                    onSetFontSize={setFontSize} 
+                />
+              </RequireAuth>
+            } />
+            <Route path="/profile-menu" element={<RequireAuth><MobileProfileMenu /></RequireAuth>} />
+            
             <Route path="*" element={<PageNotFound />} /> 
           </Routes>
         </Suspense>

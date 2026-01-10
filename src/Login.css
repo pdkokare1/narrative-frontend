@@ -21,11 +21,11 @@
   height: 120%;
   display: flex;
   gap: 20px;
-  opacity: 0.25; /* Subtle background */
+  opacity: 0.25; 
   transform: rotate(-12deg);
   z-index: 0;
   pointer-events: none;
-  filter: blur(2px) grayscale(80%); /* De-emphasize background */
+  filter: blur(2px) grayscale(80%); 
 }
 
 .stream-vignette {
@@ -97,7 +97,8 @@
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 420px;
+  /* UPDATED: Increased width from 420px to 520px */
+  max-width: 520px; 
   padding: 20px;
 }
 
@@ -132,8 +133,8 @@
 }
 
 .login-header h1 {
-  font-family: 'Playfair Display', serif; /* Or your theme font */
-  font-size: 2.5rem;
+  font-family: 'Playfair Display', serif; 
+  font-size: 2.8rem; /* Slightly larger title */
   margin: 0;
   letter-spacing: -1px;
   background: linear-gradient(to right, #fff, #aaa);
@@ -142,7 +143,7 @@
 }
 
 .login-header p {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: rgba(255, 255, 255, 0.6);
   margin-top: 0.5rem;
 }
@@ -159,8 +160,8 @@
 }
 
 .login-input-large input {
-  font-size: 1.2rem !important;
-  padding: 1.2rem !important;
+  font-size: 1.3rem !important; /* Slightly larger text */
+  padding: 1.3rem !important;
   background: rgba(0, 0, 0, 0.3) !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
   text-align: center;
@@ -174,7 +175,7 @@
 
 .login-btn-wide {
   width: 100%;
-  padding: 1rem !important;
+  padding: 1.1rem !important;
   font-size: 1rem !important;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -215,7 +216,7 @@
 }
 
 .login-divider span {
-  background: #111; /* Match card bg approx */
+  background: #111; 
   padding: 0 15px;
   font-size: 0.7rem;
   letter-spacing: 2px;
@@ -232,8 +233,8 @@
 }
 
 .social-btn {
-  width: 50px;
-  height: 50px;
+  width: 54px; /* Slightly larger buttons */
+  height: 54px;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.05);

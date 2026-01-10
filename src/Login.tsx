@@ -35,94 +35,117 @@ const Login: React.FC = () => {
   
   const { addToast } = useToast();
   const navigate = useNavigate();
-  // Ref to track if verifier is already initialized to prevent Strict Mode double-render crashes
-  const verifierRef = useRef<RecaptchaVerifier | null>(null);
 
-  // Initialize Invisible Recaptcha on Mount (Robust Method)
+  // Initialize Invisible Recaptcha on Mount
   useEffect(() => {
-    // Clean up existing verifier if it exists (handles hot reloads)
+    // 1. Cleanup any existing verifier to prevent "Already Rendered" error
     if (window.recaptchaVerifier) {
       try {
         window.recaptchaVerifier.clear();
       } catch (e) {
-        console.warn("Recaptcha cleanup warning", e);
+        console.warn("Cleanup warning:", e);
       }
+      window.recaptchaVerifier = undefined;
     }
 
-    // Initialize new verifier
+    // 2. Clear the DOM container manually
+    const container = document.getElementById('recaptcha-container');
+    if (container) container.innerHTML = '';
+
+    // 3. Initialize new verifier
     try {
-      verifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      console.log("Initializing RecaptchaVerifier...");
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
-        'callback': () => {
-          console.log("Recaptcha resolved");
+        'callback': (response: any) => {
+          console.log("Recaptcha SOLVED automatically via invisible check.");
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
         },
         'expired-callback': () => {
+          console.warn("Recaptcha Expired");
           addToast('Security check expired. Please try again.', 'error');
         }
       });
-      window.recaptchaVerifier = verifierRef.current;
     } catch (error) {
-      console.error("Recaptcha Init Error:", error);
+      console.error("Recaptcha Init Failed:", error);
     }
     
-    // Cleanup on Unmount
     return () => {
+        // Cleanup on unmount
         if (window.recaptchaVerifier) {
-            try {
-              window.recaptchaVerifier.clear();
-              window.recaptchaVerifier = undefined;
-            } catch(e) { /* ignore */ }
+            try { window.recaptchaVerifier.clear(); } catch(e) {}
         }
     };
-  }, []); // Empty dependency array ensures this only runs once
+  }, []);
 
   // --- HANDLERS ---
 
   const handleSendCode = async () => {
+    console.log("Attempting to send code to:", phoneNumber);
+
     if (!phoneNumber || phoneNumber.length < 8) {
         addToast('Please enter a valid phone number.', 'error');
         return;
     }
 
-    setLoading(true);
-    
-    // Ensure verifier exists
     if (!window.recaptchaVerifier) {
-         addToast('Security check failed to load. Refreshing...', 'error');
-         window.location.reload();
-         return;
+        console.error("Verifier is NULL. Reloading page...");
+        addToast('Security check missing. Reloading...', 'error');
+        window.location.reload();
+        return;
     }
 
+    setLoading(true);
+
     try {
-      // Auto-format US numbers if missing country code
-      // If user types "5551234567", we assume "+1" if no "+" is present
-      const formattedNumber = phoneNumber.startsWith('+') 
-        ? phoneNumber 
-        : `+1${phoneNumber.replace(/\D/g, '')}`; 
+      // FIX: Manually format to international standard if user forgot '+'
+      // Assuming US (+1) default if no code provided, adjustable logic
+      let formattedNumber = phoneNumber.trim();
+      if (!formattedNumber.startsWith('+')) {
+         // Default to +1 for US/Canada if missing, or prompt user.
+         // You can change this to your target region.
+         formattedNumber = `+1${formattedNumber.replace(/\D/g, '')}`; 
+      }
+      
+      console.log("Formatted Number:", formattedNumber);
+      
+      // FIX: Force render to ensure widget is active
+      try {
+          await window.recaptchaVerifier.render();
+      } catch (renderError) {
+          // Ignore "already rendered" errors, that is good.
+          console.log("Verifier render status:", renderError);
+      }
 
       const confirmation = await signInWithPhoneNumber(auth, formattedNumber, window.recaptchaVerifier);
+      
+      console.log("SMS Sent Successfully. Confirmation Obj:", confirmation);
       setConfirmationResult(confirmation);
       setStep('OTP');
       addToast('Secure access code sent.', 'success');
+
     } catch (error: any) {
-      console.error("SMS Error Full:", error);
+      console.error("CRITICAL SMS ERROR:", error);
       
       let msg = 'Failed to send code.';
-      if (error.code === 'auth/invalid-phone-number') msg = 'Invalid phone number format.';
+      if (error.code === 'auth/invalid-phone-number') msg = 'Invalid phone number format. Use +1 555-555-5555';
       if (error.code === 'auth/quota-exceeded') msg = 'SMS quota exceeded. Try again later.';
+      if (error.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
       if (error.code === 'auth/network-request-failed') msg = 'Network error. Check connection.';
-      // This is the most common one for new domains:
+      // Catch App Check / Domain errors
       if (error.message && error.message.includes('authorized domain')) {
         msg = 'Domain not authorized in Firebase Console.';
       }
 
       addToast(msg, 'error');
       
-      // Reset captcha if it fails so user can try again
+      // Reset captcha so they can try again
       if (window.recaptchaVerifier) {
-          window.recaptchaVerifier.render().then((widgetId: any) => {
-              if (window.grecaptcha) window.grecaptcha.reset(widgetId);
-          });
+          // Use 'grecaptcha' global to reset if available
+          try {
+             const widgetId = await window.recaptchaVerifier.render();
+             window.grecaptcha.reset(widgetId);
+          } catch(e) {}
       }
     } finally {
       setLoading(false);
@@ -137,6 +160,7 @@ const Login: React.FC = () => {
       addToast('Welcome back.', 'success');
       navigate('/');
     } catch (error) {
+      console.error("OTP Error:", error);
       addToast('Invalid code. Please try again.', 'error');
     } finally {
       setLoading(false);
@@ -199,7 +223,7 @@ const Login: React.FC = () => {
                 <p>Analyze the full spectrum of the narrative.</p>
             </div>
 
-            {/* Hidden Recaptcha Container - Must exist in DOM */}
+            {/* Hidden Recaptcha Container - VITAL for Phone Auth */}
             <div id="recaptcha-container"></div>
 
             {/* STEP 1: PHONE INPUT */}
@@ -220,7 +244,7 @@ const Login: React.FC = () => {
                         disabled={loading}
                         className="login-btn-wide"
                     >
-                        {loading ? 'Sending...' : 'Get Access Code'}
+                        {loading ? 'Sending Security Code...' : 'Get Access Code'}
                     </Button>
                 </div>
             )}
@@ -267,9 +291,8 @@ const Login: React.FC = () => {
                     <svg viewBox="0 0 24 24" width="24" height="24"><path fill="#fff" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
                 </button>
                 
-                {/* Apple Button - UPDATED with Correct SVG */}
+                {/* Apple Button */}
                 <button className="social-btn apple" onClick={handleApplePlaceholder}>
-                    {/* Official Apple Logo SVG (Ionicons) */}
                     <svg viewBox="0 0 512 512" width="22" height="22" fill="white">
                       <path d="M349.13 136.86c-40.32 0-57.36 19.24-85.44 19.24-35.96 0-57.92-19.1-92.86-19.1-34.2 0-70.67 20.88-93.83 56.45-32.52 50.16-27 144.63 25.67 225.11 18.84 28.81 44 61.12 77 61.47h.6c28.68 0 33.48-18.47 62.72-18.47 28.92 0 33.72 18.47 62.72 18.47h.48c33.24-.35 59-33.51 77-61.47 18.72-29.28 26.52-52.68 26.64-53.76-.24-.24-51.24-19.68-51.24-78 0-48.84 40.2-72.36 41.64-73.2-22.92-33.24-58.44-36.96-70.8-37.56z M314 105.86c18.36-22.32 30.6-53.16 27.24-84.12-26.28 1.08-57.96 17.52-76.8 39.72-16.92 19.56-31.56 50.88-27.6 81.36 29.28 2.28 58.8-14.76 77.16-36.96z"/>
                     </svg>

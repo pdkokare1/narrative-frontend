@@ -1,3 +1,5 @@
+/* src/components/ui/Card.css */
+
 /* Card Base Styles */
 .card {
   background-color: var(--bg-card);
@@ -49,7 +51,7 @@
   padding: 2rem;
 }
 
-/* FIXED: Added XL padding support */
+/* FIXED: Added XL padding support for Login screen */
 .card-padding-xl {
   padding: 3rem;
 }

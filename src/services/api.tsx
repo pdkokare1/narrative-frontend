@@ -9,7 +9,7 @@ export const getWeather = (lat: number, lon: number) => {
 
 // --- MISC / TRENDS ---
 export const getTrendingTopics = () => {
-    return api.get('/articles/trends');
+    return api.get('/trending');
 };
 
 // --- EMERGENCY ---

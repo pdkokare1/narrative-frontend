@@ -6,11 +6,10 @@ import * as firebaseui from 'firebaseui';
 import 'firebaseui/dist/firebaseui.css';  
 import './Login.css'; 
 import Card from './components/ui/Card';
-import Button from './components/ui/Button'; // Using your UI component
-import { useToast } from './context/ToastContext'; // For the "Coming Soon" feedback
+import Button from './components/ui/Button'; 
+import { useToast } from './context/ToastContext'; // Using your original context
 
 // --- GHOST DATA ---
-// Beautiful gradients that will "ignite" when they pass under the login card
 const GHOST_CARDS = [
   { category: "POLITICS", title: "Summit Talks: New Climate Agreements Signed", color: "linear-gradient(135deg, #FF6B6B 0%, #EE5D5D 100%)" },
   { category: "TECH", title: "Quantum Leap: Silicon Valley's New Bet", color: "linear-gradient(135deg, #4FACFE 0%, #00F2FE 100%)" },
@@ -33,9 +32,9 @@ const uiConfig = {
     // 1. Phone (Priority)
     {
       provider: PhoneAuthProvider.PROVIDER_ID,
-      defaultCountry: 'US', // Adjust default country if needed
+      defaultCountry: 'US', 
       recaptchaParameters: {
-        type: 'invisible', // Invisible captcha for minimal design
+        type: 'invisible', 
         badge: 'bottomright' 
       }
     },
@@ -52,7 +51,7 @@ const uiConfig = {
   ],
   signInSuccessUrl: "/", 
   callbacks: {
-    signInSuccessWithAuthResult: () => false, // Prevent redirect, let React handle state
+    signInSuccessWithAuthResult: () => false, 
   },
   tosUrl: '/terms', 
   privacyPolicyUrl: '/privacy'
@@ -60,7 +59,8 @@ const uiConfig = {
 
 const Login: React.FC = () => {
   const elementRef = useRef<HTMLDivElement>(null); 
-  const { showToast } = useToast();
+  // FIXED: Destructure 'addToast' instead of 'showToast'
+  const { addToast } = useToast();
 
   useEffect(() => {
     const ui = firebaseui.auth.AuthUI.getInstance() || new firebaseui.auth.AuthUI(auth);
@@ -70,7 +70,8 @@ const Login: React.FC = () => {
   }, []);
 
   const handleAppleClick = () => {
-    showToast('Apple Sign-In is coming soon.', 'info');
+    // FIXED: Use 'addToast' to match your Context API
+    addToast('Apple Sign-In is coming soon.', 'info');
   };
 
   // Helper to render a scrolling column
@@ -111,6 +112,7 @@ const Login: React.FC = () => {
         <div className="login-sensor-glow"></div>
 
         <div className="login-container">
+          {/* Using 'xl' padding - requires the Card update below */}
           <Card variant="glass" padding="xl">
             <div className="login-form-panel" style={{ padding: 0 }}> 
               <h1 style={{ marginBottom: '0.5rem' }}>The Gamut</h1> 
@@ -118,10 +120,8 @@ const Login: React.FC = () => {
                 Analyze the full spectrum of the narrative.
               </p>
               
-              {/* FirebaseUI Container (Phone, Email Link, Google) */}
               <div ref={elementRef} id="firebaseui-auth-container"></div>
               
-              {/* Elegant Divider */}
               <div style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -133,8 +133,6 @@ const Login: React.FC = () => {
                 <div style={{ flex: 1, height: '1px', background: 'currentColor' }}></div>
               </div>
 
-              {/* Apple Placeholder Button */}
-              {/* Manually styled to match FirebaseUI buttons but keep your design system */}
               <Button 
                 variant="secondary" 
                 onClick={handleAppleClick}
@@ -151,7 +149,6 @@ const Login: React.FC = () => {
                     border: '1px solid #333'
                 }}
               >
-                {/* Simple Apple Icon SVG */}
                 <svg viewBox="0 0 384 512" width="16" height="16" fill="white">
                   <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 46.9 104.3 80.9 102.6 30.6-1.5 42.8-19.8 85.3-19.8 41.7 0 53.3 19.8 84.5 19.8 40 0 56.4-42.9 83.2-100.3-52.1-23.7-73.4-64-73.6-88.3zm-31.4-123c3.4-5.2 7.5-16.3 7.5-28.4 0-20.5-13-37-33.6-37-4.2 0-11.3 3.1-15.3 5.5-9.4 6-17.8 15.4-20 25-3.2 16.7 10.1 36 29.8 36 6.3 0 16.1-3.6 24.2-7.5 4.6-2.2 6.8-3 7.4-3.6z"/>
                 </svg>

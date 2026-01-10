@@ -1,5 +1,6 @@
+// src/App.tsx
 import React, { Suspense } from 'react'; 
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; 
 
 import './App.css'; 
@@ -44,6 +45,18 @@ function App() {
   );
 }
 
+// Helper for protecting routes
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return <PageLoader />;
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  return children;
+};
+
 function AppRoutes() {
   const { user, profile, loading } = useAuth();
   
@@ -51,17 +64,21 @@ function AppRoutes() {
   useNativeFeatures(user); 
   
   if (loading) return <PageLoader />;
-  if (!user) return <Login />;
   
-  if (!profile) {
+  // Logic Update: We no longer block generic access if !user.
+  // We only check profile if user EXISTS.
+  if (user && !profile) {
      return <CreateProfile />;
   }
 
-  // Pass profile to Layout for personalization
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route path="/create-profile" element={<Navigate to="/" replace />} />
+        {/* Public Routes */}
+        <Route path="/login" element={ user ? <Navigate to="/" replace /> : <Login /> } />
+        <Route path="/create-profile" element={user ? <CreateProfile /> : <Navigate to="/login" replace />} />
+        
+        {/* Main Layout handles both Public (Feed) and Private (Dashboard) routes internal logic */}
         <Route path="/*" element={<MainLayout profile={profile} />} />
       </Routes>
     </Suspense>

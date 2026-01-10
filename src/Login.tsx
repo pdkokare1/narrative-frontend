@@ -1,5 +1,5 @@
 // src/Login.tsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   RecaptchaVerifier, 
   signInWithPhoneNumber, 
@@ -44,20 +44,24 @@ const Login: React.FC = () => {
   const [step, setStep] = useState<'PHONE' | 'OTP'>('PHONE');
   const [loading, setLoading] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
   
   const { addToast } = useToast();
   const navigate = useNavigate();
   
-  // Track if recaptcha is rendered
   const recaptchaRendered = useRef(false);
 
-  // cleanup on unmount
+  // Helper to append logs to screen
+  const log = (msg: string) => {
+    console.log(`[LOGIN-DEBUG] ${msg}`);
+    setDebugLog(prev => [...prev.slice(-4), msg]); // Keep last 5 logs
+  };
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (window.recaptchaVerifier) {
-        try {
-          window.recaptchaVerifier.clear();
-        } catch (e) { console.warn(e); }
+        try { window.recaptchaVerifier.clear(); } catch(e) {}
         window.recaptchaVerifier = undefined;
       }
     };
@@ -66,30 +70,39 @@ const Login: React.FC = () => {
   // --- HANDLERS ---
 
   const setupRecaptcha = async () => {
-    // If already exists, just return it
-    if (window.recaptchaVerifier) return window.recaptchaVerifier;
+    // 1. Check if already exists
+    if (window.recaptchaVerifier) {
+       log("Verifier already exists, reusing...");
+       return window.recaptchaVerifier;
+    }
 
-    console.log("Setting up reCAPTCHA verifier...");
+    log("Initializing NEW Verifier (Visible Mode)...");
+    
     try {
+      // 2. Create Verifier (Visible 'normal' size)
       const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
+        'size': 'normal', // VISIBLE CHECKBOX
         'callback': (response: any) => {
-          console.log("reCAPTCHA Solved:", response);
+          log("ReCAPTCHA Solved by User.");
         },
         'expired-callback': () => {
-          console.warn("reCAPTCHA Expired");
-          addToast("Security check expired. Please try again.", 'error');
+          log("ReCAPTCHA Expired.");
+          addToast("Security check expired. Please check the box again.", 'error');
         }
       });
       
-      // Explicitly wait for it to render
+      // 3. Render it explicitly so user can see it
+      log("Rendering ReCAPTCHA widget...");
       await verifier.render();
+      
       window.recaptchaVerifier = verifier;
       recaptchaRendered.current = true;
-      console.log("reCAPTCHA Rendered & Ready.");
+      log("Widget Rendered Successfully.");
+      
       return verifier;
 
-    } catch (err) {
+    } catch (err: any) {
+      log(`Setup Error: ${err.message}`);
       console.error("Recaptcha Setup Error:", err);
       throw new Error("Could not load security check.");
     }
@@ -102,58 +115,55 @@ const Login: React.FC = () => {
     }
 
     setLoading(true);
+    setDebugLog([]); // Clear previous logs
+    log("Starting Phone Auth Process...");
 
     try {
       // 1. Prepare Number
       const cleanNumber = phoneNumber.replace(/\D/g, ''); 
       const formattedNumber = `${countryCode}${cleanNumber}`;
-      console.log("Step 1: Preparing to send to:", formattedNumber);
+      log(`Target Number: ${formattedNumber}`);
 
-      // 2. Ensure Recaptcha is Ready
-      console.log("Step 2: Checking Security...");
+      // 2. Ensure Recaptcha is Ready (User might need to click it)
       await setupRecaptcha();
 
-      // 3. Send SMS (with a race timeout in case it hangs)
-      console.log("Step 3: Sending SMS request...");
+      // 3. Send SMS
+      log("Requesting SMS from Firebase...");
       
-      // Create a promise that rejects after 15 seconds to prevent eternal hanging
-      const smsPromise = signInWithPhoneNumber(auth, formattedNumber, window.recaptchaVerifier);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Timeout: Security check not solved in time.")), 15000)
-      );
-
-      // Race them
-      const confirmation: any = await Promise.race([smsPromise, timeoutPromise]);
+      // We do NOT timeout here for visible recaptcha, because user needs time to click images
+      const confirmation = await signInWithPhoneNumber(auth, formattedNumber, window.recaptchaVerifier);
       
-      console.log("Step 4: SMS Sent Successfully!", confirmation);
+      log("SMS Sent! Confirmation received.");
       setConfirmationResult(confirmation);
       setStep('OTP');
       addToast(`Code sent to ${formattedNumber}`, 'success');
 
     } catch (error: any) {
+      log(`ERROR: ${error.code || error.message}`);
       console.error("SMS Error Full Object:", error);
       
       let msg = 'Failed to send code.';
-      if (error.message && error.message.includes('Timeout')) msg = 'Security check timed out. Please check your internet or try again.';
-      if (error.message && error.message.includes('timed out')) msg = 'Connection timed out. Please retry.';
       if (error.code === 'auth/invalid-phone-number') msg = 'Invalid phone number format.';
       if (error.code === 'auth/quota-exceeded') msg = 'SMS quota exceeded.';
       if (error.code === 'auth/network-request-failed') msg = 'Network error. Check connection.';
       if (error.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
       if (error.message && error.message.includes('authorized domain')) {
-        msg = 'Domain not authorized. Please add to Firebase Console.';
+        msg = 'Domain not authorized in Firebase Console.';
       }
       
-      if (error.code === 'auth/internal-error') {
-         msg = 'Security check interrupted. Reloading...';
-         // Clear verifier to force fresh init next time
-         if (window.recaptchaVerifier) {
-             try { window.recaptchaVerifier.clear(); } catch(e){}
-             window.recaptchaVerifier = undefined;
-         }
+      if (error.code === 'auth/internal-error' || error.message.includes('internal-error')) {
+         msg = 'Security configuration error. Reloading page...';
+         setTimeout(() => window.location.reload(), 3000);
       }
 
       addToast(msg, 'error');
+
+      // Reset recaptcha if failed
+      if (window.recaptchaVerifier) {
+          window.recaptchaVerifier.clear();
+          window.recaptchaVerifier = undefined;
+          recaptchaRendered.current = false;
+      }
 
     } finally {
       setLoading(false);
@@ -236,7 +246,6 @@ const Login: React.FC = () => {
                 <div className="login-step fade-in">
                     <div className="input-group" style={{ display: 'flex', gap: '8px' }}>
                         
-                        {/* Country Code Selector */}
                         <select 
                           className="login-country-select"
                           value={countryCode}
@@ -260,7 +269,6 @@ const Login: React.FC = () => {
                           ))}
                         </select>
 
-                        {/* Phone Number Input */}
                         <Input 
                             type="tel" 
                             placeholder="123 456 7890" 
@@ -270,6 +278,17 @@ const Login: React.FC = () => {
                             style={{ flex: 1 }}
                         />
                     </div>
+                    
+                    {/* VISIBLE RECAPTCHA CONTAINER */}
+                    <div 
+                      id="recaptcha-container" 
+                      style={{ 
+                          margin: '15px 0', 
+                          minHeight: '78px', 
+                          display: 'flex', 
+                          justifyContent: 'center' 
+                      }}
+                    ></div>
 
                     <Button 
                         variant="primary" 
@@ -277,7 +296,7 @@ const Login: React.FC = () => {
                         disabled={loading}
                         className="login-btn-wide"
                     >
-                        {loading ? 'Sending Security Code...' : 'Get Access Code'}
+                        {loading ? 'Processing...' : 'Get Access Code'}
                     </Button>
                 </div>
             )}
@@ -330,23 +349,24 @@ const Login: React.FC = () => {
                 </button>
             </div>
 
+            {/* TEMPORARY DEBUG LOG */}
+            <div style={{ 
+                marginTop: '15px', 
+                padding: '10px', 
+                background: 'rgba(0,0,0,0.5)', 
+                borderRadius: '8px',
+                fontSize: '0.75rem',
+                color: '#aaa',
+                fontFamily: 'monospace',
+                border: '1px solid rgba(255,255,255,0.1)'
+            }}>
+                <div style={{ borderBottom: '1px solid #333', marginBottom: '5px' }}>DEBUG LOG:</div>
+                {debugLog.length === 0 ? <span>Waiting for input...</span> : debugLog.map((l, i) => <div key={i}>{l}</div>)}
+            </div>
+
           </Card>
         </div>
       </div>
-
-      {/* Recaptcha Container - Placed at root to ensure visibility */}
-      {/* High z-index to sit on top of everything if it decides to pop up */}
-      <div 
-        id="recaptcha-container" 
-        style={{ 
-            marginTop: '20px', 
-            zIndex: 1000, 
-            position: 'relative',
-            display: 'flex',
-            justifyContent: 'center'
-        }} 
-      ></div>
-
     </div>
   );
 };

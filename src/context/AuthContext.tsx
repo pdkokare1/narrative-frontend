@@ -1,3 +1,4 @@
+// src/context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
@@ -8,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   profile: IUserProfile | null;
   loading: boolean;
+  isGuest: boolean; // NEW: Helper to check guest status
   logout: () => void;
   setProfile: (profile: IUserProfile | null) => void;
 }
@@ -58,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     profile,
     loading,
+    isGuest: !user, // NEW: Derived state
     logout,
     setProfile
   };

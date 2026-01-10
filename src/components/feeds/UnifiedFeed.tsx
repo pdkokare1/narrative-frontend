@@ -1,7 +1,9 @@
 // src/components/feeds/UnifiedFeed.tsx
-import React, { useEffect, useRef, useMemo, useCallback } from 'react'; 
+import React, { useEffect, useRef, useMemo, useCallback, useState } from 'react'; 
 import CategoryPills from '../ui/CategoryPills';
 import SkeletonCard from '../ui/SkeletonCard';
+import NativeAdUnit from '../ui/NativeAdUnit'; // NEW
+import LoginModal from '../modals/LoginModal'; // NEW
 import { useRadio } from '../../context/RadioContext';
 import useShare from '../../hooks/useShare'; 
 import useIsMobile from '../../hooks/useIsMobile'; 
@@ -11,9 +13,10 @@ import { IArticle, INarrative, IFilters } from '../../types';
 import './UnifiedFeed.css'; 
 import { useFeedQuery } from '../../hooks/useFeedQuery';
 import FeedItemRenderer from './FeedItemRenderer';
+import { useAuth } from '../../context/AuthContext'; // NEW
 
 interface UnifiedFeedProps {
-  mode: 'latest' | 'infocus' | 'balanced'; // UPDATED: Strict mode typing
+  mode: 'latest' | 'infocus' | 'balanced'; 
   filters?: IFilters; 
   onFilterChange?: (filters: IFilters) => void;
   onAnalyze: (article: IArticle) => void;
@@ -25,7 +28,6 @@ interface UnifiedFeedProps {
   scrollToTopRef?: React.RefObject<HTMLDivElement>;
 }
 
-// --- HEADER COMPONENT ---
 const FeedHeader: React.FC<{ 
   mode: string; 
   filters: IFilters; 
@@ -43,20 +45,15 @@ const FeedHeader: React.FC<{
                   onSelectCategory={(cat) => { vibrate(); onFilterChange({ ...filters, category: cat }); }} 
                 />
             )}
-            
+            {/* Other headers preserved */}
             {mode === 'infocus' && (
                  <div style={{ padding: '8px 12px', background: 'var(--surface-paper)', borderBottom: '1px solid var(--border-color)' }}>
-                    <p style={{margin:0, fontSize: '0.9rem', color: 'var(--accent-primary)', fontWeight: 600 }}>
-                        Developing Narratives
-                    </p>
+                    <p style={{margin:0, fontSize: '0.9rem', color: 'var(--accent-primary)', fontWeight: 600 }}>Developing Narratives</p>
                  </div>
             )}
-
             {mode === 'balanced' && metaData && (
                  <div style={{ padding: '8px 12px', background: 'var(--surface-paper)', borderBottom: '1px solid var(--border-color)' }}>
-                    <p style={{margin:0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                        {metaData.reason || 'Broadening your perspective'}
-                    </p>
+                    <p style={{margin:0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{metaData.reason || 'Broadening your perspective'}</p>
                  </div>
             )}
         </div>
@@ -64,7 +61,6 @@ const FeedHeader: React.FC<{
   );
 });
 
-// --- MAIN COMPONENT ---
 const UnifiedFeed: React.FC<UnifiedFeedProps> = ({ 
   mode,
   filters = {}, 
@@ -77,31 +73,25 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   showTooltip, 
   scrollToTopRef 
 }) => {
-  // 1. Data Query Hook
   const { 
       feedItems, status, isRefreshing, refresh, loadMoreRef, showNewPill, 
       metaData, isFetchingNextPage, hasNextPage 
   } = useFeedQuery(mode, filters);
 
-  // 2. Radio & UI Hooks
-  const { 
-      startRadio, playSingle, stop, 
-      currentArticle, updateContextQueue, 
-      updateVisibleArticle, isPlaying 
-  } = useRadio();
-  
+  const { startRadio, playSingle, stop, currentArticle, updateContextQueue, updateVisibleArticle, isPlaying } = useRadio();
   const { handleShare } = useShare(); 
   const isMobile = useIsMobile(); 
   const vibrate = useHaptic(); 
-  
-  // 3. Refs & State
+  const { isGuest } = useAuth(); // NEW
+
+  // Local state for Login Modal
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
   const prevSentIds = useRef<string>('');
   const observerRef = useRef<IntersectionObserver | null>(null);
   const articleRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const lastScrolledId = useRef<string | null>(null);
 
-  // 4. Activity Tracking
-  // We filter map to only articles to avoid tracking time on Narratives (collections)
   const articlesMap = useMemo(() => {
       const map = new Map();
       feedItems.forEach(i => { if(i.type === 'Article') map.set(i._id, i); });
@@ -111,7 +101,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const [trackerVisibleId, setTrackerVisibleId] = React.useState<string>();
   useActivityTracker(trackerVisibleId, articlesMap);
 
-  // 5. Radio Queue Synchronization
   const playableArticles = useMemo(() => {
     return feedItems.filter(item => item.type !== 'Narrative') as IArticle[];
   }, [feedItems]);
@@ -133,45 +122,30 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       }
   }, [contentSignature, playableArticles, mode, filters, updateContextQueue]);
 
-  // 6. Intersection Observer (Merged Radio + Stats)
   useEffect(() => {
       if (status !== 'success') return;
-
-      const options = {
-          root: null, 
-          rootMargin: '0px',
-          threshold: 0.6 // 60% visibility required
-      };
-
+      const options = { root: null, rootMargin: '0px', threshold: 0.6 };
       observerRef.current = new IntersectionObserver((entries) => {
           entries.forEach((entry) => {
               if (entry.isIntersecting) {
                   const id = entry.target.getAttribute('data-article-id');
                   if (id) {
-                      updateVisibleArticle(id); // Radio Context
-                      setTrackerVisibleId(id);  // Activity Tracker
+                      updateVisibleArticle(id); 
+                      setTrackerVisibleId(id);  
                   }
               }
           });
       }, options);
-
-      // Attach to all refs
       articleRefs.current.forEach((element) => {
           if (element) observerRef.current?.observe(element);
       });
-
-      return () => {
-          observerRef.current?.disconnect();
-      };
+      return () => { observerRef.current?.disconnect(); };
   }, [feedItems, status, updateVisibleArticle]);
 
-  // 7. Auto-Scroll to Active Radio Article
   useEffect(() => {
       const currentId = currentArticle?._id;
-
       if (isPlaying && currentId) {
           if (currentId === lastScrolledId.current) return;
-
           const element = articleRefs.current.get(currentId);
           if (element) {
               lastScrolledId.current = currentId; 
@@ -180,7 +154,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       }
   }, [currentArticle?._id, isPlaying]);
 
-  // Ref Helper
   const setArticleRef = useCallback((el: HTMLDivElement | null, id: string) => {
       if (el) {
           articleRefs.current.set(id, el);
@@ -193,37 +166,37 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const handleRefresh = () => {
       vibrate();
       refresh();
-      if (scrollToTopRef?.current) {
-          scrollToTopRef.current.scrollTop = 0;
+      if (scrollToTopRef?.current) scrollToTopRef.current.scrollTop = 0;
+  };
+
+  // --- NEW: Handle Interactions with Guest Check ---
+  const handleToggleSaveWrapper = (article: IArticle) => {
+      if (isGuest) {
+          setShowLoginModal(true);
+      } else {
+          onToggleSave(article);
+      }
+  };
+
+  const handlePlayWrapper = (article: IArticle) => {
+      if (isGuest) {
+          setShowLoginModal(true);
+      } else {
+          playSingle(article);
       }
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-        
-        {/* NEW CONTENT PILL */}
         <div className={`new-content-pill ${showNewPill ? 'visible' : ''}`} onClick={handleRefresh}>
             <span>↑ New Articles Available</span>
         </div>
 
-        {/* HEADER */}
-        <FeedHeader 
-            mode={mode} 
-            filters={filters} 
-            onFilterChange={onFilterChange} 
-            vibrate={vibrate} 
-            metaData={metaData}
-        />
+        <FeedHeader mode={mode} filters={filters} onFilterChange={onFilterChange} vibrate={vibrate} metaData={metaData} />
 
-        {/* GRID */}
-        <div 
-            className={`articles-grid ${isMobile ? 'mobile-stack' : ''}`} 
-            ref={scrollToTopRef}
-        >
+        <div className={`articles-grid ${isMobile ? 'mobile-stack' : ''}`} ref={scrollToTopRef}>
             {status === 'pending' && !isRefreshing ? (
-                 <>
-                   {[...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) }
-                 </>
+                 <> {[...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) } </>
             ) : status === 'error' ? (
                 <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
                     <p>Unable to load feed.</p>
@@ -237,46 +210,55 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                 </div>
             ) : (
                 <>
-                    {feedItems.map((item) => (
-                        <div 
-                            key={item._id} 
-                            ref={(el) => setArticleRef(el, item._id)} 
-                            data-article-id={item._id} 
-                            className={`feed-article-wrapper ${currentArticle?._id === item._id ? 'now-playing-highlight' : ''}`}
-                        >
-                            <FeedItemRenderer
-                                item={item}
-                                onOpenNarrative={onOpenNarrative}
-                                onCompare={onCompare}
-                                onAnalyze={onAnalyze}
-                                onShare={handleShare}
-                                savedArticleIds={savedArticleIds}
-                                onToggleSave={onToggleSave}
-                                showTooltip={showTooltip}
-                                currentArticleId={currentArticle?._id}
-                                playSingle={playSingle}
-                                stop={stop}
-                            />
-                        </div>
+                    {feedItems.map((item, index) => (
+                        <React.Fragment key={item._id}>
+                             {/* NATIVE AD INJECTION: Every 7 items */}
+                             {index > 0 && index % 7 === 0 && (
+                                <NativeAdUnit 
+                                    slotId="1234567890" // REPLACE WITH REAL ID
+                                    layoutKey="-6t+ed+2i-1n-4w" // REPLACE WITH REAL KEY
+                                    className="feed-ad-wrapper"
+                                />
+                             )}
+
+                            <div 
+                                ref={(el) => setArticleRef(el, item._id)} 
+                                data-article-id={item._id} 
+                                className={`feed-article-wrapper ${currentArticle?._id === item._id ? 'now-playing-highlight' : ''}`}
+                            >
+                                <FeedItemRenderer
+                                    item={item}
+                                    onOpenNarrative={onOpenNarrative}
+                                    onCompare={onCompare}
+                                    onAnalyze={onAnalyze}
+                                    onShare={handleShare}
+                                    savedArticleIds={savedArticleIds}
+                                    onToggleSave={handleToggleSaveWrapper} // Wrapped
+                                    showTooltip={showTooltip}
+                                    currentArticleId={currentArticle?._id}
+                                    playSingle={handlePlayWrapper} // Wrapped
+                                    stop={stop}
+                                />
+                            </div>
+                        </React.Fragment>
                     ))}
 
-                    {/* LOAD MORE (Only for Latest) */}
                     {mode === 'latest' && (
                         <div className="load-more-container" ref={loadMoreRef}>
-                            {isFetchingNextPage ? (
-                                <div className="spinner-small" />
-                            ) : hasNextPage ? (
-                                <span style={{ opacity: 0.5, fontSize: '0.8rem' }}>Loading more...</span>
-                            ) : (
-                                <div className="end-message">You're all caught up</div>
-                            )}
+                            {isFetchingNextPage ? ( <div className="spinner-small" /> ) : hasNextPage ? ( <span style={{ opacity: 0.5, fontSize: '0.8rem' }}>Loading more...</span> ) : ( <div className="end-message">You're all caught up</div> )}
                         </div>
                     )}
-                    
                     <div style={{ height: '80px', flexShrink: 0, scrollSnapAlign: 'none' }} />
                 </>
             )}
         </div>
+        
+        {/* Guest Login Prompt */}
+        <LoginModal 
+            isOpen={showLoginModal} 
+            onClose={() => setShowLoginModal(false)}
+            message="Join The Gamut to save articles, listen to stories, and customize your feed."
+        />
     </div>
   );
 };

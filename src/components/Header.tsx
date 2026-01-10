@@ -4,10 +4,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import * as api from '../services/api';
 import { useRadio } from '../context/RadioContext';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext'; // NEW
 import './Header.css'; 
 import { IArticle, INarrative, IFilters, FeedItem } from '../types';
 import { Capacitor } from '@capacitor/core'; 
 import WeatherWidget from './WeatherWidget'; 
+import LoginModal from './modals/LoginModal'; // NEW
 
 interface HeaderProps {
   theme: string;
@@ -20,12 +22,13 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false); 
   const [searchQuery, setSearchQuery] = useState('');
-  
   const [suggestions, setSuggestions] = useState<FeedItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false); // NEW
 
   const { isPlaying, isPaused, startRadio, resume, pause, currentArticle, contextQueue, contextLabel } = useRadio();
   const { addToast } = useToast();
+  const { isGuest } = useAuth(); // NEW
   const [radioLoading, setRadioLoading] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null); 
@@ -73,6 +76,12 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   };
 
   const handleRadioClick = async () => {
+    // NEW: Guest Check
+    if (isGuest) {
+        setShowLoginModal(true);
+        return;
+    }
+
     if (radioLoading) return;
     if (isPlaying) { pause(); return; }
     if (isPaused && currentArticle) { resume(); return; }
@@ -89,7 +98,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
     addToast('Tuning into Gamut Radio...', 'info');
     try {
         const { data } = await api.fetchArticles({ limit: 20, offset: 0 });
-        // FIX: Cast to FeedItem[] to allow filtering mixed types
         const audioArticles = (data.articles as FeedItem[] || []).filter(item => item.type !== 'Narrative') as IArticle[];
         
         if (audioArticles.length > 0) startRadio(audioArticles, 0);
@@ -109,8 +117,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
       </div>
 
       <div className="header-right">
-
-        {/* Weather Widget (Desktop Only handled by CSS) */}
         <WeatherWidget />
         
         {!isNative && (
@@ -139,16 +145,11 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
                   <div className="live-search-label">TOP MATCHES</div>
                   {suggestions.map(item => {
                       const isNarrative = item.type === 'Narrative';
-                      const headline = isNarrative 
-                          ? (item as INarrative).masterHeadline 
-                          : (item as IArticle).headline;
-
+                      const headline = isNarrative ? (item as INarrative).masterHeadline : (item as IArticle).headline;
                       return (
                           <div key={item._id} className="live-search-item" onClick={handleSearchSubmit}>
                               <span className="live-item-icon">{isNarrative ? '✨' : '📄'}</span>
-                              <div className="live-item-text">
-                                  <div className="live-item-headline">{headline}</div>
-                              </div>
+                              <div className="live-item-text"><div className="live-item-headline">{headline}</div></div>
                           </div>
                       );
                   })}
@@ -158,19 +159,28 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
 
         {!isNative && (
           <div className="header-user-desktop" ref={dropdownRef}> 
-            <div className="header-user-clickable-area" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-              <span className="header-username-desktop">{username}</span>
-              <svg className="custom-select-arrow" style={{ width: '14px', height: '14px', fill: 'var(--text-tertiary)', marginLeft: '4px' }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"></path></svg>
-            </div>
-            {isDropdownOpen && (
-              <div className="header-user-dropdown">
-                <ul>
-                  <li><Link to="/my-dashboard" onClick={() => setIsDropdownOpen(false)}>Dashboard</Link></li>
-                  <li><Link to="/saved-articles" onClick={() => setIsDropdownOpen(false)}>Saved Articles</Link></li>
-                  <li><Link to="/emergency-resources" onClick={() => setIsDropdownOpen(false)}>Emergency Help</Link></li>
-                  <li><Link to="/account-settings" onClick={() => setIsDropdownOpen(false)}>Settings</Link></li>
-                </ul>
-              </div>
+            {/* NEW: Toggle between Guest Login and User Dropdown */}
+            {isGuest ? (
+                <Link to="/login" className="btn-secondary" style={{ padding: '6px 16px', fontSize: '0.9rem', textDecoration: 'none' }}>
+                    Log In
+                </Link>
+            ) : (
+                <>
+                    <div className="header-user-clickable-area" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+                    <span className="header-username-desktop">{username}</span>
+                    <svg className="custom-select-arrow" style={{ width: '14px', height: '14px', fill: 'var(--text-tertiary)', marginLeft: '4px' }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"></path></svg>
+                    </div>
+                    {isDropdownOpen && (
+                    <div className="header-user-dropdown">
+                        <ul>
+                        <li><Link to="/my-dashboard" onClick={() => setIsDropdownOpen(false)}>Dashboard</Link></li>
+                        <li><Link to="/saved-articles" onClick={() => setIsDropdownOpen(false)}>Saved Articles</Link></li>
+                        <li><Link to="/emergency-resources" onClick={() => setIsDropdownOpen(false)}>Emergency Help</Link></li>
+                        <li><Link to="/account-settings" onClick={() => setIsDropdownOpen(false)}>Settings</Link></li>
+                        </ul>
+                    </div>
+                    )}
+                </>
             )}
           </div>
         )}
@@ -179,6 +189,12 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
            <button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '🌙' : '☀️'}</button>
         )}
       </div>
+
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)}
+        message="Gamut Radio is exclusive to members. Login to listen to your news."
+      />
     </header>
   );
 };

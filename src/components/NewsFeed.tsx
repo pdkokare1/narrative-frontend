@@ -3,10 +3,10 @@ import React, { useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import UnifiedFeed from './feeds/UnifiedFeed';
 import NarrativeModal from './modals/NarrativeModal'; 
-import LoginModal from './modals/LoginModal'; // NEW
+import LoginModal from './modals/LoginModal'; 
 import useIsMobile from '../hooks/useIsMobile';
 import useHaptic from '../hooks/useHaptic';
-import { useAuth } from '../context/AuthContext'; // NEW
+import { useAuth } from '../context/AuthContext'; 
 import '../App.css'; 
 import { IArticle, IFilters, INarrative } from '../types';
 
@@ -36,13 +36,13 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   
   // Modals
   const [selectedNarrative, setSelectedNarrative] = useState<INarrative | null>(null);
-  const [showLoginModal, setShowLoginModal] = useState(false); // NEW
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const contentRef = useRef<HTMLDivElement>(null); 
   
   const isMobile = useIsMobile();
   const vibrate = useHaptic();
-  const { isGuest } = useAuth(); // NEW
+  const { isGuest } = useAuth();
 
   // --- MODE SWITCHER (Protected) ---
   const attemptChangeMode = (newMode: FeedMode, direction: 'enter-right' | 'enter-left') => {
@@ -103,7 +103,8 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
         {['latest', 'infocus', 'balanced'].map((m) => (
             <button
               key={m}
-              onClick={() => attemptChangeMode(m as FeedMode)}
+              // FIXED: Added 'enter-right' as the second argument
+              onClick={() => attemptChangeMode(m as FeedMode, 'enter-right')}
               style={{
                 background: mode === m ? 'var(--accent-primary)' : 'transparent',
                 color: mode === m ? 'white' : 'var(--text-secondary)',
@@ -195,7 +196,6 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
       {selectedNarrative && <NarrativeModal data={selectedNarrative} onClose={() => setSelectedNarrative(null)} />}
       
-      {/* NEW LOGIN MODAL */}
       <LoginModal 
         isOpen={showLoginModal} 
         onClose={() => setShowLoginModal(false)}

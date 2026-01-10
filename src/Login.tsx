@@ -1,5 +1,5 @@
 // src/Login.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   RecaptchaVerifier, 
   signInWithPhoneNumber, 
@@ -36,40 +36,47 @@ const Login: React.FC = () => {
   const { addToast } = useToast();
   const navigate = useNavigate();
 
-  // Clean up any lingering verifiers on unmount
+  // --- 1. INITIALIZE RECAPTCHA ON MOUNT ---
+  // We do this once when the page loads, not every time the button is clicked.
   useEffect(() => {
-    return () => {
-      if (window.recaptchaVerifier) {
-        try { window.recaptchaVerifier.clear(); } catch(e) {}
+    const initRecaptcha = async () => {
+      const container = document.getElementById('recaptcha-container');
+      
+      // Only create if container exists and verifier is not already set
+      if (container && !window.recaptchaVerifier) {
+        console.log("Initializing RecaptchaVerifier...");
+        try {
+          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            'size': 'invisible',
+            'callback': (response: any) => {
+              console.log("Recaptcha Solved!");
+            },
+            'expired-callback': () => {
+              addToast('Security check expired. Please refresh.', 'error');
+            }
+          });
+          
+          // Pre-render to ensure it is ready
+          await window.recaptchaVerifier.render();
+          console.log("Recaptcha Ready.");
+        } catch (err) {
+          console.error("Recaptcha Init Error:", err);
+        }
       }
     };
-  }, []);
 
-  // --- HELPER: LAZY INITIALIZATION ---
-  const setupRecaptcha = () => {
-    // 1. If it already exists, clear it to be safe (prevents "already rendered" bugs)
-    if (window.recaptchaVerifier) {
-      try { window.recaptchaVerifier.clear(); } catch(e) {}
-      window.recaptchaVerifier = undefined;
-    }
+    // Small delay to ensure DOM is painted
+    const timer = setTimeout(initRecaptcha, 500);
 
-    // 2. Clear the DOM container
-    const container = document.getElementById('recaptcha-container');
-    if (container) container.innerHTML = '';
-
-    // 3. Create fresh instance
-    console.log("Creating new RecaptchaVerifier...");
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      'size': 'invisible',
-      'callback': (response: any) => {
-        console.log("Recaptcha Solved!");
-      },
-      'expired-callback': () => {
-        addToast('Security check expired. Please try again.', 'error');
-        setLoading(false);
+    // Cleanup on component unmount
+    return () => {
+      clearTimeout(timer);
+      if (window.recaptchaVerifier) {
+        try { window.recaptchaVerifier.clear(); } catch(e) {}
+        window.recaptchaVerifier = undefined;
       }
-    });
-  };
+    };
+  }, [addToast]);
 
   // --- HANDLERS ---
 
@@ -82,21 +89,23 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      // 1. Initialize Recaptcha ON CLICK (JIT)
-      setupRecaptcha();
-
-      // 2. Format Number (Default to +1 if missing)
+      // 1. Format Number (Default to +1 if missing)
       let formattedNumber = phoneNumber.trim();
       if (!formattedNumber.startsWith('+')) {
          formattedNumber = `+1${formattedNumber.replace(/\D/g, '')}`; 
       }
       console.log("Sending to:", formattedNumber);
 
-      // 3. Send SMS with a 15s Timeout Race
-      // This prevents the "Nothing Happens" infinite hang
+      // 2. Ensure Verifier Exists (Fallback)
+      if (!window.recaptchaVerifier) {
+        throw new Error("Security check not initialized. Please refresh the page.");
+      }
+
+      // 3. Send SMS with a 20s Timeout Race
       const sendPromise = signInWithPhoneNumber(auth, formattedNumber, window.recaptchaVerifier);
+      
       const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Request timed out. Check connection.")), 15000)
+          setTimeout(() => reject(new Error("Request timed out. Check connection.")), 20000)
       );
 
       const confirmation = await Promise.race([sendPromise, timeoutPromise]) as ConfirmationResult;
@@ -115,17 +124,20 @@ const Login: React.FC = () => {
       if (error.code === 'auth/quota-exceeded') msg = 'SMS quota exceeded.';
       if (error.code === 'auth/network-request-failed') msg = 'Network error. Check connection.';
       if (error.message && error.message.includes('authorized domain')) {
-        msg = 'Domain not authorized in Firebase Console.';
+        msg = 'Domain not authorized. Check Firebase Console.';
       }
-      
-      // If we see "internal-error", it often means App Check blocked it
-      if (error.code === 'auth/internal-error') msg = 'Security Check Failed. Refresh page.';
+      if (error.code === 'auth/internal-error') msg = 'Security Check Failed. Refreshing...';
 
       addToast(msg, 'error');
       
-      // Reset logic
-      if (window.recaptchaVerifier) {
-          try { window.recaptchaVerifier.clear(); } catch(e) {}
+      // Only clear/reset if it was a catastrophic error
+      if (error.code === 'auth/internal-error' || error.message.includes('verifier')) {
+         if (window.recaptchaVerifier) {
+            try { window.recaptchaVerifier.clear(); } catch(e) {}
+            window.recaptchaVerifier = undefined;
+            // Force reload to recover
+            setTimeout(() => window.location.reload(), 2000);
+         }
       }
     } finally {
       setLoading(false);
@@ -204,6 +216,7 @@ const Login: React.FC = () => {
             </div>
 
             {/* Hidden Recaptcha Container - Must be present in DOM */}
+            {/* We keep this outside conditional rendering so it persists */}
             <div id="recaptcha-container"></div>
 
             {/* STEP 1: PHONE INPUT */}
@@ -268,7 +281,7 @@ const Login: React.FC = () => {
             <div className="social-row">
                 {/* Google Button */}
                 <button className="social-btn google" onClick={handleGoogleLogin}>
-                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="#fff" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="#fff" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
                 </button>
                 
                 {/* Apple Button - Verified Logo */}

@@ -20,7 +20,8 @@ const InFocusBar: React.FC = () => {
     const fetchTopics = async () => {
       try {
         const { data } = await api.getTrendingTopics();
-        setTopics(data.topics || []);
+        // FIXED: Backend returns { status: 'success', data: [...] }, not data.topics
+        setTopics(data.data || []);
       } catch (error) {
         console.error("Failed to load In Focus topics", error);
       } finally {

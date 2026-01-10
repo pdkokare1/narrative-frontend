@@ -9,7 +9,6 @@ export const getWeather = (lat: number, lon: number) => {
 
 // --- MISC / TRENDS ---
 export const getTrendingTopics = () => {
-    // FIXED: Pointed to correct backend route '/trending'
     return api.get('/trending');
 };
 

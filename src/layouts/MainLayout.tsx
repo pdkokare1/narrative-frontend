@@ -25,6 +25,7 @@ const AccountSettings = lazy(() => import('../AccountSettings'));
 const SearchResults = lazy(() => import('../SearchResults'));
 const EmergencyResources = lazy(() => import('../EmergencyResources'));
 const MobileProfileMenu = lazy(() => import('../pages/MobileProfileMenu'));
+const Legal = lazy(() => import('../pages/Legal'));
 
 const CompareCoverageModal = lazy(() => import('../components/modals/CompareCoverageModal'));
 const DetailedAnalysisModal = lazy(() => import('../components/modals/DetailedAnalysisModal'));
@@ -185,6 +186,7 @@ export default function MainLayout({ profile }: MainLayoutProps) {
                   onSetFontSize={setFontSize} 
               />
             } />
+            <Route path="/legal" element={<Legal />} />
             <Route path="/profile-menu" element={<MobileProfileMenu />} />
             <Route path="*" element={<PageNotFound />} /> 
           </Routes>

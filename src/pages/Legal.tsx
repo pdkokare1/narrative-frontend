@@ -1,3 +1,4 @@
+// src/pages/Legal.tsx
 import React from 'react';
 import '../App.css';
 import './Legal.css';
@@ -29,8 +30,8 @@ const Legal: React.FC = () => {
             <h3>2. Information We Collect</h3>
             <h4>A. Personal Data</h4>
             <ul>
-              <li><strong>Identity Data:</strong> Name, email address, and profile pictures (facilitated via Google Sign-In or manual upload).</li>
-              <li><strong>Account Credentials:</strong> Passwords (encrypted and stored via Firebase Authentication).</li>
+              <li><strong>Identity Data:</strong> Name, email address, and profile pictures (facilitated via secure third-party sign-in providers or manual upload).</li>
+              <li><strong>Account Credentials:</strong> Passwords (encrypted and stored via secure authentication providers).</li>
               <li><strong>Emergency Contacts:</strong> Names and phone numbers of contacts you designate for our safety/emergency features.</li>
             </ul>
 
@@ -50,7 +51,7 @@ const Legal: React.FC = () => {
             <p>We use the data we collect to:</p>
             <ul>
               <li><strong>Provide Services:</strong> Deliver personalized news feeds, generate audio narratives, and manage your user account.</li>
-              <li><strong>AI Processing:</strong> Your reading preferences and search queries are processed by AI models (Google Gemini) to summarize news and generate "Smart Briefs."</li>
+              <li><strong>AI Processing:</strong> Your reading preferences and search queries are processed by advanced AI models to summarize news and generate "Smart Briefs."</li>
               <li><strong>Notifications:</strong> Send push notifications regarding breaking news or daily briefings.</li>
               <li><strong>Emergency Services:</strong> If you trigger an emergency alert, we use your stored contacts to facilitate immediate communication.</li>
             </ul>
@@ -58,10 +59,10 @@ const Legal: React.FC = () => {
             <h3>4. Third-Party Service Providers</h3>
             <p>We share specific data with trusted third-party services to function:</p>
             <ul>
-              <li><strong>Authentication:</strong> Google Firebase handles secure login and identity management.</li>
-              <li><strong>Database & Hosting:</strong> MongoDB stores user data; Railway hosts our backend services.</li>
-              <li><strong>AI & Content:</strong> Google Gemini processes text for summaries; GNews provides aggregated news content.</li>
-              <li><strong>Media:</strong> Cloudinary stores and streams audio files.</li>
+              <li><strong>Authentication:</strong> We use industry-standard providers for secure login and identity management.</li>
+              <li><strong>Database & Hosting:</strong> User data is stored in encrypted, secure cloud databases hosted on enterprise-grade infrastructure.</li>
+              <li><strong>AI & Content:</strong> Text processing and summaries are generated using leading Artificial Intelligence models; news content is aggregated from reputable global sources.</li>
+              <li><strong>Media:</strong> Audio files and media assets are delivered via secure content delivery networks (CDNs).</li>
             </ul>
 
             <h3>5. Data Retention</h3>
@@ -102,7 +103,7 @@ const Legal: React.FC = () => {
             <p>
               These Terms of Use constitute a legally binding agreement made between you, whether personally or on behalf of an entity ("you") 
               and <strong>Stalingrad Technologies (OPC) Pvt Ltd</strong> ("Company," "we," "us," or "our"), concerning your access to and use of 
-              <strong> he Gamut</strong> application. By accessing the application, you agree that you have read, understood, and agreed to be bound by all of these Terms of Use.
+              <strong>The Gamut</strong> application. By accessing the application, you agree that you have read, understood, and agreed to be bound by all of these Terms of Use.
             </p>
 
             <h3>2. Intellectual Property Rights</h3>
@@ -111,7 +112,7 @@ const Legal: React.FC = () => {
               website designs, audio, video, text, and graphics on the application are owned or controlled by us or licensed to us.
             </p>
             <p>
-              <strong>News Content:</strong> Articles and news summaries displayed are aggregated from third-party sources (e.g., GNews). 
+              <strong>News Content:</strong> Articles and news summaries displayed are aggregated from third-party sources. 
               Stalingrad Technologies does not claim ownership of the original news articles.
             </p>
 
@@ -136,7 +137,7 @@ const Legal: React.FC = () => {
             </ul>
 
             <h3>5. AI-Generated Content Disclaimer</h3>
-            <p>The Gamut utilizes Artificial Intelligence (Google Gemini) to summarize articles and generate audio.</p>
+            <p>The Gamut utilizes Artificial Intelligence to summarize articles and generate audio.</p>
             <ul>
               <li><strong>Accuracy:</strong> While we strive for accuracy, AI-generated summaries may occasionally contain errors or hallucinations. We recommend verifying critical information with original sources.</li>
               <li><strong>Bias:</strong> AI models may inherently reflect biases present in their training data. We provide tools (like the "Bias Map") to help visualize this, but we do not guarantee total neutrality.</li>
@@ -158,7 +159,7 @@ const Legal: React.FC = () => {
             <p>
               These Terms shall be governed by and defined following the laws of <strong>India</strong>. 
               Any dispute arising out of or in relation to these Terms shall be subject to the exclusive jurisdiction of the courts located in 
-              <strong> Pune, Maharashtra</strong>.
+              <strong>Pune, Maharashtra</strong>.
             </p>
 
             <h3>9. Contact Us</h3>

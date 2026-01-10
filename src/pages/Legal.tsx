@@ -102,7 +102,7 @@ const Legal: React.FC = () => {
             <p>
               These Terms of Use constitute a legally binding agreement made between you, whether personally or on behalf of an entity ("you") 
               and <strong>Stalingrad Technologies (OPC) Pvt Ltd</strong> ("Company," "we," "us," or "our"), concerning your access to and use of 
-              <strong>The Gamut</strong> application. By accessing the application, you agree that you have read, understood, and agreed to be bound by all of these Terms of Use.
+              <strong> he Gamut</strong> application. By accessing the application, you agree that you have read, understood, and agreed to be bound by all of these Terms of Use.
             </p>
 
             <h3>2. Intellectual Property Rights</h3>
@@ -158,7 +158,7 @@ const Legal: React.FC = () => {
             <p>
               These Terms shall be governed by and defined following the laws of <strong>India</strong>. 
               Any dispute arising out of or in relation to these Terms shall be subject to the exclusive jurisdiction of the courts located in 
-              <strong>Pune, Maharashtra</strong>.
+              <strong> Pune, Maharashtra</strong>.
             </p>
 
             <h3>9. Contact Us</h3>

@@ -3,8 +3,10 @@ import React, { useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import UnifiedFeed from './feeds/UnifiedFeed';
 import NarrativeModal from './modals/NarrativeModal'; 
+import LoginModal from './modals/LoginModal'; // NEW
 import useIsMobile from '../hooks/useIsMobile';
 import useHaptic from '../hooks/useHaptic';
+import { useAuth } from '../context/AuthContext'; // NEW
 import '../App.css'; 
 import { IArticle, IFilters, INarrative } from '../types';
 
@@ -18,7 +20,6 @@ interface NewsFeedProps {
   showTooltip: (text: string, e: React.MouseEvent) => void;
 }
 
-// UPDATE: Changed modes to match new hierarchy
 type FeedMode = 'latest' | 'infocus' | 'balanced';
 
 const NewsFeed: React.FC<NewsFeedProps> = ({ 
@@ -33,50 +34,55 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   const [mode, setMode] = useState<FeedMode>('latest'); 
   const [animDirection, setAnimDirection] = useState<'enter-right' | 'enter-left'>('enter-right');
   
-  // Narrative Modal State
+  // Modals
   const [selectedNarrative, setSelectedNarrative] = useState<INarrative | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false); // NEW
 
-  // Ref passed to UnifiedFeed for scrolling. 
   const contentRef = useRef<HTMLDivElement>(null); 
   
   const isMobile = useIsMobile();
   const vibrate = useHaptic();
+  const { isGuest } = useAuth(); // NEW
+
+  // --- MODE SWITCHER (Protected) ---
+  const attemptChangeMode = (newMode: FeedMode, direction: 'enter-right' | 'enter-left') => {
+      vibrate();
+      
+      // GUEST PROTECTION
+      if (isGuest && newMode !== 'latest') {
+          setShowLoginModal(true);
+          return;
+      }
+
+      setAnimDirection(direction);
+      setMode(newMode);
+  };
 
   // --- SWIPE LOGIC ---
   const touchStart = useRef<number | null>(null);
   const touchEnd = useRef<number | null>(null);
-
   const minSwipeDistance = 50; 
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchEnd.current = null; 
     touchStart.current = e.targetTouches[0].clientX;
   };
-
   const onTouchMove = (e: React.TouchEvent) => {
     touchEnd.current = e.targetTouches[0].clientX;
   };
-
-  const changeMode = (newMode: FeedMode, direction: 'enter-right' | 'enter-left') => {
-      vibrate();
-      setAnimDirection(direction);
-      setMode(newMode);
-  };
-
   const onTouchEnd = () => {
     if (!touchStart.current || !touchEnd.current) return;
     const distance = touchStart.current - touchEnd.current;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
-    // UPDATE: New Swipe Logic for Latest -> In Focus -> Balanced
     if (isLeftSwipe) { 
-        if (mode === 'latest') changeMode('infocus', 'enter-right');
-        else if (mode === 'infocus') changeMode('balanced', 'enter-right');
+        if (mode === 'latest') attemptChangeMode('infocus', 'enter-right');
+        else if (mode === 'infocus') attemptChangeMode('balanced', 'enter-right');
     }
     if (isRightSwipe) { 
-        if (mode === 'balanced') changeMode('infocus', 'enter-left');
-        else if (mode === 'infocus') changeMode('latest', 'enter-left');
+        if (mode === 'balanced') attemptChangeMode('infocus', 'enter-left');
+        else if (mode === 'infocus') attemptChangeMode('latest', 'enter-left');
     }
   };
 
@@ -87,7 +93,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
     return 'The Gamut - Analyse The Full Spectrum';
   };
 
-  // --- DESKTOP TOGGLE (Pills) ---
+  // --- DESKTOP TOGGLE ---
   const renderDesktopToggle = () => (
     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px', marginTop: '20px' }}>
       <div style={{ 
@@ -97,7 +103,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
         {['latest', 'infocus', 'balanced'].map((m) => (
             <button
               key={m}
-              onClick={() => { vibrate(); setMode(m as FeedMode); }}
+              onClick={() => attemptChangeMode(m as FeedMode)}
               style={{
                 background: mode === m ? 'var(--accent-primary)' : 'transparent',
                 color: mode === m ? 'white' : 'var(--text-secondary)',
@@ -107,84 +113,70 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
               }}
             >
               {m === 'infocus' ? 'In Focus' : m === 'balanced' ? 'Balanced' : 'Top Stories'}
+              {isGuest && m !== 'latest' && <span style={{marginLeft:'5px'}}>🔒</span>}
             </button>
         ))}
       </div>
     </div>
   );
 
-  // --- MOBILE COLOR BAR TOGGLE ---
-  const renderMobileNav = () => {
-      return (
-        <div style={{ 
-            position: 'sticky', top: 0, zIndex: 900, 
-            background: 'var(--bg-primary)', 
-            borderBottom: '1px solid var(--border-light)',
-            marginBottom: '5px', 
-            marginTop: 0, 
-            paddingTop: '0px' 
-        }}>
-            <div style={{ display: 'flex', width: '100%' }}>
-                {[
-                    { id: 'latest', label: 'Latest' },
-                    { id: 'infocus', label: 'In Focus' },
-                    { id: 'balanced', label: 'Balanced' }
-                ].map(tab => {
-                    const isActive = mode === tab.id;
-                    // Smart direction calculation for animation
-                    let clickDirection: 'enter-right' | 'enter-left' = 'enter-right';
-                    
-                    if (mode === 'latest') clickDirection = 'enter-right';
-                    else if (mode === 'balanced') clickDirection = 'enter-left';
-                    else if (mode === 'infocus') {
-                        clickDirection = tab.id === 'balanced' ? 'enter-right' : 'enter-left';
-                    }
+  // --- MOBILE TOGGLE ---
+  const renderMobileNav = () => (
+    <div style={{ 
+        position: 'sticky', top: 0, zIndex: 900, 
+        background: 'var(--bg-primary)', 
+        borderBottom: '1px solid var(--border-light)',
+        marginBottom: '5px', marginTop: 0, paddingTop: '0px' 
+    }}>
+        <div style={{ display: 'flex', width: '100%' }}>
+            {[
+                { id: 'latest', label: 'Latest' },
+                { id: 'infocus', label: 'In Focus' },
+                { id: 'balanced', label: 'Balanced' }
+            ].map(tab => {
+                const isActive = mode === tab.id;
+                let clickDirection: 'enter-right' | 'enter-left' = 'enter-right';
+                if (mode === 'latest') clickDirection = 'enter-right';
+                else if (mode === 'balanced') clickDirection = 'enter-left';
+                else if (mode === 'infocus') clickDirection = tab.id === 'balanced' ? 'enter-right' : 'enter-left';
 
-                    return (
-                        <div 
-                            key={tab.id}
-                            onClick={() => { 
-                                if (!isActive) changeMode(tab.id as FeedMode, clickDirection); 
-                            }}
-                            style={{
-                                flex: 1, textAlign: 'center', padding: '8px 0', 
-                                cursor: 'pointer', position: 'relative',
-                                color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                                fontWeight: isActive ? 700 : 500,
-                                fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px',
-                                transition: 'color 0.2s'
-                            }}
-                        >
-                            {tab.label}
-                            <div style={{ 
-                                position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px',
-                                background: 'var(--accent-primary)',
-                                opacity: isActive ? 1 : 0,
-                                transform: isActive ? 'scaleX(1)' : 'scaleX(0)',
-                                transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'
-                            }} />
-                        </div>
-                    );
-                })}
-            </div>
+                return (
+                    <div 
+                        key={tab.id}
+                        onClick={() => { if (!isActive) attemptChangeMode(tab.id as FeedMode, clickDirection); }}
+                        style={{
+                            flex: 1, textAlign: 'center', padding: '8px 0', 
+                            cursor: 'pointer', position: 'relative',
+                            color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                            fontWeight: isActive ? 700 : 500,
+                            fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px',
+                            transition: 'color 0.2s'
+                        }}
+                    >
+                        {tab.label}
+                        {isGuest && tab.id !== 'latest' && <span style={{marginLeft:'4px', fontSize:'9px'}}>🔒</span>}
+                        <div style={{ 
+                            position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px',
+                            background: 'var(--accent-primary)',
+                            opacity: isActive ? 1 : 0,
+                            transform: isActive ? 'scaleX(1)' : 'scaleX(0)',
+                            transition: 'all 0.3s'
+                        }} />
+                    </div>
+                );
+            })}
         </div>
-      );
-  };
+    </div>
+  );
 
   return (
     <main 
         className="content" 
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
+        onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
     >
-      <Helmet>
-        <title>{getPageTitle()}</title>
-      </Helmet>
+      <Helmet><title>{getPageTitle()}</title></Helmet>
 
       {isMobile ? renderMobileNav() : renderDesktopToggle()}
-
-      {/* Removed InFocusBar - Now integrated as a main tab */}
 
       <div key={mode} className={`feed-anim-wrapper ${animDirection}`}>
           <UnifiedFeed 
@@ -201,12 +193,14 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
           />
       </div>
 
-      {selectedNarrative && (
-          <NarrativeModal 
-              data={selectedNarrative} 
-              onClose={() => setSelectedNarrative(null)} 
-          />
-      )}
+      {selectedNarrative && <NarrativeModal data={selectedNarrative} onClose={() => setSelectedNarrative(null)} />}
+      
+      {/* NEW LOGIN MODAL */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)}
+        message="Login to access advanced feeds like 'In Focus' and 'Balanced Perspective'."
+      />
     </main>
   );
 };

@@ -36,8 +36,14 @@
     scroll-behavior: smooth;
     scrollbar-width: none; 
     -ms-overflow-style: none;
+    
     /* Ensure grid items stretch to match the tallest in the row */
-    align-items: stretch; 
+    align-items: stretch;
+    
+    /* CRITICAL FIX: Pack rows at the start. 
+       This prevents the grid from stretching a single row to fill 
+       the entire vertical height of the screen. */
+    align-content: start;
 }
 
 .articles-grid::-webkit-scrollbar {
@@ -46,11 +52,11 @@
 
 /* --- Wrapper for Equal Height --- */
 .feed-article-wrapper {
-    /* On Desktop: height: 100% ensures the card fills the grid cell vertically.
-       We REMOVED min-height: 100% here to prevent cards from stretching 
-       to the full container height (screen height) when not needed. 
-    */
-    height: 100%;
+    /* FIX: Removed height: 100% to stop forcing full-screen height. */
+    /* We use flex column so the inner ArticleCard (which is height: 100%) 
+       can still fill the height of this wrapper (which is determined by the grid row). */
+    display: flex;
+    flex-direction: column;
 }
 
 /* --- DESKTOP ENFORCEMENT (4 Articles per row) --- */
@@ -130,8 +136,8 @@
     }
 
     .feed-article-wrapper {
+        /* RESTORED: Full height is strictly required for Mobile Snap View */
         height: 100%; 
-        /* RESTORED: This is required for Mobile Snap View to be full screen */
         min-height: 100%;
         width: 100%;
         scroll-snap-align: start;

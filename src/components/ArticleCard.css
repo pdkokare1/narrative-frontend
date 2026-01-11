@@ -75,23 +75,25 @@
   filter: brightness(1) contrast(1.1);
 }
 
-/* --- OVERLAY TEXT STYLES (UPDATED: Gold/Bronze Theme) --- */
+/* --- OVERLAY TEXT STYLES (REVERTED TO BLACK THEME) --- */
 .overlay-source {
   position: absolute;
   top: 0;
   left: 0;
   z-index: 4;
-  /* Gold to Bronze Gradient - Opaque */
-  background: linear-gradient(135deg, #D4AF37 0%, #CD7F32 100%);
-  color: #000000; /* Black text for contrast */
+  /* Reverted to Black/Dark Theme */
+  background: rgba(0, 0, 0, 0.75); 
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: #fff; /* White text */
   padding: 6px 12px;
   border-radius: 0 0 8px 0; /* Flat top-left, rounded bottom-right */
   font-size: 10px;
-  font-weight: 800; /* Extra bold for readability on gold */
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   pointer-events: none;
-  box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.25);
 }
 
 .overlay-date {
@@ -99,16 +101,18 @@
   bottom: 0;
   right: 0;
   z-index: 4;
-  /* Gold to Bronze Gradient - Opaque */
-  background: linear-gradient(135deg, #D4AF37 0%, #CD7F32 100%);
-  color: #000000; /* Black text for contrast */
+  /* Reverted to Black/Dark Theme */
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: rgba(255, 255, 255, 0.9); /* Slightly soft white */
   padding: 6px 12px;
   border-radius: 8px 0 0 0; /* Flat bottom-right, rounded top-left */
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
-  box-shadow: -2px -2px 4px rgba(0,0,0,0.3);
+  box-shadow: -2px -2px 4px rgba(0,0,0,0.25);
 }
 
 /* ==================== CONTENT BODY ==================== */

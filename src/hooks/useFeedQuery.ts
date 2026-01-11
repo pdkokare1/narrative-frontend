@@ -33,18 +33,34 @@ export const useFeedQuery = (mode: FeedMode, filters: IFilters) => {
         // Balanced feed is curated by backend, standard sorts don't apply
     } else if (mode === 'infocus') {
         endpoint = '/articles/infocus';
-        if (filters.category && filters.category !== 'All') {
+        if (filters.category && !filters.category.startsWith('All')) {
             params.category = filters.category;
         }
     } else {
         // Mode: 'latest'
         endpoint = '/articles';
-        // Apply all filters
-        if (filters.category && filters.category !== 'All') params.category = filters.category;
-        if (filters.sort) params.sort = filters.sort;
-        if (filters.sentiment) params.sentiment = filters.sentiment;
-        if (filters.politicalLean) params.politicalLean = filters.politicalLean;
-        if (filters.source) params.source = filters.source;
+        
+        // Apply all filters (Updated to handle "All ..." strings correctly)
+        if (filters.category && !filters.category.startsWith('All')) {
+            params.category = filters.category;
+        }
+        
+        if (filters.sort) {
+            params.sort = filters.sort;
+        }
+        
+        if (filters.sentiment) {
+            params.sentiment = filters.sentiment;
+        }
+        
+        // Fixed: Check politicalLean and ignore "All Leans"
+        if (filters.politicalLean && !filters.politicalLean.startsWith('All')) {
+            params.politicalLean = filters.politicalLean;
+        }
+        
+        if (filters.source) {
+            params.source = filters.source;
+        }
     }
 
     const { data } = await apiClient.get(endpoint, { params });

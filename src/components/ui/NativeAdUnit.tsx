@@ -27,9 +27,22 @@ const NativeAdUnit: React.FC<NativeAdUnitProps> = ({
   if (!slotId) return null;
 
   return (
-    <div className={`ad-container ${className || ''}`} style={{ height: '100%', width: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      {/* Label moved to top */}
-      <div style={{ textAlign: 'center', fontSize: '10px', color: '#888', marginBottom: '4px' }}>
+    <div 
+      className={`ad-container ${className || ''}`} 
+      style={{ 
+        width: '100%', 
+        // FIX: Removed height: 100% and added maxHeight to stop it from stretching the row
+        maxHeight: '480px', 
+        overflow: 'hidden', 
+        display: 'flex', 
+        flexDirection: 'column',
+        // Optional: Add a subtle background/border to match card shape if ad loads slowly
+        background: 'var(--bg-card-flat, #fff)',
+        borderRadius: 'var(--radius-sm, 8px)'
+      }}
+    >
+      {/* Label at top */}
+      <div style={{ textAlign: 'center', fontSize: '10px', color: '#888', padding: '8px 0 4px 0' }}>
         Advertisement
       </div>
       

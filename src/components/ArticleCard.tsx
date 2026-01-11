@@ -124,8 +124,7 @@ const ArticleCard = memo(function ArticleCard({
         </div>
         
         <div className="article-content">
-          {/* Removed article-meta-top since data is now on image */}
-
+          
           <button 
             className="article-headline-btn"
             onClick={(e) => { 

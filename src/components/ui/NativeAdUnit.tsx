@@ -27,19 +27,21 @@ const NativeAdUnit: React.FC<NativeAdUnitProps> = ({
   if (!slotId) return null;
 
   return (
-    <div className={`ad-container ${className || ''}`} style={{ height: '100%', width: '100%', overflow: 'hidden' }}>
+    <div className={`ad-container ${className || ''}`} style={{ height: '100%', width: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      {/* Label moved to top */}
+      <div style={{ textAlign: 'center', fontSize: '10px', color: '#888', marginBottom: '4px' }}>
+        Advertisement
+      </div>
+      
       <ins
         className="adsbygoogle"
-        style={{ display: 'block' }}
+        style={{ display: 'block', flexGrow: 1 }}
         data-ad-client="ca-pub-YOUR_PUBLISHER_ID_HERE" // REPLACE WITH YOUR ID
         data-ad-slot={slotId}
         data-ad-format={format}
         data-ad-layout-key={layoutKey}
         data-full-width-responsive="true"
       />
-      <div style={{ textAlign: 'center', fontSize: '10px', color: '#888', marginTop: '4px' }}>
-        Advertisement
-      </div>
     </div>
   );
 };

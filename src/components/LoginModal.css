@@ -1,0 +1,103 @@
+/* src/components/modals/LoginModal.css */
+.login-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1200; /* Higher than Header (1000) and other modals */
+    display: flex;
+    align-items: center; /* Vertical Center */
+    justify-content: center; /* Horizontal Center */
+    animation: fadeIn 0.2s ease-out;
+}
+
+.login-modal-content {
+    background: var(--bg-elevated);
+    width: 90%;
+    max-width: 400px;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    border: 1px solid var(--border-light);
+    position: relative;
+    text-align: center;
+    animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    line-height: 1;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.login-modal-close:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+}
+
+.login-modal-title {
+    font-family: var(--font-heading);
+    font-size: 22px;
+    margin: 10px 0 12px 0;
+    color: var(--text-primary);
+}
+
+.login-modal-desc {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 25px;
+}
+
+.login-modal-btn {
+    display: block;
+    width: 100%;
+    text-decoration: none;
+    padding: 12px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    font-weight: 600;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.login-modal-btn:active {
+    transform: scale(0.98);
+}
+
+.login-modal-guest-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    margin-top: 15px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 5px;
+}
+
+.login-modal-guest-btn:hover {
+    color: var(--text-secondary);
+    text-decoration: underline;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}

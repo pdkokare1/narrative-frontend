@@ -5,7 +5,7 @@ import { isOpinion, getOptimizedImageUrl, generateImageSrcSet } from '../utils/h
 import { getFallbackImage } from '../utils/constants'; 
 import { IArticle } from '../types';
 import useHaptic from '../hooks/useHaptic'; 
-import InlineSmartBrief from './InlineSmartBrief'; // Import the new component
+import InlineSmartBrief from './InlineSmartBrief'; 
 
 // --- UI Components ---
 import Button from './ui/Button';
@@ -38,7 +38,7 @@ const ArticleCard = memo(function ArticleCard({
   onPlay, 
   onStop 
 }: ArticleCardProps) {
-  // CHANGED: Replaced showBriefing modal state with inline showBrief toggle
+  
   const [showBrief, setShowBrief] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const triggerHaptic = useHaptic(); 
@@ -60,7 +60,6 @@ const ArticleCard = memo(function ArticleCard({
       setCurrentSrc(newDefault);
       setCurrentSrcSet(newSrcSet);
       setImageLoaded(false); 
-      // Reset brief view when article changes
       setShowBrief(false); 
   }, [article?.imageUrl, article?.category, article?._id]);
 
@@ -119,19 +118,18 @@ const ArticleCard = memo(function ArticleCard({
             loading="lazy" 
             style={{ opacity: imageLoaded ? 1 : 0 }}
           />
+          {/* OVERLAY ELEMENTS: Source (Top Left) & Date (Bottom Right) */}
+          <span className="overlay-source">{article.source}</span>
+          <time className="overlay-date">{new Date(article.publishedAt).toLocaleDateString()}</time>
         </div>
         
         <div className="article-content">
-          <div className="article-meta-top">
-             <span className="source-name">{article.source}</span>
-             <time className="date">{new Date(article.publishedAt).toLocaleDateString()}</time>
-          </div>
+          {/* Removed article-meta-top since data is now on image */}
 
           <button 
             className="article-headline-btn"
             onClick={(e) => { 
                 preventBubble(e); 
-                // Clicking headline now also toggles brief if available, or just opens details
                 handleInteraction(() => isHardNews ? setShowBrief(!showBrief) : null); 
             }}
             aria-label={`Read analysis for ${article.headline}`}
@@ -139,7 +137,6 @@ const ArticleCard = memo(function ArticleCard({
             {article.headline}
           </button>
 
-          {/* CHANGED: Conditional rendering for Summary vs Inline Brief */}
           {showBrief && isHardNews ? (
              <InlineSmartBrief articleId={article._id} />
           ) : (
@@ -238,7 +235,6 @@ const ArticleCard = memo(function ArticleCard({
                     )}
                 </div>
 
-                {/* CHANGED: Updated Button Logic for Smart Brief Toggle */}
                 <Button 
                     variant="text"
                     onClick={(e) => { 
@@ -258,7 +254,6 @@ const ArticleCard = memo(function ArticleCard({
           </div>
         </div>
       </article>
-      {/* Removed the external SmartBriefingModal component */}
     </>
   );
 });

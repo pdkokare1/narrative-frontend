@@ -23,7 +23,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ filters, onFilterChange, onCl
   const handleReset = () => {
     onFilterChange({
       category: 'All Categories',
-      lean: 'All Leans',
+      politicalLean: 'All Leans', // Changed from 'lean' to match usage
       region: 'Global',
       articleType: 'All Types',
       quality: 'All Quality Levels',
@@ -56,7 +56,8 @@ const FilterModal: React.FC<FilterModalProps> = ({ filters, onFilterChange, onCl
 
           <div>
             <div className="filter-group-label">Political Lean</div>
-            <CustomSelect name="lean" value={filters.lean || 'All Leans'} options={LEANS} onChange={handleChange} />
+            {/* Name changed to politicalLean to match hook/backend */}
+            <CustomSelect name="politicalLean" value={filters.politicalLean || 'All Leans'} options={LEANS} onChange={handleChange} />
           </div>
 
           <div>

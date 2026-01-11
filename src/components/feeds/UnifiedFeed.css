@@ -13,8 +13,8 @@
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
     
-    /* ADJUSTMENT: Reduced top padding to tighten spacing further */
-    padding: 6px 15px 10px 15px;
+    /* MODIFIED: Reduced top/side padding to tighten spacing */
+    padding: 6px 12px 10px 12px;
     
     display: flex;
     flex-direction: column;
@@ -25,11 +25,12 @@
 /* --- Main Grid --- */
 .articles-grid {
     flex: 1; 
-    padding: 20px 24px;
+    /* MODIFIED: Reduced side padding from 24px to 12px to use more width */
+    padding: 20px 12px;
     overflow-y: auto;
     display: grid;
-    /* Default: Responsive auto-fill */
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    /* MODIFIED: Increased minmax to 350px for larger cards */
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 24px; 
     scroll-behavior: smooth;
     scrollbar-width: none; 
@@ -46,16 +47,17 @@
     min-height: 100%;
 }
 
-/* --- DESKTOP ENFORCEMENT (4 Articles per row) --- */
+/* --- DESKTOP ENFORCEMENT --- */
 @media (min-width: 1200px) {
     .articles-grid {
-        grid-template-columns: repeat(4, 1fr);
+        /* MODIFIED: Changed from 4 to 3 columns to make cards significantly wider */
+        grid-template-columns: repeat(3, 1fr);
     }
 
-    /* Match Header padding to Grid padding (24px) */
+    /* Match Header padding to Grid padding (12px) */
     .feed-header-sticky {
-        padding-left: 24px;
-        padding-right: 24px;
+        padding-left: 12px;
+        padding-right: 12px;
     }
 }
 

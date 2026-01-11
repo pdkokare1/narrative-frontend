@@ -13,7 +13,7 @@
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
     
-    /* MODIFIED: Reduced top/side padding to tighten spacing */
+    /* Reduced top/side padding to tighten spacing */
     padding: 6px 12px 10px 12px;
     
     display: flex;
@@ -25,13 +25,14 @@
 /* --- Main Grid --- */
 .articles-grid {
     flex: 1; 
-    /* MODIFIED: Reduced side padding from 24px to 12px to use more width */
+    /* Reduced side padding to 12px to use more screen width */
     padding: 20px 12px;
     overflow-y: auto;
     display: grid;
-    /* MODIFIED: Increased minmax to 350px for larger cards */
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 24px; 
+    /* Adjusted minmax to 270px to allow 4 columns to fit comfortably */
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    /* Reduced gap slightly to give cards more width */
+    gap: 20px; 
     scroll-behavior: smooth;
     scrollbar-width: none; 
     -ms-overflow-style: none;
@@ -47,11 +48,11 @@
     min-height: 100%;
 }
 
-/* --- DESKTOP ENFORCEMENT --- */
+/* --- DESKTOP ENFORCEMENT (4 Articles per row) --- */
 @media (min-width: 1200px) {
     .articles-grid {
-        /* MODIFIED: Changed from 4 to 3 columns to make cards significantly wider */
-        grid-template-columns: repeat(3, 1fr);
+        /* RESTORED: Force 4 columns on large screens */
+        grid-template-columns: repeat(4, 1fr);
     }
 
     /* Match Header padding to Grid padding (12px) */

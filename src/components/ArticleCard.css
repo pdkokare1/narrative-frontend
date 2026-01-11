@@ -75,42 +75,42 @@
   filter: brightness(1) contrast(1.1);
 }
 
-/* --- OVERLAY TEXT STYLES --- */
+/* --- OVERLAY TEXT STYLES (UPDATED) --- */
 .overlay-source {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 0;
+  left: 0;
   z-index: 4;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.75); /* Slightly darker for better contrast */
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   color: #fff;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 0 0 8px 0; /* Flat top-left, rounded bottom-right */
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   pointer-events: none;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.25);
 }
 
 .overlay-date {
   position: absolute;
-  bottom: 10px;
-  right: 10px;
+  bottom: 0;
+  right: 0;
   z-index: 4;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   color: rgba(255, 255, 255, 0.9);
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 8px 0 0 0; /* Flat bottom-right, rounded top-left */
   font-size: 10px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: -2px -2px 4px rgba(0,0,0,0.25);
 }
 
 /* ==================== CONTENT BODY ==================== */
@@ -122,8 +122,6 @@
   gap: 10px;
   position: relative;
 }
-
-/* Removed .article-meta-top, .source-name, .date as they are now overlays */
 
 .article-headline-btn {
   background: none;

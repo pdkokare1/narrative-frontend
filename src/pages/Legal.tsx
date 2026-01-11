@@ -63,6 +63,7 @@ const Legal: React.FC = () => {
               <li><strong>Database & Hosting:</strong> User data is stored in encrypted, secure cloud databases hosted on enterprise-grade infrastructure.</li>
               <li><strong>AI & Content:</strong> Text processing and summaries are generated using leading Artificial Intelligence models; news content is aggregated from reputable global sources.</li>
               <li><strong>Media:</strong> Audio files and media assets are delivered via secure content delivery networks (CDNs).</li>
+              <li><strong>Advertising:</strong> We use Google AdSense to serve advertisements. Google uses cookies to serve ads based on your prior visits to our website or other websites. You may opt out of personalized advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">Google Ads Settings</a>.</li>
             </ul>
 
             <h3>5. Data Retention</h3>

@@ -27,7 +27,7 @@ const NativeAdUnit: React.FC<NativeAdUnitProps> = ({
   if (!slotId) return null;
 
   return (
-    <div className={`ad-container ${className || ''}`} style={{ margin: '1rem 0', minHeight: '100px', width: '100%', overflow: 'hidden' }}>
+    <div className={`ad-container ${className || ''}`} style={{ height: '100%', width: '100%', overflow: 'hidden' }}>
       <ins
         className="adsbygoogle"
         style={{ display: 'block' }}

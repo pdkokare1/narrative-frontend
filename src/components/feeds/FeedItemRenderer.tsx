@@ -48,7 +48,7 @@ const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({
   // --- Render Narrative ---
   if (isNarrative(item)) {
     return (
-       <div className="feed-item-wrapper" style={{ marginBottom: '1.5rem' }}>
+       <div className="feed-item-wrapper" style={{ height: '100%' }}>
           <NarrativeCard 
             data={item} 
             onClick={() => onOpenNarrative(item)} 
@@ -66,7 +66,7 @@ const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({
   return (
     <div 
       className="feed-item-wrapper" 
-      style={{ marginBottom: '1rem' }}
+      style={{ height: '100%' }}
       id={article._id} 
       data-article-id={article._id}
     >

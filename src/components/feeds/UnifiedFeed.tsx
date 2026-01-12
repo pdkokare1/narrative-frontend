@@ -2,8 +2,8 @@
 import React, { useEffect, useRef, useMemo, useCallback, useState } from 'react'; 
 import CategoryPills from '../ui/CategoryPills';
 import SkeletonCard from '../ui/SkeletonCard';
-import NativeAdUnit from '../ui/NativeAdUnit'; // NEW
-import LoginModal from '../modals/LoginModal'; // NEW
+import NativeAdUnit from '../ui/NativeAdUnit'; 
+import LoginModal from '../modals/LoginModal'; 
 import { useRadio } from '../../context/RadioContext';
 import useShare from '../../hooks/useShare'; 
 import useIsMobile from '../../hooks/useIsMobile'; 
@@ -13,7 +13,7 @@ import { IArticle, INarrative, IFilters } from '../../types';
 import './UnifiedFeed.css'; 
 import { useFeedQuery } from '../../hooks/useFeedQuery';
 import FeedItemRenderer from './FeedItemRenderer';
-import { useAuth } from '../../context/AuthContext'; // NEW
+import { useAuth } from '../../context/AuthContext'; 
 
 interface UnifiedFeedProps {
   mode: 'latest' | 'infocus' | 'balanced'; 
@@ -82,7 +82,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const { handleShare } = useShare(); 
   const isMobile = useIsMobile(); 
   const vibrate = useHaptic(); 
-  const { isGuest } = useAuth(); // NEW
+  const { isGuest } = useAuth(); 
 
   // Local state for Login Modal
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -169,7 +169,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       if (scrollToTopRef?.current) scrollToTopRef.current.scrollTop = 0;
   };
 
-  // --- NEW: Handle Interactions with Guest Check ---
+  // --- Handle Interactions with Guest Check ---
   const handleToggleSaveWrapper = (article: IArticle) => {
       if (isGuest) {
           setShowLoginModal(true);
@@ -217,7 +217,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                                 <NativeAdUnit 
                                     slotId="1234567890" // REPLACE WITH REAL ID
                                     layoutKey="-6t+ed+2i-1n-4w" // REPLACE WITH REAL KEY
-                                    className="feed-ad-wrapper"
+                                    // Removed className="feed-ad-wrapper" to prevent CSS conflicts
                                 />
                              )}
 
@@ -233,10 +233,10 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                                     onAnalyze={onAnalyze}
                                     onShare={handleShare}
                                     savedArticleIds={savedArticleIds}
-                                    onToggleSave={handleToggleSaveWrapper} // Wrapped
+                                    onToggleSave={handleToggleSaveWrapper} 
                                     showTooltip={showTooltip}
                                     currentArticleId={currentArticle?._id}
-                                    playSingle={handlePlayWrapper} // Wrapped
+                                    playSingle={handlePlayWrapper} 
                                     stop={stop}
                                 />
                             </div>

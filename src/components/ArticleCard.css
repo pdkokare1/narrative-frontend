@@ -182,7 +182,7 @@
   /* MODIFIED: Align to top, maximize space */
   justify-content: flex-start;
   padding: 12px;
-  padding-top: 16px; /* Start near top */
+  padding-top: 24px; /* INCREASED: More space above title */
   padding-bottom: 50px; /* Leave space for footer controls */
   
   opacity: 0;

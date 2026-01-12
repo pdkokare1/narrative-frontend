@@ -260,30 +260,15 @@
   gap: 4px;
 }
 
-/* MODIFIED: GRID Layout for exact centering */
+/* MODIFIED: Flex Layout for Left/Right alignment without center divider */
 .stats-row {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr; /* Equal outer columns, auto center */
+  display: flex;
   align-items: center;
+  justify-content: space-between; /* Pushes items to edges */
   width: 100%;
-  gap: 0; /* Gap handled by grid distribution */
   font-size: 11px;
   color: var(--text-tertiary);
-}
-
-/* Child 1: Left Item (Bias / Grade) */
-.stats-row > :nth-child(1) {
-  justify-self: start;
-}
-
-/* Child 2: The Divider (|) */
-.stats-row > :nth-child(2) {
-  justify-self: center;
-}
-
-/* Child 3: Right Item (Lean / Sentiment) */
-.stats-row > :nth-child(3) {
-  justify-self: end;
+  min-height: 20px; /* Ensure height consistency */
 }
 
 .stat-item-btn {

@@ -4,21 +4,19 @@
   flex-direction: column;
   justify-content: center;
   
-  /* Match Header Button/Input Styling exactly */
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* MATCHED TO RADIO BUTTON */
+  background: transparent;
+  border: 1px solid var(--border-color);
   
-  padding: 4px 14px; /* Slightly wider for pill shape */
+  padding: 0 14px; /* Reduced vertical padding */
   border-radius: 20px; /* Matching Header.css radius */
   
   color: var(--text-primary);
   transition: all 0.2s ease;
   cursor: default;
   margin-right: 12px; /* Consistent spacing */
-  min-width: 80px; /* Reduced min-width since date is gone */
-  height: 38px; /* Fixed height to match buttons */
+  min-width: 80px; 
+  height: 36px; /* Standardized height */
 }
 
 .weather-widget:hover {
@@ -29,12 +27,12 @@
 /* Top Row: Location */
 .weather-meta {
   display: flex;
-  justify-content: flex-start; /* Changed from space-between to flex-start */
+  justify-content: flex-start;
   align-items: center;
-  font-size: 0.65rem;
+  font-size: 0.6rem; /* Slightly smaller to fit */
   color: var(--text-secondary);
   line-height: 1;
-  margin-bottom: 3px;
+  margin-bottom: 2px; /* Tighter gap */
   width: 100%;
 }
 
@@ -52,13 +50,12 @@
 .weather-main {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   line-height: 1;
 }
 
 .weather-icon {
-  font-size: 0.95rem; 
-  /* Emojis can be vertically misaligned, this fixes it */
+  font-size: 0.9rem; 
   display: flex; 
   align-items: center;
   height: 100%;
@@ -67,7 +64,7 @@
 .weather-temp {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-primary);
 }
 

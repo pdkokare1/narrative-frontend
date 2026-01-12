@@ -90,6 +90,13 @@ const ArticleCard = memo(function ArticleCard({
     return 'sentiment-neu';
   };
 
+  // Helper to map sentiment to user-friendly terms
+  const getSentimentDisplay = (sentiment: string) => {
+    if (sentiment === 'Positive') return 'Supportive';
+    if (sentiment === 'Negative') return 'Critical';
+    return sentiment;
+  };
+
   const hasStats = article && (
     article.biasScore !== undefined || 
     (article.politicalLean && article.politicalLean !== 'Unknown') || 
@@ -156,7 +163,10 @@ const ArticleCard = memo(function ArticleCard({
                         <>
                             <button className="stat-item-btn" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
                                 <span>Bias:</span>
-                                <span className="stat-val accent-text">{article.biasScore}%</span>
+                                <span className="stat-val accent-text">
+                                  {/* Changed: Show 'NA' if 0, otherwise Score/100 */}
+                                  {article.biasScore === 0 ? 'NA' : `${article.biasScore}/100`}
+                                </span>
                             </button>
                             <span className="divider">•</span>
                         </>
@@ -167,7 +177,10 @@ const ArticleCard = memo(function ArticleCard({
                             <div className="stat-item">
                                 <span>Lean:</span>
                                 <span className={`stat-val ${getLeanClass(article.politicalLean)}`}>
-                                    {article.politicalLean}
+                                    {/* Changed: Show 'NA' if Unknown/Not Applicable */}
+                                    {(article.politicalLean === 'Unknown' || article.politicalLean === 'Not Applicable') 
+                                      ? 'NA' 
+                                      : article.politicalLean}
                                 </span>
                             </div>
                             <span className="divider">•</span>
@@ -178,7 +191,8 @@ const ArticleCard = memo(function ArticleCard({
                         <div className="stat-item">
                             <span>Sent:</span>
                             <span className={`stat-val ${getSentimentClass(article.sentiment)}`}>
-                                {article.sentiment}
+                                {/* Changed: Map Positive->Supportive, Negative->Critical */}
+                                {getSentimentDisplay(article.sentiment)}
                             </span>
                         </div>
                     )}

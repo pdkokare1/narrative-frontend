@@ -31,11 +31,14 @@ const NativeAdUnit: React.FC<NativeAdUnitProps> = ({
       className={`ad-container ${className || ''}`} 
       style={{ 
         width: '100%',
-        /* STRICT FIX: Use a fixed height. This physically forces the container size 
-           and prevents the Grid row from ever expanding beyond this point due to the ad. */
+        /* STRICT LAYOUT ENFORCEMENT */
         height: '280px', 
         minHeight: '280px',
         maxHeight: '280px',
+        
+        /* 'contain: strict' creates a boundary that prevents children 
+           (like the Ad iframe) from affecting the parent's layout size. */
+        contain: 'strict',
         
         overflow: 'hidden', 
         display: 'flex', 
@@ -44,8 +47,10 @@ const NativeAdUnit: React.FC<NativeAdUnitProps> = ({
         borderRadius: 'var(--radius-sm, 8px)',
         border: '1px solid var(--border-light)',
         
-        /* Ensure it doesn't stretch vertically in the flex container */
-        alignSelf: 'flex-start'
+        /* Prevent Grid from stretching this item */
+        alignSelf: 'start',
+        flexGrow: 0,
+        flexShrink: 0
       }}
     >
       {/* Label at top */}
@@ -55,12 +60,13 @@ const NativeAdUnit: React.FC<NativeAdUnitProps> = ({
         color: '#888', 
         padding: '8px 0',
         background: 'rgba(0,0,0,0.02)',
-        borderBottom: '1px solid rgba(0,0,0,0.05)'
+        borderBottom: '1px solid rgba(0,0,0,0.05)',
+        flexShrink: 0
       }}>
         Advertisement
       </div>
       
-      <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ flex: 1, overflow: 'hidden', position: 'relative', width: '100%' }}>
         <ins
           className="adsbygoogle"
           style={{ display: 'block', width: '100%', height: '100%' }}

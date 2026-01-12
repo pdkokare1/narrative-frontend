@@ -33,9 +33,9 @@ const NativeAdUnit: React.FC<NativeAdUnitProps> = ({
         width: '100%',
         /* STRICT FIX: Use a fixed height. This physically forces the container size 
            and prevents the Grid row from ever expanding beyond this point due to the ad. */
-        height: '350px', 
-        minHeight: '350px',
-        maxHeight: '350px',
+        height: '300px', 
+        minHeight: '300px',
+        maxHeight: '300px',
         
         overflow: 'hidden', 
         display: 'flex', 

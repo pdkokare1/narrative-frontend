@@ -9,7 +9,7 @@ import InlineSmartBrief from './InlineSmartBrief';
 
 // --- UI Components ---
 import Button from './ui/Button';
-import { PlayIcon, PauseIcon, BookmarkIcon, ShareIcon, CompareIcon } from './ui/Icons';
+import { PlayIcon, PauseIcon, BookmarkIcon, ShareIcon, ExternalLinkIcon } from './ui/Icons';
 
 interface ArticleCardProps {
   article: IArticle;
@@ -208,60 +208,61 @@ const ArticleCard = memo(function ArticleCard({
             )}
 
             <div className="action-bar">
-                <div className="action-left">
-                    <Button 
-                        variant="icon" 
-                        isActive={isPlaying}
-                        onClick={(e) => { 
-                            preventBubble(e); 
-                            handleInteraction(() => (isPlaying && onStop ? onStop() : onPlay?.()), 'medium'); 
-                        }}
-                        title={isPlaying ? "Stop" : "Listen"}
-                        aria-label={isPlaying ? "Stop audio" : "Listen to article"}
-                    >
-                        {isPlaying ? <PauseIcon /> : <PlayIcon />}
-                    </Button>
+                {/* 1. Play Button */}
+                <Button 
+                    variant="icon" 
+                    isActive={isPlaying}
+                    onClick={(e) => { 
+                        preventBubble(e); 
+                        handleInteraction(() => (isPlaying && onStop ? onStop() : onPlay?.()), 'medium'); 
+                    }}
+                    title={isPlaying ? "Stop" : "Listen"}
+                    aria-label={isPlaying ? "Stop audio" : "Listen to article"}
+                >
+                    {isPlaying ? <PauseIcon /> : <PlayIcon />}
+                </Button>
 
-                    <Button 
-                        variant="icon" 
-                        isActive={isSaved}
-                        onClick={(e) => { 
-                            preventBubble(e); 
-                            handleInteraction(() => onToggleSave(article)); 
-                        }}
-                        title={isSaved ? "Remove" : "Save"}
-                        aria-label={isSaved ? "Remove from saved" : "Save article"}
-                    >
-                        <BookmarkIcon filled={isSaved} />
-                    </Button>
+                {/* 2. Save Button */}
+                <Button 
+                    variant="icon" 
+                    isActive={isSaved}
+                    onClick={(e) => { 
+                        preventBubble(e); 
+                        handleInteraction(() => onToggleSave(article)); 
+                    }}
+                    title={isSaved ? "Remove" : "Save"}
+                    aria-label={isSaved ? "Remove from saved" : "Save article"}
+                >
+                    <BookmarkIcon filled={isSaved} />
+                </Button>
 
-                    <Button 
-                        variant="icon" 
-                        onClick={(e) => { 
-                            preventBubble(e); 
-                            handleInteraction(() => onShare(article)); 
-                        }}
-                        title="Share"
-                        aria-label="Share article"
-                    >
-                        <ShareIcon />
-                    </Button>
+                {/* 3. Share Button */}
+                <Button 
+                    variant="icon" 
+                    onClick={(e) => { 
+                        preventBubble(e); 
+                        handleInteraction(() => onShare(article)); 
+                    }}
+                    title="Share"
+                    aria-label="Share article"
+                >
+                    <ShareIcon />
+                </Button>
 
-                    {(isHardNews || (article.clusterCount || 0) > 1) && (
-                        <Button 
-                            variant="icon" 
-                            onClick={(e) => { 
-                                preventBubble(e); 
-                                handleInteraction(() => onCompare(article)); 
-                            }}
-                            title="Compare Coverage"
-                            aria-label="Compare coverage"
-                        >
-                            <CompareIcon />
-                        </Button>
-                    )}
-                </div>
+                {/* 4. Read Source (Replacing Compare Coverage) */}
+                <Button 
+                    variant="icon" 
+                    onClick={(e) => { 
+                        preventBubble(e); 
+                        handleInteraction(() => window.open(article.url, '_blank')); 
+                    }}
+                    title="Read Source"
+                    aria-label="Read original article"
+                >
+                    <ExternalLinkIcon />
+                </Button>
 
+                {/* 5. Smart Brief Text Button */}
                 <Button 
                     variant="text"
                     onClick={(e) => { 

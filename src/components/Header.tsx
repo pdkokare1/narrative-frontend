@@ -18,6 +18,12 @@ interface HeaderProps {
   currentFilters?: IFilters;
 }
 
+const getFormattedDate = () => {
+    const date = new Date();
+    // Returns format like: "Mon, Jan 12"
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+};
+
 const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFilters }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false); 
@@ -37,6 +43,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   
   const navigate = useNavigate();
   const isNative = Capacitor.isNativePlatform();
+  const todayDate = getFormattedDate();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -117,6 +124,11 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
       </div>
 
       <div className="header-right">
+        {/* Date Display (Shown differently, before widget) */}
+        <div className="header-date-display">
+            {todayDate}
+        </div>
+
         <WeatherWidget />
         
         {!isNative && (

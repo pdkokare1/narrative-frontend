@@ -31,14 +31,16 @@ const NativeAdUnit: React.FC<NativeAdUnitProps> = ({
       className={`ad-container ${className || ''}`} 
       style={{ 
         width: '100%', 
-        // FIX: Removed height: 100% and added maxHeight to stop it from stretching the row
-        maxHeight: '480px', 
+        // FIX: Reduced maxHeight further to 300px for a more compact look
+        maxHeight: '300px', 
         overflow: 'hidden', 
         display: 'flex', 
         flexDirection: 'column',
-        // Optional: Add a subtle background/border to match card shape if ad loads slowly
+        // Optional: Background to match card shape
         background: 'var(--bg-card-flat, #fff)',
-        borderRadius: 'var(--radius-sm, 8px)'
+        borderRadius: 'var(--radius-sm, 8px)',
+        // Ensure it sits at the top and doesn't stretch to fill the row height
+        alignSelf: 'flex-start'
       }}
     >
       {/* Label at top */}

@@ -323,15 +323,15 @@
 
 /* REMOVED: .action-left wrapper is no longer used */
 
-/* MODIFIED: Smaller Icons */
+/* MODIFIED: Smaller Icons for Better Spacing */
 .action-bar button svg {
-  width: 17px;  /* Reduced from default 20px */
-  height: 17px;
+  width: 15px;  /* Reduced to 15px */
+  height: 15px;
 }
 
 /* Ensure text button aligns with icons */
 .action-bar button {
-  font-size: 13px; 
+  font-size: 12px; 
 }
 
 /* ==================== MOBILE ADJUSTMENTS ==================== */

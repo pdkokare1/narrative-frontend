@@ -163,16 +163,12 @@ const ArticleCard = memo(function ArticleCard({
                     {/* ROW 1: Bias & Lean */}
                     <div className="stats-row">
                         {article.biasScore !== undefined && (
-                            <>
-                                <button className="stat-item-btn" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
-                                    <span>Bias:</span>
-                                    <span className="stat-val accent-text">
-                                      {article.biasScore === 0 ? 'NA' : article.biasScore}
-                                    </span>
-                                </button>
-                                {/* Divider now Pipe */}
-                                {article.politicalLean && <span className="divider">|</span>}
-                            </>
+                            <button className="stat-item-btn" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
+                                <span>Bias:</span>
+                                <span className="stat-val accent-text">
+                                  {article.biasScore === 0 ? 'NA' : article.biasScore}
+                                </span>
+                            </button>
                         )}
                         
                         {article.politicalLean && (
@@ -190,16 +186,12 @@ const ArticleCard = memo(function ArticleCard({
                     {/* ROW 2: Grade & Sentiment */}
                     <div className="stats-row">
                         {(article.credibilityGrade || isHardNews) && (
-                            <>
-                                <div className="stat-item">
-                                    <span>Grade:</span>
-                                    <span className="stat-val accent-text">
-                                        {article.credibilityGrade || 'NA'}
-                                    </span>
-                                </div>
-                                {/* Divider now Pipe */}
-                                {article.sentiment && <span className="divider">|</span>}
-                            </>
+                            <div className="stat-item">
+                                <span>Grade:</span>
+                                <span className="stat-val accent-text">
+                                    {article.credibilityGrade || 'NA'}
+                                </span>
+                            </div>
                         )}
 
                         {article.sentiment && (

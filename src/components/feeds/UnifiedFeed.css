@@ -37,12 +37,10 @@
     scrollbar-width: none; 
     -ms-overflow-style: none;
     
-    /* Ensure grid items stretch to match the tallest in the row */
+    /* STRETCH: Ensures article cards match height in a row */
     align-items: stretch;
     
-    /* CRITICAL FIX: Pack rows at the start. 
-       This prevents the grid from stretching a single row to fill 
-       the entire vertical height of the screen. */
+    /* PACKING: Prevents rows from expanding to fill screen height */
     align-content: start;
 }
 
@@ -52,9 +50,8 @@
 
 /* --- Wrapper for Equal Height --- */
 .feed-article-wrapper {
-    /* FIX: Removed height: 100% to stop forcing full-screen height. */
-    /* We use flex column so the inner ArticleCard (which is height: 100%) 
-       can still fill the height of this wrapper (which is determined by the grid row). */
+    /* Desktop: Use Flex to allow the inner ArticleCard to fill the grid cell height.
+       Do NOT set a fixed height or min-height here, let the grid row dictate it. */
     display: flex;
     flex-direction: column;
 }

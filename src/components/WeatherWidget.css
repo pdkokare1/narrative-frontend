@@ -17,7 +17,7 @@
   transition: all 0.2s ease;
   cursor: default;
   margin-right: 12px; /* Consistent spacing */
-  min-width: 100px; /* Stability */
+  min-width: 80px; /* Reduced min-width since date is gone */
   height: 38px; /* Fixed height to match buttons */
 }
 
@@ -26,10 +26,10 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Top Row: Location & Date */
+/* Top Row: Location */
 .weather-meta {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start; /* Changed from space-between to flex-start */
   align-items: center;
   font-size: 0.65rem;
   color: var(--text-secondary);
@@ -42,15 +42,10 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  max-width: 70px;
+  max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.weather-date {
-  font-weight: 400;
-  opacity: 0.8;
 }
 
 /* Bottom Row: Icon & Temp */

@@ -124,26 +124,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
       </div>
 
       <div className="header-right">
-        {/* Date Display (Shown differently, before widget) */}
-        <div className="header-date-display">
-            {todayDate}
-        </div>
-
-        <WeatherWidget />
-        
-        {!isNative && (
-          <button onClick={handleRadioClick} className={`radio-header-btn ${isPlaying ? 'playing' : ''}`} title="Start Radio">
-              {radioLoading ? ( 
-                  <div className="spinner-small" style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'var(--accent-primary)', margin: 0 }}></div> 
-              ) : isPlaying ? ( 
-                  <span className="radio-pulse"><span className="bar b1"></span><span className="bar b2"></span><span className="bar b3"></span></span> 
-              ) : ( 
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg> 
-              )}
-              <span className="radio-label-desktop">Gamut Radio</span>
-          </button>
-        )}
-
+        {/* 1. Search */}
         <div ref={searchRef} className="search-bar-wrapper">
           <form onSubmit={handleSearchSubmit} className={`search-form ${isSearchOpen ? 'open' : ''}`}>
             <input ref={inputRef} type="text" className="search-input" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
@@ -169,6 +150,29 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
           )}
         </div>
 
+        {/* 2. Gamut Radio */}
+        {!isNative && (
+          <button onClick={handleRadioClick} className={`radio-header-btn ${isPlaying ? 'playing' : ''}`} title="Start Radio">
+              {radioLoading ? ( 
+                  <div className="spinner-small" style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'var(--accent-primary)', margin: 0 }}></div> 
+              ) : isPlaying ? ( 
+                  <span className="radio-pulse"><span className="bar b1"></span><span className="bar b2"></span><span className="bar b3"></span></span> 
+              ) : ( 
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg> 
+              )}
+              <span className="radio-label-desktop">Gamut Radio</span>
+          </button>
+        )}
+
+        {/* 3. Weather (Hidden) */}
+        {/* <WeatherWidget /> */}
+
+        {/* 4. Date */}
+        <div className="header-date-display">
+            {todayDate}
+        </div>
+
+        {/* 5. Username */}
         {!isNative && (
           <div className="header-user-desktop" ref={dropdownRef}> 
             {/* NEW: Toggle between Guest Login and User Dropdown */}
@@ -197,6 +201,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
           </div>
         )}
 
+        {/* 6. Theme Toggle */}
         {!isNative && (
            <button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '🌙' : '☀️'}</button>
         )}

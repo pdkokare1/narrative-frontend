@@ -325,13 +325,13 @@
 
 /* MODIFIED: Smaller Icons for Better Spacing */
 .action-bar button svg {
-  width: 15px;  /* Reduced to 15px */
-  height: 15px;
+  width: 13px;  /* Reduced to 13px */
+  height: 13px;
 }
 
 /* Ensure text button aligns with icons */
 .action-bar button {
-  font-size: 12px; 
+  font-size: 11px; /* Reduced to 11px */
 }
 
 /* ==================== MOBILE ADJUSTMENTS ==================== */

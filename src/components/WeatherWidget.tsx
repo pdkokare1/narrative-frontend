@@ -6,11 +6,6 @@ import './WeatherWidget.css';
 // Fallback: New York (Prevents empty UI on error/block)
 const DEFAULT_LOCATION = { lat: 40.7128, lon: -74.0060 };
 
-const getFormattedDate = () => {
-    const date = new Date();
-    return `${date.toLocaleString('en-US', { month: 'short' })} ${date.getDate()}`;
-};
-
 const getWeatherIcon = (code: number, isDay: boolean) => {
   if (code === 0) return isDay ? '☀️' : '🌙';
   if (code >= 1 && code <= 3) return isDay ? '⛅' : '☁️';
@@ -31,7 +26,6 @@ interface WeatherState {
 const WeatherWidget: React.FC = () => {
   const [weather, setWeather] = useState<WeatherState | null>(null);
   const [loading, setLoading] = useState(true);
-  const todayDate = getFormattedDate();
 
   const fetchLocalWeather = async (lat: number, lon: number) => {
       try {
@@ -84,10 +78,9 @@ const WeatherWidget: React.FC = () => {
 
   return (
     <div className="weather-widget">
-      {/* Top: City Left, Date Right */}
+      {/* Top: City */}
       <div className="weather-meta">
           <span className="weather-city" title={weather.city}>{weather.city}</span>
-          <span className="weather-date">{todayDate}</span>
       </div>
       {/* Bottom: Icon Left, Temp Right */}
       <div className="weather-main">

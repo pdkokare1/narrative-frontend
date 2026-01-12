@@ -219,7 +219,7 @@ const ArticleCard = memo(function ArticleCard({
                     title={isPlaying ? "Stop" : "Listen"}
                     aria-label={isPlaying ? "Stop audio" : "Listen to article"}
                 >
-                    {isPlaying ? <PauseIcon /> : <PlayIcon />}
+                    {isPlaying ? <PauseIcon size={13} strokeWidth={2} /> : <PlayIcon size={13} strokeWidth={2} />}
                 </Button>
 
                 {/* 2. Save Button */}
@@ -233,7 +233,7 @@ const ArticleCard = memo(function ArticleCard({
                     title={isSaved ? "Remove" : "Save"}
                     aria-label={isSaved ? "Remove from saved" : "Save article"}
                 >
-                    <BookmarkIcon filled={isSaved} />
+                    <BookmarkIcon filled={isSaved} size={13} strokeWidth={2} />
                 </Button>
 
                 {/* 3. Share Button */}
@@ -246,7 +246,7 @@ const ArticleCard = memo(function ArticleCard({
                     title="Share"
                     aria-label="Share article"
                 >
-                    <ShareIcon />
+                    <ShareIcon size={13} strokeWidth={2} />
                 </Button>
 
                 {/* 4. Read Source (Replacing Compare Coverage) */}
@@ -259,7 +259,7 @@ const ArticleCard = memo(function ArticleCard({
                     title="Read Source"
                     aria-label="Read original article"
                 >
-                    <ExternalLinkIcon />
+                    <ExternalLinkIcon size={13} strokeWidth={2} />
                 </Button>
 
                 {/* 5. Smart Brief Text Button */}

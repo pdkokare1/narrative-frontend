@@ -30,33 +30,47 @@ const NativeAdUnit: React.FC<NativeAdUnitProps> = ({
     <div 
       className={`ad-container ${className || ''}`} 
       style={{ 
-        width: '100%', 
-        // FIX: Reduced maxHeight further to 300px for a more compact look
-        maxHeight: '300px', 
+        width: '100%',
+        /* STRICT FIX: Use a fixed height. This physically forces the container size 
+           and prevents the Grid row from ever expanding beyond this point due to the ad. */
+        height: '280px', 
+        minHeight: '280px',
+        maxHeight: '280px',
+        
         overflow: 'hidden', 
         display: 'flex', 
         flexDirection: 'column',
-        // Optional: Background to match card shape
         background: 'var(--bg-card-flat, #fff)',
         borderRadius: 'var(--radius-sm, 8px)',
-        // Ensure it sits at the top and doesn't stretch to fill the row height
+        border: '1px solid var(--border-light)',
+        
+        /* Ensure it doesn't stretch vertically in the flex container */
         alignSelf: 'flex-start'
       }}
     >
       {/* Label at top */}
-      <div style={{ textAlign: 'center', fontSize: '10px', color: '#888', padding: '8px 0 4px 0' }}>
+      <div style={{ 
+        textAlign: 'center', 
+        fontSize: '10px', 
+        color: '#888', 
+        padding: '8px 0',
+        background: 'rgba(0,0,0,0.02)',
+        borderBottom: '1px solid rgba(0,0,0,0.05)'
+      }}>
         Advertisement
       </div>
       
-      <ins
-        className="adsbygoogle"
-        style={{ display: 'block', flexGrow: 1 }}
-        data-ad-client="ca-pub-YOUR_PUBLISHER_ID_HERE" // REPLACE WITH YOUR ID
-        data-ad-slot={slotId}
-        data-ad-format={format}
-        data-ad-layout-key={layoutKey}
-        data-full-width-responsive="true"
-      />
+      <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+        <ins
+          className="adsbygoogle"
+          style={{ display: 'block', width: '100%', height: '100%' }}
+          data-ad-client="ca-pub-YOUR_PUBLISHER_ID_HERE" // REPLACE WITH YOUR ID
+          data-ad-slot={slotId}
+          data-ad-format={format}
+          data-ad-layout-key={layoutKey}
+          data-full-width-responsive="true"
+        />
+      </div>
     </div>
   );
 };

@@ -49,6 +49,25 @@
   letter-spacing: -0.5px;
 }
 
+/* Date Display */
+.header-date-display {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
 /* Buttons */
 .hamburger-btn, .search-toggle-btn {
   background: none;
@@ -290,6 +309,9 @@
   .header-left { gap: 10px; }
   .logo-text { font-size: 18px; }
   .radio-header-btn { display: none; }
+  
+  /* Hide Date and Weather on Mobile to prevent clutter */
+  .header-date-display { display: none; }
 
   .search-form.open {
     position: absolute;

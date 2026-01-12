@@ -312,15 +312,26 @@
 
 .divider { opacity: 0.5; }
 
+/* MODIFIED: Action Bar for Even Spacing */
 .action-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-between; /* Evenly space all 5 items */
+  width: 100%;
+  padding-top: 4px;
 }
 
-.action-left {
-  display: flex;
-  gap: 4px;
+/* REMOVED: .action-left wrapper is no longer used */
+
+/* MODIFIED: Smaller Icons */
+.action-bar button svg {
+  width: 17px;  /* Reduced from default 20px */
+  height: 17px;
+}
+
+/* Ensure text button aligns with icons */
+.action-bar button {
+  font-size: 13px; 
 }
 
 /* ==================== MOBILE ADJUSTMENTS ==================== */

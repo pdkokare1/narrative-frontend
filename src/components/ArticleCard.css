@@ -253,6 +253,13 @@
   color: #fff;
 }
 
+/* ADDED: Container for multi-line stats */
+.stats-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .stats-row {
   display: flex;
   align-items: center;

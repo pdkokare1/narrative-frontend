@@ -20,8 +20,8 @@ interface HeaderProps {
 
 const getFormattedDate = () => {
     const date = new Date();
-    // Returns format like: "Mon, Jan 12"
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    // Returns format like: "Monday, 12 January 2026"
+    return date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 };
 
 const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFilters }) => {

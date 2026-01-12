@@ -102,6 +102,10 @@
   justify-content: center;
   gap: 8px;
   transition: all var(--transition-fast);
+  
+  /* NEW: Required for Spotlight Animation */
+  position: relative;
+  overflow: hidden; 
 }
 
 .radio-header-btn:hover {
@@ -116,6 +120,43 @@
   background: rgba(212, 175, 55, 0.1); 
 }
 
+/* SPOTLIGHT ANIMATION */
+.radio-header-btn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  
+  /* The "Light Stroke" / Beam */
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3), /* Light intensity */
+    transparent
+  );
+  
+  /* Start off-screen */
+  transform: translateX(-100%) skewX(-20deg);
+  
+  /* Animation: 4s loop (sweep then pause) */
+  animation: spotlight 4s infinite ease-in-out;
+  pointer-events: none; /* Ensure clicks pass through */
+}
+
+@keyframes spotlight {
+  0% {
+    transform: translateX(-100%) skewX(-20deg);
+  }
+  40% {
+    transform: translateX(200%) skewX(-20deg); /* Move fully across */
+  }
+  100% {
+    transform: translateX(200%) skewX(-20deg); /* Stay there (pause) */
+  }
+}
+
 .radio-label-desktop {
   font-family: var(--font-body);
   font-size: 11px;
@@ -123,6 +164,11 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
+  
+  /* Ensure text sits above the shine if desired, 
+     though letting shine pass over looks more realistic */
+  position: relative; 
+  z-index: 1; 
 }
 
 /* Radio Pulse */
@@ -133,6 +179,8 @@
   gap: 2px;
   width: 14px;
   height: 14px;
+  position: relative;
+  z-index: 1; /* Keep icon above shine if needed */
 }
 
 .radio-pulse .bar {

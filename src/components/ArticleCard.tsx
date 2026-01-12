@@ -170,8 +170,8 @@ const ArticleCard = memo(function ArticleCard({
                                       {article.biasScore === 0 ? 'NA' : article.biasScore}
                                     </span>
                                 </button>
-                                {/* Only show divider if Lean follows */}
-                                {article.politicalLean && <span className="divider">•</span>}
+                                {/* Divider now Pipe */}
+                                {article.politicalLean && <span className="divider">|</span>}
                             </>
                         )}
                         
@@ -189,7 +189,6 @@ const ArticleCard = memo(function ArticleCard({
 
                     {/* ROW 2: Grade & Sentiment */}
                     <div className="stats-row">
-                        {/* Show Grade if available or if Hard News (default to NA if missing) */}
                         {(article.credibilityGrade || isHardNews) && (
                             <>
                                 <div className="stat-item">
@@ -198,8 +197,8 @@ const ArticleCard = memo(function ArticleCard({
                                         {article.credibilityGrade || 'NA'}
                                     </span>
                                 </div>
-                                {/* Only show divider if Sentiment follows */}
-                                {article.sentiment && <span className="divider">•</span>}
+                                {/* Divider now Pipe */}
+                                {article.sentiment && <span className="divider">|</span>}
                             </>
                         )}
 

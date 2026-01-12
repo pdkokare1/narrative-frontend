@@ -164,8 +164,8 @@ const ArticleCard = memo(function ArticleCard({
                             <button className="stat-item-btn" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
                                 <span>Bias:</span>
                                 <span className="stat-val accent-text">
-                                  {/* Changed: Show 'NA' if 0, otherwise Score/100 */}
-                                  {article.biasScore === 0 ? 'NA' : `${article.biasScore}/100`}
+                                  {/* Changed: Show 'NA' if 0, otherwise just the score */}
+                                  {article.biasScore === 0 ? 'NA' : article.biasScore}
                                 </span>
                             </button>
                             <span className="divider">•</span>

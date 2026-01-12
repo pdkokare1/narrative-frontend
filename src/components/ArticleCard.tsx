@@ -100,7 +100,7 @@ const ArticleCard = memo(function ArticleCard({
 
   return (
     <>
-      <article className={`article-card ${isPlaying ? 'now-playing' : ''}`}>
+      <article className={`article-card ${isPlaying ? 'now-playing' : ''} ${showBrief ? 'show-brief-mode' : ''}`}>
         
         <div className="card-badges">
           {article.suggestionType === 'Challenge' && <span className="badge challenge">Perspective</span>}
@@ -123,6 +123,15 @@ const ArticleCard = memo(function ArticleCard({
           <time className="overlay-date">{new Date(article.publishedAt).toLocaleDateString()}</time>
         </div>
         
+        {/* OPTION 1: Glassmorphism Overlay for Smart Brief */}
+        {showBrief && isHardNews && (
+          <div className="smart-brief-overlay" onClick={() => setShowBrief(false)}>
+            <div className="smart-brief-content" onClick={(e) => e.stopPropagation()}>
+               <InlineSmartBrief articleId={article._id} />
+            </div>
+          </div>
+        )}
+
         <div className="article-content">
           
           <button 
@@ -136,11 +145,8 @@ const ArticleCard = memo(function ArticleCard({
             {article.headline}
           </button>
 
-          {showBrief && isHardNews ? (
-             <InlineSmartBrief articleId={article._id} />
-          ) : (
-             <p className="article-summary">{article.summary}</p>
-          )}
+          {/* Always render summary to maintain layout height */}
+          <p className="article-summary">{article.summary}</p>
           
           <div className="article-footer">
             

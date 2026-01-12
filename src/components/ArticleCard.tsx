@@ -158,44 +158,61 @@ const ArticleCard = memo(function ArticleCard({
           <div className="article-footer">
             
             {hasStats && (
-                <div className="stats-row">
-                    {article.biasScore !== undefined && (
-                        <>
-                            <button className="stat-item-btn" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
-                                <span>Bias:</span>
-                                <span className="stat-val accent-text">
-                                  {/* Changed: Show 'NA' if 0, otherwise just the score */}
-                                  {article.biasScore === 0 ? 'NA' : article.biasScore}
-                                </span>
-                            </button>
-                            <span className="divider">•</span>
-                        </>
-                    )}
+                <div className="stats-container">
                     
-                    {article.politicalLean && (
-                        <>
+                    {/* ROW 1: Bias & Lean */}
+                    <div className="stats-row">
+                        {article.biasScore !== undefined && (
+                            <>
+                                <button className="stat-item-btn" onClick={(e) => showTooltip("Bias Score (0-100). Lower is better.", e)}>
+                                    <span>Bias:</span>
+                                    <span className="stat-val accent-text">
+                                      {article.biasScore === 0 ? 'NA' : article.biasScore}
+                                    </span>
+                                </button>
+                                {/* Only show divider if Lean follows */}
+                                {article.politicalLean && <span className="divider">•</span>}
+                            </>
+                        )}
+                        
+                        {article.politicalLean && (
                             <div className="stat-item">
                                 <span>Lean:</span>
                                 <span className={`stat-val ${getLeanClass(article.politicalLean)}`}>
-                                    {/* Changed: Show 'NA' if Unknown/Not Applicable */}
                                     {(article.politicalLean === 'Unknown' || article.politicalLean === 'Not Applicable') 
                                       ? 'NA' 
                                       : article.politicalLean}
                                 </span>
                             </div>
-                            <span className="divider">•</span>
-                        </>
-                    )}
+                        )}
+                    </div>
 
-                    {article.sentiment && (
-                        <div className="stat-item">
-                            <span>Sent:</span>
-                            <span className={`stat-val ${getSentimentClass(article.sentiment)}`}>
-                                {/* Changed: Map Positive->Supportive, Negative->Critical */}
-                                {getSentimentDisplay(article.sentiment)}
-                            </span>
-                        </div>
-                    )}
+                    {/* ROW 2: Grade & Sentiment */}
+                    <div className="stats-row">
+                        {/* Show Grade if available or if Hard News (default to NA if missing) */}
+                        {(article.credibilityGrade || isHardNews) && (
+                            <>
+                                <div className="stat-item">
+                                    <span>Grade:</span>
+                                    <span className="stat-val accent-text">
+                                        {article.credibilityGrade || 'NA'}
+                                    </span>
+                                </div>
+                                {/* Only show divider if Sentiment follows */}
+                                {article.sentiment && <span className="divider">•</span>}
+                            </>
+                        )}
+
+                        {article.sentiment && (
+                            <div className="stat-item">
+                                <span>Sentiment:</span>
+                                <span className={`stat-val ${getSentimentClass(article.sentiment)}`}>
+                                    {getSentimentDisplay(article.sentiment)}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+
                 </div>
             )}
 

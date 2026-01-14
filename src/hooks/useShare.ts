@@ -13,10 +13,11 @@ const useShare = () => {
     api.logShare(article._id).catch(err => console.error("Log Share Error:", err));
 
     // 2. Construct Share Data
-    // FIXED: Used import.meta.env for Vite
+    // FIXED: Do not strip '/api'. The share route is hosted on the backend API.
+    // e.g., https://narrative-backend.railway.app/api/share/123
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-    const baseUrl = apiUrl.replace(/\/api\/?$/, ''); 
-    const shareUrl = `${baseUrl}/share/${article._id}`;
+    const shareUrl = `${apiUrl}/share/${article._id}`;
+    
     const shareTitle = article.headline;
     const shareText = `Read this on The Gamut: ${article.headline}`;
 

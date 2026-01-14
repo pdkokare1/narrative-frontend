@@ -125,39 +125,52 @@
 @media (max-width: 768px) {
     /* FIXED: Reduce header padding and gap specifically for mobile */
     .feed-header-sticky {
-        padding: 4px 12px;
+        padding: 4px 20px; /* Align with new grid padding */
         gap: 6px;
     }
 
     .articles-grid {
         display: flex;
         flex-direction: column;
-        padding: 0; 
-        gap: 0;    
+        
+        /* UPDATED: Add Margins (Padding) to sides */
+        padding: 10px 20px; 
+        
+        /* UPDATED: Add gap for stack separation */
+        gap: 24px;    
+        
         scroll-snap-type: y mandatory;
         overscroll-behavior-y: contain;
+        
+        /* Ensure bottom nav doesn't cover last item */
+        padding-bottom: 100px;
     }
 
     .feed-article-wrapper {
-        /* RESTORED: Full height is strictly required for Mobile Snap View */
-        height: 100%; 
-        min-height: 100%;
+        /* UPDATED: Calculated height for "Centered Card" look
+           (Viewport - Header - Nav - Breathing room) */
+        height: calc(100vh - 160px); 
+        min-height: 480px; /* Prevents it from getting too small on tiny screens */
         width: 100%;
-        scroll-snap-align: start;
+        
+        /* UPDATED: Snap to Center */
+        scroll-snap-align: center;
         scroll-snap-stop: always;
+        
         display: flex;
         flex-direction: column;
         justify-content: center;
-        /* ADJUSTMENT: Removed side padding (was 10px 15px) to use full width */
-        padding: 10px 0; 
+        
+        /* Removed internal padding to let container padding handle margins */
+        padding: 0; 
         box-sizing: border-box;
     }
 
     .article-card-wrapper {
-        height: 100%;
-        scroll-snap-align: start;
-        /* ADJUSTMENT: Match wrapper padding change */
-        padding: 10px 0;
+        /* Match the main wrapper for Skeletons */
+        height: calc(100vh - 160px);
+        scroll-snap-align: center;
+        padding: 0;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -170,7 +183,7 @@
     .now-playing-highlight::before {
         content: '';
         position: absolute;
-        left: 0;
+        left: -12px; /* Adjusted for new margins */
         top: 10%;
         bottom: 10%;
         width: 3px;

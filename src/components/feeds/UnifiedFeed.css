@@ -123,6 +123,12 @@
 
 /* --- Mobile Specific Layout --- */
 @media (max-width: 768px) {
+    /* FIXED: Reduce header padding and gap specifically for mobile */
+    .feed-header-sticky {
+        padding: 4px 12px;
+        gap: 6px;
+    }
+
     .articles-grid {
         display: flex;
         flex-direction: column;

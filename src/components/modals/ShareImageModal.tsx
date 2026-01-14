@@ -109,13 +109,13 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
             {article.imageUrl && (
               <div className="share-card-image-container">
                  <img 
-                    src={getProxyImageSrc(article.imageUrl)} 
+                    src={getProxyImageSrc(article.imageUrl || '')} 
                     alt="" 
                     crossOrigin="anonymous" // Critical for html2canvas
                     className="share-card-img"
                     onError={(e) => {
                         // If proxy fails, fallback to original (might still fail screenshot, but visible to user)
-                        (e.target as HTMLImageElement).src = article.imageUrl;
+                        (e.target as HTMLImageElement).src = article.imageUrl || '';
                     }}
                  />
               </div>

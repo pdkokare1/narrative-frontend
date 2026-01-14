@@ -14,6 +14,7 @@ interface ShareImageModalProps {
 const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [generating, setGenerating] = useState(false);
+  const [proxyFailed, setProxyFailed] = useState(false);
 
   // Helper to generate the proxy URL for the current article image
   const getProxyImageSrc = (originalUrl: string) => {
@@ -29,15 +30,15 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
     setGenerating(true);
 
     try {
-      // Small delay to ensure any proxy images are fully rendered
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Small delay to ensure render is stable
+      await new Promise(resolve => setTimeout(resolve, 150));
 
       const options: any = {
         scale: 3, 
         backgroundColor: '#1E1E1E', 
         useCORS: true, 
         logging: false,
-        allowTaint: true,
+        allowTaint: false, // Critical: If true, toBlob fails. We must rely on CORS.
         fontDefinitions: [{
             src: "url('https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff')",
             family: 'Inter',
@@ -49,13 +50,14 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
 
       canvas.toBlob(async (blob) => {
         if (!blob) {
+            console.error("Canvas empty");
             setGenerating(false);
             return;
         }
         
         const file = new File([blob], 'the-gamut-share.png', { type: 'image/png' });
         
-        // Generate the share link to include in the caption
+        // Generate link for caption
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
         const shareLink = `${apiUrl}/share/${article._id}`;
 
@@ -63,7 +65,6 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
           try {
             await navigator.share({
               files: [file],
-              // Combined Title + Link into 'text' for better compatibility (esp WhatsApp)
               text: `Read the full analysis on The Gamut:\n${article.headline}\n\n${shareLink}`
             });
             setGenerating(false);
@@ -108,16 +109,19 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
                 <span className="share-sub-text">AI ANALYSIS</span>
             </div>
 
-            {/* MAIN IMAGE: Uses Proxy to bypass CORS */}
-            {article.imageUrl && (
+            {/* MAIN IMAGE */}
+            {article.imageUrl && !proxyFailed && (
               <div className="share-card-image-container">
                  <img 
                     src={getProxyImageSrc(article.imageUrl || '')} 
                     alt="" 
                     crossOrigin="anonymous" 
                     className="share-card-img"
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).src = article.imageUrl || '';
+                    onError={() => {
+                        // If proxy fails, we HIDE the image. 
+                        // Falling back to the original non-CORS image 'taints' the canvas 
+                        // and causes the Share/Download to fail silently.
+                        setProxyFailed(true);
                     }}
                  />
               </div>

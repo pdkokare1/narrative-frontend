@@ -35,7 +35,7 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
       const options: any = {
         scale: 3, 
         backgroundColor: '#1E1E1E', 
-        useCORS: true, // This now works because the backend sends Allow-Origin: *
+        useCORS: true, 
         logging: false,
         allowTaint: true,
         fontDefinitions: [{
@@ -54,14 +54,17 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
         }
         
         const file = new File([blob], 'the-gamut-share.png', { type: 'image/png' });
+        
+        // Generate the share link to include in the caption
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+        const shareLink = `${apiUrl}/share/${article._id}`;
 
-        // Try native share first (Mobile)
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
               files: [file],
-              title: article.headline,
-              text: `Read the full analysis on The Gamut: ${article.headline}`
+              // Combined Title + Link into 'text' for better compatibility (esp WhatsApp)
+              text: `Read the full analysis on The Gamut:\n${article.headline}\n\n${shareLink}`
             });
             setGenerating(false);
             onClose(); 
@@ -71,7 +74,7 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
           }
         }
 
-        // Fallback to direct download (Desktop)
+        // Fallback for Desktop
         const link = document.createElement('a');
         link.download = `the-gamut-${article._id}.png`;
         link.href = canvas.toDataURL('image/png');
@@ -111,10 +114,9 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
                  <img 
                     src={getProxyImageSrc(article.imageUrl || '')} 
                     alt="" 
-                    crossOrigin="anonymous" // Critical for html2canvas
+                    crossOrigin="anonymous" 
                     className="share-card-img"
                     onError={(e) => {
-                        // If proxy fails, fallback to original (might still fail screenshot, but visible to user)
                         (e.target as HTMLImageElement).src = article.imageUrl || '';
                     }}
                  />

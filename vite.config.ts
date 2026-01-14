@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt', // Changed from 'autoUpdate' to 'prompt' to prevent reload loops
       includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
       manifest: {
         short_name: "The Gamut",

@@ -67,7 +67,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   const touchEndY = useRef<number | null>(null);
   
   // FIXED: Increased distance significantly to reduce sensitivity
-  const minSwipeDistance = 150; 
+  const minSwipeDistance = 125; 
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchEnd.current = null; 

@@ -13,7 +13,8 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 50px; /* Reduced from 60px to save space */
+    /* Calculated height to include the safe area (50px content + safe area inset) */
+    height: calc(50px + env(safe-area-inset-bottom));
     
     /* --- USE NEW GLASS VARIABLES --- */
     background: var(--glass-bg);
@@ -23,7 +24,8 @@
     box-shadow: var(--glass-shadow);
     
     z-index: 1500;
-    padding-bottom: max(0px, env(safe-area-inset-bottom)); /* Reduced cushion to 0 */
+    /* Push content up by the safe area amount so it sits above the home bar */
+    padding-bottom: env(safe-area-inset-bottom);
     padding-left: 20px;
     padding-right: 20px;
   }

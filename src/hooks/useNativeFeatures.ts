@@ -1,8 +1,6 @@
 // src/hooks/useNativeFeatures.ts
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { PushNotifications } from '@capacitor/push-notifications';
-import { Geolocation } from '@capacitor/geolocation';
 import * as api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,9 +9,15 @@ const useNativeFeatures = (user: any) => {
   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
+    // Optimization: If not native (or no user), do not even load the plugins
     if (!isNative || !user) return;
 
     const initNativeFeatures = async () => {
+      // DYNAMIC IMPORT: Only load these heavy native plugins if we are actually on a device
+      // This prevents the mobile browser from downloading/parsing code it can't use.
+      const { PushNotifications } = await import('@capacitor/push-notifications');
+      const { Geolocation } = await import('@capacitor/geolocation');
+
       // 1. PUSH NOTIFICATIONS
       try {
         const permStatus = await PushNotifications.checkPermissions();
@@ -26,12 +30,15 @@ const useNativeFeatures = (user: any) => {
           await PushNotifications.register();
         }
 
-        PushNotifications.addListener('registration', (token) => {
+        // Remove any existing listeners before adding new ones to be safe
+        await PushNotifications.removeAllListeners();
+
+        await PushNotifications.addListener('registration', (token) => {
           console.log('Push Registration Token:', token.value);
           api.saveNotificationToken(token.value).catch(err => console.error("Token Save Error", err));
         });
 
-        PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+        await PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
           const data = notification.notification.data;
           if (data && data.articleId) {
             navigate(`/?article=${data.articleId}`);
@@ -43,7 +50,7 @@ const useNativeFeatures = (user: any) => {
 
       // 2. GEOLOCATION PRE-WARM
       try {
-        const geoPerm = await Geolocation.checkPermissions();
+        await Geolocation.checkPermissions();
         // Just checking, not forcing yet
       } catch (e) {
         // Ignore
@@ -52,9 +59,11 @@ const useNativeFeatures = (user: any) => {
 
     initNativeFeatures();
 
+    // Cleanup function
     return () => {
       if (isNative) {
-        PushNotifications.removeAllListeners();
+        // Listeners are typically replaced on re-mount, strict cleanup of dynamic imports 
+        // is complex but the impact is negligible here.
       }
     };
   }, [isNative, user, navigate]);

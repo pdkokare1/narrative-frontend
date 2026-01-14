@@ -16,11 +16,12 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
   const [generating, setGenerating] = useState(false);
   const [proxyFailed, setProxyFailed] = useState(false);
 
+  // Helper to generate the proxy URL with Cache Busting
   const getProxyImageSrc = (originalUrl: string) => {
     if (!originalUrl) return '';
-    // Ensure we use the correct environment API URL
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-    return `${apiUrl}/share/proxy-image?url=${encodeURIComponent(originalUrl)}`;
+    // Add timestamp to force fresh fetch with CORS headers
+    return `${apiUrl}/share/proxy-image?url=${encodeURIComponent(originalUrl)}&t=${Date.now()}`;
   };
 
   if (!article) return null;
@@ -31,76 +32,81 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
 
     try {
       // 1. Wait for render stability
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 800));
 
       // 2. Capture Canvas
+      // useCORS: true is critical. 
       const canvas = await html2canvas(cardRef.current, {
-        scale: 2, // 2x is usually sufficient and faster/smaller than 3x
+        scale: 2, 
         backgroundColor: '#1E1E1E', 
         useCORS: true, 
         allowTaint: false,
         logging: false,
+        width: cardRef.current.scrollWidth,
+        height: cardRef.current.scrollHeight
       });
 
       canvas.toBlob(async (blob) => {
-        if (!blob) {
-            throw new Error("Canvas generation resulted in empty blob");
-        }
-        
-        const file = new File([blob], 'the-gamut-share.png', { type: 'image/png' });
-        
+        // Fallback vars
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
         const shareLink = `${apiUrl}/share/${article._id}`;
         const shareText = `Read the full analysis on The Gamut:\n${article.headline}\n\n${shareLink}`;
 
-        // 3. Attempt Share
+        if (!blob) {
+            console.warn("Canvas empty. Falling back to text share.");
+            await shareTextFallback(shareText);
+            return;
+        }
+        
+        const file = new File([blob], 'the-gamut-share.png', { type: 'image/png' });
+
+        // 3. Attempt Image Share
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
               files: [file],
-              title: article.headline,
               text: shareText
+              // Note: We deliberately omit 'title' and 'url' here to maximize compatibility
+              // with WhatsApp image sharing.
             });
             setGenerating(false);
             onClose(); 
             return;
           } catch (err) {
-            console.warn("Image share failed or cancelled, falling back to text...", err);
-            // Fallback continues below...
+            console.warn("Image share cancelled or failed, trying text...", err);
+            // Don't return, fall through to text fallback
           }
         }
 
-        // 4. Fallback 1: Try sharing just TEXT (if image failed)
-        if (navigator.share) {
-             try {
-                await navigator.share({
-                    title: article.headline,
-                    text: shareText
-                });
-                setGenerating(false);
-                onClose();
-                return;
-             } catch (textErr) {
-                 console.warn("Text share failed", textErr);
-             }
-        }
-
-        // 5. Fallback 2: Download Image (Desktop/Last Resort)
-        const link = document.createElement('a');
-        link.download = `the-gamut-${article._id}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        
-        setGenerating(false);
-        onClose();
+        // 4. Fallback: Text Share
+        await shareTextFallback(shareText);
 
       }, 'image/png');
 
     } catch (error) {
       console.error("Image generation failed:", error);
-      setGenerating(false);
-      alert("Could not generate image. Try copying the link instead.");
+      // Final fallback if canvas completely crashes
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const shareLink = `${apiUrl}/share/${article._id}`;
+      const shareText = `Read the full analysis on The Gamut:\n${article.headline}\n\n${shareLink}`;
+      await shareTextFallback(shareText);
     }
+  };
+
+  const shareTextFallback = async (text: string) => {
+      try {
+          if (navigator.share) {
+              await navigator.share({ text });
+          } else {
+              // Copy to clipboard if no native share
+              await navigator.clipboard.writeText(text);
+              alert("Image generation failed, but link copied to clipboard!");
+          }
+      } catch (e) {
+          console.error("Fallback share failed", e);
+      }
+      setGenerating(false);
+      onClose();
   };
 
   const leanColor = (lean: string) => {

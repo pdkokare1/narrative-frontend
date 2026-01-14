@@ -17,24 +17,25 @@ const useShare = () => {
     const shareUrl = `${apiUrl}/share/${article._id}`;
     
     const shareTitle = article.headline;
-    const shareText = `Read this on The Gamut: ${article.headline}`;
+    // Appending URL to text ensures it is clickable on WhatsApp/SMS
+    const shareText = `Read this on The Gamut: ${article.headline}\n${shareUrl}`;
 
     try {
       if (Capacitor.isNativePlatform()) {
         await Share.share({
           title: shareTitle,
           text: shareText,
-          url: shareUrl,
+          url: shareUrl, // Native sheet usually handles this well separately
           dialogTitle: 'Share to'
         });
       } else {
         if (navigator.share) {
-          // Note: On some Android devices, sharing both 'text' and 'url' can be buggy.
-          // WhatsApp often prefers the URL to be appended to the text.
+          // Web Share API
           await navigator.share({ 
             title: shareTitle, 
-            text: `${shareText}\n${shareUrl}`
-            // url: shareUrl // Commented out to force text-based link sharing which is more reliable on WhatsApp
+            text: shareText
+            // We omit 'url' here because appending it to 'text' is more reliable 
+            // for WhatsApp Web and Android WebViews.
           });
         } else {
           await navigator.clipboard.writeText(shareUrl);
@@ -42,6 +43,7 @@ const useShare = () => {
         }
       }
     } catch (err) {
+      // User cancelled share or failed
       console.log('Share dismissed', err);
     }
   };

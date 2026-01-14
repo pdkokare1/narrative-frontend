@@ -15,6 +15,13 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
   const cardRef = useRef<HTMLDivElement>(null);
   const [generating, setGenerating] = useState(false);
 
+  // Helper to generate the proxy URL for the current article image
+  const getProxyImageSrc = (originalUrl: string) => {
+    if (!originalUrl) return '';
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+    return `${apiUrl}/share/proxy-image?url=${encodeURIComponent(originalUrl)}`;
+  };
+
   if (!article) return null;
 
   const handleDownload = async () => {
@@ -22,10 +29,13 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
     setGenerating(true);
 
     try {
+      // Small delay to ensure any proxy images are fully rendered
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const options: any = {
         scale: 3, 
         backgroundColor: '#1E1E1E', 
-        useCORS: true, 
+        useCORS: true, // This now works because the backend sends Allow-Origin: *
         logging: false,
         allowTaint: true,
         fontDefinitions: [{
@@ -45,6 +55,7 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
         
         const file = new File([blob], 'the-gamut-share.png', { type: 'image/png' });
 
+        // Try native share first (Mobile)
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
@@ -60,6 +71,7 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
           }
         }
 
+        // Fallback to direct download (Desktop)
         const link = document.createElement('a');
         link.download = `the-gamut-${article._id}.png`;
         link.href = canvas.toDataURL('image/png');
@@ -92,6 +104,22 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
                 <span className="share-logo-text">THE GAMUT</span>
                 <span className="share-sub-text">AI ANALYSIS</span>
             </div>
+
+            {/* MAIN IMAGE: Uses Proxy to bypass CORS */}
+            {article.imageUrl && (
+              <div className="share-card-image-container">
+                 <img 
+                    src={getProxyImageSrc(article.imageUrl)} 
+                    alt="" 
+                    crossOrigin="anonymous" // Critical for html2canvas
+                    className="share-card-img"
+                    onError={(e) => {
+                        // If proxy fails, fallback to original (might still fail screenshot, but visible to user)
+                        (e.target as HTMLImageElement).src = article.imageUrl;
+                    }}
+                 />
+              </div>
+            )}
 
             <h2 className="share-headline" style={{ fontFamily: 'Playfair Display, serif' }}>{article.headline}</h2>
 

@@ -61,20 +61,42 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   // --- SWIPE LOGIC ---
   const touchStart = useRef<number | null>(null);
   const touchEnd = useRef<number | null>(null);
-  const minSwipeDistance = 50; 
+  
+  // FIXED: Added Y-axis refs to detect scrolling vs swiping
+  const touchStartY = useRef<number | null>(null);
+  const touchEndY = useRef<number | null>(null);
+  
+  // FIXED: Increased distance to reduce sensitivity
+  const minSwipeDistance = 100; 
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchEnd.current = null; 
     touchStart.current = e.targetTouches[0].clientX;
+    
+    // Track Y start
+    touchEndY.current = null;
+    touchStartY.current = e.targetTouches[0].clientY;
   };
   const onTouchMove = (e: React.TouchEvent) => {
     touchEnd.current = e.targetTouches[0].clientX;
+    // Track Y move
+    touchEndY.current = e.targetTouches[0].clientY;
   };
   const onTouchEnd = () => {
+    // Ensure we have X data
     if (!touchStart.current || !touchEnd.current) return;
-    const distance = touchStart.current - touchEnd.current;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
+    
+    // Ensure we have Y data (safeguard)
+    if (!touchStartY.current || !touchEndY.current) return;
+
+    const xDistance = touchStart.current - touchEnd.current;
+    const yDistance = touchStartY.current - touchEndY.current;
+
+    // FIXED: Ignore swipe if user was scrolling vertically (Y > X)
+    if (Math.abs(yDistance) > Math.abs(xDistance)) return;
+
+    const isLeftSwipe = xDistance > minSwipeDistance;
+    const isRightSwipe = xDistance < -minSwipeDistance;
 
     if (isLeftSwipe) { 
         if (mode === 'latest') attemptChangeMode('infocus', 'enter-right');
@@ -103,7 +125,6 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
         {['latest', 'infocus', 'balanced'].map((m) => (
             <button
               key={m}
-              // FIXED: Added 'enter-right' as the second argument
               onClick={() => attemptChangeMode(m as FeedMode, 'enter-right')}
               style={{
                 background: mode === m ? 'var(--accent-primary)' : 'transparent',

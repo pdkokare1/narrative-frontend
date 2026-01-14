@@ -30,20 +30,17 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
     setGenerating(true);
 
     try {
-      // Small delay to ensure render is stable
-      await new Promise(resolve => setTimeout(resolve, 150));
+      // Increased delay to 800ms to ensure fonts and images are fully settled
+      await new Promise(resolve => setTimeout(resolve, 800));
 
       const options: any = {
         scale: 3, 
         backgroundColor: '#1E1E1E', 
         useCORS: true, 
-        logging: false,
-        allowTaint: false, // Critical: If true, toBlob fails. We must rely on CORS.
-        fontDefinitions: [{
-            src: "url('https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff')",
-            family: 'Inter',
-            style: 'normal'
-        }]
+        logging: true, // Enable logging to debug if needed
+        allowTaint: false,
+        width: cardRef.current.offsetWidth,
+        height: cardRef.current.offsetHeight
       };
 
       const canvas = await html2canvas(cardRef.current, options);
@@ -51,6 +48,7 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
       canvas.toBlob(async (blob) => {
         if (!blob) {
             console.error("Canvas empty");
+            alert("Failed to generate image. Please try again.");
             setGenerating(false);
             return;
         }
@@ -60,28 +58,32 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
         // Generate link for caption
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
         const shareLink = `${apiUrl}/share/${article._id}`;
+        const shareText = `Read the full analysis on The Gamut:\n${article.headline}\n\n${shareLink}`;
 
+        // Attempt Native Share (Mobile)
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
               files: [file],
-              text: `Read the full analysis on The Gamut:\n${article.headline}\n\n${shareLink}`
+              title: article.headline,
+              text: shareText
             });
             setGenerating(false);
             onClose(); 
             return;
           } catch (err) {
-            console.log("Share dismissed", err);
+            console.warn("Native share dismissed or failed", err);
+            // Don't alert here as user might have just cancelled the sheet
           }
+        } else {
+            // Fallback for Desktop or unsupported browsers
+            const link = document.createElement('a');
+            link.download = `the-gamut-${article._id}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            setGenerating(false);
+            onClose();
         }
-
-        // Fallback for Desktop
-        const link = document.createElement('a');
-        link.download = `the-gamut-${article._id}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        setGenerating(false);
-        onClose();
       }, 'image/png');
 
     } catch (error) {
@@ -117,10 +119,8 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
                     alt="" 
                     crossOrigin="anonymous" 
                     className="share-card-img"
-                    onError={() => {
-                        // If proxy fails, we HIDE the image. 
-                        // Falling back to the original non-CORS image 'taints' the canvas 
-                        // and causes the Share/Download to fail silently.
+                    onError={(e) => {
+                        console.warn("Proxy Image Failed, hiding image to save canvas.");
                         setProxyFailed(true);
                     }}
                  />

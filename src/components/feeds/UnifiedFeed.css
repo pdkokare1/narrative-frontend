@@ -148,14 +148,16 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding: 10px 15px; 
+        /* ADJUSTMENT: Removed side padding (was 10px 15px) to use full width */
+        padding: 10px 0; 
         box-sizing: border-box;
     }
 
     .article-card-wrapper {
         height: 100%;
         scroll-snap-align: start;
-        padding: 10px 15px;
+        /* ADJUSTMENT: Match wrapper padding change */
+        padding: 10px 0;
         display: flex;
         flex-direction: column;
         justify-content: center;

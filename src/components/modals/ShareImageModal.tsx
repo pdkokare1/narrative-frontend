@@ -16,12 +16,12 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
   const [generating, setGenerating] = useState(false);
   const [proxyFailed, setProxyFailed] = useState(false);
 
-  // Helper to generate the proxy URL with Cache Busting
+  // Helper to generate the proxy URL for the current article image
   const getProxyImageSrc = (originalUrl: string) => {
     if (!originalUrl) return '';
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-    // Add timestamp to force fresh fetch with CORS headers
-    return `${apiUrl}/share/proxy-image?url=${encodeURIComponent(originalUrl)}&t=${Date.now()}`;
+    // FIX: Robust URL and timestamp for cache busting
+    const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '');
+    return `${apiBase}/api/share/proxy-image?url=${encodeURIComponent(originalUrl)}&t=${Date.now()}`;
   };
 
   if (!article) return null;
@@ -31,82 +31,66 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
     setGenerating(true);
 
     try {
-      // 1. Wait for render stability
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Small delay to ensure render is stable
+      await new Promise(resolve => setTimeout(resolve, 800)); // Increased to 800ms
 
-      // 2. Capture Canvas
-      // useCORS: true is critical. 
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 2, 
+      const options: any = {
+        scale: 3, 
         backgroundColor: '#1E1E1E', 
         useCORS: true, 
-        allowTaint: false,
         logging: false,
+        allowTaint: false, 
         width: cardRef.current.scrollWidth,
         height: cardRef.current.scrollHeight
-      });
+      };
+
+      const canvas = await html2canvas(cardRef.current, options);
 
       canvas.toBlob(async (blob) => {
         // Fallback vars
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-        const shareLink = `${apiUrl}/share/${article._id}`;
+        const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '');
+        const shareLink = `${apiBase}/api/share/${article._id}`;
         const shareText = `Read the full analysis on The Gamut:\n${article.headline}\n\n${shareLink}`;
 
         if (!blob) {
-            console.warn("Canvas empty. Falling back to text share.");
-            await shareTextFallback(shareText);
+            console.error("Canvas empty, falling back to text");
+            // Fallback to text share
+            if (navigator.share) navigator.share({ text: shareText });
+            setGenerating(false);
+            onClose();
             return;
         }
         
         const file = new File([blob], 'the-gamut-share.png', { type: 'image/png' });
-
-        // 3. Attempt Image Share
+        
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
               files: [file],
               text: shareText
-              // Note: We deliberately omit 'title' and 'url' here to maximize compatibility
-              // with WhatsApp image sharing.
             });
             setGenerating(false);
             onClose(); 
             return;
           } catch (err) {
-            console.warn("Image share cancelled or failed, trying text...", err);
-            // Don't return, fall through to text fallback
+            console.log("Share dismissed", err);
           }
         }
 
-        // 4. Fallback: Text Share
-        await shareTextFallback(shareText);
-
+        // Fallback for Desktop
+        const link = document.createElement('a');
+        link.download = `the-gamut-${article._id}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        setGenerating(false);
+        onClose();
       }, 'image/png');
 
     } catch (error) {
       console.error("Image generation failed:", error);
-      // Final fallback if canvas completely crashes
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-      const shareLink = `${apiUrl}/share/${article._id}`;
-      const shareText = `Read the full analysis on The Gamut:\n${article.headline}\n\n${shareLink}`;
-      await shareTextFallback(shareText);
-    }
-  };
-
-  const shareTextFallback = async (text: string) => {
-      try {
-          if (navigator.share) {
-              await navigator.share({ text });
-          } else {
-              // Copy to clipboard if no native share
-              await navigator.clipboard.writeText(text);
-              alert("Image generation failed, but link copied to clipboard!");
-          }
-      } catch (e) {
-          console.error("Fallback share failed", e);
-      }
       setGenerating(false);
-      onClose();
+      alert("Could not generate image. Please try again.");
+    }
   };
 
   const leanColor = (lean: string) => {
@@ -135,7 +119,9 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
                     alt="" 
                     crossOrigin="anonymous" 
                     className="share-card-img"
-                    onError={() => setProxyFailed(true)}
+                    onError={() => {
+                        setProxyFailed(true);
+                    }}
                  />
               </div>
             )}

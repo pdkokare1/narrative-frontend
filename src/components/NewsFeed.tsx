@@ -62,28 +62,45 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   const touchStart = useRef<number | null>(null);
   const touchEnd = useRef<number | null>(null);
   
-  // FIXED: Added Y-axis refs to detect scrolling vs swiping
+  // Y-axis refs to detect scrolling vs swiping
   const touchStartY = useRef<number | null>(null);
   const touchEndY = useRef<number | null>(null);
   
-  // FIXED: Increased distance significantly to reduce sensitivity
-  const minSwipeDistance = 125; 
+  // ADJUSTMENT: Increased sensitivity (lowered distance) because we now have Safe Zones
+  const minSwipeDistance = 90; 
 
   const onTouchStart = (e: React.TouchEvent) => {
+    const y = e.targetTouches[0].clientY;
+    const windowHeight = window.innerHeight;
+    
+    // --- SAFETY ZONES ---
+    // Ignore swipes originating from the Header/Pills area (Top 150px)
+    // Ignore swipes originating from the Player/Nav area (Bottom 120px)
+    const topSafeZone = 150; 
+    const bottomSafeZone = 120; 
+
+    if (y < topSafeZone || y > (windowHeight - bottomSafeZone)) {
+        touchStart.current = null;
+        touchStartY.current = null;
+        return;
+    }
+
     touchEnd.current = null; 
     touchStart.current = e.targetTouches[0].clientX;
     
     // Track Y start
     touchEndY.current = null;
-    touchStartY.current = e.targetTouches[0].clientY;
+    touchStartY.current = y;
   };
+
   const onTouchMove = (e: React.TouchEvent) => {
     touchEnd.current = e.targetTouches[0].clientX;
     // Track Y move
     touchEndY.current = e.targetTouches[0].clientY;
   };
+
   const onTouchEnd = () => {
-    // Ensure we have X data
+    // Ensure we have X data (if null, it means we hit a safe zone check)
     if (!touchStart.current || !touchEnd.current) return;
     
     // Ensure we have Y data (safeguard)
@@ -92,7 +109,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
     const xDistance = touchStart.current - touchEnd.current;
     const yDistance = touchStartY.current - touchEndY.current;
 
-    // FIXED: Ignore swipe if user was scrolling vertically (Y > X)
+    // Ignore swipe if user was scrolling vertically (Y > X)
     if (Math.abs(yDistance) > Math.abs(xDistance)) return;
 
     const isLeftSwipe = xDistance > minSwipeDistance;

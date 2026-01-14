@@ -16,9 +16,9 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
   const [generating, setGenerating] = useState(false);
   const [proxyFailed, setProxyFailed] = useState(false);
 
-  // Helper to generate the proxy URL for the current article image
   const getProxyImageSrc = (originalUrl: string) => {
     if (!originalUrl) return '';
+    // Ensure we use the correct environment API URL
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
     return `${apiUrl}/share/proxy-image?url=${encodeURIComponent(originalUrl)}`;
   };
@@ -30,37 +30,30 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
     setGenerating(true);
 
     try {
-      // Increased delay to 800ms to ensure fonts and images are fully settled
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // 1. Wait for render stability
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      const options: any = {
-        scale: 3, 
+      // 2. Capture Canvas
+      const canvas = await html2canvas(cardRef.current, {
+        scale: 2, // 2x is usually sufficient and faster/smaller than 3x
         backgroundColor: '#1E1E1E', 
         useCORS: true, 
-        logging: true, // Enable logging to debug if needed
         allowTaint: false,
-        width: cardRef.current.offsetWidth,
-        height: cardRef.current.offsetHeight
-      };
-
-      const canvas = await html2canvas(cardRef.current, options);
+        logging: false,
+      });
 
       canvas.toBlob(async (blob) => {
         if (!blob) {
-            console.error("Canvas empty");
-            alert("Failed to generate image. Please try again.");
-            setGenerating(false);
-            return;
+            throw new Error("Canvas generation resulted in empty blob");
         }
         
         const file = new File([blob], 'the-gamut-share.png', { type: 'image/png' });
         
-        // Generate link for caption
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
         const shareLink = `${apiUrl}/share/${article._id}`;
         const shareText = `Read the full analysis on The Gamut:\n${article.headline}\n\n${shareLink}`;
 
-        // Attempt Native Share (Mobile)
+        // 3. Attempt Share
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
@@ -72,24 +65,41 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
             onClose(); 
             return;
           } catch (err) {
-            console.warn("Native share dismissed or failed", err);
-            // Don't alert here as user might have just cancelled the sheet
+            console.warn("Image share failed or cancelled, falling back to text...", err);
+            // Fallback continues below...
           }
-        } else {
-            // Fallback for Desktop or unsupported browsers
-            const link = document.createElement('a');
-            link.download = `the-gamut-${article._id}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            setGenerating(false);
-            onClose();
         }
+
+        // 4. Fallback 1: Try sharing just TEXT (if image failed)
+        if (navigator.share) {
+             try {
+                await navigator.share({
+                    title: article.headline,
+                    text: shareText
+                });
+                setGenerating(false);
+                onClose();
+                return;
+             } catch (textErr) {
+                 console.warn("Text share failed", textErr);
+             }
+        }
+
+        // 5. Fallback 2: Download Image (Desktop/Last Resort)
+        const link = document.createElement('a');
+        link.download = `the-gamut-${article._id}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        setGenerating(false);
+        onClose();
+
       }, 'image/png');
 
     } catch (error) {
       console.error("Image generation failed:", error);
       setGenerating(false);
-      alert("Could not generate image. Please try again.");
+      alert("Could not generate image. Try copying the link instead.");
     }
   };
 
@@ -119,10 +129,7 @@ const ShareImageModal: React.FC<ShareImageModalProps> = ({ article, onClose }) =
                     alt="" 
                     crossOrigin="anonymous" 
                     className="share-card-img"
-                    onError={(e) => {
-                        console.warn("Proxy Image Failed, hiding image to save canvas.");
-                        setProxyFailed(true);
-                    }}
+                    onError={() => setProxyFailed(true)}
                  />
               </div>
             )}

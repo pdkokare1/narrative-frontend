@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt', // Changed from 'autoUpdate' to 'prompt' to prevent reload loops
+      registerType: 'prompt', // Kept 'prompt' to prevent auto-reload loops
       includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
       manifest: {
         short_name: "The Gamut",
@@ -36,5 +36,17 @@ export default defineConfig({
   },
   build: {
     outDir: 'build', // React Scripts uses 'build', Vite uses 'dist' by default. We keep 'build' for Vercel/Capacitor compatibility.
+    rollupOptions: {
+      output: {
+        // Optimization: Split code into smaller chunks for faster parallel loading
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-firebase': ['firebase/app', 'firebase/auth'],
+          'vendor-ui': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
+          'vendor-charts': ['chart.js', 'react-chartjs-2'],
+          'vendor-utils': ['date-fns', 'axios', '@tanstack/react-query']
+        }
+      }
+    }
   }
 });

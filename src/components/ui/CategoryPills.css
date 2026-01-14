@@ -98,9 +98,10 @@
 /* ================= MOBILE OPTIMIZATIONS ================= */
 @media (max-width: 768px) {
     .category-pills-container {
-        /* FIXED: Reduced vertical padding for mobile specifically */
-        /* Top: 4px, Side: 12px, Bottom: 2px, Side: 12px */
-        padding: 4px 12px 2px 12px;
+        /* FIXED: Tighter padding and zero margin for mobile */
+        /* Top: 2px, Side: 12px, Bottom: 2px, Side: 12px */
+        padding: 2px 12px;
+        margin: 0;
         gap: 6px;
     }
 

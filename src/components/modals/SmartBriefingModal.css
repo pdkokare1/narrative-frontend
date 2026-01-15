@@ -32,8 +32,11 @@
     
     display: flex;
     flex-direction: column;
-    max-height: 85vh;
+    max-height: 80vh; /* Reduced slightly */
     overflow: hidden;
+
+    /* --- ADDED: Push up above Bottom Nav --- */
+    margin-bottom: calc(55px + env(safe-area-inset-bottom));
     
     /* Force visibility */
     opacity: 1;

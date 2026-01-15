@@ -1,5 +1,6 @@
 // src/components/modals/LoginModal.tsx
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import './LoginModal.css'; 
 
@@ -12,12 +13,10 @@ interface LoginModalProps {
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, message }) => {
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="login-modal-overlay" onClick={onClose}>
       <div className="login-modal-content" onClick={(e) => e.stopPropagation()}>
         <button className="login-modal-close" onClick={onClose}>×</button>
-        
-        {/* Removed the Lock Icon div completely for minimal aesthetic */}
         
         <h2 className="login-modal-title">
           Unlock The Gamut
@@ -41,7 +40,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, message }) => 
           Continue as Guest
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

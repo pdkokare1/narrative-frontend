@@ -197,22 +197,42 @@ a:hover {
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
   .main-container {
-    /* Slightly taller top padding on mobile to account for safe area if needed, 
-       but mostly handled by body padding now */
+    /* Slightly taller top padding on mobile to account for safe area if needed */
     padding-top: 40px; 
+    /* Force height to match viewport exactly for snap scroll containers */
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
   }
   
+  /* DEFAULT CONTENT behavior for other pages */
   .content {
     padding: 0 10px 70px 10px; 
     height: calc(100vh - 40px); 
     overflow-y: auto; 
     overflow-x: hidden;
-    /* Prevent pull-to-refresh here specifically */
     overscroll-behavior-y: none;
   }
+
+  /* OVERRIDE FOR FEED: Strictly Locked Container */
+  .content.feed-content {
+      padding: 0; 
+      height: 100%; /* Fill the main-container */
+      overflow: hidden; /* Prevent this container from scrolling */
+      display: flex;
+      flex-direction: column;
+  }
+
+  /* Ensure the animation wrapper fills the space */
+  .feed-content .feed-anim-wrapper {
+      flex: 1;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+  }
   
+  /* Fallback for standard grid if not in feed mode */
   .articles-grid { display: block; }
   
   .article-card-wrapper {

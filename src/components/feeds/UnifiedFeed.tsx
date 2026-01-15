@@ -3,7 +3,9 @@ import React, { useEffect, useRef, useMemo, useCallback, useState } from 'react'
 import CategoryPills from '../ui/CategoryPills';
 import SkeletonCard from '../ui/SkeletonCard';
 import NativeAdUnit from '../ui/NativeAdUnit'; 
-import LoginModal from '../modals/LoginModal'; 
+import LoginModal from '../modals/LoginModal';
+import SmartBriefingModal from '../modals/SmartBriefingModal'; // Import SmartBriefingModal
+import InFocusBar from '../InFocusBar'; // Import InFocusBar
 import { useRadio } from '../../context/RadioContext';
 import useShare from '../../hooks/useShare'; 
 import useIsMobile from '../../hooks/useIsMobile'; 
@@ -45,7 +47,6 @@ const FeedHeader: React.FC<{
                   onSelectCategory={(cat) => { vibrate(); onFilterChange({ ...filters, category: cat }); }} 
                 />
             )}
-            {/* Other headers preserved */}
             {mode === 'infocus' && (
                  <div style={{ padding: '8px 12px', background: 'var(--surface-paper)', borderBottom: '1px solid var(--border-color)' }}>
                     <p style={{margin:0, fontSize: '0.9rem', color: 'var(--accent-primary)', fontWeight: 600 }}>Developing Narratives</p>
@@ -84,8 +85,9 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const vibrate = useHaptic(); 
   const { isGuest } = useAuth(); 
 
-  // Local state for Login Modal
+  // Local state for Modals
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
 
   const prevSentIds = useRef<string>('');
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -186,12 +188,19 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       }
   };
 
+  // Logic to open Topic Briefing (Unlocked for guests, but content locked inside)
+  const handleTopicClick = (topic: string) => {
+     setSelectedTopic(topic);
+  };
+
   return (
-    // Changed from inline style to className to control viewport height strictly
     <div className="feed-page-container">
         <div className={`new-content-pill ${showNewPill ? 'visible' : ''}`} onClick={handleRefresh}>
             <span>↑ New Articles Available</span>
         </div>
+
+        {/* IN FOCUS BAR (Top of Feed) */}
+        {mode === 'latest' && <InFocusBar onTopicClick={handleTopicClick} />}
 
         <FeedHeader mode={mode} filters={filters} onFilterChange={onFilterChange} vibrate={vibrate} metaData={metaData} />
 
@@ -213,12 +222,10 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                 <>
                     {feedItems.map((item, index) => (
                         <React.Fragment key={item._id}>
-                             {/* NATIVE AD INJECTION: Every 7 items */}
                              {index > 0 && index % 7 === 0 && (
                                 <NativeAdUnit 
-                                    slotId="1234567890" // REPLACE WITH REAL ID
-                                    layoutKey="-6t+ed+2i-1n-4w" // REPLACE WITH REAL KEY
-                                    // Removed className="feed-ad-wrapper" to prevent CSS conflicts
+                                    slotId="1234567890" 
+                                    layoutKey="-6t+ed+2i-1n-4w"
                                 />
                              )}
 
@@ -249,7 +256,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                             {isFetchingNextPage ? ( <div className="spinner-small" /> ) : hasNextPage ? ( <span style={{ opacity: 0.5, fontSize: '0.8rem' }}>Loading more...</span> ) : ( <div className="end-message">You're all caught up</div> )}
                         </div>
                     )}
-                    {/* Spacer for bottom nav */}
                     <div style={{ height: '80px', flexShrink: 0, scrollSnapAlign: 'none' }} />
                 </>
             )}
@@ -261,6 +267,19 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             onClose={() => setShowLoginModal(false)}
             message="Join The Gamut to save articles, listen to stories, and customize your feed."
         />
+
+        {/* Topic Briefing Modal (Re-using SmartBriefingModal but passing topic data via API if needed) */}
+        {/* Note: In a real app, you might pass a 'topic' prop. 
+            For now, we render the modal, but SmartBriefingModal expects 'article' object.
+            We will mock a 'Topic Article' object to reuse the modal, or you can update Modal props.
+        */}
+        {selectedTopic && (
+            <SmartBriefingModal 
+                onClose={() => setSelectedTopic(null)}
+                // We fake an article object so the modal knows what to fetch
+                article={{ _id: `topic_${selectedTopic}`, headline: selectedTopic } as any} 
+            />
+        )}
     </div>
   );
 };

@@ -1,0 +1,111 @@
+/* src/components/ui/CustomSelect.css */
+
+.custom-select-container {
+  position: relative;
+  width: 100%;
+  font-family: var(--font-body);
+}
+
+.custom-select-value {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.custom-select-value:hover {
+  border-color: var(--accent-primary);
+  background-color: var(--bg-elevated);
+}
+
+.custom-select-value.open {
+  border-color: var(--accent-primary);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  background-color: var(--bg-elevated);
+}
+
+.custom-select-value span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 10px;
+}
+
+.custom-select-arrow {
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+.custom-select-value.open .custom-select-arrow {
+  transform: rotate(180deg);
+  color: var(--accent-primary);
+}
+
+.custom-select-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--accent-primary);
+  border-top: none;
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  z-index: 50;
+  max-height: 250px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-md);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  /* Ensure it sits above other content */
+}
+
+/* Scrollbar styling for the options list */
+.custom-select-options::-webkit-scrollbar {
+  width: 6px;
+  display: block; /* Override global hidden scrollbar for this internal list if needed */
+}
+.custom-select-options::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-select-options::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 3px;
+}
+
+.custom-select-option {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 14px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.custom-select-option:last-child {
+  border-bottom: none;
+}
+
+.custom-select-option:hover {
+  background-color: var(--bg-elevated);
+  color: var(--accent-primary);
+}
+
+.custom-select-option.selected {
+  background-color: var(--bg-elevated);
+  color: var(--accent-primary);
+  font-weight: 600;
+}

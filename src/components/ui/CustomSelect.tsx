@@ -1,6 +1,6 @@
 // src/components/ui/CustomSelect.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import '../../App.css'; 
+import './CustomSelect.css'; 
 
 // Option can be a simple string or an object
 export type SelectOption = string | { value: string; label: string };

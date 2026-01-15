@@ -1,21 +1,27 @@
 /* src/components/feeds/UnifiedFeed.css */
 
+/* --- Container for Page-Level Layout Control --- */
+.feed-page-container {
+    display: flex;
+    flex-direction: column;
+    /* Force the container to take exactly the viewport height */
+    height: 100vh;
+    height: 100dvh; /* Mobile viewport fix */
+    overflow: hidden; /* Prevent body scroll, force internal scroll */
+    position: relative;
+    background: var(--bg-primary);
+}
+
 /* --- Sticky Header --- */
 .feed-header-sticky {
     position: sticky;
     top: 0;
     z-index: 20;
-    
-    /* RE-FIX: Use theme variable instead of black box */
     background: var(--bg-primary); 
-    
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
-    
-    /* Reduced top/side padding to tighten spacing */
     padding: 6px 12px 10px 12px;
-    
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -25,22 +31,15 @@
 /* --- Main Grid --- */
 .articles-grid {
     flex: 1; 
-    /* Reduced side padding to 12px to use more screen width */
     padding: 20px 12px;
     overflow-y: auto;
     display: grid;
-    /* Adjusted minmax to 270px to allow 4 columns to fit comfortably */
     grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-    /* Reduced gap slightly to give cards more width */
     gap: 20px; 
     scroll-behavior: smooth;
     scrollbar-width: none; 
     -ms-overflow-style: none;
-    
-    /* STRETCH: Ensures article cards match height in a row */
     align-items: stretch;
-    
-    /* PACKING: Prevents rows from expanding to fill screen height */
     align-content: start;
 }
 
@@ -50,8 +49,6 @@
 
 /* --- Wrapper for Equal Height --- */
 .feed-article-wrapper {
-    /* Desktop: Use Flex to allow the inner ArticleCard to fill the grid cell height.
-       Do NOT set a fixed height or min-height here, let the grid row dictate it. */
     display: flex;
     flex-direction: column;
 }
@@ -59,11 +56,9 @@
 /* --- DESKTOP ENFORCEMENT (4 Articles per row) --- */
 @media (min-width: 1200px) {
     .articles-grid {
-        /* RESTORED: Force 4 columns on large screens */
         grid-template-columns: repeat(4, 1fr);
     }
 
-    /* Match Header padding to Grid padding (12px) */
     .feed-header-sticky {
         padding-left: 12px;
         padding-right: 12px;
@@ -121,11 +116,10 @@
     text-align: center;
 }
 
-/* --- Mobile Specific Layout --- */
+/* --- Mobile Specific Layout (TikTok/Reel Snap) --- */
 @media (max-width: 768px) {
-    /* FIXED: Reduce header padding and gap specifically for mobile */
     .feed-header-sticky {
-        padding: 4px 20px; /* Align with new grid padding */
+        padding: 4px 20px;
         gap: 6px;
     }
 
@@ -133,47 +127,57 @@
         display: flex;
         flex-direction: column;
         
-        /* UPDATED: Add Margins (Padding) to sides */
+        /* Margins on sides */
         padding: 10px 20px; 
         
-        /* UPDATED: Add gap for stack separation */
-        gap: 24px;    
+        /* Remove large gap to ensure smooth snapping between "pages" */
+        gap: 24px; 
         
+        /* ENABLE STRICT SNAP SCROLL */
         scroll-snap-type: y mandatory;
+        
+        /* Ensure this element handles the scroll */
+        overflow-y: scroll;
         overscroll-behavior-y: contain;
         
-        /* Ensure bottom nav doesn't cover last item */
-        padding-bottom: 100px;
+        /* Adjust padding for bottom nav space */
+        padding-bottom: 0;
     }
 
     .feed-article-wrapper {
-        /* UPDATED: Calculated height for "Centered Card" look
-           (Viewport - Header - Nav - Breathing room) */
-        height: calc(100vh - 160px); 
-        min-height: 480px; /* Prevents it from getting too small on tiny screens */
+        /* STRICT FULL HEIGHT: Fills the flex-1 area (Viewport - Header) */
+        height: 100%;
+        min-height: 100%;
+        
+        /* Optional: Add a max height constraint if needed, but 100% usually works best */
+        
         width: 100%;
         
-        /* UPDATED: Snap to Center */
-        scroll-snap-align: center;
-        scroll-snap-stop: always;
+        /* SNAP ALIGNMENT */
+        scroll-snap-align: center; /* Centers the card in the view */
+        scroll-snap-stop: always;  /* Forces stopping on each card (Reel feel) */
         
         display: flex;
         flex-direction: column;
         justify-content: center;
         
-        /* Removed internal padding to let container padding handle margins */
         padding: 0; 
         box-sizing: border-box;
+        
+        /* Ensure footer doesn't get cut off by bottom nav */
+        padding-bottom: 60px; 
     }
 
+    /* Loading Skeletons */
     .article-card-wrapper {
-        /* Match the main wrapper for Skeletons */
-        height: calc(100vh - 160px);
+        height: 100%;
         scroll-snap-align: center;
+        scroll-snap-stop: always;
         padding: 0;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        padding-bottom: 60px;
     }
 
     .now-playing-highlight {
@@ -183,9 +187,9 @@
     .now-playing-highlight::before {
         content: '';
         position: absolute;
-        left: -12px; /* Adjusted for new margins */
+        left: -12px; 
         top: 10%;
-        bottom: 10%;
+        bottom: 20%; /* Adjusted for bottom padding */
         width: 3px;
         background: var(--accent-primary);
         border-radius: 0 4px 4px 0;

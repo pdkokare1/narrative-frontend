@@ -1,3 +1,4 @@
+// src/components/modals/SmartBriefingModal.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { 
@@ -6,14 +7,21 @@ import {
   Refresh as RefreshIcon, 
   ErrorOutline as AlertIcon 
 } from '@mui/icons-material';
+import { LockIcon } from '../ui/Icons';
 import './SmartBriefingModal.css';
 import api from '../../services/api';
 import { IArticle } from '../../types';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface BriefingData {
   title: string;
-  content: string;
-  keyPoints: string[];
+  content: string; // The Summary (Always Visible)
+  keyPoints?: string[];
+  // New Locked Fields
+  agreedUpon?: string[];
+  conflict?: string[];
+  timeline?: string[];
 }
 
 interface SmartBriefingModalProps {
@@ -31,6 +39,9 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
   const [data, setData] = useState<BriefingData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const mounted = useRef(true);
+  
+  const { isGuest } = useAuth();
+  const navigate = useNavigate();
 
   // cleanup on unmount
   useEffect(() => {
@@ -99,6 +110,29 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
     fetchBriefing();
   }, []);
 
+  const handleLoginRedirect = () => {
+    onClose();
+    navigate('/login');
+  };
+
+  // --- MOCK DATA FOR GUESTS TO SEE BLURRED ---
+  // If no deep data is returned from API yet, we can show placeholders to indicate what they are missing
+  const lockedContentPlaceholder = (
+    <div className="briefing-points">
+      <h4>Agreed Upon Facts</h4>
+      <ul>
+        <li>Both sides acknowledge the economic impact of the recent policy changes.</li>
+        <li>International observers have confirmed the initial timeline of events.</li>
+      </ul>
+      <br />
+      <h4>Points of Conflict</h4>
+      <ul>
+        <li>Disagreement persists regarding the long-term viability of the proposed solution.</li>
+        <li>Opposition leaders argue the data used for the decision was incomplete.</li>
+      </ul>
+    </div>
+  );
+
   return createPortal(
     <div className="smart-briefing-overlay" onClick={onClose}>
       <div 
@@ -115,7 +149,6 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
         {/* Header - Always visible */}
         <div className="smart-briefing-header">
           <div className="header-title">
-            {/* UPDATED: Use variable color for sparkles */}
             <SparklesIcon sx={{ color: 'var(--accent-primary)', fontSize: 24 }} />
             <h2>{article ? 'Smart Analysis' : 'Smart Briefing'}</h2>
           </div>
@@ -136,7 +169,6 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
             </div>
           ) : error ? (
             <div className="briefing-error">
-              {/* UPDATED: Use variable color for error icon */}
               <AlertIcon sx={{ fontSize: 48, color: 'var(--color-error)', marginBottom: '1rem' }} />
               <p style={{ maxWidth: '80%', lineHeight: '1.4' }}>{error}</p>
               <button className="retry-button" onClick={fetchBriefing}>
@@ -149,8 +181,10 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
                 {article ? `Context: ${article.headline}` : data.title}
               </h3>
               
+              {/* SUMMARY IS ALWAYS VISIBLE */}
               <p className="briefing-summary">{data.content}</p>
               
+              {/* KEY POINTS (Always Visible if available) */}
               {data.keyPoints && data.keyPoints.length > 0 && (
                 <div className="briefing-points">
                   <h4>Key Takeaways</h4>
@@ -160,6 +194,44 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
                     ))}
                   </ul>
                 </div>
+              )}
+
+              {/* LOCKED SECTIONS: Agreed Upon, Conflict, Timeline */}
+              {isGuest ? (
+                 <div className="briefing-locked-section">
+                    <div className="briefing-lock-overlay">
+                        <button className="lock-message-btn" onClick={handleLoginRedirect}>
+                            <LockIcon size={16} />
+                            <span>Login to Unlock Full Analysis</span>
+                        </button>
+                    </div>
+                    {/* Blurred Background Content */}
+                    <div className="briefing-blur-content">
+                        {lockedContentPlaceholder}
+                    </div>
+                 </div>
+              ) : (
+                 // LOGGED IN VIEW
+                 <>
+                    {data.agreedUpon && data.agreedUpon.length > 0 && (
+                        <div className="briefing-points" style={{ marginTop: '20px' }}>
+                            <h4>Agreed Upon</h4>
+                            <ul>{data.agreedUpon.map((p, i) => <li key={i}>{p}</li>)}</ul>
+                        </div>
+                    )}
+                    {data.conflict && data.conflict.length > 0 && (
+                        <div className="briefing-points">
+                            <h4>Points of Conflict</h4>
+                            <ul>{data.conflict.map((p, i) => <li key={i}>{p}</li>)}</ul>
+                        </div>
+                    )}
+                    {data.timeline && data.timeline.length > 0 && (
+                        <div className="briefing-points">
+                            <h4>Timeline</h4>
+                            <ul>{data.timeline.map((p, i) => <li key={i}>{p}</li>)}</ul>
+                        </div>
+                    )}
+                 </>
               )}
               
               <div className="briefing-footer">

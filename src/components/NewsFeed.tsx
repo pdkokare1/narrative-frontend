@@ -165,7 +165,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
         position: 'sticky', top: 0, zIndex: 900, 
         background: 'var(--bg-primary)', 
         borderBottom: '1px solid var(--border-light)',
-        marginBottom: '5px', marginTop: 0, paddingTop: '0px' 
+        marginBottom: '0px', marginTop: 0, paddingTop: '0px' 
     }}>
         <div style={{ display: 'flex', width: '100%' }}>
             {[
@@ -184,7 +184,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
                         key={tab.id}
                         onClick={() => { if (!isActive) attemptChangeMode(tab.id as FeedMode, clickDirection); }}
                         style={{
-                            flex: 1, textAlign: 'center', padding: '8px 0', 
+                            flex: 1, textAlign: 'center', padding: '12px 0', 
                             cursor: 'pointer', position: 'relative',
                             color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
                             fontWeight: isActive ? 700 : 500,
@@ -209,8 +209,9 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   );
 
   return (
+    // UPDATED: Added 'feed-content' class to target specific mobile scroll behavior
     <main 
-        className="content" 
+        className="content feed-content" 
         onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
     >
       <Helmet><title>{getPageTitle()}</title></Helmet>

@@ -6,13 +6,11 @@
     right: 0;
     bottom: 0;
     width: 100vw;
-    /* FIX: Use 100dvh for better mobile browser support */
     height: 100dvh;
     background-color: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(4px);
     display: flex;
     justify-content: center;
-    /* FIX: Align center but use padding to push content UP */
     align-items: center;
     padding-bottom: calc(120px + env(safe-area-inset-bottom));
     z-index: 99999;
@@ -31,7 +29,6 @@
     
     display: flex;
     flex-direction: column;
-    /* FIX: Reduced max-height slightly to fit in the shifted viewport */
     max-height: 70vh;
     overflow: hidden;
     
@@ -214,4 +211,56 @@
     color: var(--text-tertiary);
     text-align: center;
     font-style: italic;
+}
+
+/* --- LOCKED CONTENT STYLES --- */
+.briefing-locked-section {
+    position: relative;
+    overflow: hidden;
+    margin-top: 20px;
+    padding: 10px 0;
+}
+
+.briefing-blur-content {
+    filter: blur(6px);
+    user-select: none;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.briefing-lock-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    /* Gradient fade at the bottom for smooth cutoff */
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 20%, var(--bg-card) 95%);
+}
+
+.lock-message-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    padding: 10px 20px;
+    border-radius: 20px;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background 0.2s;
+}
+
+.lock-message-btn:hover {
+    transform: scale(1.02);
+    background: var(--surface-paper);
+    border-color: var(--accent-primary);
 }

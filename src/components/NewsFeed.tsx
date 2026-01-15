@@ -7,6 +7,7 @@ import LoginModal from './modals/LoginModal';
 import useIsMobile from '../hooks/useIsMobile';
 import useHaptic from '../hooks/useHaptic';
 import { useAuth } from '../context/AuthContext'; 
+import { LockIcon } from './ui/Icons'; // Import Minimal Lock Icon
 import '../App.css'; 
 import { IArticle, IFilters, INarrative } from '../types';
 
@@ -49,7 +50,8 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
       vibrate();
       
       // GUEST PROTECTION
-      if (isGuest && newMode !== 'latest') {
+      // CHANGED: Guests can now access 'infocus'. Only 'balanced' is locked.
+      if (isGuest && newMode === 'balanced') {
           setShowLoginModal(true);
           return;
       }
@@ -61,21 +63,13 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   // --- SWIPE LOGIC ---
   const touchStart = useRef<number | null>(null);
   const touchEnd = useRef<number | null>(null);
-  
-  // Y-axis refs to detect scrolling vs swiping
   const touchStartY = useRef<number | null>(null);
   const touchEndY = useRef<number | null>(null);
-  
-  // ADJUSTMENT: Increased sensitivity (lowered distance) because we now have Safe Zones
   const minSwipeDistance = 90; 
 
   const onTouchStart = (e: React.TouchEvent) => {
     const y = e.targetTouches[0].clientY;
     const windowHeight = window.innerHeight;
-    
-    // --- SAFETY ZONES ---
-    // Ignore swipes originating from the Header/Pills area (Top 150px)
-    // Ignore swipes originating from the Player/Nav area (Bottom 120px)
     const topSafeZone = 150; 
     const bottomSafeZone = 120; 
 
@@ -87,29 +81,22 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
     touchEnd.current = null; 
     touchStart.current = e.targetTouches[0].clientX;
-    
-    // Track Y start
     touchEndY.current = null;
     touchStartY.current = y;
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
     touchEnd.current = e.targetTouches[0].clientX;
-    // Track Y move
     touchEndY.current = e.targetTouches[0].clientY;
   };
 
   const onTouchEnd = () => {
-    // Ensure we have X data (if null, it means we hit a safe zone check)
     if (!touchStart.current || !touchEnd.current) return;
-    
-    // Ensure we have Y data (safeguard)
     if (!touchStartY.current || !touchEndY.current) return;
 
     const xDistance = touchStart.current - touchEnd.current;
     const yDistance = touchStartY.current - touchEndY.current;
 
-    // Ignore swipe if user was scrolling vertically (Y > X)
     if (Math.abs(yDistance) > Math.abs(xDistance)) return;
 
     const isLeftSwipe = xDistance > minSwipeDistance;
@@ -148,11 +135,13 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
                 color: mode === m ? 'white' : 'var(--text-secondary)',
                 border: 'none', borderRadius: '20px', padding: '8px 16px',
                 fontSize: '11px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.3s ease',
-                textTransform: 'capitalize'
+                textTransform: 'capitalize',
+                display: 'flex', alignItems: 'center', gap: '6px'
               }}
             >
               {m === 'infocus' ? 'In Focus' : m === 'balanced' ? 'Balanced' : 'Top Stories'}
-              {isGuest && m !== 'latest' && <span style={{marginLeft:'5px'}}>🔒</span>}
+              {/* Only show lock for Balanced now, using minimal icon */}
+              {isGuest && m === 'balanced' && <LockIcon size={12} />}
             </button>
         ))}
       </div>
@@ -189,11 +178,12 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
                             color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
                             fontWeight: isActive ? 700 : 500,
                             fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px',
-                            transition: 'color 0.2s'
+                            transition: 'color 0.2s',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px'
                         }}
                     >
                         {tab.label}
-                        {isGuest && tab.id !== 'latest' && <span style={{marginLeft:'4px', fontSize:'9px'}}>🔒</span>}
+                        {isGuest && tab.id === 'balanced' && <LockIcon size={10} />}
                         <div style={{ 
                             position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px',
                             background: 'var(--accent-primary)',
@@ -237,7 +227,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
       <LoginModal 
         isOpen={showLoginModal} 
         onClose={() => setShowLoginModal(false)}
-        message="Login to access advanced feeds like 'In Focus' and 'Balanced Perspective'."
+        message="Login to access advanced feeds like 'Balanced Perspective'."
       />
     </main>
   );

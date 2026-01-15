@@ -33,12 +33,12 @@
     display: flex;
     flex-direction: column;
     
-    /* --- UPDATED: Slightly reduced height to accommodate larger bottom margin --- */
-    max-height: 75vh; 
+    /* --- UPDATED: Pushed up higher, reduced top margin implicitly --- */
+    max-height: 80vh; 
     overflow: hidden;
 
-    /* --- UPDATED: Increased margin to 85px to clear BottomNav completely --- */
-    margin-bottom: calc(85px + env(safe-area-inset-bottom));
+    /* --- UPDATED: Significant clearance from bottom (130px) --- */
+    margin-bottom: calc(130px + env(safe-area-inset-bottom));
     
     /* Force visibility */
     opacity: 1;

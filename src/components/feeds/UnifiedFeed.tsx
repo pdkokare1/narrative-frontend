@@ -187,7 +187,8 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    // Changed from inline style to className to control viewport height strictly
+    <div className="feed-page-container">
         <div className={`new-content-pill ${showNewPill ? 'visible' : ''}`} onClick={handleRefresh}>
             <span>↑ New Articles Available</span>
         </div>
@@ -248,6 +249,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                             {isFetchingNextPage ? ( <div className="spinner-small" /> ) : hasNextPage ? ( <span style={{ opacity: 0.5, fontSize: '0.8rem' }}>Loading more...</span> ) : ( <div className="end-message">You're all caught up</div> )}
                         </div>
                     )}
+                    {/* Spacer for bottom nav */}
                     <div style={{ height: '80px', flexShrink: 0, scrollSnapAlign: 'none' }} />
                 </>
             )}

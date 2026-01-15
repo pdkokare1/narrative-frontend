@@ -5,9 +5,9 @@
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
-  z-index: 1300;
+  z-index: 1300; /* Kept original Z-Index as requested */
   display: flex;
-  align-items: flex-end; /* Default for mobile: Bottom Sheet */
+  align-items: flex-end; 
   justify-content: center;
   animation: fadeIn 0.2s ease-out;
 }
@@ -17,20 +17,22 @@
   width: 100%;
   max-width: 500px;
   
-  /* Mobile Style Defaults */
+  /* --- CHANGED: Compact Size & Margin for Bottom Nav --- */
+  max-height: 65vh; 
+  margin-bottom: calc(55px + env(safe-area-inset-bottom)); /* Pushes above BottomNav */
+  
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 20px; /* Rounded bottom too since it's floating now */
+  border-bottom-right-radius: 20px;
   
   border: 1px solid var(--border-color);
-  border-bottom: none; /* No border at bottom edge */
   box-shadow: 0 -10px 40px rgba(0,0,0,0.3);
   
   display: flex;
   flex-direction: column;
-  max-height: 85vh; /* Never fill screen fully */
   animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  overflow: hidden; /* Contains the scroll */
 }
 
 @keyframes slideUp {
@@ -38,27 +40,34 @@
   to { transform: translateY(0); }
 }
 
-/* Drag Handle for Mobile visual cue */
+/* Swipe Area Container */
+.filter-swipe-area {
+  flex-shrink: 0;
+  background: var(--bg-card);
+  padding-top: 8px;
+  cursor: grab;
+}
+
+/* Drag Handle */
 .filter-drag-handle {
-  width: 40px;
+  width: 36px;
   height: 4px;
   background: var(--border-color);
   border-radius: 2px;
-  margin: 10px auto 5px auto;
-  flex-shrink: 0;
+  margin: 0 auto 8px auto; 
 }
 
 .filter-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 25px;
+  padding: 8px 20px 12px 20px; /* Reduced padding */
   border-bottom: 1px solid var(--border-light);
 }
 
 .filter-title {
   font-family: var(--font-heading);
-  font-size: 18px;
+  font-size: 16px; /* Smaller font */
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
@@ -68,7 +77,7 @@
   background: none;
   border: none;
   color: var(--accent-primary);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   text-transform: uppercase;
@@ -76,42 +85,49 @@
 }
 
 .filter-body {
-  padding: 25px;
+  padding: 15px 20px; /* Reduced padding */
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  -webkit-overflow-scrolling: touch; /* Smooth scroll */
+  gap: 12px; /* Tighter gap */
+  -webkit-overflow-scrolling: touch; 
 }
 
 .filter-group-label {
-  font-size: 11px;
+  font-size: 10px; /* Smaller label */
   font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+/* --- OVERRIDES FOR COMPACT INPUTS --- */
+.filter-modal .custom-select-value {
+  padding: 8px 12px; /* Smaller input padding */
+  font-size: 13px;
+  min-height: 36px;
 }
 
 .filter-footer {
-  padding: 20px 25px;
+  padding: 15px 20px;
   border-top: 1px solid var(--border-light);
   background: var(--bg-elevated);
-  /* Safe area for mobile home bar */
-  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  padding-bottom: 15px; /* Removed safe-area padding since we have margin-bottom on the modal itself */
 }
 
-/* Desktop: Center Modal behavior override */
+/* Desktop Overrides */
 @media (min-width: 769px) {
   .filter-modal-overlay {
-    align-items: center; /* Center vertically */
+    align-items: center; 
   }
   .filter-modal {
-    border-radius: 12px; /* All corners rounded */
+    margin-bottom: 0;
+    border-radius: 12px; 
     border-bottom: 1px solid var(--border-color);
-    max-height: 700px;
+    max-height: 600px;
   }
   .filter-drag-handle {
-    display: none; /* Hide drag handle on desktop */
+    display: none; 
   }
 }

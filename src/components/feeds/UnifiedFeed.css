@@ -4,12 +4,11 @@
 .feed-page-container {
     display: flex;
     flex-direction: column;
-    /* Force the container to take exactly the viewport height */
-    height: 100vh;
-    height: 100dvh; /* Mobile viewport fix */
-    overflow: hidden; /* Prevent body scroll, force internal scroll */
+    height: 100%;
     position: relative;
     background: var(--bg-primary);
+    /* Default to auto for desktop */
+    overflow: visible; 
 }
 
 /* --- Sticky Header --- */
@@ -32,19 +31,11 @@
 .articles-grid {
     flex: 1; 
     padding: 20px 12px;
-    overflow-y: auto;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
     gap: 20px; 
-    scroll-behavior: smooth;
-    scrollbar-width: none; 
-    -ms-overflow-style: none;
     align-items: stretch;
     align-content: start;
-}
-
-.articles-grid::-webkit-scrollbar {
-    display: none;
 }
 
 /* --- Wrapper for Equal Height --- */
@@ -118,6 +109,12 @@
 
 /* --- Mobile Specific Layout (TikTok/Reel Snap) --- */
 @media (max-width: 768px) {
+    /* STRICT CONTAINER: Fit to viewport minus Header (approx 60px) */
+    .feed-page-container {
+        height: calc(100dvh - 60px); 
+        overflow: hidden; /* Prevent Body Scroll */
+    }
+
     .feed-header-sticky {
         padding: 4px 20px;
         gap: 6px;
@@ -128,10 +125,10 @@
         flex-direction: column;
         
         /* Margins on sides */
-        padding: 10px 20px; 
+        padding: 0 20px; 
         
-        /* Remove large gap to ensure smooth snapping between "pages" */
-        gap: 24px; 
+        /* Eliminate Gap for strict snap */
+        gap: 0; 
         
         /* ENABLE STRICT SNAP SCROLL */
         scroll-snap-type: y mandatory;
@@ -139,45 +136,40 @@
         /* Ensure this element handles the scroll */
         overflow-y: scroll;
         overscroll-behavior-y: contain;
+        height: 100%;
         
-        /* Adjust padding for bottom nav space */
-        padding-bottom: 0;
+        /* Bottom padding for Nav + Spacing */
+        padding-bottom: 80px; 
     }
 
     .feed-article-wrapper {
-        /* STRICT FULL HEIGHT: Fills the flex-1 area (Viewport - Header) */
+        /* STRICT FULL HEIGHT: Matches the scroll container height exactly */
         height: 100%;
         min-height: 100%;
-        
-        /* Optional: Add a max height constraint if needed, but 100% usually works best */
-        
         width: 100%;
         
         /* SNAP ALIGNMENT */
-        scroll-snap-align: center; /* Centers the card in the view */
-        scroll-snap-stop: always;  /* Forces stopping on each card (Reel feel) */
+        scroll-snap-align: start; /* Snap top of card to top of container */
+        scroll-snap-stop: always;  /* Force stop on every card */
         
         display: flex;
         flex-direction: column;
         justify-content: center;
         
-        padding: 0; 
+        /* Separation between "Pages" */
+        padding: 12px 0; 
         box-sizing: border-box;
-        
-        /* Ensure footer doesn't get cut off by bottom nav */
-        padding-bottom: 60px; 
     }
 
     /* Loading Skeletons */
     .article-card-wrapper {
         height: 100%;
-        scroll-snap-align: center;
+        scroll-snap-align: start;
         scroll-snap-stop: always;
-        padding: 0;
+        padding: 12px 0;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding-bottom: 60px;
     }
 
     .now-playing-highlight {
@@ -187,9 +179,9 @@
     .now-playing-highlight::before {
         content: '';
         position: absolute;
-        left: -12px; 
-        top: 10%;
-        bottom: 20%; /* Adjusted for bottom padding */
+        left: -15px; 
+        top: 20%;
+        bottom: 20%;
         width: 3px;
         background: var(--accent-primary);
         border-radius: 0 4px 4px 0;

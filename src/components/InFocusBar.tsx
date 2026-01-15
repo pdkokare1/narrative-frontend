@@ -1,6 +1,5 @@
 // src/components/InFocusBar.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import * as api from '../services/api';
 import './InFocusBar.css';
 
@@ -10,22 +9,23 @@ interface Topic {
   score?: number;
 }
 
-const InFocusBar: React.FC = () => {
+interface InFocusBarProps {
+  onTopicClick?: (topic: string) => void;
+}
+
+const InFocusBar: React.FC<InFocusBarProps> = ({ onTopicClick }) => {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTopics = async () => {
       try {
         const { data } = await api.getTrendingTopics();
-        // FIXED: Safely access data.data from the response structure
-        // Backend returns: { status: 'success', data: [...] }
         setTopics(data?.data || []);
       } catch (error) {
         console.error("Failed to load In Focus topics", error);
-        setTopics([]); // Fallback to empty
+        setTopics([]); 
       } finally {
         setLoading(false);
       }
@@ -33,17 +33,12 @@ const InFocusBar: React.FC = () => {
     fetchTopics();
   }, []);
 
-  const handleTopicClick = (topic: string) => {
-    navigate(`/search?q=${encodeURIComponent(topic)}`);
-  };
-
   const handleWheel = (e: React.WheelEvent) => {
     if (scrollRef.current) {
       scrollRef.current.scrollLeft += e.deltaY;
     }
   };
 
-  // If loading, show skeleton. If loaded and empty, hide component.
   if (!loading && topics.length === 0) return null;
 
   return (
@@ -55,7 +50,6 @@ const InFocusBar: React.FC = () => {
       
       <div className="infocus-scroll-area" ref={scrollRef} onWheel={handleWheel}>
         {loading ? (
-           // Smart Skeleton: 5 random-width pills
            [80, 100, 70, 90, 60].map((width, i) => (
              <div key={i} className="infocus-pill skeleton" style={{ width: `${width}px` }}></div>
            ))
@@ -64,7 +58,7 @@ const InFocusBar: React.FC = () => {
             <button 
               key={index} 
               className="infocus-pill" 
-              onClick={() => handleTopicClick(item.topic)}
+              onClick={() => onTopicClick?.(item.topic)}
             >
               #{item.topic}
             </button>

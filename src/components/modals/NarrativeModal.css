@@ -254,3 +254,51 @@
     text-align: center;
     font-style: italic;
 }
+
+/* --- LOCKED STATES --- */
+.nm-locked-section {
+    position: relative;
+    overflow: hidden;
+    min-height: 150px;
+    border-radius: 12px;
+}
+
+.nm-blur-content {
+    filter: blur(6px);
+    opacity: 0.6;
+    pointer-events: none;
+    user-select: none;
+}
+
+.nm-lock-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, var(--bg-card) 85%);
+}
+
+.nm-lock-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    padding: 10px 20px;
+    border-radius: 20px;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background 0.2s;
+}
+
+.nm-lock-btn:hover {
+    transform: scale(1.02);
+    background: var(--surface-paper);
+    border-color: var(--accent-primary);
+}

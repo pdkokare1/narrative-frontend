@@ -1,28 +1,31 @@
 // src/components/modals/NarrativeModal.tsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './NarrativeModal.css';
 import { INarrative } from '../../types';
 import { getClusterById } from '../../services/articleService';
 import TopicTimeline from '../TopicTimeline';
+import { useAuth } from '../../context/AuthContext';
+import { LockIcon } from '../ui/Icons';
 
 interface NarrativeModalProps {
   data: INarrative | null;
   onClose: () => void;
 }
 
-// CHANGED: Renamed 'sources' to 'timeline'
 type Tab = 'consensus' | 'divergence' | 'timeline';
 
 const NarrativeModal: React.FC<NarrativeModalProps> = ({ data, onClose }) => {
   const [activeTab, setActiveTab] = useState<Tab>('consensus');
   
-  // NEW: State for Timeline Data
   const [clusterData, setClusterData] = useState<any>(null);
   const [loadingTimeline, setLoadingTimeline] = useState(false);
 
-  // NEW: Fetch timeline data when tab is active
+  const { isGuest } = useAuth();
+  const navigate = useNavigate();
+
   useEffect(() => {
-    if (activeTab === 'timeline' && !clusterData && data?.clusterId) {
+    if (activeTab === 'timeline' && !clusterData && data?.clusterId && !isGuest) {
         setLoadingTimeline(true);
         getClusterById(data.clusterId)
             .then(res => {
@@ -35,13 +38,28 @@ const NarrativeModal: React.FC<NarrativeModalProps> = ({ data, onClose }) => {
                 setLoadingTimeline(false);
             });
     }
-  }, [activeTab, data, clusterData]);
+  }, [activeTab, data, clusterData, isGuest]);
 
   if (!data) return null;
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose();
   };
+
+  const handleLoginClick = () => {
+    onClose();
+    navigate('/login');
+  };
+
+  // Reusable Lock Overlay Component
+  const LockOverlay = ({ label = "Unlock Full Analysis" }) => (
+      <div className="nm-lock-overlay">
+          <button className="nm-lock-btn" onClick={handleLoginClick}>
+              <LockIcon size={16} />
+              <span>{label}</span>
+          </button>
+      </div>
+  );
 
   return (
     <div className="narrative-modal-overlay" onClick={handleOverlayClick}>
@@ -73,7 +91,6 @@ const NarrativeModal: React.FC<NarrativeModalProps> = ({ data, onClose }) => {
             >
                 The Conflict
             </button>
-            {/* CHANGED: Label to Timeline */}
             <button 
                 className={`nm-tab ${activeTab === 'timeline' ? 'active' : ''}`}
                 onClick={() => setActiveTab('timeline')}
@@ -88,55 +105,104 @@ const NarrativeModal: React.FC<NarrativeModalProps> = ({ data, onClose }) => {
             {/* TAB: CONSENSUS */}
             {activeTab === 'consensus' && (
                 <div className="nm-tab-content fade-in">
+                    {/* Executive Summary is ALWAYS VISIBLE */}
                     <div className="nm-summary-box">
                         <h3>Executive Summary</h3>
                         <p>{data.executiveSummary}</p>
                     </div>
                     
+                    {/* Agreed Facts - LOCKED FOR GUESTS */}
                     <div className="nm-points-list">
                         <h3>Agreed Facts</h3>
-                        <ul>
-                            {data.consensusPoints.map((point, i) => (
-                                <li key={i}>
-                                    <span className="nm-check-icon">✓</span>
-                                    {point}
-                                </li>
-                            ))}
-                        </ul>
+                        {isGuest ? (
+                            <div className="nm-locked-section">
+                                <LockOverlay label="Login to view agreed facts" />
+                                <div className="nm-blur-content">
+                                    <ul>
+                                        {[1, 2, 3].map((_, i) => (
+                                            <li key={i}>
+                                                <span className="nm-check-icon">✓</span>
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+                        ) : (
+                            <ul>
+                                {data.consensusPoints.map((point, i) => (
+                                    <li key={i}>
+                                        <span className="nm-check-icon">✓</span>
+                                        {point}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 </div>
             )}
 
-            {/* TAB: DIVERGENCE */}
+            {/* TAB: DIVERGENCE (Locked for Guests) */}
             {activeTab === 'divergence' && (
                 <div className="nm-tab-content fade-in">
                     <p className="nm-intro-text">Where the reporting differs or conflicts:</p>
                     
-                    {data.divergencePoints.map((item, i) => (
-                        <div key={i} className="nm-divergence-card">
-                            <div className="nm-divergence-header">
-                                <span className="nm-index">0{i+1}</span>
-                                <h4>{item.point}</h4>
-                            </div>
-                            <div className="nm-perspectives">
-                                {item.perspectives.map((p, j) => (
-                                    <div key={j} className="nm-perspective-row">
-                                        <span className="nm-p-source">{p.source}:</span>
-                                        <span className="nm-p-stance">"{p.stance}"</span>
+                    {isGuest ? (
+                        <div className="nm-locked-section">
+                            <LockOverlay label="Login to see conflicting perspectives" />
+                            <div className="nm-blur-content">
+                                {[1, 2].map((i) => (
+                                    <div key={i} className="nm-divergence-card">
+                                        <div className="nm-divergence-header">
+                                            <span className="nm-index">0{i}</span>
+                                            <h4>Sample conflict point blurred out...</h4>
+                                        </div>
+                                        <div className="nm-perspectives">
+                                            <div className="nm-perspective-row">
+                                                <span className="nm-p-source">Source A:</span>
+                                                <span className="nm-p-stance">"Sample stance text..."</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                    ))}
+                    ) : (
+                        <>
+                            {data.divergencePoints.map((item, i) => (
+                                <div key={i} className="nm-divergence-card">
+                                    <div className="nm-divergence-header">
+                                        <span className="nm-index">0{i+1}</span>
+                                        <h4>{item.point}</h4>
+                                    </div>
+                                    <div className="nm-perspectives">
+                                        {item.perspectives.map((p, j) => (
+                                            <div key={j} className="nm-perspective-row">
+                                                <span className="nm-p-source">{p.source}:</span>
+                                                <span className="nm-p-stance">"{p.stance}"</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </>
+                    )}
                 </div>
             )}
 
-            {/* TAB: TIMELINE (Replaces Sources) */}
+            {/* TAB: TIMELINE (Locked for Guests) */}
             {activeTab === 'timeline' && (
                 <div className="nm-tab-content fade-in">
                     <p className="nm-intro-text">Timeline of coverage for this story:</p>
                     
-                    {loadingTimeline ? (
+                    {isGuest ? (
+                        <div className="nm-locked-section">
+                            <LockOverlay label="Login to view timeline" />
+                            <div className="nm-blur-content">
+                                <div style={{ height: '200px', background: 'var(--bg-secondary)', borderRadius: '12px' }}></div>
+                            </div>
+                        </div>
+                    ) : loadingTimeline ? (
                         <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
                             Loading timeline data...
                         </div>

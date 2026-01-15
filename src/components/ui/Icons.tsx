@@ -104,3 +104,11 @@ export const RefreshIcon = (props: IconProps) => (
         <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
     </BaseIcon>
 );
+
+// --- STATUS ICONS ---
+export const LockIcon = (props: IconProps) => (
+  <BaseIcon {...props}>
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+  </BaseIcon>
+);

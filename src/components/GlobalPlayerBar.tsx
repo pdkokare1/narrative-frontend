@@ -235,6 +235,7 @@ const GlobalPlayerBar: React.FC = () => {
                     <Fab 
                         size={isMobile ? "small" : "medium"} 
                         onClick={handleControl(isPaused ? resume : pause)}
+                        disableRipple={true} // Disable default ripple to show custom animations
                         sx={{ 
                             boxShadow: '0 4px 12px rgba(0,0,0,0.3)', 
                             zIndex: 10, // Ensure button is above pulse
@@ -244,7 +245,8 @@ const GlobalPlayerBar: React.FC = () => {
                             bgcolor: 'var(--accent-primary)',
                             color: 'var(--bg-primary)', 
                             '&:hover': { bgcolor: 'var(--accent-hover)' },
-                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                            // Add slight bounce on click handled by CSS
+                            transition: 'all 0.2s ease-in-out'
                         }}
                     >
                         {/* Icon Transition/Morph */}

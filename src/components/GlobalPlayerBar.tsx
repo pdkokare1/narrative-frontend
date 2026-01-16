@@ -1,3 +1,4 @@
+// src/components/GlobalPlayerBar.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useRadio } from '../context/RadioContext';
 import useHaptic from '../hooks/useHaptic';
@@ -82,7 +83,7 @@ const GlobalPlayerBar: React.FC = () => {
   }, [currentTime, isDragging]);
 
   // --- ANIMATION EFFECTS ---
-  // 1. Disable "Invite Pulse" after 8 seconds (Increased from 5s)
+  // 1. Disable "Invite Pulse" after 8 seconds
   useEffect(() => {
     const timer = setTimeout(() => setIntroActive(false), 8000);
     return () => clearTimeout(timer);
@@ -133,12 +134,12 @@ const GlobalPlayerBar: React.FC = () => {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  // Determine Animation Class for the WRAPPER
-  let wrapperAnimationClass = '';
+  // Determine Animation Class for the PULSE RING
+  let pulseClass = '';
   if (isPlaying) {
-    wrapperAnimationClass = 'fab-active-heartbeat';
+    pulseClass = 'pulse-active-heartbeat';
   } else if (!hasPlayedOnce && introActive) {
-    wrapperAnimationClass = 'fab-invite-pulse';
+    pulseClass = 'pulse-invite-radar';
   }
 
   // --- UP NEXT BUBBLE ---
@@ -225,14 +226,18 @@ const GlobalPlayerBar: React.FC = () => {
                     <SkipPreviousRounded />
                 </IconButton>
 
-                {/* PLAY/PAUSE WRAPPER (Handles Animation) */}
-                <Box className={`fab-wrapper ${wrapperAnimationClass}`}>
+                {/* CONTAINER FOR BUTTON & PULSE */}
+                <Box className="fab-container">
+                    {/* The Pulse Animation (Behind Button) */}
+                    <div className={`pulse-ring ${pulseClass}`} />
+                    
+                    {/* The Button (Foreground) */}
                     <Fab 
                         size={isMobile ? "small" : "medium"} 
                         onClick={handleControl(isPaused ? resume : pause)}
                         sx={{ 
                             boxShadow: '0 4px 12px rgba(0,0,0,0.3)', 
-                            zIndex: 2, // Keep button above the pulse
+                            zIndex: 10, // Ensure button is above pulse
                             width: isMobile ? 40 : 48,
                             height: isMobile ? 40 : 48,
                             minHeight: 'auto',
@@ -242,7 +247,7 @@ const GlobalPlayerBar: React.FC = () => {
                             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                         }}
                     >
-                        {/* Wrapped for Icon Transition/Morph */}
+                        {/* Icon Transition/Morph */}
                         <div className="icon-transition-wrapper" key={isPaused ? 'play' : 'pause'}>
                             {isPaused ? <PlayArrowRounded fontSize="medium" /> : <PauseRounded fontSize="medium" />}
                         </div>

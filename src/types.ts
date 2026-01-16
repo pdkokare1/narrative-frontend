@@ -150,6 +150,8 @@ export interface IFilters {
   source?: string;
   startDate?: string;
   endDate?: string;
+  // NEW: Topic Filter
+  topic?: string | null; 
 }
 
 export interface ISearchResponse {

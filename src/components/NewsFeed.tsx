@@ -114,7 +114,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
   const getPageTitle = () => {
     if (mode === 'balanced') return 'Balanced Perspectives | The Gamut';
-    if (mode === 'infocus') return 'In Focus | The Gamut';
+    if (mode === 'infocus') return 'Narratives | The Gamut'; // Updated Title
     if (filters.category && filters.category !== 'All Categories') return `${filters.category} News | The Gamut`;
     return 'The Gamut - Analyse The Full Spectrum';
   };
@@ -139,7 +139,8 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
                 display: 'flex', alignItems: 'center', gap: '6px'
               }}
             >
-              {m === 'infocus' ? 'In Focus' : m === 'balanced' ? 'Balanced' : 'Top Stories'}
+              {/* Updated Label: 'In Focus' -> 'Narratives' */}
+              {m === 'infocus' ? 'Narratives' : m === 'balanced' ? 'Balanced' : 'Top Stories'}
               {/* Only show lock for Balanced now, using minimal icon */}
               {isGuest && m === 'balanced' && <LockIcon size={12} />}
             </button>
@@ -159,7 +160,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
         <div style={{ display: 'flex', width: '100%' }}>
             {[
                 { id: 'latest', label: 'Latest' },
-                { id: 'infocus', label: 'In Focus' },
+                { id: 'infocus', label: 'Narratives' }, // Updated Label
                 { id: 'balanced', label: 'Balanced' }
             ].map(tab => {
                 const isActive = mode === tab.id;

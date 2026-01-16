@@ -83,13 +83,11 @@ const GlobalPlayerBar: React.FC = () => {
   }, [currentTime, isDragging]);
 
   // --- ANIMATION EFFECTS ---
-  // 1. Disable "Invite Pulse" after 8 seconds
   useEffect(() => {
     const timer = setTimeout(() => setIntroActive(false), 8000);
     return () => clearTimeout(timer);
   }, []);
 
-  // 2. If playback starts (even externally), mark as played to stop Invite Pulse
   useEffect(() => {
     if (isPlaying) {
       setHasPlayedOnce(true);
@@ -134,7 +132,7 @@ const GlobalPlayerBar: React.FC = () => {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  // Determine Animation Class for the PULSE RING
+  // Determine Animation Class
   let pulseClass = '';
   if (isPlaying) {
     pulseClass = 'pulse-active-heartbeat';
@@ -188,140 +186,146 @@ const GlobalPlayerBar: React.FC = () => {
   // --- ACTIVE PLAYER BUBBLE ---
   return (
     <Fade in={true}>
-      <Box className="global-player-bar" onClick={resetAutoHide}>
+      <Box className="global-player-bar-container" onClick={resetAutoHide}>
         
-        {/* SECTION 1: CONTEXT (Left) */}
-        <Box className="player-section left">
-           {currentSpeaker && (
-             <Typography variant="caption" sx={{ 
-                 color: 'var(--accent-primary)', 
-                 fontWeight: 700, 
-                 display: 'flex', 
-                 alignItems: 'center', 
-                 gap: 0.5 
-             }}>
-                <Box className={`pulse-dot-small ${isPlaying ? 'active' : ''}`} sx={{ bgcolor: 'var(--accent-primary)' }} />
-                {currentSpeaker.name}
-             </Typography>
-           )}
-           <Typography variant="subtitle2" sx={{ 
-               fontWeight: 600, 
-               whiteSpace: 'nowrap', 
-               overflow: 'hidden', 
-               textOverflow: 'ellipsis',
-               maxWidth: '100%',
-               lineHeight: 1.2,
-               color: 'var(--text-primary)'
-           }}>
-             {isLoading ? "Buffering..." : currentArticle?.headline}
-           </Typography>
-        </Box>
+        {/* LAYER 1: The Glass Background (Independent) */}
+        <div className="glass-background-layer" />
 
-        {/* SECTION 2: CONTROLS (Center) */}
-        <Box className="player-section center">
-            <Stack direction="row" alignItems="center" spacing={isMobile ? 1 : 2} sx={{ mb: 0 }}>
-                
-                {/* PREVIOUS Button */}
-                <IconButton size="small" onClick={handleControl(playPrevious)} sx={{ color: 'var(--text-primary)' }}>
-                    <SkipPreviousRounded />
-                </IconButton>
+        {/* LAYER 2: The Content (Foreground) */}
+        <Box className="player-content-layer">
+            
+            {/* SECTION 1: CONTEXT (Left) */}
+            <Box className="player-section left">
+               {currentSpeaker && (
+                 <Typography variant="caption" sx={{ 
+                     color: 'var(--accent-primary)', 
+                     fontWeight: 700, 
+                     display: 'flex', 
+                     alignItems: 'center', 
+                     gap: 0.5 
+                 }}>
+                    <Box className={`pulse-dot-small ${isPlaying ? 'active' : ''}`} sx={{ bgcolor: 'var(--accent-primary)' }} />
+                    {currentSpeaker.name}
+                 </Typography>
+               )}
+               <Typography variant="subtitle2" sx={{ 
+                   fontWeight: 600, 
+                   whiteSpace: 'nowrap', 
+                   overflow: 'hidden', 
+                   textOverflow: 'ellipsis',
+                   maxWidth: '100%',
+                   lineHeight: 1.2,
+                   color: 'var(--text-primary)'
+               }}>
+                 {isLoading ? "Buffering..." : currentArticle?.headline}
+               </Typography>
+            </Box>
 
-                {/* CONTAINER FOR BUTTON & PULSE */}
-                <Box className="fab-container">
-                    {/* The Pulse Animation (Behind Button) */}
-                    <div className={`pulse-ring ${pulseClass}`} />
+            {/* SECTION 2: CONTROLS (Center) */}
+            <Box className="player-section center">
+                <Stack direction="row" alignItems="center" spacing={isMobile ? 1 : 2} sx={{ mb: 0 }}>
                     
-                    {/* The Button (Foreground) */}
-                    <Fab 
-                        size={isMobile ? "small" : "medium"} 
-                        onClick={handleControl(isPaused ? resume : pause)}
-                        disableRipple={true} // Disable default ripple to show custom animations
-                        sx={{ 
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)', 
-                            zIndex: 10, // Ensure button is above pulse
-                            width: isMobile ? 40 : 48,
-                            height: isMobile ? 40 : 48,
-                            minHeight: 'auto',
-                            bgcolor: 'var(--accent-primary)',
-                            color: 'var(--bg-primary)', 
-                            '&:hover': { bgcolor: 'var(--accent-hover)' },
-                            // Add slight bounce on click handled by CSS
-                            transition: 'all 0.2s ease-in-out'
+                    <IconButton size="small" onClick={handleControl(playPrevious)} sx={{ color: 'var(--text-primary)' }}>
+                        <SkipPreviousRounded />
+                    </IconButton>
+
+                    {/* FAB CONTAINER: Pulse lives here, OUTSIDE the clipped background */}
+                    <Box className="fab-container">
+                        {/* THE PULSE (Absolute, behind button) */}
+                        <div className={`pulse-ring ${pulseClass}`} />
+                        
+                        <Fab 
+                            size={isMobile ? "small" : "medium"} 
+                            onClick={handleControl(isPaused ? resume : pause)}
+                            disableRipple={true} 
+                            sx={{ 
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.3)', 
+                                zIndex: 10,
+                                width: isMobile ? 40 : 48,
+                                height: isMobile ? 40 : 48,
+                                minHeight: 'auto',
+                                bgcolor: 'var(--accent-primary)',
+                                color: 'var(--bg-primary)', 
+                                '&:hover': { bgcolor: 'var(--accent-hover)' },
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            {/* CROSS-FADE MORPH: Both icons exist, we animate opacity */}
+                            <div className="morph-container">
+                                <div className={`morph-icon ${isPaused ? 'visible' : 'hidden'}`}>
+                                    <PlayArrowRounded fontSize="medium" />
+                                </div>
+                                <div className={`morph-icon ${!isPaused ? 'visible' : 'hidden'}`}>
+                                    <PauseRounded fontSize="medium" />
+                                </div>
+                            </div>
+                        </Fab>
+                    </Box>
+
+                    <IconButton size="small" onClick={handleControl(playNext)} sx={{ color: 'var(--text-primary)' }}>
+                        <SkipNextRounded />
+                    </IconButton>
+                </Stack>
+                
+                <Stack direction="row" alignItems="center" spacing={2} sx={{ width: '100%', mt: 0 }}>
+                    <Typography variant="caption" sx={{ minWidth: 35, textAlign: 'right', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                        {formatTime(dragTime)}
+                    </Typography>
+                    <Slider
+                        size="small"
+                        value={dragTime}
+                        min={0}
+                        max={duration || 100}
+                        onChange={handleSeekChange}
+                        onChangeCommitted={handleSeekEnd}
+                        onMouseDown={handleSeekStart}
+                        onTouchStart={handleSeekStart}
+                        sx={{
+                            color: 'var(--accent-primary)',
+                            height: 3,
+                            padding: '6px 0', 
+                            '& .MuiSlider-thumb': {
+                                width: 8,
+                                height: 8,
+                                transition: '0.2s',
+                                '&:hover, &.Mui-focusVisible': { boxShadow: `0px 0px 0px 6px var(--accent-glow)` }, 
+                                '&.Mui-active': { width: 12, height: 12 },
+                            },
+                            '& .MuiSlider-rail': { opacity: 0.3, backgroundColor: 'var(--text-secondary)' },
                         }}
-                    >
-                        {/* Icon Transition/Morph */}
-                        <div className="icon-transition-wrapper" key={isPaused ? 'play' : 'pause'}>
-                            {isPaused ? <PlayArrowRounded fontSize="medium" /> : <PauseRounded fontSize="medium" />}
-                        </div>
-                    </Fab>
-                </Box>
+                    />
+                    <Typography variant="caption" sx={{ minWidth: 35, fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                        {formatTime(duration)}
+                    </Typography>
+                </Stack>
+            </Box>
 
-                {/* NEXT Button */}
-                <IconButton size="small" onClick={handleControl(playNext)} sx={{ color: 'var(--text-primary)' }}>
-                    <SkipNextRounded />
-                </IconButton>
-            </Stack>
-            
-            {/* Scrubber Row */}
-            <Stack direction="row" alignItems="center" spacing={2} sx={{ width: '100%', mt: 0 }}>
-                <Typography variant="caption" sx={{ minWidth: 35, textAlign: 'right', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                    {formatTime(dragTime)}
-                </Typography>
-                <Slider
-                    size="small"
-                    value={dragTime}
-                    min={0}
-                    max={duration || 100}
-                    onChange={handleSeekChange}
-                    onChangeCommitted={handleSeekEnd}
-                    onMouseDown={handleSeekStart}
-                    onTouchStart={handleSeekStart}
-                    sx={{
-                        color: 'var(--accent-primary)',
-                        height: 3,
-                        padding: '6px 0', 
-                        '& .MuiSlider-thumb': {
-                            width: 8,
-                            height: 8,
-                            transition: '0.2s',
-                            '&:hover, &.Mui-focusVisible': { boxShadow: `0px 0px 0px 6px var(--accent-glow)` }, 
-                            '&.Mui-active': { width: 12, height: 12 },
-                        },
-                        '& .MuiSlider-rail': { opacity: 0.3, backgroundColor: 'var(--text-secondary)' },
-                    }}
-                />
-                <Typography variant="caption" sx={{ minWidth: 35, fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                    {formatTime(duration)}
-                </Typography>
-            </Stack>
+            {/* SECTION 3: UTILITY (Right) */}
+            <Box className="player-section right">
+                <Tooltip title="Playback Speed">
+                    <IconButton onClick={handleSpeedClick} size="small" sx={{ 
+                        fontSize: '0.7rem', 
+                        fontWeight: 700, 
+                        border: '1px solid',
+                        borderColor: 'var(--border-color)', 
+                        borderRadius: 2,
+                        px: 1,
+                        py: 0.5,
+                        width: 'auto',
+                        mr: 1,
+                        color: 'var(--text-secondary)'
+                    }}>
+                       {playbackRate}x
+                    </IconButton>
+                </Tooltip>
+                
+                {isMobile && (
+                    <IconButton onClick={() => { vibrate(); closePlayer(); }} size="small" sx={{ color: 'var(--text-secondary)' }}>
+                        <CloseRounded fontSize="small" />
+                    </IconButton>
+                )}
+            </Box>
         </Box>
-
-        {/* SECTION 3: UTILITY (Right) */}
-        <Box className="player-section right">
-            <Tooltip title="Playback Speed">
-                <IconButton onClick={handleSpeedClick} size="small" sx={{ 
-                    fontSize: '0.7rem', 
-                    fontWeight: 700, 
-                    border: '1px solid',
-                    borderColor: 'var(--border-color)', 
-                    borderRadius: 2,
-                    px: 1,
-                    py: 0.5,
-                    width: 'auto',
-                    mr: 1,
-                    color: 'var(--text-secondary)'
-                }}>
-                   {playbackRate}x
-                </IconButton>
-            </Tooltip>
-            
-            {isMobile && (
-                <IconButton onClick={() => { vibrate(); closePlayer(); }} size="small" sx={{ color: 'var(--text-secondary)' }}>
-                    <CloseRounded fontSize="small" />
-                </IconButton>
-            )}
-        </Box>
-
       </Box>
     </Fade>
   );

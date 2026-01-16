@@ -7,8 +7,8 @@
     white-space: nowrap;
     
     /* Layout & Spacing */
-    /* Kept reduced bottom padding */
-    padding: 8px 16px 4px 16px; 
+    /* UPDATED: Reduced vertical padding for tighter header */
+    padding: 4px 16px; 
     margin-bottom: 0;
     align-items: center;
     
@@ -40,7 +40,7 @@
     /* Shape */
     border-radius: var(--radius-pill, 50px);
     
-    /* Default State (Inactive) - FIXED: Transparent background as per previous request */
+    /* Default State (Inactive) - FIXED: Transparent background */
     background: transparent;
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
@@ -99,8 +99,8 @@
 @media (max-width: 768px) {
     .category-pills-container {
         /* FIXED: Tighter padding and zero margin for mobile */
-        /* Top: 2px, Side: 12px, Bottom: 2px, Side: 12px */
-        padding: 2px 12px;
+        /* Updated to match Desktop vertical rhythm */
+        padding: 4px 12px;
         margin: 0;
         gap: 6px;
     }

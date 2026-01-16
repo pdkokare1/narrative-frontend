@@ -44,6 +44,9 @@
     width: 40%;
     align-items: center;
     justify-content: center;
+    /* CRITICAL: Allow animations to extend outside */
+    position: relative;
+    overflow: visible; 
 }
 
 /* Right: Utility */
@@ -78,7 +81,6 @@
   
   .player-section.center { 
       width: 65%; 
-      /* CRITICAL: Allow animations to spill out of the center section */
       overflow: visible !important;
   }
   
@@ -110,8 +112,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Allow pulse to show */
     overflow: visible !important; 
+    z-index: 5;
 }
 
 /* The Background Ring */
@@ -124,7 +126,10 @@
     height: 100%;
     border-radius: 50%;
     pointer-events: none;
-    z-index: 1; /* Behind Button (Fab is z-index 10) */
+    z-index: -1; /* Behind Button */
+    
+    /* Ensure hardware acceleration */
+    will-change: transform, box-shadow;
 }
 
 /* 1. Invite Pulse (Radar) - 0 to 8s */
@@ -134,25 +139,28 @@
 
 @keyframes radar {
   0% {
-    box-shadow: 0 0 0 0 rgba(var(--accent-primary-rgb), 0.7);
+    box-shadow: 0 0 0 0 rgba(var(--accent-primary-rgb), 0.8);
     opacity: 1;
   }
+  50% {
+      opacity: 0.5;
+  }
   100% {
-    box-shadow: 0 0 0 20px rgba(var(--accent-primary-rgb), 0);
+    box-shadow: 0 0 0 30px rgba(var(--accent-primary-rgb), 0);
     opacity: 0;
   }
 }
 
 /* 2. Active Heartbeat (Playing) */
 .pulse-active-heartbeat {
-    background: rgba(var(--accent-primary-rgb), 0.3);
+    background: rgba(var(--accent-primary-rgb), 0.4);
     animation: heartbeat 2s infinite ease-in-out;
 }
 
 @keyframes heartbeat {
-  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
-  50% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
-  100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+  50% { transform: translate(-50%, -50%) scale(1.6); opacity: 0.2; } /* Large scale for visibility */
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
 }
 
 /* 3. Icon Morph/Transition */
@@ -164,7 +172,7 @@
 }
 
 @keyframes popIn {
-  0% { transform: scale(0.4) rotate(-45deg); opacity: 0; }
+  0% { transform: scale(0.4) rotate(-90deg); opacity: 0; }
   100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 

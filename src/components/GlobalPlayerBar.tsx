@@ -53,6 +53,11 @@ const GlobalPlayerBar: React.FC = () => {
   const isMobile = useIsMobile();
   const [isDragging, setIsDragging] = useState(false);
   const [dragTime, setDragTime] = useState(0);
+  
+  // --- ANIMATION STATE ---
+  const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
+  const [introActive, setIntroActive] = useState(true);
+
   const autoHideRef = useRef<NodeJS.Timeout | null>(null);
 
   // --- AUTO-HIDE LOGIC ---
@@ -75,6 +80,22 @@ const GlobalPlayerBar: React.FC = () => {
   useEffect(() => {
     if (!isDragging) setDragTime(currentTime);
   }, [currentTime, isDragging]);
+
+  // --- ANIMATION EFFECTS ---
+  // 1. Disable "Invite Pulse" after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => setIntroActive(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // 2. If playback starts (even externally), mark as played to stop Invite Pulse
+  useEffect(() => {
+    if (isPlaying) {
+      setHasPlayedOnce(true);
+      // Also ensure intro stops immediately if they play within the first 5s
+      setIntroActive(false); 
+    }
+  }, [isPlaying]);
 
   if (!isVisible || !playerOpen) return null;
 
@@ -112,6 +133,14 @@ const GlobalPlayerBar: React.FC = () => {
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
+
+  // Determine Animation Class
+  let fabAnimationClass = '';
+  if (isPlaying) {
+    fabAnimationClass = 'fab-active-heartbeat';
+  } else if (!hasPlayedOnce && introActive) {
+    fabAnimationClass = 'fab-invite-pulse';
+  }
 
   // --- UP NEXT BUBBLE ---
   if (isWaitingForNext) {
@@ -165,7 +194,7 @@ const GlobalPlayerBar: React.FC = () => {
         <Box className="player-section left">
            {currentSpeaker && (
              <Typography variant="caption" sx={{ 
-                 color: 'var(--accent-primary)', // FIXED: Matches theme Gold/Bronze
+                 color: 'var(--accent-primary)', 
                  fontWeight: 700, 
                  display: 'flex', 
                  alignItems: 'center', 
@@ -182,7 +211,7 @@ const GlobalPlayerBar: React.FC = () => {
                textOverflow: 'ellipsis',
                maxWidth: '100%',
                lineHeight: 1.2,
-               color: 'var(--text-primary)' // FIXED: High contrast text from variables
+               color: 'var(--text-primary)'
            }}>
              {isLoading ? "Buffering..." : currentArticle?.headline}
            </Typography>
@@ -201,19 +230,23 @@ const GlobalPlayerBar: React.FC = () => {
                 <Fab 
                     size={isMobile ? "small" : "medium"} 
                     onClick={handleControl(isPaused ? resume : pause)}
+                    className={fabAnimationClass} // Animation Logic Applied Here
                     sx={{ 
                         boxShadow: '0 4px 12px rgba(0,0,0,0.3)', 
                         zIndex: 10,
                         width: isMobile ? 40 : 48,
                         height: isMobile ? 40 : 48,
                         minHeight: 'auto',
-                        // FIXED: Uses Theme Variables for Adaptive Color
                         bgcolor: 'var(--accent-primary)',
                         color: 'var(--bg-primary)', 
-                        '&:hover': { bgcolor: 'var(--accent-hover)' }
+                        '&:hover': { bgcolor: 'var(--accent-hover)' },
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                     }}
                 >
-                    {isPaused ? <PlayArrowRounded fontSize="medium" /> : <PauseRounded fontSize="medium" />}
+                    {/* Wrapped for Icon Transition/Morph */}
+                    <div className="icon-transition-wrapper" key={isPaused ? 'play' : 'pause'}>
+                        {isPaused ? <PlayArrowRounded fontSize="medium" /> : <PauseRounded fontSize="medium" />}
+                    </div>
                 </Fab>
 
                 {/* NEXT Button */}
@@ -237,7 +270,7 @@ const GlobalPlayerBar: React.FC = () => {
                     onMouseDown={handleSeekStart}
                     onTouchStart={handleSeekStart}
                     sx={{
-                        color: 'var(--accent-primary)', // FIXED: Slider matches theme
+                        color: 'var(--accent-primary)',
                         height: 3,
                         padding: '6px 0', 
                         '& .MuiSlider-thumb': {
@@ -263,13 +296,13 @@ const GlobalPlayerBar: React.FC = () => {
                     fontSize: '0.7rem', 
                     fontWeight: 700, 
                     border: '1px solid',
-                    borderColor: 'var(--border-color)', // FIXED: Adaptive border
+                    borderColor: 'var(--border-color)', 
                     borderRadius: 2,
                     px: 1,
                     py: 0.5,
                     width: 'auto',
                     mr: 1,
-                    color: 'var(--text-secondary)' // FIXED: Adaptive text
+                    color: 'var(--text-secondary)'
                 }}>
                    {playbackRate}x
                 </IconButton>

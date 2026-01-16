@@ -61,6 +61,11 @@ export const useFeedQuery = (mode: FeedMode, filters: IFilters) => {
         if (filters.source) {
             params.source = filters.source;
         }
+
+        // NEW: Topic Filter
+        if (filters.topic) {
+            params.topic = filters.topic;
+        }
     }
 
     const { data } = await apiClient.get(endpoint, { params });

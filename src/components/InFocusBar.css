@@ -4,8 +4,9 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 5px; 
-  padding: 0 5px;
+  /* UPDATED: Adjusted vertical padding for tighter rhythm */
+  padding: 8px 5px 4px 5px; 
+  margin-bottom: 0; /* Removed margin, using padding */
   width: 100%;
   overflow: hidden; 
 }
@@ -86,7 +87,9 @@
 
 @media (max-width: 768px) {
   .infocus-container {
-    margin-bottom: 8px;
+    /* UPDATED: Maintain tight spacing on mobile */
+    padding-top: 6px;
+    padding-bottom: 2px;
     gap: 8px;
   }
   .infocus-pill {

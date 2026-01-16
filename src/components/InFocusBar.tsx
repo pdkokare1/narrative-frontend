@@ -11,9 +11,10 @@ interface Topic {
 
 interface InFocusBarProps {
   onTopicClick?: (topic: string) => void;
+  activeTopic?: string | null; // NEW: Visual state
 }
 
-const InFocusBar: React.FC<InFocusBarProps> = ({ onTopicClick }) => {
+const InFocusBar: React.FC<InFocusBarProps> = ({ onTopicClick, activeTopic }) => {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -57,7 +58,13 @@ const InFocusBar: React.FC<InFocusBarProps> = ({ onTopicClick }) => {
           topics.map((item, index) => (
             <button 
               key={index} 
-              className="infocus-pill" 
+              // Apply 'active' class if topic matches selected
+              className={`infocus-pill ${item.topic === activeTopic ? 'active' : ''}`}
+              style={item.topic === activeTopic ? { 
+                  background: 'var(--accent-primary)', 
+                  color: 'white',
+                  borderColor: 'var(--accent-primary)' 
+              } : {}}
               onClick={() => onTopicClick?.(item.topic)}
             >
               #{item.topic}

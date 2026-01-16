@@ -36,17 +36,35 @@ const FeedHeader: React.FC<{
   onFilterChange?: (f: IFilters) => void; 
   vibrate: () => void; 
   metaData: any;
-}> = React.memo(({ mode, filters, onFilterChange, vibrate, metaData }) => {
+  activeTopic?: string | null; // NEW: Display topic in header if active
+  onClearTopic?: () => void;
+}> = React.memo(({ mode, filters, onFilterChange, vibrate, metaData, activeTopic, onClearTopic }) => {
   return (
     <div className="feed-header-sticky">
         <div style={{ flex: 1, overflow: 'hidden' }}>
-            {mode === 'latest' && onFilterChange && (
+            {mode === 'latest' && onFilterChange && !activeTopic && (
                 <CategoryPills 
                   categories={["All", "Technology", "Business", "Science", "Health", "Entertainment", "Sports", "World", "Politics"]}
                   selectedCategory={filters.category || 'All'} 
                   onSelectCategory={(cat) => { vibrate(); onFilterChange({ ...filters, category: cat }); }} 
                 />
             )}
+            
+            {/* NEW: Show Active Topic Filter Indicator */}
+            {mode === 'latest' && activeTopic && (
+                 <div style={{ padding: '8px 12px', background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <p style={{margin:0, fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>
+                        Filtered by: <span style={{color:'var(--accent-primary)'}}>#{activeTopic}</span>
+                    </p>
+                    <button 
+                        onClick={onClearTopic}
+                        style={{ background:'none', border:'none', color:'var(--text-tertiary)', fontSize:'0.8rem', cursor:'pointer' }}
+                    >
+                        Clear ✕
+                    </button>
+                 </div>
+            )}
+
             {mode === 'infocus' && (
                  <div style={{ padding: '8px 12px', background: 'var(--surface-paper)', borderBottom: '1px solid var(--border-color)' }}>
                     <p style={{margin:0, fontSize: '0.9rem', color: 'var(--accent-primary)', fontWeight: 600 }}>Developing Narratives</p>
@@ -74,10 +92,19 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   showTooltip, 
   scrollToTopRef 
 }) => {
+  // NEW: Local state for Topic Filter (replaces Modal logic)
+  const [activeTopic, setActiveTopic] = useState<string | null>(null);
+
+  // Merge topic into filters dynamically
+  const effectiveFilters = useMemo(() => ({
+      ...filters,
+      topic: activeTopic
+  }), [filters, activeTopic]);
+
   const { 
       feedItems, status, isRefreshing, refresh, loadMoreRef, showNewPill, 
       metaData, isFetchingNextPage, hasNextPage 
-  } = useFeedQuery(mode, filters);
+  } = useFeedQuery(mode, effectiveFilters);
 
   const { startRadio, playSingle, stop, currentArticle, updateContextQueue, updateVisibleArticle, isPlaying } = useRadio();
   const { handleShare } = useShare(); 
@@ -87,7 +114,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   // Local state for Modals
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
 
   const prevSentIds = useRef<string>('');
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -188,9 +214,12 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       }
   };
 
-  // Logic to open Topic Briefing (Unlocked for guests, but content locked inside)
+  // Logic to Filter Feed by Topic (Toggle)
   const handleTopicClick = (topic: string) => {
-     setSelectedTopic(topic);
+     vibrate();
+     setActiveTopic(prev => prev === topic ? null : topic);
+     // Scroll to top when filter changes
+     if (scrollToTopRef?.current) scrollToTopRef.current.scrollTop = 0;
   };
 
   return (
@@ -200,9 +229,22 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
         </div>
 
         {/* IN FOCUS BAR (Top of Feed) */}
-        {mode === 'latest' && <InFocusBar onTopicClick={handleTopicClick} />}
+        {mode === 'latest' && (
+            <InFocusBar 
+                onTopicClick={handleTopicClick} 
+                activeTopic={activeTopic} // Pass active state
+            />
+        )}
 
-        <FeedHeader mode={mode} filters={filters} onFilterChange={onFilterChange} vibrate={vibrate} metaData={metaData} />
+        <FeedHeader 
+            mode={mode} 
+            filters={effectiveFilters} 
+            onFilterChange={onFilterChange} 
+            vibrate={vibrate} 
+            metaData={metaData} 
+            activeTopic={activeTopic}
+            onClearTopic={() => handleTopicClick(activeTopic!)}
+        />
 
         <div className={`articles-grid ${isMobile ? 'mobile-stack' : ''}`} ref={scrollToTopRef}>
             {status === 'pending' && !isRefreshing ? (
@@ -215,7 +257,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             ) : feedItems.length === 0 && !isRefreshing ? (
                 <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
                     <h3>No articles found</h3>
-                    <p>Try refreshing or checking back later.</p>
+                    <p>{activeTopic ? `No stories found for #${activeTopic}` : "Try refreshing or checking back later."}</p>
                     <button onClick={handleRefresh} className="btn-secondary" style={{ marginTop: '15px' }}>Force Refresh</button>
                 </div>
             ) : (
@@ -267,19 +309,8 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             onClose={() => setShowLoginModal(false)}
             message="Join The Gamut to save articles, listen to stories, and customize your feed."
         />
-
-        {/* Topic Briefing Modal (Re-using SmartBriefingModal but passing topic data via API if needed) */}
-        {/* Note: In a real app, you might pass a 'topic' prop. 
-            For now, we render the modal, but SmartBriefingModal expects 'article' object.
-            We will mock a 'Topic Article' object to reuse the modal, or you can update Modal props.
-        */}
-        {selectedTopic && (
-            <SmartBriefingModal 
-                onClose={() => setSelectedTopic(null)}
-                // We fake an article object so the modal knows what to fetch
-                article={{ _id: `topic_${selectedTopic}`, headline: selectedTopic } as any} 
-            />
-        )}
+        
+        {/* Removed SmartBriefingModal since topic click now filters feed instead */}
     </div>
   );
 };

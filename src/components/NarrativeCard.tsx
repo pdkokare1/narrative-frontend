@@ -29,8 +29,9 @@ const NarrativeCard: React.FC<NarrativeCardProps> = memo(({ data, onClick }) => 
         {/* --- BADGES --- */}
         <div className="card-badges">
           {/* FIXED: Changed to Adaptive Theme Color and Renamed Label */}
+          {/* Updated Label from "Narrative In Focus" to "Developing Narratives" */}
           <span className="badge challenge" style={{ background: 'var(--accent-primary)', color: 'white' }}>
-            Narrative In Focus
+            Developing Narratives
           </span>
         </div>
         

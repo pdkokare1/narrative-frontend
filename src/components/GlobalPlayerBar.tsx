@@ -82,9 +82,9 @@ const GlobalPlayerBar: React.FC = () => {
   }, [currentTime, isDragging]);
 
   // --- ANIMATION EFFECTS ---
-  // 1. Disable "Invite Pulse" after 5 seconds
+  // 1. Disable "Invite Pulse" after 8 seconds (Increased from 5s)
   useEffect(() => {
-    const timer = setTimeout(() => setIntroActive(false), 5000);
+    const timer = setTimeout(() => setIntroActive(false), 8000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -92,7 +92,6 @@ const GlobalPlayerBar: React.FC = () => {
   useEffect(() => {
     if (isPlaying) {
       setHasPlayedOnce(true);
-      // Also ensure intro stops immediately if they play within the first 5s
       setIntroActive(false); 
     }
   }, [isPlaying]);
@@ -134,12 +133,12 @@ const GlobalPlayerBar: React.FC = () => {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  // Determine Animation Class
-  let fabAnimationClass = '';
+  // Determine Animation Class for the WRAPPER
+  let wrapperAnimationClass = '';
   if (isPlaying) {
-    fabAnimationClass = 'fab-active-heartbeat';
+    wrapperAnimationClass = 'fab-active-heartbeat';
   } else if (!hasPlayedOnce && introActive) {
-    fabAnimationClass = 'fab-invite-pulse';
+    wrapperAnimationClass = 'fab-invite-pulse';
   }
 
   // --- UP NEXT BUBBLE ---
@@ -226,28 +225,29 @@ const GlobalPlayerBar: React.FC = () => {
                     <SkipPreviousRounded />
                 </IconButton>
 
-                {/* PLAY/PAUSE FAB */}
-                <Fab 
-                    size={isMobile ? "small" : "medium"} 
-                    onClick={handleControl(isPaused ? resume : pause)}
-                    className={fabAnimationClass} // Animation Logic Applied Here
-                    sx={{ 
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)', 
-                        zIndex: 10,
-                        width: isMobile ? 40 : 48,
-                        height: isMobile ? 40 : 48,
-                        minHeight: 'auto',
-                        bgcolor: 'var(--accent-primary)',
-                        color: 'var(--bg-primary)', 
-                        '&:hover': { bgcolor: 'var(--accent-hover)' },
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                    }}
-                >
-                    {/* Wrapped for Icon Transition/Morph */}
-                    <div className="icon-transition-wrapper" key={isPaused ? 'play' : 'pause'}>
-                        {isPaused ? <PlayArrowRounded fontSize="medium" /> : <PauseRounded fontSize="medium" />}
-                    </div>
-                </Fab>
+                {/* PLAY/PAUSE WRAPPER (Handles Animation) */}
+                <Box className={`fab-wrapper ${wrapperAnimationClass}`}>
+                    <Fab 
+                        size={isMobile ? "small" : "medium"} 
+                        onClick={handleControl(isPaused ? resume : pause)}
+                        sx={{ 
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)', 
+                            zIndex: 2, // Keep button above the pulse
+                            width: isMobile ? 40 : 48,
+                            height: isMobile ? 40 : 48,
+                            minHeight: 'auto',
+                            bgcolor: 'var(--accent-primary)',
+                            color: 'var(--bg-primary)', 
+                            '&:hover': { bgcolor: 'var(--accent-hover)' },
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                        }}
+                    >
+                        {/* Wrapped for Icon Transition/Morph */}
+                        <div className="icon-transition-wrapper" key={isPaused ? 'play' : 'pause'}>
+                            {isPaused ? <PlayArrowRounded fontSize="medium" /> : <PauseRounded fontSize="medium" />}
+                        </div>
+                    </Fab>
+                </Box>
 
                 {/* NEXT Button */}
                 <IconButton size="small" onClick={handleControl(playNext)} sx={{ color: 'var(--text-primary)' }}>

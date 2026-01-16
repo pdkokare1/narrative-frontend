@@ -20,17 +20,21 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
-    padding: 6px 12px 10px 12px;
+    
+    /* UPDATED: Tighter padding for equal spacing */
+    padding: 4px 12px 8px 12px;
+    
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px; /* Reduced gap from 10px */
     flex-shrink: 0; 
 }
 
 /* --- Main Grid --- */
 .articles-grid {
     flex: 1; 
-    padding: 20px 12px;
+    /* UPDATED: Reduced top padding to 12px for better flow */
+    padding: 12px 12px 20px 12px;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
     gap: 20px; 
@@ -51,6 +55,7 @@
     }
 
     .feed-header-sticky {
+        /* Align with grid padding */
         padding-left: 12px;
         padding-right: 12px;
     }
@@ -59,7 +64,7 @@
 /* --- New Content Pill --- */
 .new-content-pill {
     position: absolute;
-    top: 70px;
+    top: 60px; /* Adjusted for tighter header */
     left: 50%;
     transform: translateX(-50%) translateY(-20px);
     background: var(--accent-primary);
@@ -116,7 +121,8 @@
     }
 
     .feed-header-sticky {
-        padding: 4px 20px;
+        /* UPDATED: Consistent small padding on mobile */
+        padding: 4px 20px 8px 20px;
         gap: 6px;
     }
 
@@ -140,6 +146,9 @@
         
         /* Bottom padding for Nav + Spacing */
         padding-bottom: 80px; 
+        
+        /* Add slight top spacer for mobile scroll feel */
+        padding-top: 4px; 
     }
 
     .feed-article-wrapper {

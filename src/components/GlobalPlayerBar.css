@@ -69,10 +69,19 @@
 
     flex-direction: row; 
     gap: 10px;
+    
+    /* CRITICAL: Allow animations to spill out of the bar */
+    overflow: visible !important; 
   }
 
   .player-section.left { width: 35%; }
-  .player-section.center { width: 65%; }
+  
+  .player-section.center { 
+      width: 65%; 
+      /* CRITICAL: Allow animations to spill out of the center section */
+      overflow: visible !important;
+  }
+  
   .player-section.right { 
       position: absolute; 
       top: 6px; 
@@ -95,52 +104,55 @@
   100% { opacity: 1; transform: scale(1); }
 }
 
-/* --- ANIMATIONS: FAB Wrapper --- */
-.fab-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
+/* --- ANIMATIONS: FAB & Pulse Ring --- */
+.fab-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Allow pulse to show */
+    overflow: visible !important; 
 }
 
-/* 1. Invite Pulse (Radar) - Uses Pseudo Element to avoid FAB conflict */
-.fab-invite-pulse::before {
-  content: '';
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%; height: 100%;
-  border-radius: 50%;
-  background: transparent;
-  z-index: 1; /* Behind FAB (FAB is z-index 2 in JSX) */
-  animation: radar 2s infinite ease-out;
+/* The Background Ring */
+.pulse-ring {
+    position: absolute;
+    top: 50%; 
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%; 
+    height: 100%;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1; /* Behind Button (Fab is z-index 10) */
+}
+
+/* 1. Invite Pulse (Radar) - 0 to 8s */
+.pulse-invite-radar {
+    animation: radar 2s infinite ease-out;
 }
 
 @keyframes radar {
   0% {
-    box-shadow: 0 0 0 0 var(--accent-primary);
-    opacity: 0.7;
-  }
-  70% {
-    box-shadow: 0 0 0 20px var(--accent-primary);
-    opacity: 0;
+    box-shadow: 0 0 0 0 rgba(var(--accent-primary-rgb), 0.7);
+    opacity: 1;
   }
   100% {
-    box-shadow: 0 0 0 0 var(--accent-primary);
+    box-shadow: 0 0 0 20px rgba(var(--accent-primary-rgb), 0);
     opacity: 0;
   }
 }
 
-/* 2. Active Heartbeat (Playing) - Animates the Wrapper itself */
-.fab-active-heartbeat {
-  animation: heartbeat 2s infinite ease-in-out;
+/* 2. Active Heartbeat (Playing) */
+.pulse-active-heartbeat {
+    background: rgba(var(--accent-primary-rgb), 0.3);
+    animation: heartbeat 2s infinite ease-in-out;
 }
 
 @keyframes heartbeat {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-  100% { transform: scale(1); }
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+  50% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
 }
 
 /* 3. Icon Morph/Transition */
@@ -148,11 +160,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy pop */
 }
 
 @keyframes popIn {
-  0% { transform: scale(0.5) rotate(-30deg); opacity: 0; }
+  0% { transform: scale(0.4) rotate(-45deg); opacity: 0; }
   100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 

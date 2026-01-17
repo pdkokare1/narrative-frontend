@@ -1,5 +1,5 @@
 // src/components/ui/Card.tsx
-import React, { ReactNode } from 'react';
+import React, { ReactNode, CSSProperties } from 'react';
 import './Card.css';
 
 interface CardProps {
@@ -10,6 +10,7 @@ interface CardProps {
   padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl'; 
   variant?: 'default' | 'outlined' | 'elevated' | 'glass';
   className?: string;
+  style?: CSSProperties; // NEW: Allow inline styles
   onClick?: () => void;
 }
 
@@ -20,6 +21,7 @@ const Card: React.FC<CardProps> = ({
   padding = 'md',
   variant = 'default',
   className = '',
+  style,
   onClick
 }) => {
   return (
@@ -32,6 +34,7 @@ const Card: React.FC<CardProps> = ({
         ${className}
       `}
       onClick={onClick}
+      style={style} // NEW: Apply the passed styles
     >
       {(title || subtitle) && (
         <div className="card-header">

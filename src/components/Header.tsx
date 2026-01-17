@@ -16,7 +16,7 @@ interface HeaderProps {
   toggleTheme: () => void;
   username: string;
   currentFilters?: IFilters;
-  // NEW: Props for PWA Install
+  // Kept interface compatible but optional, though we won't use them here anymore
   isInstallable?: boolean;
   triggerInstall?: () => void;
 }
@@ -27,7 +27,7 @@ const getFormattedDate = () => {
     return date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 };
 
-const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFilters, isInstallable, triggerInstall }) => {
+const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFilters }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false); 
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,7 +86,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   };
 
   const handleRadioClick = async () => {
-    // Guest Check
     if (isGuest) {
         setShowLoginModal(true);
         return;
@@ -153,13 +152,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
           )}
         </div>
 
-        {/* NEW: Install Button (Desktop) */}
-        {isInstallable && triggerInstall && (
-           <button onClick={triggerInstall} className="btn-secondary" style={{ marginRight: '8px', padding: '6px 12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }} title="Install App">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              <span>Install</span>
-           </button>
-        )}
+        {/* REMOVED: Install Button Logic here. It will only show on Mobile Profile Menu now. */}
 
         {/* 2. Gamut Radio */}
         {!isNative && (
@@ -175,18 +168,14 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
           </button>
         )}
 
-        {/* 3. Weather (Hidden) */}
-        {/* <WeatherWidget /> */}
-
-        {/* 4. Date */}
+        {/* 3. Date */}
         <div className="header-date-display">
             {todayDate}
         </div>
 
-        {/* 5. Username */}
+        {/* 4. Username */}
         {!isNative && (
           <div className="header-user-desktop" ref={dropdownRef}> 
-            {/* Toggle between Guest Login and User Dropdown */}
             {isGuest ? (
                 <Link to="/login" className="btn-secondary" style={{ padding: '6px 16px', fontSize: '0.9rem', textDecoration: 'none' }}>
                     Log In
@@ -212,7 +201,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
           </div>
         )}
 
-        {/* 6. Theme Toggle */}
+        {/* 5. Theme Toggle */}
         {!isNative && (
            <button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '🌙' : '☀️'}</button>
         )}

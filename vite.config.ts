@@ -9,12 +9,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt', 
       includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
-      // FIXED: Force the filename to standard manifest.json
-      filename: 'manifest.json', 
+      // FIXED: Removed manual filename. Defaults to 'manifest.webmanifest' which is safer.
       manifest: {
         short_name: "The Gamut",
         name: "The Gamut - Analyse The Full Spectrum",
-        // FIXED: Explicit root start_url
         start_url: "/",
         display: "standalone",
         theme_color: "#0a0a0a",
@@ -24,7 +22,6 @@ export default defineConfig({
             src: "logo192.png",
             sizes: "192x192",
             type: "image/png",
-            // FIXED: Added 'purpose' which is required for PWA installability on Android
             purpose: "any maskable"
           },
           {

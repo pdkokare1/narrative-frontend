@@ -143,7 +143,7 @@ export default function MainLayout({ profile }: MainLayoutProps) {
         toggleTheme={toggleTheme} 
         username={profile?.username || 'Guest'} 
         currentFilters={filters}
-        // FIXED: Removed install props (cleanup)
+        // FIXED: Removed install props to sync with Header
       />
       
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />

@@ -16,9 +16,6 @@ interface HeaderProps {
   toggleTheme: () => void;
   username: string;
   currentFilters?: IFilters;
-  // Kept interface compatible but optional, though we won't use them here anymore
-  isInstallable?: boolean;
-  triggerInstall?: () => void;
 }
 
 const getFormattedDate = () => {
@@ -151,8 +148,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
               </div>
           )}
         </div>
-
-        {/* REMOVED: Install Button Logic here. It will only show on Mobile Profile Menu now. */}
 
         {/* 2. Gamut Radio */}
         {!isNative && (

@@ -28,7 +28,6 @@ const MobileProfileMenu: React.FC<MobileProfileMenuProps> = ({ isInstallable, tr
   // Platform Detection (Case insensitive now to be safer)
   const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
   const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
-  const isAndroid = /Android/i.test(userAgent);
   
   // Check if already running as an app
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
@@ -74,7 +73,7 @@ const MobileProfileMenu: React.FC<MobileProfileMenuProps> = ({ isInstallable, tr
                 /* OPTION B: Manual Instructions (If Magic Button not ready/supported) */
                 <>
                     {/* iOS Manual Instructions */}
-                    {isIOS && (
+                    {isIOS ? (
                         <div style={{ marginBottom: '15px' }}>
                             <Card variant="glass" padding="sm" className="menu-card-item">
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -90,10 +89,8 @@ const MobileProfileMenu: React.FC<MobileProfileMenuProps> = ({ isInstallable, tr
                                 </div>
                             </Card>
                         </div>
-                    )}
-
-                    {/* Android Manual Instructions (Show if Android OR if we couldn't detect OS) */}
-                    {(isAndroid || (!isIOS && !isAndroid)) && (
+                    ) : (
+                    /* Android / General Manual Instructions (Default Fallback) */
                         <div style={{ marginBottom: '15px' }}>
                             <Card variant="glass" padding="sm" className="menu-card-item">
                                 <div style={{ display: 'flex', alignItems: 'center' }}>

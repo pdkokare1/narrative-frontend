@@ -7,7 +7,7 @@ import '../DashboardPages.css';
 
 import useIsMobile from '../hooks/useIsMobile';
 import useArticleSave from '../hooks/useArticleSave';
-import usePWAInstall from '../hooks/usePWAInstall'; // NEW: Import the Install Hook
+import usePWAInstall from '../hooks/usePWAInstall'; 
 import * as api from '../services/api';
 
 import Header from '../components/Header';
@@ -47,8 +47,7 @@ interface MainLayoutProps {
 export default function MainLayout({ profile }: MainLayoutProps) {
   const isMobileView = useIsMobile();
   
-  // --- NEW: Initialize PWA Install Hook ---
-  // This listener must be active at the layout level to catch the event early
+  // Initialize PWA Install Hook
   const { isInstallable, triggerInstall } = usePWAInstall();
   
   // --- THEME & FONT STATE ---
@@ -144,9 +143,7 @@ export default function MainLayout({ profile }: MainLayoutProps) {
         toggleTheme={toggleTheme} 
         username={profile?.username || 'Guest'} 
         currentFilters={filters}
-        // NEW: Pass install props to Header for Desktop button
-        isInstallable={isInstallable}
-        triggerInstall={triggerInstall}
+        // FIXED: Removed install props (cleanup)
       />
       
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
@@ -201,7 +198,7 @@ export default function MainLayout({ profile }: MainLayoutProps) {
               </RequireAuth>
             } />
             
-            {/* NEW: Pass install props to Mobile Profile Menu */}
+            {/* Pass install props to Mobile Profile Menu */}
             <Route path="/profile-menu" element={
               <RequireAuth>
                 <MobileProfileMenu 

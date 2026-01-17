@@ -4,18 +4,21 @@ import { Link, useNavigate } from 'react-router-dom';
 import * as api from '../services/api';
 import { useRadio } from '../context/RadioContext';
 import { useToast } from '../context/ToastContext';
-import { useAuth } from '../context/AuthContext'; // NEW
+import { useAuth } from '../context/AuthContext'; 
 import './Header.css'; 
 import { IArticle, INarrative, IFilters, FeedItem } from '../types';
 import { Capacitor } from '@capacitor/core'; 
 import WeatherWidget from './WeatherWidget'; 
-import LoginModal from './modals/LoginModal'; // NEW
+import LoginModal from './modals/LoginModal'; 
 
 interface HeaderProps {
   theme: string;
   toggleTheme: () => void;
   username: string;
   currentFilters?: IFilters;
+  // NEW: Props for PWA Install
+  isInstallable?: boolean;
+  triggerInstall?: () => void;
 }
 
 const getFormattedDate = () => {
@@ -24,17 +27,17 @@ const getFormattedDate = () => {
     return date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 };
 
-const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFilters }) => {
+const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFilters, isInstallable, triggerInstall }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false); 
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<FeedItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false); // NEW
+  const [showLoginModal, setShowLoginModal] = useState(false); 
 
   const { isPlaying, isPaused, startRadio, resume, pause, currentArticle, contextQueue, contextLabel } = useRadio();
   const { addToast } = useToast();
-  const { isGuest } = useAuth(); // NEW
+  const { isGuest } = useAuth(); 
   const [radioLoading, setRadioLoading] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null); 
@@ -83,7 +86,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   };
 
   const handleRadioClick = async () => {
-    // NEW: Guest Check
+    // Guest Check
     if (isGuest) {
         setShowLoginModal(true);
         return;
@@ -150,6 +153,14 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
           )}
         </div>
 
+        {/* NEW: Install Button (Desktop) */}
+        {isInstallable && triggerInstall && (
+           <button onClick={triggerInstall} className="btn-secondary" style={{ marginRight: '8px', padding: '6px 12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }} title="Install App">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span>Install</span>
+           </button>
+        )}
+
         {/* 2. Gamut Radio */}
         {!isNative && (
           <button onClick={handleRadioClick} className={`radio-header-btn ${isPlaying ? 'playing' : ''}`} title="Start Radio">
@@ -175,7 +186,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
         {/* 5. Username */}
         {!isNative && (
           <div className="header-user-desktop" ref={dropdownRef}> 
-            {/* NEW: Toggle between Guest Login and User Dropdown */}
+            {/* Toggle between Guest Login and User Dropdown */}
             {isGuest ? (
                 <Link to="/login" className="btn-secondary" style={{ padding: '6px 16px', fontSize: '0.9rem', textDecoration: 'none' }}>
                     Log In

@@ -2,32 +2,37 @@
 import { useState, useEffect } from 'react';
 
 const usePWAInstall = () => {
-  const [isInstallable, setIsInstallable] = useState(false);
+  // Initialize state based on the global variable we set in index.tsx
+  const [deferredPrompt, setDeferredPrompt] = useState<any>((window as any).deferredPrompt || null);
+  const [isInstallable, setIsInstallable] = useState<boolean>(!!(window as any).deferredPrompt);
 
   useEffect(() => {
-    // 1. Check if the event was already captured globally (in index.tsx)
-    // This fixes the race condition where the event fires before this component mounts.
-    if ((window as any).deferredPrompt) {
-      console.log("PWA Hook: Found stashed install event");
+    // 1. Listen for new events (if it hasn't fired yet)
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      // Update global stash
+      (window as any).deferredPrompt = e;
+      // Update local state
+      setDeferredPrompt(e);
       setIsInstallable(true);
+      console.log("PWA Hook: Captured event via listener");
+    };
+
+    // 2. Check global stash on mount (in case we missed the event)
+    if ((window as any).deferredPrompt) {
+        setIsInstallable(true);
+        setDeferredPrompt((window as any).deferredPrompt);
+        console.log("PWA Hook: Found stashed event on mount");
     }
 
-    // 2. Listen for the event in case it fires *after* this hook mounts
-    const handleBeforeInstallPrompt = (e: any) => {
-      console.log("PWA Hook: Captured new install event");
-      e.preventDefault();
-      (window as any).deferredPrompt = e;
-      setIsInstallable(true);
-    };
-
-    // 3. Listen for successful installation to hide the button
-    const handleAppInstalled = () => {
-      console.log("PWA installed successfully");
-      (window as any).deferredPrompt = null;
-      setIsInstallable(false);
-    };
-
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // 3. Listen for successful installation to cleanup
+    const handleAppInstalled = () => {
+      setDeferredPrompt(null);
+      setIsInstallable(false);
+      (window as any).deferredPrompt = null;
+    };
     window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
@@ -37,23 +42,23 @@ const usePWAInstall = () => {
   }, []);
 
   const triggerInstall = async () => {
-    const promptEvent = (window as any).deferredPrompt;
-    if (!promptEvent) {
-        return;
-    }
+    if (!deferredPrompt) return;
 
     // Show the install prompt
-    promptEvent.prompt();
+    deferredPrompt.prompt();
 
     // Wait for the user to respond to the prompt
-    const { outcome } = await promptEvent.userChoice;
+    const { outcome } = await deferredPrompt.userChoice;
     
-    console.log(`User response to install prompt: ${outcome}`);
-
-    // Whether accepted or dismissed, we clear the stashed event 
-    // because it can typically only be used once.
+    if (outcome === 'accepted') {
+      console.log('User accepted the install prompt');
+      setIsInstallable(false);
+    } else {
+      console.log('User dismissed the install prompt');
+    }
+    // We clear the prompt because it can't be used twice
+    setDeferredPrompt(null);
     (window as any).deferredPrompt = null;
-    setIsInstallable(false);
   };
 
   return { isInstallable, triggerInstall };

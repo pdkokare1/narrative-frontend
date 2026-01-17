@@ -7,7 +7,7 @@ import '../DashboardPages.css';
 
 import useIsMobile from '../hooks/useIsMobile';
 import useArticleSave from '../hooks/useArticleSave';
-import usePWAInstall from '../hooks/usePWAInstall'; 
+import usePWAInstall from '../hooks/usePWAInstall'; // NEW: Import Install Hook
 import * as api from '../services/api';
 
 import Header from '../components/Header';
@@ -17,6 +17,7 @@ import BottomNav from '../components/ui/BottomNav';
 import CustomTooltip from '../components/ui/CustomTooltip';
 import PageLoader from '../components/PageLoader';
 import { useAuth } from '../context/AuthContext'; 
+import { useToast } from '../context/ToastContext'; // NEW: Import Toast for the Pop-Up
 
 import { IFilters, IArticle, IUserProfile, INarrative } from '../types';
 
@@ -47,9 +48,12 @@ interface MainLayoutProps {
 export default function MainLayout({ profile }: MainLayoutProps) {
   const isMobileView = useIsMobile();
   
-  // Initialize PWA Install Hook
+  // --- NEW: PWA Logic ---
   const { isInstallable, triggerInstall } = usePWAInstall();
-  
+  const { addToast } = useToast();
+  // State to ensure we only show the popup once per session
+  const [installToastShown, setInstallToastShown] = useState(false);
+
   // --- THEME & FONT STATE ---
   const [theme, setTheme] = useState('dark');
   const [fontSize, setFontSize] = useState('medium');
@@ -76,6 +80,41 @@ export default function MainLayout({ profile }: MainLayoutProps) {
   const { savedArticleIds, handleToggleSave } = useArticleSave(profile?.savedArticles || []);
 
   // --- EFFECTS ---
+
+  // NEW: PWA Install Pop-Up Logic
+  useEffect(() => {
+    // Wait a moment after load to be polite
+    const timer = setTimeout(() => {
+      // Don't show if already shown, or if not mobile
+      if (installToastShown || !isMobileView) return;
+
+      // Check if app is already running in "Standalone" (App Mode)
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+      if (isStandalone) return;
+
+      // 1. ANDROID / DESKTOP (If browser says it's installable)
+      if (isInstallable) {
+        addToast('Install The Gamut for a better experience', 'info', {
+          label: 'Install App',
+          onClick: () => {
+             triggerInstall();
+             setInstallToastShown(true);
+          }
+        });
+        setInstallToastShown(true);
+      } 
+      // 2. iOS (If on iPhone but not installed)
+      else if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+         addToast('To install: Tap Share button below → Add to Home Screen', 'info');
+         setInstallToastShown(true);
+      }
+
+    }, 3000); // 3-second delay so it doesn't pop up instantly
+
+    return () => clearTimeout(timer);
+  }, [isInstallable, isMobileView, installToastShown, addToast, triggerInstall]);
+
+
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
@@ -143,7 +182,6 @@ export default function MainLayout({ profile }: MainLayoutProps) {
         toggleTheme={toggleTheme} 
         username={profile?.username || 'Guest'} 
         currentFilters={filters}
-        // FIXED: Removed install props to sync with Header
       />
       
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
@@ -197,16 +235,7 @@ export default function MainLayout({ profile }: MainLayoutProps) {
                 />
               </RequireAuth>
             } />
-            
-            {/* Pass install props to Mobile Profile Menu */}
-            <Route path="/profile-menu" element={
-              <RequireAuth>
-                <MobileProfileMenu 
-                  isInstallable={isInstallable} 
-                  triggerInstall={triggerInstall} 
-                />
-              </RequireAuth>
-            } />
+            <Route path="/profile-menu" element={<RequireAuth><MobileProfileMenu /></RequireAuth>} />
             
             <Route path="*" element={<PageNotFound />} /> 
           </Routes>

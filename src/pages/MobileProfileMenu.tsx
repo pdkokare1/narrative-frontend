@@ -25,12 +25,14 @@ interface MobileProfileMenuProps {
 const MobileProfileMenu: React.FC<MobileProfileMenuProps> = ({ isInstallable, triggerInstall }) => {
   const { user } = useAuth();
   
-  // Platform Detection (Case insensitive now to be safer)
+  // Platform Detection
   const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
   const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
   
-  // Check if already running as an app
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+  // Robust Standalone Check
+  const isStandalone = 
+    window.matchMedia('(display-mode: standalone)').matches || 
+    (window.navigator as any).standalone === true;
 
   const menuItems = [
     { label: 'My Dashboard', path: '/my-dashboard', icon: '📊', desc: 'View your reading stats' },
@@ -48,11 +50,11 @@ const MobileProfileMenu: React.FC<MobileProfileMenuProps> = ({ isInstallable, tr
       />
 
       {/* --- INSTALL APP SECTION --- */}
-      {/* Logic: If not currently in "App Mode" (Standalone), show ONE of the options below */}
+      {/* Logic: Show ONLY if NOT in standalone mode */}
       {!isStandalone && (
         <div style={{ marginBottom: '20px' }}>
             
-            {/* OPTION A: The Magic Button (If Browser supports it) */}
+            {/* OPTION A: The Magic Button (If Browser signals it's ready) */}
             {isInstallable && triggerInstall ? (
                 <div onClick={triggerInstall} style={{ cursor: 'pointer', marginBottom: '15px' }}>
                     <Card variant="glass" padding="sm" className="menu-card-item" style={{ background: 'rgba(212, 175, 55, 0.15)', borderColor: 'var(--accent-primary)' }}>
@@ -70,9 +72,9 @@ const MobileProfileMenu: React.FC<MobileProfileMenuProps> = ({ isInstallable, tr
                     </Card>
                 </div>
             ) : (
-                /* OPTION B: Manual Instructions (If Magic Button not ready/supported) */
+                /* OPTION B: Manual Instructions (Default Fallback) */
                 <>
-                    {/* iOS Manual Instructions */}
+                    {/* iOS Specific Instructions */}
                     {isIOS ? (
                         <div style={{ marginBottom: '15px' }}>
                             <Card variant="glass" padding="sm" className="menu-card-item">
@@ -90,7 +92,7 @@ const MobileProfileMenu: React.FC<MobileProfileMenuProps> = ({ isInstallable, tr
                             </Card>
                         </div>
                     ) : (
-                    /* Android / General Manual Instructions (Default Fallback) */
+                    /* Android / General Instructions (The Default for everything else) */
                         <div style={{ marginBottom: '15px' }}>
                             <Card variant="glass" padding="sm" className="menu-card-item">
                                 <div style={{ display: 'flex', alignItems: 'center' }}>

@@ -7,6 +7,7 @@ import '../DashboardPages.css';
 
 import useIsMobile from '../hooks/useIsMobile';
 import useArticleSave from '../hooks/useArticleSave';
+import usePWAInstall from '../hooks/usePWAInstall'; // NEW: Import the Install Hook
 import * as api from '../services/api';
 
 import Header from '../components/Header';
@@ -15,7 +16,7 @@ import GlobalPlayerBar from '../components/GlobalPlayerBar';
 import BottomNav from '../components/ui/BottomNav';
 import CustomTooltip from '../components/ui/CustomTooltip';
 import PageLoader from '../components/PageLoader';
-import { useAuth } from '../context/AuthContext'; // To check guest status
+import { useAuth } from '../context/AuthContext'; 
 
 import { IFilters, IArticle, IUserProfile, INarrative } from '../types';
 
@@ -40,11 +41,15 @@ const RequireAuth = ({ children }: { children: JSX.Element }) => {
 };
 
 interface MainLayoutProps {
-  profile: IUserProfile | null; // UPDATED: Can be null for guests
+  profile: IUserProfile | null; 
 }
 
 export default function MainLayout({ profile }: MainLayoutProps) {
   const isMobileView = useIsMobile();
+  
+  // --- NEW: Initialize PWA Install Hook ---
+  // This listener must be active at the layout level to catch the event early
+  const { isInstallable, triggerInstall } = usePWAInstall();
   
   // --- THEME & FONT STATE ---
   const [theme, setTheme] = useState('dark');
@@ -69,7 +74,6 @@ export default function MainLayout({ profile }: MainLayoutProps) {
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
   // --- LOGIC HOOKS ---
-  // FIXED: Provide empty array if profile is null (Guest)
   const { savedArticleIds, handleToggleSave } = useArticleSave(profile?.savedArticles || []);
 
   // --- EFFECTS ---
@@ -138,8 +142,11 @@ export default function MainLayout({ profile }: MainLayoutProps) {
       <Header 
         theme={theme} 
         toggleTheme={toggleTheme} 
-        username={profile?.username || 'Guest'} // Handle Guest name
+        username={profile?.username || 'Guest'} 
         currentFilters={filters}
+        // NEW: Pass install props to Header for Desktop button
+        isInstallable={isInstallable}
+        triggerInstall={triggerInstall}
       />
       
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
@@ -193,7 +200,16 @@ export default function MainLayout({ profile }: MainLayoutProps) {
                 />
               </RequireAuth>
             } />
-            <Route path="/profile-menu" element={<RequireAuth><MobileProfileMenu /></RequireAuth>} />
+            
+            {/* NEW: Pass install props to Mobile Profile Menu */}
+            <Route path="/profile-menu" element={
+              <RequireAuth>
+                <MobileProfileMenu 
+                  isInstallable={isInstallable} 
+                  triggerInstall={triggerInstall} 
+                />
+              </RequireAuth>
+            } />
             
             <Route path="*" element={<PageNotFound />} /> 
           </Routes>

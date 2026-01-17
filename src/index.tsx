@@ -8,15 +8,14 @@ import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { registerSW } from 'virtual:pwa-register';
 
-// --- NEW: Global PWA Install Event Listener ---
-// We capture this event immediately (outside of React) to ensure we don't miss it 
-// if it fires before the React components have fully mounted.
+// --- VERSION CHECK ---
+console.log("🚀 LATEST VERSION LOADED: v2.5 - Header Button Removed");
+
+// 1. Capture the Install Event (Global Listener)
 window.addEventListener('beforeinstallprompt', (e) => {
-  // Prevent Chrome 67 and earlier from automatically showing the prompt
   e.preventDefault();
-  // Stash the event so it can be triggered later by our hook.
   (window as any).deferredPrompt = e;
-  console.log("PWA Install Event captured globally.");
+  console.log("✅ PWA Install Event captured globally.");
 });
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
@@ -30,5 +29,16 @@ root.render(
   </React.StrictMode>
 );
 
-// PWA Registration Logic
-registerSW({ immediate: true });
+// 2. Aggressive Auto-Update Logic
+// This forces the browser to skip the "waiting" phase and activate the new version immediately.
+const updateSW = registerSW({
+  onNeedRefresh() {
+    console.log("🔄 New content detected. Force updating...");
+    updateSW(true);
+  },
+  onOfflineReady() {
+    console.log("✅ App is ready for offline usage.");
+  },
+  // This ensures the service worker takes control immediately
+  immediate: true
+});

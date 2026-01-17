@@ -7,10 +7,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt', 
+      registerType: 'autoUpdate', // FIXED: Changed to autoUpdate for aggressive updates
       includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
-      // FIXED: Force the generation of 'manifest.json' so it matches what the browser expects
-      filename: 'manifest.json',
+      // We removed the manual filename to let Vite handle version hashing naturally
       manifest: {
         short_name: "The Gamut",
         name: "The Gamut - Analyse The Full Spectrum",
@@ -42,6 +41,10 @@ export default defineConfig({
     outDir: 'build', 
     rollupOptions: {
       output: {
+        // FIXED: Explicitly hashing filenames to bust browser cache
+        entryFileNames: `assets/[name].[hash].js`,
+        chunkFileNames: `assets/[name].[hash].js`,
+        assetFileNames: `assets/[name].[hash].[ext]`,
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-firebase': ['firebase/app', 'firebase/auth'],

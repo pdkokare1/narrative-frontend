@@ -18,7 +18,6 @@ const MenuIcon = ({ char }: { char: string }) => (
   </div>
 );
 
-// NEW: Accept Install Props
 interface MobileProfileMenuProps {
   isInstallable?: boolean;
   triggerInstall?: () => void;
@@ -27,8 +26,10 @@ interface MobileProfileMenuProps {
 const MobileProfileMenu: React.FC<MobileProfileMenuProps> = ({ isInstallable, triggerInstall }) => {
   const { user } = useAuth();
   
-  // Detect iOS to show specific instructions since standard install prompt doesn't work there
-  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  // Platform Detection
+  const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+  const isIOS = /iPhone|iPad|iPod/.test(userAgent);
+  const isAndroid = /Android/.test(userAgent);
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
   const menuItems = [
@@ -46,8 +47,10 @@ const MobileProfileMenu: React.FC<MobileProfileMenuProps> = ({ isInstallable, tr
         subtitle={`Signed in as ${user?.displayName || 'User'}`} 
       />
 
-      {/* NEW: Install App Section */}
+      {/* --- INSTALL APP SECTION --- */}
       <div style={{ marginBottom: '20px' }}>
+        
+        {/* 1. NATIVE PROMPT (Android/Desktop) - Only if browser allows it */}
         {isInstallable && triggerInstall && (
            <div onClick={triggerInstall} style={{ cursor: 'pointer', marginBottom: '15px' }}>
               <Card variant="glass" padding="sm" className="menu-card-item" style={{ background: 'rgba(212, 175, 55, 0.15)', borderColor: 'var(--accent-primary)' }}>
@@ -66,7 +69,7 @@ const MobileProfileMenu: React.FC<MobileProfileMenuProps> = ({ isInstallable, tr
            </div>
         )}
         
-        {/* iOS Specific Instructions (if not installed and not native) */}
+        {/* 2. IOS INSTRUCTIONS (Always show on iOS if not installed) */}
         {!isStandalone && isIOS && !isInstallable && (
            <div style={{ marginBottom: '15px' }}>
               <Card variant="glass" padding="sm" className="menu-card-item">
@@ -77,7 +80,26 @@ const MobileProfileMenu: React.FC<MobileProfileMenuProps> = ({ isInstallable, tr
                       Install on iPhone
                     </div>
                     <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                      Tap the <strong>Share</strong> button below and select <strong>"Add to Home Screen"</strong>
+                      Tap <strong>Share</strong> button <span style={{fontSize: '14px'}}>⎋</span> below, then <strong>"Add to Home Screen"</strong>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+           </div>
+        )}
+
+        {/* 3. ANDROID MANUAL INSTRUCTIONS (If Native Prompt Fails/Missing) */}
+        {!isStandalone && isAndroid && !isInstallable && (
+           <div style={{ marginBottom: '15px' }}>
+              <Card variant="glass" padding="sm" className="menu-card-item">
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <MenuIcon char="🤖" />
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-heading)', fontSize: '16px', color: 'var(--text-primary)' }}>
+                      Install App
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                      Tap the menu <strong>(⋮)</strong> and select <strong>"Install App"</strong> or <strong>"Add to Home Screen"</strong>
                     </div>
                   </div>
                 </div>

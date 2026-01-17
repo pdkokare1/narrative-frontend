@@ -9,7 +9,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt', 
       includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
-      // FIXED: Removed manual filename. Defaults to 'manifest.webmanifest' which is safer.
+      // FIXED: Force the generation of 'manifest.json' so it matches what the browser expects
+      filename: 'manifest.json',
       manifest: {
         short_name: "The Gamut",
         name: "The Gamut - Analyse The Full Spectrum",

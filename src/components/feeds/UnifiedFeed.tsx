@@ -4,8 +4,8 @@ import CategoryPills from '../ui/CategoryPills';
 import SkeletonCard from '../ui/SkeletonCard';
 import NativeAdUnit from '../ui/NativeAdUnit'; 
 import LoginModal from '../modals/LoginModal';
-import SmartBriefingModal from '../modals/SmartBriefingModal'; // Import SmartBriefingModal
-import InFocusBar from '../InFocusBar'; // Import InFocusBar
+import SmartBriefingModal from '../modals/SmartBriefingModal'; 
+import InFocusBar from '../InFocusBar'; 
 import { useRadio } from '../../context/RadioContext';
 import useShare from '../../hooks/useShare'; 
 import useIsMobile from '../../hooks/useIsMobile'; 
@@ -36,7 +36,7 @@ const FeedHeader: React.FC<{
   onFilterChange?: (f: IFilters) => void; 
   vibrate: () => void; 
   metaData: any;
-  activeTopic?: string | null; // NEW: Display topic in header if active
+  activeTopic?: string | null; 
   onClearTopic?: () => void;
 }> = React.memo(({ mode, filters, onFilterChange, vibrate, metaData, activeTopic, onClearTopic }) => {
   return (
@@ -50,7 +50,6 @@ const FeedHeader: React.FC<{
                 />
             )}
             
-            {/* NEW: Show Active Topic Filter Indicator */}
             {mode === 'latest' && activeTopic && (
                  <div style={{ padding: '8px 12px', background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <p style={{margin:0, fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>
@@ -92,10 +91,8 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   showTooltip, 
   scrollToTopRef 
 }) => {
-  // NEW: Local state for Topic Filter (replaces Modal logic)
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
 
-  // Merge topic into filters dynamically
   const effectiveFilters = useMemo(() => ({
       ...filters,
       topic: activeTopic
@@ -112,7 +109,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   const vibrate = useHaptic(); 
   const { isGuest } = useAuth(); 
 
-  // Local state for Modals
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   const prevSentIds = useRef<string>('');
@@ -197,7 +193,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       if (scrollToTopRef?.current) scrollToTopRef.current.scrollTop = 0;
   };
 
-  // --- Handle Interactions with Guest Check ---
   const handleToggleSaveWrapper = (article: IArticle) => {
       if (isGuest) {
           setShowLoginModal(true);
@@ -214,11 +209,9 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       }
   };
 
-  // Logic to Filter Feed by Topic (Toggle)
   const handleTopicClick = (topic: string) => {
      vibrate();
      setActiveTopic(prev => prev === topic ? null : topic);
-     // Scroll to top when filter changes
      if (scrollToTopRef?.current) scrollToTopRef.current.scrollTop = 0;
   };
 
@@ -228,11 +221,10 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             <span>↑ New Articles Available</span>
         </div>
 
-        {/* IN FOCUS BAR (Top of Feed) */}
         {mode === 'latest' && (
             <InFocusBar 
                 onTopicClick={handleTopicClick} 
-                activeTopic={activeTopic} // Pass active state
+                activeTopic={activeTopic} 
             />
         )}
 
@@ -264,6 +256,10 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                 <>
                     {feedItems.map((item, index) => (
                         <React.Fragment key={item._id}>
+                             {/* IMPORTANT: You MUST replace '1234567890' with a real 'In-feed ad' 
+                                Unit ID from your Google AdSense Dashboard.
+                                If you keep the test ID, ads will not show, and approval may fail.
+                             */}
                              {index > 0 && index % 7 === 0 && (
                                 <NativeAdUnit 
                                     slotId="1234567890" 
@@ -303,14 +299,11 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             )}
         </div>
         
-        {/* Guest Login Prompt */}
         <LoginModal 
             isOpen={showLoginModal} 
             onClose={() => setShowLoginModal(false)}
             message="Join The Gamut to save articles, listen to stories, and customize your feed."
         />
-        
-        {/* Removed SmartBriefingModal since topic click now filters feed instead */}
     </div>
   );
 };

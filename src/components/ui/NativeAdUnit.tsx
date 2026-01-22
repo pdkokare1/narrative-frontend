@@ -1,5 +1,5 @@
 // src/components/ui/NativeAdUnit.tsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface NativeAdUnitProps {
   slotId: string; // The data-ad-slot ID from AdSense
@@ -10,18 +10,27 @@ interface NativeAdUnitProps {
 
 const NativeAdUnit: React.FC<NativeAdUnitProps> = ({ 
   slotId, 
-  format = 'auto', 
+  format = 'fluid', // Default to fluid for In-Feed
   layoutKey,
   className 
 }) => {
+  const adRef = useRef<HTMLModElement>(null);
+
   useEffect(() => {
+    // Prevent pushing if the ad is already loaded in this slot
+    if (adRef.current && adRef.current.innerHTML.trim() !== '') {
+      return;
+    }
+
     try {
       // @ts-ignore
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
+      const adsbygoogle = window.adsbygoogle || [];
+      adsbygoogle.push({});
     } catch (err) {
-      console.error('AdSense error:', err);
+      // Ignore "All ins elements... already have ads" errors in React Strict Mode
+      console.warn('AdSense push warning:', err);
     }
-  }, []);
+  }, [slotId]);
 
   // Use a placeholder if no slotId is provided (development mode)
   if (!slotId) return null;
@@ -31,34 +40,29 @@ const NativeAdUnit: React.FC<NativeAdUnitProps> = ({
       className={`ad-container ${className || ''}`} 
       style={{ 
         width: '100%',
-        /* STRICT LAYOUT ENFORCEMENT */
-        height: '280px', 
-        minHeight: '280px',
-        maxHeight: '280px',
+        /* RELAXED LAYOUT ENFORCEMENT for AdSense Policy */
+        /* Removed 'contain: strict' and 'max-height' to allow ad to resize naturally */
+        minHeight: '250px', 
         
-        /* 'contain: strict' creates a boundary that prevents children 
-           (like the Ad iframe) from affecting the parent's layout size. */
-        contain: 'strict',
-        
-        overflow: 'hidden', 
         display: 'flex', 
         flexDirection: 'column',
         background: 'var(--bg-card-flat, #fff)',
         borderRadius: 'var(--radius-sm, 8px)',
         border: '1px solid var(--border-light)',
         
-        /* Prevent Grid from stretching this item */
+        /* Prevent Grid from stretching this item awkwardly */
         alignSelf: 'start',
         flexGrow: 0,
-        flexShrink: 0
+        flexShrink: 0,
+        margin: '16px 0' // Add spacing to distinguish from content (Policy Requirement)
       }}
     >
-      {/* Label at top */}
+      {/* Label at top - Required by AdSense Policy to distinguish ads */}
       <div style={{ 
         textAlign: 'center', 
         fontSize: '10px', 
         color: '#888', 
-        padding: '8px 0',
+        padding: '4px 0',
         background: 'rgba(0,0,0,0.02)',
         borderBottom: '1px solid rgba(0,0,0,0.05)',
         flexShrink: 0
@@ -66,11 +70,12 @@ const NativeAdUnit: React.FC<NativeAdUnitProps> = ({
         Advertisement
       </div>
       
-      <div style={{ flex: 1, overflow: 'hidden', position: 'relative', width: '100%' }}>
+      <div style={{ flex: 1, width: '100%', display: 'block' }}>
         <ins
+          ref={adRef}
           className="adsbygoogle"
-          style={{ display: 'block', width: '100%', height: '100%' }}
-          data-ad-client="ca-pub-YOUR_PUBLISHER_ID_HERE" // REPLACE WITH YOUR ID
+          style={{ display: 'block', width: '100%' }}
+          data-ad-client="ca-pub-2458153912750862" // CORRECTED: Updated to match index.html
           data-ad-slot={slotId}
           data-ad-format={format}
           data-ad-layout-key={layoutKey}

@@ -24,7 +24,8 @@ import {
   SkipPreviousRounded, 
   CloseRounded,
   RemoveRounded, // For Minimize
-  StopRounded    // For Stop
+  StopRounded,    // For Stop
+  KeyboardArrowUpRounded // For Restore
 } from '@mui/icons-material';
 import './GlobalPlayerBar.css';
 
@@ -38,6 +39,7 @@ const GlobalPlayerBar: React.FC = () => {
     isLoading,
     isVisible, 
     playerOpen, 
+    openPlayer, // DESTUCTURED: Need this to restore
     closePlayer,
     stop, 
     pause, 
@@ -102,8 +104,32 @@ const GlobalPlayerBar: React.FC = () => {
   }, [isPlaying]);
 
   // --- RENDER LOGIC ---
-  // Only render if visible (active) AND open
-  if (!isVisible || !playerOpen) return null;
+  
+  // 1. If audio is not active/visible, render nothing.
+  if (!isVisible) return null;
+
+  // 2. If audio is active BUT player is MINIMIZED (closed), render the Mini Bar.
+  if (!playerOpen) {
+      return (
+        <Fade in={true}>
+            <Box 
+                className="global-player-bar-container minimized" 
+                onClick={() => { vibrate(); openPlayer(); }}
+            >
+                {/* LAYER 1: Glass BG */}
+                <div className="glass-background-layer" />
+                
+                {/* LAYER 2: Mini Content */}
+                <Box className="player-content-layer">
+                     <Typography className="mini-bar-text">Gamut Radio</Typography>
+                     <KeyboardArrowUpRounded sx={{ fontSize: 20, color: 'var(--accent-primary)' }} />
+                </Box>
+            </Box>
+        </Fade>
+      );
+  }
+
+  // --- FULL PLAYER LOGIC BELOW ---
 
   // --- HANDLERS ---
   const handleControl = (fn: () => void) => () => { 
@@ -122,7 +148,7 @@ const GlobalPlayerBar: React.FC = () => {
   const handleMinimize = () => {
     vibrate();
     closePlayer();
-    // Audio continues, UI hides
+    // Audio continues, UI becomes mini-bar
   };
 
   const handleSeekChange = (_: Event, value: number | number[]) => {
@@ -355,7 +381,7 @@ const GlobalPlayerBar: React.FC = () => {
                     </>
                 )}
 
-                {/* Mobile: Close (Stop/Minimize hybrid) */}
+                {/* Mobile: Minimize (X) */}
                 {isMobile && (
                     <IconButton onClick={handleMinimize} size="small" sx={{ color: 'var(--text-secondary)' }}>
                         <CloseRounded fontSize="small" />

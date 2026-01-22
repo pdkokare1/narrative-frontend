@@ -1,8 +1,10 @@
 // src/components/GlobalPlayerBar.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useRadio } from '../context/RadioContext';
+import { useToast } from '../context/ToastContext';
 import useHaptic from '../hooks/useHaptic';
 import useIsMobile from '../hooks/useIsMobile';
+import * as api from '../services/api';
 import { 
   Box, 
   Typography, 
@@ -20,7 +22,9 @@ import {
   PauseRounded, 
   SkipNextRounded, 
   SkipPreviousRounded, 
-  CloseRounded
+  CloseRounded,
+  RemoveRounded, // For Minimize
+  StopRounded    // For Stop
 } from '@mui/icons-material';
 import './GlobalPlayerBar.css';
 
@@ -38,7 +42,7 @@ const GlobalPlayerBar: React.FC = () => {
     stop, 
     pause, 
     resume, 
-    playNext,
+    playNext, 
     playPrevious, 
     isWaitingForNext,
     autoplayTimer,
@@ -47,9 +51,10 @@ const GlobalPlayerBar: React.FC = () => {
     duration,
     seekTo,
     playbackRate,
-    changeSpeed
+    changeSpeed,
   } = useRadio();
 
+  const { addToast } = useToast();
   const vibrate = useHaptic();
   const isMobile = useIsMobile();
   const [isDragging, setIsDragging] = useState(false);
@@ -61,9 +66,10 @@ const GlobalPlayerBar: React.FC = () => {
 
   const autoHideRef = useRef<NodeJS.Timeout | null>(null);
 
-  // --- AUTO-HIDE LOGIC ---
+  // --- AUTO-HIDE LOGIC (MOBILE ONLY) ---
   const resetAutoHide = () => {
     if (autoHideRef.current) clearTimeout(autoHideRef.current);
+    // Only auto-hide on mobile
     if (isMobile && isPlaying && playerOpen) { 
         autoHideRef.current = setTimeout(() => {
             closePlayer();
@@ -95,6 +101,8 @@ const GlobalPlayerBar: React.FC = () => {
     }
   }, [isPlaying]);
 
+  // --- RENDER LOGIC ---
+  // Only render if visible (active) AND open
   if (!isVisible || !playerOpen) return null;
 
   // --- HANDLERS ---
@@ -102,6 +110,19 @@ const GlobalPlayerBar: React.FC = () => {
       vibrate(); 
       fn(); 
       resetAutoHide(); 
+  };
+
+  const handleStop = () => {
+    vibrate();
+    stop();
+    // Stop implicitly closes/resets, but we ensure UI feedback
+    addToast('Radio stopped', 'info');
+  };
+
+  const handleMinimize = () => {
+    vibrate();
+    closePlayer();
+    // Audio continues, UI hides
   };
 
   const handleSeekChange = (_: Event, value: number | number[]) => {
@@ -136,7 +157,7 @@ const GlobalPlayerBar: React.FC = () => {
   let pulseClass = '';
   if (isPlaying) {
     pulseClass = 'pulse-active-heartbeat';
-  } else if (!hasPlayedOnce && introActive) {
+  } else if (!hasPlayedOnce && introActive && isVisible) {
     pulseClass = 'pulse-invite-radar';
   }
 
@@ -229,9 +250,8 @@ const GlobalPlayerBar: React.FC = () => {
                         <SkipPreviousRounded />
                     </IconButton>
 
-                    {/* FAB CONTAINER: Pulse lives here, OUTSIDE the clipped background */}
+                    {/* FAB CONTAINER */}
                     <Box className="fab-container">
-                        {/* THE PULSE (Absolute, behind button) */}
                         <div className={`pulse-ring ${pulseClass}`} />
                         
                         <Fab 
@@ -250,7 +270,6 @@ const GlobalPlayerBar: React.FC = () => {
                                 transition: 'all 0.2s ease'
                             }}
                         >
-                            {/* CROSS-FADE MORPH: Both icons exist, we animate opacity */}
                             <div className="morph-container">
                                 <div className={`morph-icon ${isPaused ? 'visible' : 'hidden'}`}>
                                     <PlayArrowRounded fontSize="medium" />
@@ -319,8 +338,26 @@ const GlobalPlayerBar: React.FC = () => {
                     </IconButton>
                 </Tooltip>
                 
+                {/* Desktop: Minimize & Stop */}
+                {!isMobile && (
+                    <>
+                        <Tooltip title="Minimize Player">
+                            <IconButton onClick={handleMinimize} size="small" sx={{ color: 'var(--text-secondary)', ml: 1 }}>
+                                <RemoveRounded fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                        
+                        <Tooltip title="Stop Radio">
+                            <IconButton onClick={handleStop} size="small" sx={{ color: 'var(--color-error)', ml: 1 }}>
+                                <StopRounded fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    </>
+                )}
+
+                {/* Mobile: Close (Stop/Minimize hybrid) */}
                 {isMobile && (
-                    <IconButton onClick={() => { vibrate(); closePlayer(); }} size="small" sx={{ color: 'var(--text-secondary)' }}>
+                    <IconButton onClick={handleMinimize} size="small" sx={{ color: 'var(--text-secondary)' }}>
                         <CloseRounded fontSize="small" />
                     </IconButton>
                 )}

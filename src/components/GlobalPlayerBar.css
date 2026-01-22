@@ -11,6 +11,48 @@
   min-height: 60px;
   z-index: 2000;
   pointer-events: none; /* Let clicks pass through empty areas */
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* --- MINIMIZED STATE (The Mini Tab) --- */
+.global-player-bar-container.minimized {
+  min-height: 32px;
+  height: 32px;
+  width: auto;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  bottom: 0;
+  cursor: pointer;
+  pointer-events: auto; /* Re-enable clicks for the tab */
+}
+
+.global-player-bar-container.minimized:hover {
+    transform: translateX(-50%) translateY(-2px); /* Slight peek effect */
+}
+
+.global-player-bar-container.minimized .glass-background-layer {
+    border-radius: 16px 16px 0 0;
+    background: var(--glass-bg, rgba(18, 18, 18, 0.95)); /* Slightly more opaque */
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
+}
+
+.global-player-bar-container.minimized .player-content-layer {
+    padding: 0 24px;
+    justify-content: center;
+    gap: 8px;
+    width: auto;
+}
+
+.mini-bar-text {
+    font-family: var(--font-body, sans-serif);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 /* --- LAYER 1: THE GLASS BACKGROUND --- */
@@ -67,6 +109,20 @@
     right: 10px;
   }
   
+  /* Mobile Minimized Override */
+  .global-player-bar-container.minimized {
+    bottom: 85px; /* Keep it above the BottomNav */
+    left: 50%;
+    right: auto;
+    width: auto;
+    min-width: 140px;
+    border-radius: 16px; /* Fully rounded on mobile usually looks better floating */
+  }
+  
+  .global-player-bar-container.minimized .glass-background-layer {
+    border-radius: 16px;
+  }
+
   .glass-background-layer {
     border-radius: 16px;
   }

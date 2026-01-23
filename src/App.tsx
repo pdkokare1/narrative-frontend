@@ -38,34 +38,6 @@ const queryClient = new QueryClient({
   },
 });
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ToastProvider>
-          <RadioProvider> 
-            <ErrorBoundary>
-               <AppRoutes />
-            </ErrorBoundary>
-          </RadioProvider>
-        </ToastProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-}
-
-// Helper for protecting routes
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const { user, loading } = useAuth();
-  const location = useLocation();
-
-  if (loading) return <PageLoader />;
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-  return children;
-};
-
 function AppRoutes() {
   const { user, profile, loading } = useAuth();
   
@@ -88,10 +60,9 @@ function AppRoutes() {
         <Route path="/create-profile" element={user ? <CreateProfile /> : <Navigate to="/login" replace />} />
         
         {/* --- ADMIN ROUTES --- */}
-        {/* Protected: Only visible if user has role='admin' */}
-        <Route path="/admin" element={ 
-            user && profile?.role === 'admin' ? <AdminLayout /> : <Navigate to="/" /> 
-        }>
+        {/* LOGIC FIX: We allow AdminLayout to handle the security check. 
+            This ensures non-admins see the "Access Denied" screen instead of being redirected. */}
+        <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="newsroom" element={<Newsroom />} />
             <Route path="users" element={<Users />} />
@@ -103,6 +74,22 @@ function AppRoutes() {
         <Route path="/*" element={<MainLayout profile={profile} />} />
       </Routes>
     </Suspense>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RadioProvider>
+          <ToastProvider>
+            <ErrorBoundary>
+               <AppRoutes />
+            </ErrorBoundary>
+          </ToastProvider>
+        </RadioProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

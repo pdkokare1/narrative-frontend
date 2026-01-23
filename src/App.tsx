@@ -22,6 +22,10 @@ import MainLayout from './layouts/MainLayout';
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Newsroom from './pages/admin/Newsroom';
+// New Admin Pages (Lazy loaded if preferred, but direct here for simplicity)
+import Users from './pages/admin/Users';
+import SystemConfig from './pages/admin/SystemConfig';
+import Prompts from './pages/admin/Prompts';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,6 +94,9 @@ function AppRoutes() {
         }>
             <Route index element={<AdminDashboard />} />
             <Route path="newsroom" element={<Newsroom />} />
+            <Route path="users" element={<Users />} />
+            <Route path="config" element={<SystemConfig />} />
+            <Route path="prompts" element={<Prompts />} />
         </Route>
 
         {/* Main Layout handles both Public (Feed) and Private (Dashboard) routes internal logic */}

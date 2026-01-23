@@ -25,6 +25,10 @@ const AdminLayout: React.FC = () => {
     );
   }
 
+  // Helper for NavLink classes
+  const navClass = ({ isActive }: { isActive: boolean }) => 
+    `block px-4 py-3 rounded-lg transition-colors ${isActive ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 text-slate-400'}`;
+
   return (
     <div className="flex h-screen bg-slate-100">
       {/* Sidebar */}
@@ -34,33 +38,25 @@ const AdminLayout: React.FC = () => {
         </div>
         
         <nav className="flex-1 p-4 space-y-2">
-          <NavLink 
-            to="/admin" 
-            end
-            className={({ isActive }) => 
-              `block px-4 py-3 rounded-lg transition-colors ${isActive ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 text-slate-400'}`
-            }
-          >
+          <NavLink to="/admin" end className={navClass}>
             Dashboard
           </NavLink>
           
           <div className="pt-4 pb-1 pl-4 text-xs font-semibold text-slate-500 uppercase">Content</div>
-          <NavLink 
-            to="/admin/newsroom" 
-            className={({ isActive }) => 
-              `block px-4 py-3 rounded-lg transition-colors ${isActive ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 text-slate-400'}`
-            }
-          >
+          <NavLink to="/admin/newsroom" className={navClass}>
             Newsroom
           </NavLink>
+          <NavLink to="/admin/prompts" className={navClass}>
+            AI Brain (Prompts)
+          </NavLink>
           
-          {/* Future Placeholders */}
-          <div className="block px-4 py-3 rounded-lg text-slate-600 cursor-not-allowed">
-            Users (Coming Soon)
-          </div>
-          <div className="block px-4 py-3 rounded-lg text-slate-600 cursor-not-allowed">
+          <div className="pt-4 pb-1 pl-4 text-xs font-semibold text-slate-500 uppercase">System</div>
+          <NavLink to="/admin/users" className={navClass}>
+            User Management
+          </NavLink>
+          <NavLink to="/admin/config" className={navClass}>
             System Config
-          </div>
+          </NavLink>
         </nav>
 
         <div className="p-4 border-t border-slate-700">
@@ -69,7 +65,7 @@ const AdminLayout: React.FC = () => {
                 A
              </div>
              <div>
-               <p className="text-sm font-medium">{profile.username}</p>
+               <p className="text-sm font-medium">{profile?.username || 'Admin'}</p>
                <p className="text-xs text-slate-400">Super Admin</p>
              </div>
           </div>

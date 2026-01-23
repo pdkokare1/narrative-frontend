@@ -2,19 +2,17 @@ import React from 'react';
 
 interface AdminCardProps {
   children: React.ReactNode;
-  className?: string;
+  className?: string; // Kept for compatibility, but mainly unused
   title?: string;
 }
 
 export const AdminCard: React.FC<AdminCardProps> = ({ children, className = '', title }) => {
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden ${className}`}>
+    <div className={`admin-card ${className}`}>
       {title && (
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-          <h3 className="font-semibold text-slate-800">{title}</h3>
-        </div>
+        <div className="admin-card-header">{title}</div>
       )}
-      <div className="p-6">
+      <div className="admin-card-body">
         {children}
       </div>
     </div>

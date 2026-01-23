@@ -1,4 +1,4 @@
-// src/pages/admin/Newsroom.tsx
+// narrative-frontend/src/pages/admin/Newsroom.tsx
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import { IArticle } from '../../types';
@@ -10,14 +10,18 @@ const Newsroom: React.FC = () => {
   const [articles, setArticles] = useState<IArticle[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   
-  // Create Form State
+  // Edit State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  
+  // Form State
   const [newArticle, setNewArticle] = useState({
     headline: '',
     summary: '',
     source: 'Narrative Editorial',
     category: 'General',
     politicalLean: 'Center',
-    url: `https://narrative.news/manual/${Date.now()}` // Auto-gen unique URL
+    url: `https://narrative.news/manual/${Date.now()}` // Default for new
   });
 
   const fetchArticles = async () => {
@@ -61,23 +65,51 @@ const Newsroom: React.FC = () => {
     }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleEdit = (article: IArticle) => {
+    setNewArticle({
+      headline: article.headline,
+      summary: article.summary,
+      source: article.source,
+      category: article.category,
+      politicalLean: article.politicalLean || 'Center',
+      url: article.url
+    });
+    setEditId(article._id);
+    setIsEditing(true);
+    setShowCreateForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const resetForm = () => {
+    setShowCreateForm(false);
+    setIsEditing(false);
+    setEditId(null);
+    setNewArticle({
+      headline: '',
+      summary: '',
+      source: 'Narrative Editorial',
+      category: 'General',
+      politicalLean: 'Center',
+      url: `https://narrative.news/manual/${Date.now()}`
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await adminService.createArticle(newArticle);
-      setShowCreateForm(false);
-      setNewArticle({
-        headline: '',
-        summary: '',
-        source: 'Narrative Editorial',
-        category: 'General',
-        politicalLean: 'Center',
-        url: `https://narrative.news/manual/${Date.now()}`
-      });
+      if (isEditing && editId) {
+        // UPDATE MODE
+        await adminService.updateArticle(editId, newArticle);
+        alert('Article updated successfully');
+      } else {
+        // CREATE MODE
+        await adminService.createArticle(newArticle);
+        alert('Article created successfully');
+      }
+      resetForm();
       fetchArticles();
-      alert('Article created successfully');
     } catch (err) {
-      alert('Failed to create article');
+      alert(isEditing ? 'Failed to update article' : 'Failed to create article');
       console.error(err);
     }
   };
@@ -91,7 +123,10 @@ const Newsroom: React.FC = () => {
         <div className="space-x-4">
            {activeTab === 'active' && (
              <button 
-               onClick={() => setShowCreateForm(!showCreateForm)}
+               onClick={() => {
+                 if (showCreateForm) resetForm();
+                 else setShowCreateForm(true);
+               }}
                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow transition"
              >
                {showCreateForm ? 'Cancel' : '+ New Article'}
@@ -116,11 +151,13 @@ const Newsroom: React.FC = () => {
         </button>
       </div>
 
-      {/* Create Form */}
+      {/* Create / Edit Form */}
       {showCreateForm && (
         <div className="bg-white p-6 rounded-xl shadow-lg border border-slate-200 mb-8 animate-fade-in">
-          <h2 className="text-xl font-bold mb-4">Create Manual Article</h2>
-          <form onSubmit={handleCreate} className="space-y-4">
+          <h2 className="text-xl font-bold mb-4">
+            {isEditing ? 'Edit Article' : 'Create Manual Article'}
+          </h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700">Headline</label>
               <input 
@@ -153,6 +190,9 @@ const Newsroom: React.FC = () => {
                    <option>Politics</option>
                    <option>Technology</option>
                    <option>Business</option>
+                   <option>Health</option>
+                   <option>Science</option>
+                   <option>Entertainment</option>
                  </select>
                </div>
                <div>
@@ -168,9 +208,16 @@ const Newsroom: React.FC = () => {
                  </select>
                </div>
             </div>
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end pt-4 gap-2">
+              <button 
+                type="button" 
+                onClick={resetForm}
+                className="bg-slate-200 text-slate-700 px-6 py-2 rounded hover:bg-slate-300"
+              >
+                Cancel
+              </button>
               <button type="submit" className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
-                Publish
+                {isEditing ? 'Update Article' : 'Publish'}
               </button>
             </div>
           </form>
@@ -204,6 +251,12 @@ const Newsroom: React.FC = () => {
                 <td className="p-4 text-right space-x-2">
                   {activeTab === 'active' ? (
                     <>
+                      <button 
+                         onClick={() => handleEdit(article)}
+                         className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200"
+                      >
+                        Edit
+                      </button>
                       <button 
                          onClick={() => handleArchive(article._id)}
                          className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200"

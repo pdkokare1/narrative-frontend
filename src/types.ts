@@ -124,6 +124,8 @@ export interface IUserProfile {
   
   // Role for Admin Access
   role?: 'user' | 'admin';
+  isBanned?: boolean;     // Added for Admin
+  accountStatus?: string; // Added for Admin
 
   // Stats
   articlesViewedCount: number;
@@ -139,6 +141,8 @@ export interface IUserProfile {
   savedArticles: string[]; 
   notificationsEnabled: boolean;
   fcmToken?: string | null;
+  
+  createdAt?: string; // Added for Admin display
 }
 
 // --- 5. Filters & Search ---
@@ -166,4 +170,22 @@ export interface ISearchResponse {
   pagination: {
     total: number;
   };
+}
+
+// --- 6. Admin Interfaces (NEW) ---
+
+export interface ISystemConfig {
+  _id: string;
+  key: string;
+  value: any[]; // Stores as array in backend
+  lastUpdated: string;
+}
+
+export interface IPrompt {
+  _id: string;
+  type: string;
+  text: string;
+  active: boolean;
+  version: number;
+  description?: string;
 }

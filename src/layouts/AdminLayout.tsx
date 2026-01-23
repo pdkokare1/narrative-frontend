@@ -54,6 +54,9 @@ const AdminLayout: React.FC = () => {
           <NavLink to="/admin/users" className={navClass}>
             User Management
           </NavLink>
+          <NavLink to="/admin/logs" className={navClass}>
+            Activity Logs
+          </NavLink>
           <NavLink to="/admin/config" className={navClass}>
             System Config
           </NavLink>

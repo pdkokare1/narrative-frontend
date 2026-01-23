@@ -95,6 +95,11 @@ export const adminService = {
     return axios.get(`${API_URL}/admin/prompts`, headers);
   },
 
+  createSystemPrompt: async (data: Partial<IPrompt>) => {
+    const headers = await getHeaders();
+    return axios.post(`${API_URL}/admin/prompts`, data, headers);
+  },
+
   updateSystemPrompt: async (id: string, data: Partial<IPrompt>) => {
     const headers = await getHeaders();
     return axios.patch(`${API_URL}/admin/prompts/${id}`, data, headers);

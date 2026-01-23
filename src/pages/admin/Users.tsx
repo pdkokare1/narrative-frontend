@@ -3,6 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import { IUserProfile } from '../../types';
 import PageLoader from '../../components/PageLoader';
+import { AdminPageHeader } from '../../components/admin/AdminPageHeader';
+import { AdminTable, AdminThead, AdminTbody, AdminTr, AdminTh, AdminTd } from '../../components/admin/AdminTable';
+import { AdminBadge } from '../../components/admin/AdminBadge';
+import { AdminCard } from '../../components/admin/AdminCard';
 
 const Users: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -26,7 +30,6 @@ const Users: React.FC = () => {
   };
 
   useEffect(() => {
-    // Debounce search slightly
     const timeout = setTimeout(() => {
       fetchUsers();
     }, 500);
@@ -37,7 +40,7 @@ const Users: React.FC = () => {
     if(!window.confirm(`Are you sure you want to ${user.isBanned ? 'unban' : 'ban'} this user?`)) return;
     try {
       await adminService.updateUserStatus(user.userId, { isBanned: !user.isBanned });
-      fetchUsers(); // Refresh
+      fetchUsers();
     } catch (err) {
       alert('Failed to update user status');
     }
@@ -48,7 +51,7 @@ const Users: React.FC = () => {
     if(!window.confirm(`Promote/Demote this user to ${newRole}?`)) return;
     try {
       await adminService.updateUserStatus(user.userId, { role: newRole });
-      fetchUsers(); // Refresh
+      fetchUsers();
     } catch (err) {
       alert('Failed to update user role');
     }
@@ -56,81 +59,85 @@ const Users: React.FC = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-slate-800">User Management</h1>
-      </div>
+      <AdminPageHeader title="User Management" description="View and manage user accounts and permissions." />
 
-      {/* Search */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6">
+      <AdminCard className="mb-6">
         <input 
           type="text" 
           placeholder="Search users by email or name..."
-          className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
+          className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-      </div>
+      </AdminCard>
 
       {loading && users.length === 0 ? <PageLoader /> : (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50 border-b border-slate-200">
+        <AdminTable>
+            <AdminThead>
               <tr>
-                <th className="p-4 text-sm font-semibold text-slate-600">User</th>
-                <th className="p-4 text-sm font-semibold text-slate-600">Role</th>
-                <th className="p-4 text-sm font-semibold text-slate-600">Stats (Views)</th>
-                <th className="p-4 text-sm font-semibold text-slate-600">Joined</th>
-                <th className="p-4 text-sm font-semibold text-slate-600 text-right">Actions</th>
+                <AdminTh>User</AdminTh>
+                <AdminTh>Role</AdminTh>
+                <AdminTh>Stats (Views)</AdminTh>
+                <AdminTh>Joined</AdminTh>
+                <AdminTh className="text-right">Actions</AdminTh>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
+            </AdminThead>
+            <AdminTbody>
               {users.map((user) => (
-                <tr key={user.userId} className={`hover:bg-slate-50 transition-colors ${user.isBanned ? 'bg-red-50' : ''}`}>
-                  <td className="p-4">
-                    <p className="font-medium text-slate-800">{user.username}</p>
-                    <p className="text-xs text-slate-500">{user.email}</p>
-                    {user.isBanned && <span className="text-xs bg-red-600 text-white px-1 rounded ml-1">BANNED</span>}
-                  </td>
-                  <td className="p-4 text-sm text-slate-600">
-                     <span className={`px-2 py-1 rounded text-xs ${user.role === 'admin' ? 'bg-purple-100 text-purple-700 font-bold' : 'bg-slate-100'}`}>
-                        {user.role || 'user'}
-                     </span>
-                  </td>
-                  <td className="p-4 text-sm text-slate-500">
+                <tr key={user.userId} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${user.isBanned ? 'bg-red-50/50' : ''}`}>
+                  <AdminTd>
+                    <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
+                          {user.username.charAt(0).toUpperCase()}
+                       </div>
+                       <div>
+                         <p className="font-semibold text-slate-800">{user.username}</p>
+                         <p className="text-xs text-slate-500">{user.email}</p>
+                       </div>
+                    </div>
+                    {user.isBanned && <span className="mt-1 inline-block text-[10px] font-bold text-red-600 uppercase tracking-wider">Banned</span>}
+                  </AdminTd>
+                  <AdminTd>
+                     {user.role === 'admin' ? (
+                        <AdminBadge variant="purple">Admin</AdminBadge>
+                     ) : (
+                        <AdminBadge variant="neutral">User</AdminBadge>
+                     )}
+                  </AdminTd>
+                  <AdminTd>
                     {user.articlesViewedCount || 0}
-                  </td>
-                  <td className="p-4 text-sm text-slate-500">
+                  </AdminTd>
+                  <AdminTd>
                     {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
-                  </td>
-                  <td className="p-4 text-right space-x-2">
-                    <button 
-                       onClick={() => toggleRole(user)}
-                       className="text-xs border border-slate-300 px-3 py-1 rounded hover:bg-slate-100"
-                    >
-                      {user.role === 'admin' ? 'Demote' : 'Promote'}
-                    </button>
-                    <button 
-                       onClick={() => toggleBan(user)}
-                       className={`text-xs px-3 py-1 rounded ${user.isBanned ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
-                    >
-                      {user.isBanned ? 'Unban' : 'Ban'}
-                    </button>
-                  </td>
+                  </AdminTd>
+                  <AdminTd className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <button 
+                         onClick={() => toggleRole(user)}
+                         className="text-xs border border-slate-300 px-3 py-1.5 rounded-lg hover:bg-slate-100 font-medium"
+                      >
+                        {user.role === 'admin' ? 'Demote' : 'Promote'}
+                      </button>
+                      <button 
+                         onClick={() => toggleBan(user)}
+                         className={`text-xs px-3 py-1.5 rounded-lg font-medium ${user.isBanned ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
+                      >
+                        {user.isBanned ? 'Unban' : 'Ban'}
+                      </button>
+                    </div>
+                  </AdminTd>
                 </tr>
               ))}
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-400">
-                    No users found.
+                  <td colSpan={5} className="p-12 text-center text-slate-400">
+                    No users found matching "{search}".
                   </td>
                 </tr>
               )}
-            </tbody>
-          </table>
-        </div>
+            </AdminTbody>
+        </AdminTable>
       )}
-      
-      {/* Pagination Controls could go here */}
     </div>
   );
 };

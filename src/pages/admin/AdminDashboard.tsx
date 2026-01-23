@@ -1,11 +1,19 @@
-// narrative-frontend/src/pages/admin/AdminDashboard.tsx
+// src/pages/admin/AdminDashboard.tsx
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import PageLoader from '../../components/PageLoader';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader';
 import { AdminCard } from '../../components/admin/AdminCard';
 import {
-  Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend,
+  Chart as ChartJS, 
+  CategoryScale, 
+  LinearScale, 
+  PointElement, 
+  LineElement, 
+  Title, 
+  Tooltip, 
+  Legend,
+  ChartOptions // NEW: Import explicit type
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
@@ -72,7 +80,8 @@ const AdminDashboard: React.FC = () => {
     ],
   };
 
-  const graphOptions = {
+  // FIX: Explicitly type the options to satisfy TypeScript strict checks
+  const graphOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -80,8 +89,17 @@ const AdminDashboard: React.FC = () => {
       title: { display: false },
     },
     scales: {
-        y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
-        x: { grid: { display: false } }
+        y: { 
+          beginAtZero: true, 
+          grid: { 
+            display: true 
+          } 
+        },
+        x: { 
+          grid: { 
+            display: false 
+          } 
+        }
     }
   };
 

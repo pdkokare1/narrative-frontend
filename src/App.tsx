@@ -18,6 +18,11 @@ import Login from './Login';
 import CreateProfile from './CreateProfile';
 import MainLayout from './layouts/MainLayout';
 
+// --- Admin Imports ---
+import AdminLayout from './layouts/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import Newsroom from './pages/admin/Newsroom';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -78,6 +83,15 @@ function AppRoutes() {
         <Route path="/login" element={ user ? <Navigate to="/" replace /> : <Login /> } />
         <Route path="/create-profile" element={user ? <CreateProfile /> : <Navigate to="/login" replace />} />
         
+        {/* --- ADMIN ROUTES --- */}
+        {/* Protected: Only visible if user has role='admin' */}
+        <Route path="/admin" element={ 
+            user && profile?.role === 'admin' ? <AdminLayout /> : <Navigate to="/" /> 
+        }>
+            <Route index element={<AdminDashboard />} />
+            <Route path="newsroom" element={<Newsroom />} />
+        </Route>
+
         {/* Main Layout handles both Public (Feed) and Private (Dashboard) routes internal logic */}
         <Route path="/*" element={<MainLayout profile={profile} />} />
       </Routes>

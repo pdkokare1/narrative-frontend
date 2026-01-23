@@ -3,6 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import { IPrompt } from '../../types';
 import PageLoader from '../../components/PageLoader';
+import { AdminPageHeader } from '../../components/admin/AdminPageHeader';
+import { AdminCard } from '../../components/admin/AdminCard';
+import { AdminBadge } from '../../components/admin/AdminBadge';
 
 const Prompts: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -30,7 +33,7 @@ const Prompts: React.FC = () => {
     try {
       await adminService.updateSystemPrompt(id, { text: editText });
       setEditId(null);
-      fetchPrompts(); // Refresh to show new version
+      fetchPrompts();
       alert('Prompt updated. AI will use new version on next run.');
     } catch (err) {
       alert('Failed to update prompt');
@@ -50,28 +53,30 @@ const Prompts: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-slate-800 mb-6">AI Brain (Prompts)</h1>
+      <AdminPageHeader title="AI Brain (Prompts)" description="Manage system prompts and agent behaviors." />
       
       <div className="grid gap-6">
         {prompts.map((prompt) => (
-          <div key={prompt._id} className={`bg-white p-6 rounded-xl shadow-sm border-l-4 ${prompt.active ? 'border-green-500' : 'border-slate-300'}`}>
+          <AdminCard key={prompt._id} className={`border-l-4 ${prompt.active ? 'border-l-emerald-500' : 'border-l-slate-300'}`}>
              <div className="flex justify-between items-start mb-4">
                 <div>
-                   <h2 className="text-xl font-bold text-slate-800">{prompt.type}</h2>
-                   <p className="text-sm text-slate-500">{prompt.description}</p>
-                   <div className="mt-1 flex gap-2">
-                     <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-600">v{prompt.version}</span>
+                   <div className="flex items-center gap-3">
+                     <h2 className="text-xl font-bold text-slate-800">{prompt.type}</h2>
                      {prompt.active ? (
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Active</span>
+                        <AdminBadge variant="success">Active</AdminBadge>
                      ) : (
-                        <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded">Inactive</span>
+                        <AdminBadge variant="neutral">Inactive</AdminBadge>
                      )}
+                   </div>
+                   <p className="text-sm text-slate-500 mt-1">{prompt.description}</p>
+                   <div className="mt-2">
+                     <span className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-600 font-mono">v{prompt.version}</span>
                    </div>
                 </div>
                 <div className="flex gap-2">
                    <button 
                      onClick={() => toggleActive(prompt)}
-                     className="text-xs text-slate-500 hover:text-slate-800 underline"
+                     className="text-xs text-slate-500 hover:text-slate-800 underline px-2"
                    >
                      {prompt.active ? 'Deactivate' : 'Activate'}
                    </button>
@@ -81,7 +86,7 @@ const Prompts: React.FC = () => {
                            setEditId(prompt._id);
                            setEditText(prompt.text);
                        }}
-                       className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                       className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 shadow-sm font-medium"
                      >
                        Edit Prompt
                      </button>
@@ -90,33 +95,33 @@ const Prompts: React.FC = () => {
              </div>
 
              {editId === prompt._id ? (
-               <div className="space-y-3">
+               <div className="space-y-4">
                   <textarea 
-                    className="w-full h-64 p-4 border rounded font-mono text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500"
+                    className="w-full h-96 p-4 border border-slate-300 rounded-lg font-mono text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed"
                     value={editText}
                     onChange={e => setEditText(e.target.value)}
                   />
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-3">
                     <button 
                       onClick={() => setEditId(null)}
-                      className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded"
+                      className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg"
                     >
                       Cancel
                     </button>
                     <button 
                       onClick={() => handleSave(prompt._id)}
-                      className="px-4 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                      className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium shadow-sm"
                     >
                       Save Version {prompt.version + 1}
                     </button>
                   </div>
                </div>
              ) : (
-               <div className="bg-slate-50 p-4 rounded border border-slate-100 whitespace-pre-wrap font-mono text-sm text-slate-700 max-h-40 overflow-y-auto">
+               <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 whitespace-pre-wrap font-mono text-sm text-slate-700 max-h-60 overflow-y-auto">
                  {prompt.text}
                </div>
              )}
-          </div>
+          </AdminCard>
         ))}
       </div>
     </div>

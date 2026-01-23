@@ -1,4 +1,4 @@
-// src/services/adminService.ts
+// narrative-frontend/src/services/adminService.ts
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
 import { IArticle, IUserProfile, ISystemConfig, IPrompt } from '../types';
@@ -21,9 +21,8 @@ const getHeaders = async () => {
 export const adminService = {
   // --- Dashboard ---
   getDashboardStats: async () => {
-    // Uses config endpoint as a temporary health check/stats proxy
     const headers = await getHeaders();
-    return axios.get(`${API_URL}/admin/config`, headers); 
+    return axios.get(`${API_URL}/admin/dashboard`, headers); 
   },
 
   // --- Newsroom (Articles) ---

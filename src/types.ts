@@ -177,7 +177,8 @@ export interface ISearchResponse {
 export interface ISystemConfig {
   _id: string;
   key: string;
-  value: any[]; // Stores as array in backend
+  value: any; // Updated: Now allows Objects/Strings/Arrays (Mixed)
+  description?: string; // Updated: Added description field
   lastUpdated: string;
 }
 

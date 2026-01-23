@@ -213,3 +213,50 @@
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
 .gap-2 { gap: 8px; }
 .mb-4 { margin-bottom: 16px; }
+
+/* --- Append to src/pages/admin/Admin.css --- */
+
+/* Tabs (for Newsroom) */
+.admin-tabs {
+  display: flex;
+  gap: 16px;
+  border-bottom: 1px solid var(--admin-border);
+  margin-bottom: 24px;
+}
+.admin-tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--admin-text-secondary);
+  transition: all 0.2s;
+}
+.admin-tab-btn:hover { color: var(--admin-text-primary); }
+.admin-tab-btn.active {
+  color: var(--admin-sidebar-active);
+  border-bottom-color: var(--admin-sidebar-active);
+}
+
+/* Alert Box (for Warnings) */
+.admin-alert {
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  border-left: 4px solid;
+}
+.alert-warning {
+  background-color: #fffbeb;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+.alert-title { font-weight: bold; margin-bottom: 4px; display: block; }
+.alert-desc { font-size: 0.9rem; }
+
+/* Code/Monospace (for Config & Prompts) */
+.font-mono {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}

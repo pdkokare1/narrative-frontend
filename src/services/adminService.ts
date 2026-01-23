@@ -25,6 +25,12 @@ export const adminService = {
     return axios.get(`${API_URL}/admin/dashboard`, headers); 
   },
 
+  // --- Activity Logs (NEW) ---
+  getActivityLogs: async (page: number = 1, limit: number = 50) => {
+    const headers = await getHeaders();
+    return axios.get(`${API_URL}/admin/logs?page=${page}&limit=${limit}`, headers);
+  },
+
   // --- Newsroom (Articles) ---
   getAllArticles: async (page: number = 1, limit: number = 20) => {
     const headers = await getHeaders();

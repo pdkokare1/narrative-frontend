@@ -5,7 +5,11 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 48px; 
+  
+  /* --- FIX: Safe Area for iPhone Notch --- */
+  padding-top: env(safe-area-inset-top); 
+  height: calc(48px + env(safe-area-inset-top)); 
+  /* -------------------------------------- */
   
   /* Glassmorphism */
   background: var(--glass-bg);
@@ -16,7 +20,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  padding-left: 20px;  /* Split padding to preserve safe-area-inset-top above */
+  padding-right: 20px;
   z-index: 1000;
   transition: all var(--transition-fast);
 }
@@ -40,7 +45,7 @@
 }
 
 .logo-text {
-  font-family: var(--font-logo); /* CHANGED: Keep logo beautiful */
+  font-family: var(--font-logo); 
   font-size: 20px; 
   font-weight: 700;
   color: var(--text-primary);
@@ -361,8 +366,11 @@
 /* Mobile */
 @media (max-width: 768px) {
   .header {
-    height: 40px; /* Reduced from 44px to save space */
-    padding: 0 15px;
+    /* Height adjusts automatically via calculation now, but we can enforce a min-height if needed */
+    /* Original was 40px content + padding. Now it's calc(40px + safe-area). */
+    height: calc(40px + env(safe-area-inset-top)); 
+    padding-left: 15px;
+    padding-right: 15px;
   }
   .header-left { gap: 10px; }
   .logo-text { font-size: 18px; }
@@ -375,7 +383,11 @@
     position: absolute;
     right: 50px;
     top: 50%;
+    /* Fix vertical alignment when top padding is variable */
+    /* We position it relative to the visual center of the content area, not the physical top */
     transform: translateY(-50%);
+    margin-top: calc(env(safe-area-inset-top) / 2); 
+    
     width: calc(100vw - 110px);
     z-index: 10;
     background: var(--bg-elevated);

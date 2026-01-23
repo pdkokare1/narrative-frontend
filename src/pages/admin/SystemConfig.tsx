@@ -29,9 +29,21 @@ const SystemConfig: React.FC = () => {
 
   const handleSave = async (key: string) => {
     try {
-      // Parse value if it looks like JSON/Array, otherwise send as string
-      // Note: Backend expects array for 'value', or we wrap it
+      // SECURITY FIX: Validate JSON before sending
+      // The backend expects either a simple string or an array of strings.
+      // If the user is trying to input an array (e.g., ["a", "b"]), we must ensure it's valid JSON.
+      
       let payload = editValue;
+      
+      // Heuristic: If it looks like an array or object, try to parse it to ensure validity
+      if (editValue.trim().startsWith('[') || editValue.trim().startsWith('{')) {
+         try {
+           JSON.parse(editValue);
+         } catch (e) {
+           alert('INVALID JSON: Please check your syntax (commas, quotes, brackets) before saving.');
+           return; // Abort save
+         }
+      }
       
       await adminService.updateSystemConfig(key, payload);
       setEditKey(null);
@@ -50,6 +62,8 @@ const SystemConfig: React.FC = () => {
       <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
         <p className="text-sm text-yellow-800">
           <strong>Warning:</strong> Changing these values affects the live application immediately.
+          <br/>
+          Ensure arrays are formatted as valid JSON: <code>["Item1", "Item2"]</code>
         </p>
       </div>
 
@@ -65,7 +79,7 @@ const SystemConfig: React.FC = () => {
                   <button 
                     onClick={() => {
                         setEditKey(config.key);
-                        setEditValue(Array.isArray(config.value) ? config.value.join(', ') : String(config.value));
+                        setEditValue(Array.isArray(config.value) ? JSON.stringify(config.value) : String(config.value));
                     }}
                     className="text-blue-600 hover:underline text-sm"
                   >

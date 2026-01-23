@@ -6,6 +6,7 @@ import PageLoader from '../../components/PageLoader';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader';
 import { AdminCard } from '../../components/admin/AdminCard';
 import { AdminBadge } from '../../components/admin/AdminBadge';
+import './Admin.css';
 
 const Prompts: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -14,110 +15,62 @@ const Prompts: React.FC = () => {
   const [editText, setEditText] = useState('');
 
   const fetchPrompts = async () => {
-    setLoading(true);
     try {
       const res = await adminService.getSystemPrompts();
       setPrompts(res.data.data.prompts);
-    } catch (err) {
-      alert('Error loading prompts');
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { alert('Error loading prompts'); } 
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchPrompts();
-  }, []);
+  useEffect(() => { fetchPrompts(); }, []);
 
   const handleSave = async (id: string) => {
-    try {
-      await adminService.updateSystemPrompt(id, { text: editText });
-      setEditId(null);
-      fetchPrompts();
-      alert('Prompt updated. AI will use new version on next run.');
-    } catch (err) {
-      alert('Failed to update prompt');
-    }
+    await adminService.updateSystemPrompt(id, { text: editText }).then(() => {
+        setEditId(null); fetchPrompts(); alert('Prompt updated.');
+    });
   };
 
   const toggleActive = async (prompt: IPrompt) => {
-    try {
-      await adminService.updateSystemPrompt(prompt._id, { active: !prompt.active });
-      fetchPrompts();
-    } catch (err) {
-      alert('Failed to toggle status');
-    }
+    await adminService.updateSystemPrompt(prompt._id, { active: !prompt.active }).then(fetchPrompts);
   };
 
   if (loading) return <PageLoader />;
 
   return (
     <div>
-      <AdminPageHeader title="AI Brain (Prompts)" description="Manage system prompts and agent behaviors." />
+      <AdminPageHeader title="AI Brain" description="Manage system prompts." />
       
-      <div className="grid gap-6">
+      <div style={{display:'grid', gap:'24px'}}>
         {prompts.map((prompt) => (
-          <AdminCard key={prompt._id} className={`border-l-4 ${prompt.active ? 'border-l-emerald-500' : 'border-l-slate-300'}`}>
-             <div className="flex justify-between items-start mb-4">
+          <AdminCard key={prompt._id} className={prompt.active ? '' : 'opacity-75'}>
+             <div className="flex-between" style={{marginBottom:'16px'}}>
                 <div>
-                   <div className="flex items-center gap-3">
-                     <h2 className="text-xl font-bold text-slate-800">{prompt.type}</h2>
-                     {prompt.active ? (
-                        <AdminBadge variant="success">Active</AdminBadge>
-                     ) : (
-                        <AdminBadge variant="neutral">Inactive</AdminBadge>
-                     )}
+                   <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                     <h2 style={{fontSize:'1.2rem', fontWeight:'bold'}}>{prompt.type}</h2>
+                     <AdminBadge variant={prompt.active ? 'success' : 'neutral'}>{prompt.active ? 'Active' : 'Inactive'}</AdminBadge>
                    </div>
-                   <p className="text-sm text-slate-500 mt-1">{prompt.description}</p>
-                   <div className="mt-2">
-                     <span className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-600 font-mono">v{prompt.version}</span>
-                   </div>
+                   <p style={{fontSize:'0.9rem', color:'#64748b', marginTop:'4px'}}>{prompt.description}</p>
                 </div>
-                <div className="flex gap-2">
-                   <button 
-                     onClick={() => toggleActive(prompt)}
-                     className="text-xs text-slate-500 hover:text-slate-800 underline px-2"
-                   >
+                <div className="flex-end">
+                   <button onClick={() => toggleActive(prompt)} className="btn btn-outline btn-sm">
                      {prompt.active ? 'Deactivate' : 'Activate'}
                    </button>
                    {editId !== prompt._id && (
-                     <button 
-                       onClick={() => {
-                           setEditId(prompt._id);
-                           setEditText(prompt.text);
-                       }}
-                       className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 shadow-sm font-medium"
-                     >
-                       Edit Prompt
-                     </button>
+                     <button onClick={() => { setEditId(prompt._id); setEditText(prompt.text); }} className="btn btn-primary btn-sm">Edit</button>
                    )}
                 </div>
              </div>
 
              {editId === prompt._id ? (
-               <div className="space-y-4">
-                  <textarea 
-                    className="w-full h-96 p-4 border border-slate-300 rounded-lg font-mono text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none leading-relaxed"
-                    value={editText}
-                    onChange={e => setEditText(e.target.value)}
-                  />
-                  <div className="flex justify-end gap-3">
-                    <button 
-                      onClick={() => setEditId(null)}
-                      className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg"
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      onClick={() => handleSave(prompt._id)}
-                      className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium shadow-sm"
-                    >
-                      Save Version {prompt.version + 1}
-                    </button>
+               <div>
+                  <textarea className="form-textarea font-mono" style={{minHeight:'300px'}} value={editText} onChange={e => setEditText(e.target.value)} />
+                  <div className="flex-end" style={{marginTop:'16px'}}>
+                    <button onClick={() => setEditId(null)} className="btn btn-outline">Cancel</button>
+                    <button onClick={() => handleSave(prompt._id)} className="btn btn-primary">Save New Version</button>
                   </div>
                </div>
              ) : (
-               <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 whitespace-pre-wrap font-mono text-sm text-slate-700 max-h-60 overflow-y-auto">
+               <div className="font-mono" style={{background:'#f8fafc', padding:'16px', borderRadius:'8px', maxHeight:'200px', overflowY:'auto', whiteSpace:'pre-wrap'}}>
                  {prompt.text}
                </div>
              )}

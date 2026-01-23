@@ -5,21 +5,28 @@ type BadgeVariant = 'success' | 'warning' | 'danger' | 'neutral' | 'info' | 'pur
 interface AdminBadgeProps {
   children: React.ReactNode;
   variant?: BadgeVariant;
-  className?: string;
 }
 
-const variants = {
-  success: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  warning: 'bg-amber-100 text-amber-700 border-amber-200',
-  danger: 'bg-rose-100 text-rose-700 border-rose-200',
-  neutral: 'bg-slate-100 text-slate-600 border-slate-200',
-  info: 'bg-blue-100 text-blue-700 border-blue-200',
-  purple: 'bg-violet-100 text-violet-700 border-violet-200',
-};
+export const AdminBadge: React.FC<AdminBadgeProps> = ({ children, variant = 'neutral' }) => {
+  // Inline styles for badges (simple enough to keep here)
+  const styles: any = {
+    padding: '4px 10px', borderRadius: '50px', fontSize: '12px', fontWeight: '600',
+    display: 'inline-block'
+  };
+  
+  const colors: any = {
+    success: { bg: '#dcfce7', color: '#15803d' },
+    warning: { bg: '#fef3c7', color: '#b45309' },
+    danger:  { bg: '#ffe4e6', color: '#e11d48' },
+    neutral: { bg: '#f1f5f9', color: '#475569' },
+    info:    { bg: '#dbeafe', color: '#1e40af' },
+    purple:  { bg: '#f3e8ff', color: '#7e22ce' },
+  };
 
-export const AdminBadge: React.FC<AdminBadgeProps> = ({ children, variant = 'neutral', className = '' }) => {
+  const c = colors[variant] || colors.neutral;
+
   return (
-    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${variants[variant]} ${className}`}>
+    <span style={{ ...styles, backgroundColor: c.bg, color: c.color }}>
       {children}
     </span>
   );

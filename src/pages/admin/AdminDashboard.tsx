@@ -2,29 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import PageLoader from '../../components/PageLoader';
-// Chart JS Imports
+import { AdminPageHeader } from '../../components/admin/AdminPageHeader';
+import { AdminCard } from '../../components/admin/AdminCard';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
+  Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
 // Register ChartJS components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 interface IDashboardStats {
   totalUsers: number;
@@ -51,7 +37,6 @@ const AdminDashboard: React.FC = () => {
       try {
         const res = await adminService.getDashboardStats();
         setStats(res.data.data.stats);
-        // If chartData exists in response (added in updated controller)
         if (res.data.data.chartData) {
           setChartData(res.data.data.chartData);
         }
@@ -67,7 +52,7 @@ const AdminDashboard: React.FC = () => {
   }, []);
 
   if (loading) return <PageLoader />;
-  if (error) return <div className="p-8 text-red-600">{error}</div>;
+  if (error) return <div className="p-8 text-red-600 bg-red-50 rounded-lg">{error}</div>;
 
   // Prepare Chart Data
   const graphData = {
@@ -76,71 +61,74 @@ const AdminDashboard: React.FC = () => {
       {
         label: 'User Activity (Events)',
         data: chartData.map(d => d.count),
-        borderColor: 'rgb(59, 130, 246)', // Blue-500
-        backgroundColor: 'rgba(59, 130, 246, 0.5)',
-        tension: 0.3
+        borderColor: 'rgb(37, 99, 235)', // Blue-600
+        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 4
       },
     ],
   };
 
   const graphOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: 'top' as const,
-      },
-      title: {
-        display: true,
-        text: 'System Activity (Last 7 Days)',
-      },
+      legend: { display: false },
+      title: { display: false },
     },
+    scales: {
+        y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
+        x: { grid: { display: false } }
+    }
   };
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-slate-800 mb-6">System Overview</h1>
+      <AdminPageHeader 
+        title="System Overview" 
+        description="Real-time metrics and system health monitoring."
+      />
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {/* Stat Card 1 */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-slate-500 text-sm font-medium uppercase">System Status</h3>
-          <p className="text-2xl font-bold text-green-600 mt-2">{stats?.systemStatus || 'Unknown'}</p>
-          <p className="text-xs text-slate-400 mt-1">Database: {stats?.databaseStatus}</p>
-        </div>
+        <AdminCard className="border-l-4 border-l-emerald-500">
+          <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">System Status</h3>
+          <div className="flex items-baseline gap-2">
+             <span className="text-3xl font-bold text-slate-800">{stats?.systemStatus || 'Unknown'}</span>
+             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          </div>
+          <p className="text-xs text-slate-400 mt-2">Database: {stats?.databaseStatus}</p>
+        </AdminCard>
         
-        {/* Stat Card 2 */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-slate-500 text-sm font-medium uppercase">Total Users</h3>
-          <p className="text-2xl font-bold text-slate-800 mt-2">{stats?.totalUsers || 0}</p>
-        </div>
+        <AdminCard className="border-l-4 border-l-blue-500">
+          <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Total Users</h3>
+          <p className="text-3xl font-bold text-slate-800">{stats?.totalUsers || 0}</p>
+          <p className="text-xs text-slate-400 mt-2">Registered Accounts</p>
+        </AdminCard>
 
-        {/* Stat Card 3 */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="text-slate-500 text-sm font-medium uppercase">Active Articles</h3>
-          <p className="text-2xl font-bold text-blue-600 mt-2">{stats?.activeArticles || 0}</p>
-          <p className="text-xs text-slate-400 mt-1">Archived: {stats?.archivedArticles}</p>
-        </div>
+        <AdminCard className="border-l-4 border-l-indigo-500">
+          <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Content Library</h3>
+          <div className="flex items-end gap-2">
+             <p className="text-3xl font-bold text-slate-800">{stats?.activeArticles || 0}</p>
+             <span className="text-sm text-slate-500 mb-1">Articles</span>
+          </div>
+          <p className="text-xs text-slate-400 mt-2">Archived: {stats?.archivedArticles}</p>
+        </AdminCard>
       </div>
 
-      {/* CHART SECTION */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8">
+      <AdminCard title="Activity Trend (Last 7 Days)" className="mb-8">
         {chartData.length > 0 ? (
-          <div className="h-64 w-full">
+          <div className="h-80 w-full">
             <Line options={graphOptions} data={graphData} />
           </div>
         ) : (
-          <div className="h-32 flex items-center justify-center text-slate-400 italic">
+          <div className="h-40 flex items-center justify-center text-slate-400 italic bg-slate-50 rounded-lg">
             No activity data available for the last 7 days.
           </div>
         )}
-      </div>
-
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded shadow-sm">
-        <h3 className="text-lg font-semibold text-blue-800 mb-1">Welcome Admin</h3>
-        <p className="text-blue-700">
-          The Newsroom module is now live. Go to the <strong>Newsroom</strong> tab to manage articles, edit content, manually create news, or restore deleted items.
-        </p>
-      </div>
+      </AdminCard>
     </div>
   );
 };

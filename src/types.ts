@@ -65,6 +65,10 @@ export interface IArticle {
   keyFindings?: string[];
   recommendations?: string[];
   suggestionType?: 'Comfort' | 'Challenge';
+
+  // State
+  isLatest?: boolean;
+  deletedAt?: string | null; // Added for Trash functionality
   
   createdAt?: string;
   updatedAt?: string;
@@ -118,6 +122,9 @@ export interface IUserProfile {
   username: string;
   email: string;
   
+  // NEW: Role for Admin Access
+  role?: 'user' | 'admin';
+
   // Stats
   articlesViewedCount: number;
   comparisonsViewedCount: number;

@@ -7,7 +7,10 @@
   right: 0;
   
   /* --- FIX: Safe Area for iPhone Notch --- */
+  /* This pushes the content down below the battery/status bar */
   padding-top: env(safe-area-inset-top); 
+  
+  /* Increase height to accommodate the new padding */
   height: calc(48px + env(safe-area-inset-top)); 
   /* -------------------------------------- */
   
@@ -20,7 +23,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-left: 20px;  /* Split padding to preserve safe-area-inset-top above */
+  padding-left: 20px;
   padding-right: 20px;
   z-index: 1000;
   transition: all var(--transition-fast);
@@ -45,7 +48,7 @@
 }
 
 .logo-text {
-  font-family: var(--font-logo); 
+  font-family: var(--font-logo); /* CHANGED: Keep logo beautiful */
   font-size: 20px; 
   font-weight: 700;
   color: var(--text-primary);

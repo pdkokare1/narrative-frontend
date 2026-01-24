@@ -2,14 +2,36 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import PageLoader from '../../components/PageLoader';
-import { AdminPageHeader } from '../../components/admin/AdminPageHeader';
-import { AdminCard } from '../../components/admin/AdminCard';
+import AdminPageHeader from '../../components/admin/AdminPageHeader';
+import AdminCard from '../../components/admin/AdminCard';
 import {
-  Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ChartOptions, ArcElement
+  Chart as ChartJS, 
+  CategoryScale, 
+  LinearScale, 
+  PointElement, 
+  LineElement, 
+  BarElement, // NEW: Added for Habit Heatmap
+  Title, 
+  Tooltip, 
+  Legend, 
+  ChartOptions, 
+  ArcElement
 } from 'chart.js';
-import { Line, Pie } from 'react-chartjs-2';
+import { Line, Pie, Bar } from 'react-chartjs-2'; // NEW: Added Bar
+import './Admin.css'; // Ensure CSS is imported
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
+// Register ChartJS components
+ChartJS.register(
+    CategoryScale, 
+    LinearScale, 
+    PointElement, 
+    LineElement, 
+    BarElement, 
+    Title, 
+    Tooltip, 
+    Legend, 
+    ArcElement
+);
 
 interface IDashboardStats {
   totalUsers: number;
@@ -35,26 +57,48 @@ interface ILeanData {
     right: number;
 }
 
-// NEW: Search Data Interface
 interface ISearchData {
     _id: string; // The query
     count: number;
+}
+
+// NEW: Interface for Analytics Extension
+interface IExtendedDashboardData {
+    stats: IDashboardStats;
+    graphData: IChartDataPoint[];
+    leanData: ILeanData;
+    topSearches: ISearchData[];
+    // New Fields from our Backend Update
+    contentGaps?: ISearchData[];
+    hourlyActivity?: number[]; 
 }
 
 const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<IDashboardStats | null>(null);
   const [chartData, setChartData] = useState<IChartDataPoint[]>([]);
   const [leanData, setLeanData] = useState<ILeanData>({ left: 0, center: 0, right: 0 });
+  
+  // Search & Habits
   const [topSearches, setTopSearches] = useState<ISearchData[]>([]);
+  const [contentGaps, setContentGaps] = useState<ISearchData[]>([]);
+  const [hourlyActivity, setHourlyActivity] = useState<number[]>([]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     adminService.getDashboardStats()
       .then(res => {
-         setStats(res.data.data.stats);
-         if (res.data.data.graphData) setChartData(res.data.data.graphData);
-         if (res.data.data.leanData) setLeanData(res.data.data.leanData);
-         if (res.data.data.topSearches) setTopSearches(res.data.data.topSearches);
+         // Handle the nested data structure
+         const data = res.data.data; 
+         
+         if (data.stats) setStats(data.stats);
+         if (data.graphData) setChartData(data.graphData);
+         if (data.leanData) setLeanData(data.leanData);
+         if (data.topSearches) setTopSearches(data.topSearches);
+         
+         // NEW: Set Extended Metrics
+         if (data.contentGaps) setContentGaps(data.contentGaps);
+         if (data.hourlyActivity) setHourlyActivity(data.hourlyActivity);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -70,7 +114,9 @@ const AdminDashboard: React.FC = () => {
 
   if (loading) return <PageLoader />;
 
-  // 1. Line Graph: Reading vs Listening
+  // --- CHART CONFIGURATIONS ---
+
+  // 1. Line Graph: Reading vs Listening (EXISTING)
   const lineData = {
     labels: chartData.map(d => d._id),
     datasets: [
@@ -100,7 +146,7 @@ const AdminDashboard: React.FC = () => {
     scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
   };
 
-  // 2. Pie Chart: Political Compass
+  // 2. Pie Chart: Political Compass (EXISTING)
   const pieData = {
       labels: ['Left', 'Center', 'Right'],
       datasets: [{
@@ -110,48 +156,88 @@ const AdminDashboard: React.FC = () => {
       }]
   };
 
+  // 3. Bar Chart: Hourly Habits (NEW)
+  // Maps 0-23 index to "12 AM", "1 AM"... labels
+  const hourLabels = Array.from({ length: 24 }, (_, i) => {
+      const h = i % 12 || 12;
+      const ampm = i < 12 ? 'AM' : 'PM';
+      return `${h}${ampm}`;
+  });
+
+  const barData = {
+      labels: hourLabels,
+      datasets: [{
+          label: 'Active Minutes',
+          data: hourlyActivity.map(seconds => Math.round(seconds / 60)), // Convert to minutes
+          backgroundColor: '#6366f1',
+          borderRadius: 4,
+      }]
+  };
+
+  const barOptions: ChartOptions<'bar'> = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { 
+          legend: { display: false },
+          tooltip: {
+              callbacks: {
+                  label: (context) => `${context.raw} mins`
+              }
+          }
+      },
+      scales: {
+          x: { grid: { display: false }, ticks: { maxTicksLimit: 12, font: { size: 10 } } },
+          y: { display: false } // Minimalist look
+      }
+  };
+
   return (
-    <div>
-      <AdminPageHeader title="System Overview" description="Real-time metrics and system health." />
+    <div className="admin-page fade-in">
+      <AdminPageHeader 
+        title="Mission Control" 
+        subtitle="Real-time system overview and intelligence." 
+        actionLabel="Refresh Data"
+        onAction={() => window.location.reload()}
+      />
       
-      {/* Row 1: Basic Counters */}
+      {/* Row 1: Basic Counters (EXISTING) */}
       <div className="admin-grid-3" style={{marginBottom: '32px'}}>
-        <AdminCard title="System Status">
+        <AdminCard title="System Status" icon="🖥️">
           <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-             <span style={{fontSize:'2rem', fontWeight:'bold'}}>{stats?.systemStatus}</span>
+             <span style={{fontSize:'1.5rem', fontWeight:'bold'}}>{stats?.systemStatus || 'Online'}</span>
              <span style={{width:10, height:10, borderRadius:'50%', background:'#10b981'}}></span>
           </div>
           <p style={{color:'#64748b', fontSize:'0.8rem'}}>DB: {stats?.databaseStatus}</p>
         </AdminCard>
         
-        <AdminCard title="Total Users">
+        <AdminCard title="Total Users" icon="👥">
           <p style={{fontSize:'2rem', fontWeight:'bold'}}>{stats?.totalUsers || 0}</p>
           <p style={{color:'#64748b', fontSize:'0.8rem'}}>Registered Accounts</p>
         </AdminCard>
 
-        <AdminCard title="Content">
+        <AdminCard title="Content Library" icon="📚">
           <p style={{fontSize:'2rem', fontWeight:'bold'}}>{stats?.activeArticles || 0}</p>
           <p style={{color:'#64748b', fontSize:'0.8rem'}}>Archived: {stats?.archivedArticles}</p>
         </AdminCard>
       </div>
 
-      {/* Row 2: Deep Insight Metrics */}
+      {/* Row 2: Deep Insight Metrics (EXISTING) */}
       <div className="admin-grid-3" style={{marginBottom: '32px'}}>
-          <AdminCard title="Real Attention">
+          <AdminCard title="Real Attention" icon="⏱️">
               <p style={{fontSize:'2rem', fontWeight:'bold', color: '#7c3aed'}}>
                   {formatSeconds(stats?.avgSessionTime || 0)}
               </p>
               <p style={{color:'#64748b', fontSize:'0.8rem'}}>Avg. Session Duration</p>
           </AdminCard>
 
-          <AdminCard title="Content Depth">
+          <AdminCard title="Content Depth" icon="📜">
               <p style={{fontSize:'2rem', fontWeight:'bold', color: '#0891b2'}}>
                   {stats?.avgScrollDepth || 0}%
               </p>
               <p style={{color:'#64748b', fontSize:'0.8rem'}}>Avg. Scroll per Article</p>
           </AdminCard>
 
-          <AdminCard title="Audio Stickiness">
+          <AdminCard title="Audio Stickiness" icon="📻">
               <p style={{fontSize:'2rem', fontWeight:'bold', color: '#db2777'}}>
                   {stats?.audioRetention || 0}%
               </p>
@@ -159,52 +245,69 @@ const AdminDashboard: React.FC = () => {
           </AdminCard>
       </div>
 
-      {/* Row 3: Visualizations */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '32px' }}>
-          <AdminCard title="Engagement Split (Last 7 Days)">
+      {/* Row 3: Visualizations (EXISTING + RESTORED) */}
+      <div className="admin-grid-split" style={{ marginBottom: '32px' }}>
+          <AdminCard title="Engagement Split (7 Days)">
             <div style={{height:'300px'}}>
                <Line options={lineOptions} data={lineData} />
             </div>
           </AdminCard>
 
-          <AdminCard title="Audience Political Balance">
-            <div style={{height:'300px', display: 'flex', justifyContent: 'center'}}>
+          <AdminCard title="Political Balance">
+            <div style={{height:'260px', display: 'flex', justifyContent: 'center', marginBottom: '10px'}}>
                <Pie data={pieData} />
             </div>
-             <p style={{textAlign: 'center', fontSize: '0.8rem', color: '#64748b', marginTop: '10px'}}>
+             <p style={{textAlign: 'center', fontSize: '0.8rem', color: '#64748b'}}>
                  Total Minutes Consumed per Bias
              </p>
           </AdminCard>
       </div>
 
-      {/* Row 4: Trending Searches (NEW) */}
-      <AdminCard title="Top Trending Searches (Last 7 Days)">
-          <div style={{display: 'flex', flexWrap: 'wrap', gap: '10px'}}>
-              {topSearches.length > 0 ? topSearches.map((item, index) => (
-                  <div key={index} style={{
-                      padding: '8px 16px',
-                      background: '#f1f5f9',
-                      borderRadius: '20px',
-                      fontSize: '0.9rem',
-                      color: '#334155',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                  }}>
-                      <span style={{fontWeight: 600}}>#{index + 1}</span>
-                      {item._id}
-                      <span style={{
-                          background: '#cbd5e1', 
-                          padding: '2px 6px', 
-                          borderRadius: '10px', 
-                          fontSize: '0.75rem'
-                      }}>{item.count}</span>
+      {/* Row 4: NEW Habit Heatmap (ADDED) */}
+      <div style={{ marginBottom: '32px' }}>
+          <AdminCard title="Daily Habit Heatmap (Active Hours UTC)" icon="🕰️">
+              <div style={{ height: '200px', width: '100%' }}>
+                  {hourlyActivity.length > 0 ? (
+                      <Bar options={barOptions} data={barData} />
+                  ) : (
+                      <div className="empty-state">No habit data collected yet.</div>
+                  )}
+              </div>
+          </AdminCard>
+      </div>
+
+      {/* Row 5: Search Intelligence (ENHANCED SPLIT VIEW) */}
+      <div className="admin-grid-split">
+          {/* Column 1: Trends */}
+          <AdminCard title="🔥 Trending Searches" icon="🔍">
+            <div className="search-list-container">
+                {topSearches.length > 0 ? topSearches.map((item, index) => (
+                  <div key={index} className="search-item">
+                      <div className="search-rank">#{index + 1}</div>
+                      <div className="search-term">{item._id || item.query}</div> {/* Handle both formats */}
+                      <div className="search-count">{item.count}</div>
                   </div>
-              )) : (
-                  <p style={{color: '#94a3b8', fontStyle: 'italic'}}>No searches recorded yet.</p>
-              )}
-          </div>
-      </AdminCard>
+                )) : (
+                  <p className="empty-text">No trends yet.</p>
+                )}
+            </div>
+          </AdminCard>
+
+          {/* Column 2: Content Gaps (NEW) */}
+          <AdminCard title="⚠️ Content Gaps (Zero Results)" icon="🚫">
+             <div className="search-list-container">
+                {contentGaps.length > 0 ? contentGaps.map((item, index) => (
+                  <div key={index} className="search-item gap-item">
+                      <div className="search-term">{item._id || item.query}</div>
+                      <div className="search-count">{item.count}</div>
+                  </div>
+                )) : (
+                  <p className="empty-text">No content gaps found. Good job!</p>
+                )}
+            </div>
+          </AdminCard>
+      </div>
+
     </div>
   );
 };

@@ -30,7 +30,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     isActive: true,
     idleTimer: null as any,
     maxScroll: 0,
-    // NEW: Interaction Queue for "one-off" events like Copies or Audio Skips
+    // Interaction Queue for "one-off" events like Copies or Audio Skips
     pendingInteractions: [] as any[]
   });
 
@@ -40,8 +40,12 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
       sessionData.current.sessionId = 
         Date.now().toString(36) + Math.random().toString(36).substring(2);
       
+      // NEW: Expose Session ID for other components (like Search) to piggyback on
+      sessionStorage.setItem('current_analytics_session_id', sessionData.current.sessionId);
+
       console.log('Analytics Session Started:', sessionData.current.sessionId);
     }
+    // Reset scroll on mount
     sessionData.current.maxScroll = 0;
   }, []);
 
@@ -56,7 +60,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         return; 
     }
 
-    // Determine context
+    // Determine context based on validated arguments first, then URL (Fallback)
     const path = window.location.pathname;
     const isArticle = contentType === 'article' || path.includes('/article/');
     const isNarrative = contentType === 'narrative' || path.includes('/narrative/');
@@ -78,7 +82,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     // Clear pending queue immediately after grabbing them
     sessionData.current.pendingInteractions = [];
 
-    // Add current view duration interaction
+    // Add current view duration interaction (if valid content)
     if (contentId) {
         interactions.push({
             contentType: contentType || (isArticle ? 'article' : 'narrative'),
@@ -101,9 +105,11 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     };
 
     if (isBeacon) {
+        // Beacon requires Blob for JSON
         const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
         navigator.sendBeacon(`${API_URL}/analytics/track`, blob);
     } else {
+        // Standard Heartbeat
         fetch(`${API_URL}/analytics/track`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -121,25 +127,32 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     const handleUserActivity = () => {
         if (!sessionData.current.isActive) {
             sessionData.current.isActive = true;
-            sessionData.current.lastPingTime = Date.now(); 
+            sessionData.current.lastPingTime = Date.now(); // Reset clock on resume
         }
+        
+        // Reset Idle Timer
         if (sessionData.current.idleTimer) clearTimeout(sessionData.current.idleTimer);
+        
         sessionData.current.idleTimer = setTimeout(() => {
             sessionData.current.isActive = false;
         }, ACTIVITY_TIMEOUT);
     };
 
+    // Scroll Handler
     const handleScroll = () => {
-        handleUserActivity();
+        handleUserActivity(); // Mark as active
+        
         const scrollTop = window.scrollY;
         const docHeight = document.documentElement.scrollHeight - window.innerHeight;
         const scrollPercent = docHeight > 0 ? Math.round((scrollTop / docHeight) * 100) : 0;
+        
+        // Only update if deeper than before
         if (scrollPercent > sessionData.current.maxScroll) {
             sessionData.current.maxScroll = scrollPercent;
         }
     };
 
-    // NEW: Handle Copy Event
+    // Copy Event Handler
     const handleCopy = () => {
         const selection = window.getSelection()?.toString();
         if (selection && selection.length > 10) {
@@ -155,7 +168,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         }
     };
 
-    // NEW: Handle Audio Events (Dispatched from AudioPlayer)
+    // Audio Event Handler (Dispatched from AudioPlayer)
     const handleAudioEvent = (e: any) => {
         const { action, articleId } = e.detail;
         sessionData.current.pendingInteractions.push({
@@ -173,6 +186,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     window.addEventListener('copy', handleCopy); 
     window.addEventListener('narrative-audio-event', handleAudioEvent as EventListener); 
 
+    // Cleanup
     return () => {
         events.forEach(ev => window.removeEventListener(ev, handleUserActivity));
         window.removeEventListener('scroll', handleScroll);
@@ -182,7 +196,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     };
   }, [contentId]); // Re-bind if contentId changes
 
-  // 4. Heartbeat
+  // 4. The Heartbeat Interval (Every 30s)
   useEffect(() => {
     const interval = setInterval(() => {
         sendData(false);
@@ -190,15 +204,17 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     return () => clearInterval(interval);
   }, [isRadioPlaying, location.pathname, contentId]); 
 
-  // 5. Exit Beacon
+  // 5. The "Exit Beacon" (Tab Close / Hide)
   useEffect(() => {
     const handleVisibilityChange = () => {
         if (document.visibilityState === 'hidden') {
-            sendData(true); 
+            sendData(true); // Send beacon immediately when hiding
         }
     };
+
     window.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', () => sendData(true));
+
     return () => {
         window.removeEventListener('visibilitychange', handleVisibilityChange);
     };

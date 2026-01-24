@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 const SAMPLING_INTERVAL = 1000;   // 1 second (High res sampling)
 const ACTIVITY_TIMEOUT = 60000;   // 1 minute idle = inactive
+const ATTENTION_THRESHOLD = 5000; // 5 seconds (Strict attention timeout)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const useActivityTracker = (rawId?: any, rawType?: any) => {
@@ -29,6 +30,8 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     quarters: [0, 0, 0, 0], 
     lastPingTime: Date.now(),
     isActive: true,
+    // NEW: Strict interaction tracking for "Active Gaze"
+    lastActiveInteraction: Date.now(),
     idleTimer: null as any,
     maxScroll: 0,
     cachedWordCount: 0,
@@ -83,8 +86,14 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
   // This tracks *where* they are every second to build the Quarter distribution
   useEffect(() => {
     const sampler = setInterval(() => {
+        // Broad check: Is the session active? (60s timeout)
         if (!sessionData.current.isActive) return;
         
+        // Strict check: Has the user interacted in the last 5 seconds?
+        // This prevents "Scroll & Park" from inflating the reading depth.
+        const timeSinceInteraction = Date.now() - sessionData.current.lastActiveInteraction;
+        if (timeSinceInteraction > ATTENTION_THRESHOLD) return;
+
         const scrollTop = window.scrollY;
         const docHeight = document.documentElement.scrollHeight - window.innerHeight;
         
@@ -179,6 +188,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
   // 6. Listeners (Same as before)
   useEffect(() => {
     const handleUserActivity = () => {
+        // Update the strict attention timer
+        sessionData.current.lastActiveInteraction = Date.now();
+
         if (!sessionData.current.isActive) {
             sessionData.current.isActive = true;
             sessionData.current.lastPingTime = Date.now(); 

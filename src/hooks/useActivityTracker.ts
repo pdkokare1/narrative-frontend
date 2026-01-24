@@ -30,7 +30,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     isActive: true,
     idleTimer: null as any,
     maxScroll: 0,
-    // Interaction Queue for "one-off" events like Copies or Audio Skips
+    // Interaction Queue for \"one-off\" events like Copies or Audio Skips
     pendingInteractions: [] as any[]
   });
 
@@ -76,11 +76,15 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         feed: isFeed ? elapsedSeconds : 0
     };
 
-    // Prepare Interactions: Combine the "Time" interaction with any "Pending" events
+    // Prepare Interactions: Combine the \"Time\" interaction with any \"Pending\" events
     const interactions = [...sessionData.current.pendingInteractions];
     
     // Clear pending queue immediately after grabbing them
     sessionData.current.pendingInteractions = [];
+
+    // IMPROVEMENT: Estimate Word Count for Reading Velocity
+    // We grab the body text length as a rough proxy for content size
+    const estimatedWordCount = document.body.innerText.split(/\\s+/).length;
 
     // Add current view duration interaction (if valid content)
     if (contentId) {
@@ -89,6 +93,8 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             contentId: contentId,
             duration: elapsedSeconds,
             scrollDepth: sessionData.current.maxScroll,
+            // NEW: Send word count so backend can calc Reading Speed (Words/Min)
+            wordCount: estimatedWordCount, 
             timestamp: new Date()
         });
     }
@@ -100,7 +106,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         interactions, 
         meta: {
             platform: 'web',
-            userAgent: navigator.userAgent
+            userAgent: navigator.userAgent,
+            // NEW: Track where they came from (Search, Internal, External)
+            referrer: document.referrer || 'direct' 
         }
     };
 
@@ -204,7 +212,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     return () => clearInterval(interval);
   }, [isRadioPlaying, location.pathname, contentId]); 
 
-  // 5. The "Exit Beacon" (Tab Close / Hide)
+  // 5. The \"Exit Beacon\" (Tab Close / Hide)
   useEffect(() => {
     const handleVisibilityChange = () => {
         if (document.visibilityState === 'hidden') {

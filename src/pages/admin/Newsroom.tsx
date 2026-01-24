@@ -4,157 +4,247 @@ import { adminService } from '../../services/adminService';
 import { IArticle } from '../../types';
 import PageLoader from '../../components/PageLoader';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader';
-import { AdminTable, AdminThead, AdminTbody, AdminTr, AdminTh, AdminTd } from '../../components/admin/AdminTable';
+import { AdminTable } from '../../components/admin/AdminTable';
 import { AdminBadge } from '../../components/admin/AdminBadge';
-import { AdminCard } from '../../components/admin/AdminCard';
-import './Admin.css'; // Ensure styles are loaded
+import './Admin.css';
 
 const Newsroom: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'active' | 'trash'>('active');
   const [articles, setArticles] = useState<IArticle[]>([]);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   
-  const [newArticle, setNewArticle] = useState({
-    headline: '', summary: '', source: 'Narrative Editorial',
-    category: 'General', politicalLean: 'Center', url: `https://narrative.news/manual/${Date.now()}`
-  });
+  // Edit Modal State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editArticle, setEditArticle] = useState<Partial<IArticle> | null>(null);
+
+  // Archive View State
+  const [showArchived, setShowArchived] = useState(false);
 
   const fetchArticles = async () => {
     setLoading(true);
     try {
-      const res = activeTab === 'active' 
-        ? await adminService.getAllArticles(1, 50) 
-        : await adminService.getArchivedArticles(1, 50);
+      const apiCall = showArchived 
+        ? adminService.getArchivedArticles(page) 
+        : adminService.getAllArticles(page);
+
+      const res = await apiCall;
       setArticles(res.data.data.articles);
-    } catch (err) { alert('Error loading articles'); } 
-    finally { setLoading(false); }
+      setTotalPages(res.data.pages);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetchArticles(); }, [activeTab]);
+  useEffect(() => {
+    fetchArticles();
+  }, [page, showArchived]);
+
+  const handleEdit = (article: IArticle) => {
+    setEditArticle({ ...article });
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    if (!editArticle || !editArticle._id) return;
+    try {
+      await adminService.updateArticle(editArticle._id, editArticle);
+      setIsEditing(false);
+      fetchArticles(); // Refresh
+      alert('Article updated successfully');
+    } catch (err) {
+      alert('Failed to update article');
+    }
+  };
 
   const handleArchive = async (id: string) => {
-    if(!window.confirm('Move to trash?')) return;
-    await adminService.archiveArticle(id).then(fetchArticles);
+    if (!window.confirm('Are you sure you want to move this to trash?')) return;
+    try {
+      await adminService.archiveArticle(id);
+      fetchArticles();
+    } catch (err) { alert('Error archiving article'); }
   };
 
   const handleRestore = async (id: string) => {
-    await adminService.restoreArticle(id).then(fetchArticles);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
     try {
-      isEditing && editId 
-        ? await adminService.updateArticle(editId, newArticle)
-        : await adminService.createArticle(newArticle);
-      resetForm();
+      await adminService.restoreArticle(id);
       fetchArticles();
-    } catch (err) { alert('Operation failed'); }
+    } catch (err) { alert('Error restoring article'); }
   };
 
-  const handleEdit = (article: IArticle) => {
-    setNewArticle({
-      headline: article.headline, summary: article.summary, source: article.source,
-      category: article.category, politicalLean: article.politicalLean || 'Center', url: article.url
-    });
-    setEditId(article._id); setIsEditing(true); setShowCreateForm(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const resetForm = () => {
-    setShowCreateForm(false); setIsEditing(false); setEditId(null);
-    setNewArticle({ headline: '', summary: '', source: 'Narrative Editorial', category: 'General', politicalLean: 'Center', url: `https://narrative.news/manual/${Date.now()}` });
-  };
+  const columns = [
+    { 
+        header: 'Thumb', 
+        accessor: (row: IArticle) => (
+            row.imageUrl ? <img src={row.imageUrl} alt="" style={{width:'40px', height:'40px', objectFit:'cover', borderRadius:'4px'}} /> : <span style={{fontSize:'0.8rem', color:'#999'}}>No Img</span>
+        ) 
+    },
+    { header: 'Headline', accessor: 'headline' },
+    { header: 'Source', accessor: 'source' },
+    { header: 'Category', accessor: 'category' },
+    { 
+      header: 'Published', 
+      accessor: (row: IArticle) => new Date(row.publishedAt).toLocaleDateString() 
+    },
+    {
+      header: 'Status',
+      accessor: (row: IArticle) => (
+        <AdminBadge variant={row.isLatest ? 'success' : 'neutral'}>
+          {row.isLatest ? 'Live' : 'Hidden'}
+        </AdminBadge>
+      )
+    },
+    {
+      header: 'Actions',
+      accessor: (row: IArticle) => (
+        <div className="flex-end">
+            {!showArchived ? (
+                <>
+                    <button className="btn btn-outline btn-sm" onClick={() => handleEdit(row)}>Edit</button>
+                    <button className="btn btn-outline btn-sm text-red" onClick={() => handleArchive(row._id)}>Trash</button>
+                </>
+            ) : (
+                <button className="btn btn-primary btn-sm" onClick={() => handleRestore(row._id)}>Restore</button>
+            )}
+        </div>
+      )
+    }
+  ];
 
   if (loading && !articles.length) return <PageLoader />;
 
   return (
     <div>
       <AdminPageHeader 
-        title="Newsroom" 
-        description="Manage and edit content."
-        actions={activeTab === 'active' && (
-          <button onClick={() => showCreateForm ? resetForm() : setShowCreateForm(true)} className="btn btn-primary">
-            {showCreateForm ? 'Cancel' : '+ New Article'}
-          </button>
-        )}
+        title={showArchived ? "Trash Bin" : "Newsroom"} 
+        description={showArchived ? "Recover deleted articles." : "Manage and edit live articles."}
+        actions={
+            <button onClick={() => { setShowArchived(!showArchived); setPage(1); }} className="btn btn-outline">
+                {showArchived ? "View Live Articles" : "View Trash"}
+            </button>
+        }
       />
 
-      <div className="admin-tabs">
-        <button onClick={() => setActiveTab('active')} className={`admin-tab-btn ${activeTab === 'active' ? 'active' : ''}`}>Active Articles</button>
-        <button onClick={() => setActiveTab('trash')} className={`admin-tab-btn ${activeTab === 'trash' ? 'active' : ''}`}>Trash (Archive)</button>
-      </div>
+      <AdminTable 
+        data={articles} 
+        columns={columns} 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
 
-      {showCreateForm && (
-        <AdminCard title={isEditing ? 'Edit Article' : 'Create Article'}>
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className="form-label">Headline</label>
-              <input type="text" className="form-input" required value={newArticle.headline} onChange={e => setNewArticle({...newArticle, headline: e.target.value})} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Summary</label>
-              <textarea className="form-textarea" rows={3} required value={newArticle.summary} onChange={e => setNewArticle({...newArticle, summary: e.target.value})} />
-            </div>
-            <div className="admin-grid-2">
-               <div className="form-group">
-                 <label className="form-label">Category</label>
-                 <select className="form-select" value={newArticle.category} onChange={e => setNewArticle({...newArticle, category: e.target.value})}>
-                   {['General','Politics','Technology','Business','Health','Science','Entertainment'].map(c => <option key={c}>{c}</option>)}
-                 </select>
-               </div>
-               <div className="form-group">
-                 <label className="form-label">Political Lean</label>
-                 <select className="form-select" value={newArticle.politicalLean} onChange={e => setNewArticle({...newArticle, politicalLean: e.target.value})}>
-                   {['Center','Left','Right'].map(l => <option key={l}>{l}</option>)}
-                 </select>
-               </div>
-            </div>
-            <div className="flex-end" style={{marginTop:'20px'}}>
-              <button type="button" onClick={resetForm} className="btn btn-outline">Cancel</button>
-              <button type="submit" className="btn btn-primary">{isEditing ? 'Update' : 'Publish'}</button>
-            </div>
-          </form>
-        </AdminCard>
-      )}
+      {/* EDIT MODAL */}
+      {isEditing && editArticle && (
+        <div className="admin-modal-overlay">
+          <div className="admin-modal">
+             <h2>Edit Article</h2>
+             
+             <div className="admin-form-group">
+                <label>Headline</label>
+                <input 
+                  value={editArticle.headline} 
+                  onChange={e => setEditArticle({...editArticle, headline: e.target.value})} 
+                  className="form-input"
+                />
+             </div>
 
-      <AdminTable>
-        <AdminThead>
-          <tr>
-            <AdminTh>Headline</AdminTh>
-            <AdminTh>Source</AdminTh>
-            <AdminTh>Date</AdminTh>
-            <AdminTh className="text-right">Actions</AdminTh>
-          </tr>
-        </AdminThead>
-        <AdminTbody>
-          {articles.map((article) => (
-            <AdminTr key={article._id}>
-              <AdminTd>
-                <div style={{fontWeight:'600', marginBottom:'4px'}}>{article.headline}</div>
-                <div style={{fontSize:'0.8rem', color:'#64748b'}}>{article.summary.substring(0, 80)}...</div>
-              </AdminTd>
-              <AdminTd><AdminBadge>{article.source}</AdminBadge></AdminTd>
-              <AdminTd>{new Date(article.publishedAt).toLocaleDateString()}</AdminTd>
-              <AdminTd className="text-right">
-                <div className="flex-end">
-                  {activeTab === 'active' ? (
-                    <>
-                      <button onClick={() => handleEdit(article)} className="btn btn-outline btn-sm">Edit</button>
-                      <button onClick={() => handleArchive(article._id)} className="btn btn-danger btn-sm">Delete</button>
-                    </>
-                  ) : (
-                    <button onClick={() => handleRestore(article._id)} className="btn btn-success btn-sm">Restore</button>
-                  )}
+             <div className="admin-form-group">
+                <label>Summary</label>
+                <textarea 
+                  value={editArticle.summary} 
+                  onChange={e => setEditArticle({...editArticle, summary: e.target.value})} 
+                  className="form-textarea"
+                />
+             </div>
+
+             <div className="admin-form-group">
+                <label>Image URL</label>
+                <input 
+                  value={editArticle.imageUrl || ''} 
+                  onChange={e => setEditArticle({...editArticle, imageUrl: e.target.value})} 
+                  className="form-input"
+                  placeholder="https://..."
+                />
+                {editArticle.imageUrl && <img src={editArticle.imageUrl} alt="Preview" style={{marginTop:'10px', maxHeight:'100px', borderRadius:'6px'}} />}
+             </div>
+
+             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px'}}>
+                <div className="admin-form-group">
+                    <label>Category</label>
+                    <input value={editArticle.category} onChange={e => setEditArticle({...editArticle, category: e.target.value})} className="form-input" />
                 </div>
-              </AdminTd>
-            </AdminTr>
-          ))}
-        </AdminTbody>
-      </AdminTable>
+                <div className="admin-form-group">
+                    <label>Source</label>
+                    <input value={editArticle.source} onChange={e => setEditArticle({...editArticle, source: e.target.value})} className="form-input" />
+                </div>
+             </div>
+
+             {/* ADVANCED ANALYSIS SECTION */}
+             <div style={{marginTop:'24px', borderTop:'1px solid #eee', paddingTop:'16px'}}>
+                <h3 style={{fontSize:'1rem', marginBottom:'12px', color:'#334155'}}>Advanced Analysis</h3>
+                
+                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'12px'}}>
+                    <div className="admin-form-group">
+                        <label>Bias Score (0-100)</label>
+                        <input 
+                            type="number"
+                            value={editArticle.biasScore || 0} 
+                            onChange={e => setEditArticle({...editArticle, biasScore: Number(e.target.value)})} 
+                            className="form-input" 
+                        />
+                    </div>
+                    <div className="admin-form-group">
+                        <label>Credibility Grade</label>
+                        <input 
+                            value={editArticle.credibilityGrade || ''} 
+                            onChange={e => setEditArticle({...editArticle, credibilityGrade: e.target.value})} 
+                            className="form-input" 
+                        />
+                    </div>
+                    <div className="admin-form-group">
+                        <label>Sentiment</label>
+                        <select 
+                            value={editArticle.sentiment || 'Neutral'}
+                            onChange={e => setEditArticle({...editArticle, sentiment: e.target.value as any})}
+                            className="form-select"
+                        >
+                            <option value="Positive">Positive</option>
+                            <option value="Neutral">Neutral</option>
+                            <option value="Negative">Negative</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginTop:'12px'}}>
+                    <div className="admin-form-group">
+                        <label>Trust Score</label>
+                        <input 
+                            type="number"
+                            value={editArticle.trustScore || 0} 
+                            onChange={e => setEditArticle({...editArticle, trustScore: Number(e.target.value)})} 
+                            className="form-input" 
+                        />
+                    </div>
+                    <div className="admin-form-group">
+                        <label>Political Lean</label>
+                        <input 
+                            value={editArticle.politicalLean || ''} 
+                            onChange={e => setEditArticle({...editArticle, politicalLean: e.target.value})} 
+                            className="form-input" 
+                        />
+                    </div>
+                </div>
+             </div>
+
+             <div className="flex-end" style={{marginTop:'24px'}}>
+                <button className="btn btn-outline" onClick={() => setIsEditing(false)}>Cancel</button>
+                <button className="btn btn-primary" onClick={handleSave}>Save Changes</button>
+             </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -26,6 +26,7 @@ import Newsroom from './pages/admin/Newsroom';
 import Users from './pages/admin/Users';
 import SystemConfig from './pages/admin/SystemConfig';
 import Prompts from './pages/admin/Prompts';
+import Narratives from './pages/admin/Narratives'; // <--- NEW IMPORT
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,6 +66,7 @@ function AppRoutes() {
         <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="newsroom" element={<Newsroom />} />
+            <Route path="narratives" element={<Narratives />} /> {/* <--- NEW ROUTE */}
             <Route path="users" element={<Users />} />
             <Route path="config" element={<SystemConfig />} />
             <Route path="prompts" element={<Prompts />} />

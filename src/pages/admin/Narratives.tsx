@@ -4,7 +4,7 @@ import { adminService } from '../../services/adminService';
 import { INarrative } from '../../types';
 import PageLoader from '../../components/PageLoader';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader';
-import { AdminTable } from '../../components/admin/AdminTable';
+import { AdminTable, TableColumn } from '../../components/admin/AdminTable';
 import './Admin.css';
 
 const Narratives: React.FC = () => {
@@ -71,10 +71,11 @@ const Narratives: React.FC = () => {
       setEditData({...editData, consensusPoints: newArr});
   };
 
-  const columns = [
-    { header: 'Cluster ID', accessor: 'clusterId' },
-    { header: 'Master Headline', accessor: 'masterHeadline' },
-    { header: 'Sources', accessor: 'sourceCount' },
+  // FIX: Explicitly typed columns and cast string accessors
+  const columns: TableColumn<INarrative>[] = [
+    { header: 'Cluster ID', accessor: 'clusterId' as keyof INarrative },
+    { header: 'Master Headline', accessor: 'masterHeadline' as keyof INarrative },
+    { header: 'Sources', accessor: 'sourceCount' as keyof INarrative },
     { header: 'Updated', accessor: (row: INarrative) => new Date(row.lastUpdated).toLocaleDateString() },
     { 
         header: 'Actions', 

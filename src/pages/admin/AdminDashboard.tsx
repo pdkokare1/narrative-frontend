@@ -5,11 +5,11 @@ import PageLoader from '../../components/PageLoader';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader';
 import { AdminCard } from '../../components/admin/AdminCard';
 import {
-  Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ChartOptions
+  Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ChartOptions, ArcElement
 } from 'chart.js';
-import { Line } from 'react-chartjs-2';
+import { Line, Pie } from 'react-chartjs-2';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
 interface IDashboardStats {
   totalUsers: number;
@@ -18,30 +18,42 @@ interface IDashboardStats {
   systemConfigs: number;
   systemStatus: string;
   databaseStatus: string;
-  // NEW: Deep Engagement Metrics
   avgSessionTime?: number;
   avgScrollDepth?: number;
   audioRetention?: number;
 }
 
-interface IChartDataPoint { _id: string; count: number; }
+// Updated Graph Data: Split by type
+interface IChartDataPoint { 
+    _id: string; 
+    reading: number; 
+    listening: number; 
+}
+
+// New Pie Data
+interface ILeanData {
+    left: number;
+    center: number;
+    right: number;
+}
 
 const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<IDashboardStats | null>(null);
   const [chartData, setChartData] = useState<IChartDataPoint[]>([]);
+  const [leanData, setLeanData] = useState<ILeanData>({ left: 0, center: 0, right: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     adminService.getDashboardStats()
       .then(res => {
          setStats(res.data.data.stats);
-         if (res.data.data.chartData) setChartData(res.data.data.chartData);
+         if (res.data.data.graphData) setChartData(res.data.data.graphData);
+         if (res.data.data.leanData) setLeanData(res.data.data.leanData);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-  // Helper to format seconds into m s
   const formatSeconds = (seconds: number) => {
     if (!seconds) return '0s';
     const m = Math.floor(seconds / 60);
@@ -52,30 +64,55 @@ const AdminDashboard: React.FC = () => {
 
   if (loading) return <PageLoader />;
 
-  const graphData = {
+  // 1. Line Graph: Reading vs Listening (Minutes)
+  const lineData = {
     labels: chartData.map(d => d._id),
-    datasets: [{
-      label: 'Activity',
-      data: chartData.map(d => d.count),
-      borderColor: '#2563eb',
-      backgroundColor: 'rgba(37, 99, 235, 0.1)',
-      tension: 0.4,
-      fill: true
-    }]
+    datasets: [
+      {
+        label: 'Reading Time (sec)',
+        data: chartData.map(d => d.reading),
+        borderColor: '#0891b2', // Cyan
+        backgroundColor: 'rgba(8, 145, 178, 0.1)',
+        tension: 0.4,
+        fill: true
+      },
+      {
+        label: 'Listening Time (sec)',
+        data: chartData.map(d => d.listening),
+        borderColor: '#db2777', // Pink
+        backgroundColor: 'rgba(219, 39, 119, 0.1)',
+        tension: 0.4,
+        fill: true
+      }
+    ]
   };
 
-  const graphOptions: ChartOptions<'line'> = {
+  const lineOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
+    plugins: { legend: { position: 'top' as const } },
     scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
+  };
+
+  // 2. Pie Chart: Political Compass
+  const pieData = {
+      labels: ['Left', 'Center', 'Right'],
+      datasets: [{
+          data: [leanData.left, leanData.center, leanData.right],
+          backgroundColor: [
+              '#3b82f6', // Blue (Left)
+              '#a855f7', // Purple (Center)
+              '#ef4444'  // Red (Right)
+          ],
+          borderWidth: 1
+      }]
   };
 
   return (
     <div>
       <AdminPageHeader title="System Overview" description="Real-time metrics and system health." />
       
-      {/* 1. Primary Counters */}
+      {/* Row 1: Basic Counters */}
       <div className="admin-grid-3" style={{marginBottom: '32px'}}>
         <AdminCard title="System Status">
           <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
@@ -96,7 +133,7 @@ const AdminDashboard: React.FC = () => {
         </AdminCard>
       </div>
 
-      {/* 2. NEW: Deep Insight Metrics */}
+      {/* Row 2: Deep Insight Metrics */}
       <div className="admin-grid-3" style={{marginBottom: '32px'}}>
           <AdminCard title="Real Attention">
               <p style={{fontSize:'2rem', fontWeight:'bold', color: '#7c3aed'}}>
@@ -120,11 +157,23 @@ const AdminDashboard: React.FC = () => {
           </AdminCard>
       </div>
 
-      <AdminCard title="Activity Trend">
-        <div style={{height:'300px'}}>
-           <Line options={graphOptions} data={graphData} />
-        </div>
-      </AdminCard>
+      {/* Row 3: Visualizations */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+          <AdminCard title="Engagement Split (Last 7 Days)">
+            <div style={{height:'300px'}}>
+               <Line options={lineOptions} data={lineData} />
+            </div>
+          </AdminCard>
+
+          <AdminCard title="Audience Political Balance">
+            <div style={{height:'300px', display: 'flex', justifyContent: 'center'}}>
+               <Pie data={pieData} />
+            </div>
+             <p style={{textAlign: 'center', fontSize: '0.8rem', color: '#64748b', marginTop: '10px'}}>
+                 Total Minutes Consumed per Bias
+             </p>
+          </AdminCard>
+      </div>
     </div>
   );
 };

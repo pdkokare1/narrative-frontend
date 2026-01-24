@@ -1,7 +1,7 @@
 // narrative-frontend/src/services/adminService.ts
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
-import { IArticle, IUserProfile, ISystemConfig, IPrompt } from '../types';
+import { IArticle, IUserProfile, ISystemConfig, IPrompt, INarrative } from '../types';
 
 // Use environment variable or default to local/dev
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -25,7 +25,7 @@ export const adminService = {
     return axios.get(`${API_URL}/admin/dashboard`, headers); 
   },
 
-  // --- Activity Logs (NEW) ---
+  // --- Activity Logs ---
   getActivityLogs: async (page: number = 1, limit: number = 50) => {
     const headers = await getHeaders();
     return axios.get(`${API_URL}/admin/logs?page=${page}&limit=${limit}`, headers);
@@ -65,6 +65,22 @@ export const adminService = {
   toggleVisibility: async (id: string) => {
     const headers = await getHeaders();
     return axios.post(`${API_URL}/admin/articles/${id}/toggle-visibility`, {}, headers);
+  },
+
+  // --- Narratives (NEW) ---
+  getAllNarratives: async (page: number = 1) => {
+    const headers = await getHeaders();
+    return axios.get(`${API_URL}/admin/narratives?page=${page}`, headers);
+  },
+
+  getNarrativeById: async (id: string) => {
+    const headers = await getHeaders();
+    return axios.get(`${API_URL}/admin/narratives/${id}`, headers);
+  },
+
+  updateNarrative: async (id: string, data: Partial<INarrative>) => {
+    const headers = await getHeaders();
+    return axios.patch(`${API_URL}/admin/narratives/${id}`, data, headers);
   },
 
   // --- Users ---

@@ -4,7 +4,7 @@ import { adminService } from '../../services/adminService';
 import { IArticle } from '../../types';
 import PageLoader from '../../components/PageLoader';
 import { AdminPageHeader } from '../../components/admin/AdminPageHeader';
-import { AdminTable } from '../../components/admin/AdminTable';
+import { AdminTable, TableColumn } from '../../components/admin/AdminTable';
 import { AdminBadge } from '../../components/admin/AdminBadge';
 import './Admin.css';
 
@@ -74,16 +74,17 @@ const Newsroom: React.FC = () => {
     } catch (err) { alert('Error restoring article'); }
   };
 
-  const columns = [
+  // FIX: Explicitly typed columns and cast string accessors
+  const columns: TableColumn<IArticle>[] = [
     { 
         header: 'Thumb', 
         accessor: (row: IArticle) => (
             row.imageUrl ? <img src={row.imageUrl} alt="" style={{width:'40px', height:'40px', objectFit:'cover', borderRadius:'4px'}} /> : <span style={{fontSize:'0.8rem', color:'#999'}}>No Img</span>
         ) 
     },
-    { header: 'Headline', accessor: 'headline' },
-    { header: 'Source', accessor: 'source' },
-    { header: 'Category', accessor: 'category' },
+    { header: 'Headline', accessor: 'headline' as keyof IArticle },
+    { header: 'Source', accessor: 'source' as keyof IArticle },
+    { header: 'Category', accessor: 'category' as keyof IArticle },
     { 
       header: 'Published', 
       accessor: (row: IArticle) => new Date(row.publishedAt).toLocaleDateString() 

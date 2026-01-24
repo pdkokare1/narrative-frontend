@@ -43,7 +43,20 @@ export const useAudioPlayer = (user: any) => {
   const prefetchedIdsRef = useRef(new Set<string>());
   const preloadedBlobsRef = useRef<Record<string, string>>({});
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const consecutiveFailures = useRef(0); 
+  const consecutiveFailures = useRef(0);
+  
+  // Track if the song ended naturally (to distinguish Skip vs Complete)
+  const isNaturalEndRef = useRef(false);
+
+  // --- ANALYTICS HELPER ---
+  const emitAnalyticsEvent = (action: 'start' | 'pause' | 'skip' | 'complete', articleId?: string) => {
+      if (!articleId) return;
+      // Dispatch a custom event that useActivityTracker will pick up
+      const event = new CustomEvent('narrative-audio-event', {
+          detail: { action, articleId }
+      });
+      window.dispatchEvent(event);
+  };
 
   // --- HELPERS ---
   const optimizeUrl = (url?: string | null) => {
@@ -188,12 +201,17 @@ export const useAudioPlayer = (user: any) => {
       setIsWaitingForNext(false);
       setAutoplayTimer(0);
       
+      // TRACKING: If not a natural end, it's a SKIP
+      if (!isNaturalEndRef.current && playlist[currentIndex]) {
+          emitAnalyticsEvent('skip', playlist[currentIndex]._id);
+      }
+      isNaturalEndRef.current = false; // Reset for next track
+
       // IMPORTANT: Once we move past the first article, we DISABLE the timer logic
-      // so subsequent articles play continuously.
       setShouldTimerTrigger(false); 
       
       setCurrentIndex(prevIndex => prevIndex + 1);
-  }, []);
+  }, [currentIndex, playlist]);
 
   // --- CORE PLAYBACK ---
   const playArticle = useCallback(async (article: any) => {
@@ -208,6 +226,9 @@ export const useAudioPlayer = (user: any) => {
       
       setCurrentTime(0);
       setDuration(0);
+      
+      // TRACKING: Start
+      emitAnalyticsEvent('start', article._id);
 
       try {
           const persona = article.isSystemAudio ? article.speaker : getPersonaForCategory(article.category);
@@ -245,8 +266,6 @@ export const useAudioPlayer = (user: any) => {
           
           await audio.play();
           
-          // UPDATED: Only reset failures if it's a REAL article (not a segue)
-          // This prevents the "Segue Loop" where system audio keeps the radio alive infinitely
           if (!article.isSystemAudio) {
               consecutiveFailures.current = 0; 
           }
@@ -272,23 +291,19 @@ export const useAudioPlayer = (user: any) => {
       } catch (error: any) {
           console.error("Radio Playback Error:", error);
 
-          // 1. If Browser blocked Autoplay, we MUST stop.
           if (error.name === 'NotAllowedError') {
               console.warn("Autoplay blocked. Stopping radio.");
               stop();
               return;
           }
 
-          // 2. Handle Skip Logic
           consecutiveFailures.current += 1;
           
-          // Allow max 3 failures. Note: Segues no longer reset this counter.
           if (consecutiveFailures.current >= 3) {
               console.error("Too many consecutive failures. Stopping.");
               stop();
           } else {
               console.log(`Skipping due to error (Attempt ${consecutiveFailures.current}/3)`);
-              // Small delay to prevent CPU spinning
               setTimeout(() => {
                  playNext();
               }, 1000);
@@ -309,8 +324,9 @@ export const useAudioPlayer = (user: any) => {
   const pause = useCallback(() => {
       audioRef.current.pause();
       setIsPaused(true);
+      if (currentArticle) emitAnalyticsEvent('pause', currentArticle._id); // TRACKING
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
-  }, []);
+  }, [currentArticle]);
 
   const resume = useCallback(() => {
       audioRef.current.play();
@@ -351,7 +367,6 @@ export const useAudioPlayer = (user: any) => {
       const userId = user?.uid || 'guest';
       const needsGreeting = checkGreetingNeeded(userId);
 
-      // Only play greeting if it's NOT skipped via options AND the time rule allows it
       if (!options.skipGreeting && needsGreeting) {
           const firstArticle = articles[startIndex];
           const greetingTrack = getGreetingTrack(firstArticle);
@@ -362,10 +377,7 @@ export const useAudioPlayer = (user: any) => {
 
       setPlaylist(finalPlaylist);
       consecutiveFailures.current = 0;
-      
-      // Handle Timer Logic (Only for the FIRST transition if enabled)
       setShouldTimerTrigger(!!options.enableFirstTimer);
-
       setCurrentIndex(0); 
   }, [injectSegues, stop, user]);
 
@@ -380,8 +392,6 @@ export const useAudioPlayer = (user: any) => {
       if (currentIndex >= 0 && playlist.length > 0) {
           if (currentIndex < playlist.length) {
               const nextTrack = playlist[currentIndex];
-              
-              // Small delay for segues to feel natural
               const delay = (nextTrack.isSystemAudio && nextTrack.summary === "Segue") ? 500 : 0;
               
               if (delay > 0) {
@@ -399,18 +409,14 @@ export const useAudioPlayer = (user: any) => {
 
   // --- EFFECT: Smart Prefetching ---
   useEffect(() => {
-      // Look ahead to the NEXT item
       if (currentIndex >= 0 && currentIndex < playlist.length - 1) {
           const nextTrack = playlist[currentIndex + 1];
-          
           if (!nextTrack || nextTrack.isSystemAudio || prefetchedIdsRef.current.has(nextTrack._id)) return;
 
-          // Start Prefetch
           prefetchedIdsRef.current.add(nextTrack._id);
           const persona = getPersonaForCategory(nextTrack.category);
           const text = prepareAudioText(nextTrack.headline, nextTrack.summary);
 
-          // Call API with prefetch=true
           getAudio(text, persona.id, nextTrack._id, true)
               .catch(err => console.warn(`Prefetch failed for ${nextTrack._id}`, err));
       }
@@ -426,8 +432,10 @@ export const useAudioPlayer = (user: any) => {
       const handlePlaying = () => { setIsLoading(false); setIsPlaying(true); };
       
       const handleEnded = () => {
+          isNaturalEndRef.current = true; // Mark as natural end
+          if (currentArticle) emitAnalyticsEvent('complete', currentArticle._id); // TRACKING
+
           // --- CONDITIONAL TIMER LOGIC ---
-          // If 'shouldTimerTrigger' is true (User clicked Card Play), we wait 3s.
           if (shouldTimerTrigger) {
               setIsWaitingForNext(true);
               setAutoplayTimer(3);
@@ -443,7 +451,6 @@ export const useAudioPlayer = (user: any) => {
                   }
               }, 1000);
           } else {
-              // Otherwise play instantly
               playNext();
           }
       };
@@ -462,7 +469,7 @@ export const useAudioPlayer = (user: any) => {
           audio.removeEventListener('ended', handleEnded);
           if (timerRef.current) clearInterval(timerRef.current);
       };
-  }, [playNext, shouldTimerTrigger]);
+  }, [playNext, shouldTimerTrigger, currentArticle]);
 
   return {
       currentArticle, currentSpeaker, isPlaying, isPaused, isLoading, isVisible,

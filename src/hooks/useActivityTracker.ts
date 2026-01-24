@@ -6,35 +6,37 @@ import { useAuth } from '../context/AuthContext';
 
 // Constants
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
+const SAMPLING_INTERVAL = 1000;   // 1 second (High res sampling)
 const ACTIVITY_TIMEOUT = 60000;   // 1 minute idle = inactive
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// FIX: We accept 'any' here to prevent build errors from legacy components
 export const useActivityTracker = (rawId?: any, rawType?: any) => {
   const location = useLocation();
   const { isPlaying: isRadioPlaying } = useAudio();
   const { user } = useAuth();
 
-  // SANITIZATION: Only accept strings.
+  // SANITIZATION
   const contentId = (typeof rawId === 'string') ? rawId : undefined;
   const contentType = (typeof rawType === 'string' && ['article', 'narrative', 'feed'].includes(rawType)) 
     ? rawType as 'article' | 'narrative' | 'feed' 
     : undefined;
   
-  // Refs to hold mutable state without triggering re-renders
+  // Refs to hold mutable state
   const sessionData = useRef({
     sessionId: '',
     accumulatedTime: { total: 0, article: 0, radio: 0, narrative: 0, feed: 0 },
+    // NEW: Track seconds spent in each quarter of the page [Q1, Q2, Q3, Q4]
+    quarters: [0, 0, 0, 0], 
     lastPingTime: Date.now(),
     isActive: true,
     idleTimer: null as any,
     maxScroll: 0,
     cachedWordCount: 0,
-    hasStitchedSession: false, // Prevents duplicate link requests
+    hasStitchedSession: false,
     pendingInteractions: [] as any[]
   });
 
-  // 1. Initialize Session ID (Once per page load)
+  // 1. Initialize Session ID
   useEffect(() => {
     if (!sessionData.current.sessionId) {
       sessionData.current.sessionId = 
@@ -43,14 +45,12 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
       sessionStorage.setItem('current_analytics_session_id', sessionData.current.sessionId);
       console.log('Analytics Session Started:', sessionData.current.sessionId);
     }
-    // Reset scroll on mount
     sessionData.current.maxScroll = 0;
   }, []);
 
-  // 2. SESSION STITCHING: Link anonymous session to User ID upon login
+  // 2. Link Anonymous Session
   useEffect(() => {
     if (user && sessionData.current.sessionId && !sessionData.current.hasStitchedSession) {
-        // Fire and forget: Tell backend this session belongs to this user
         fetch(`${API_URL}/analytics/link-session`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -65,39 +65,59 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     }
   }, [user]);
 
-  // 3. OPTIMIZATION: Calculate Word Count on Content Change
+  // 3. Calculate Word Count
   useEffect(() => {
     if (contentId && (contentType === 'article' || contentType === 'narrative')) {
-        // Run this in a timeout to allow DOM to settle
         setTimeout(() => {
             const text = document.body.innerText || "";
-            // Rough estimation: Split by spaces
             sessionData.current.cachedWordCount = text.split(/\s+/).length;
         }, 1000);
     } else {
         sessionData.current.cachedWordCount = 0;
     }
+    // Reset quarters on new content
+    sessionData.current.quarters = [0, 0, 0, 0];
   }, [contentId, contentType]);
 
-  // 4. Helper: The Data Sender
+  // 4. NEW: High-Resolution Sampling (1s Interval)
+  // This tracks *where* they are every second to build the Quarter distribution
+  useEffect(() => {
+    const sampler = setInterval(() => {
+        if (!sessionData.current.isActive) return;
+        
+        const scrollTop = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        
+        if (docHeight > 0) {
+            const pct = scrollTop / docHeight;
+            // Map 0.0-1.0 to 0-3 (Q1-Q4)
+            const quarter = Math.min(Math.floor(pct * 4), 3);
+            sessionData.current.quarters[quarter]++;
+        } else {
+            // If page is short, attribute to Q1
+            sessionData.current.quarters[0]++;
+        }
+    }, SAMPLING_INTERVAL);
+
+    return () => clearInterval(sampler);
+  }, []);
+
+  // 5. The Data Sender
   const sendData = useCallback((isBeacon = false, forceFlush = false) => {
     const now = Date.now();
     const elapsedSeconds = Math.round((now - sessionData.current.lastPingTime) / 1000);
     
-    // Only send if active and time has passed (unless forcing a flush)
     if (!forceFlush && (elapsedSeconds <= 0 || !sessionData.current.isActive)) {
         sessionData.current.lastPingTime = now;
         return; 
     }
 
-    // Determine context based on validated arguments first, then URL (Fallback)
     const path = window.location.pathname;
     const isArticle = contentType === 'article' || path.includes('/article/');
     const isNarrative = contentType === 'narrative' || path.includes('/narrative/');
     const isRadio = isRadioPlaying; 
     const isFeed = contentType === 'feed' || (!isArticle && !isNarrative);
 
-    // Prepare Metrics
     const metrics = {
         total: elapsedSeconds,
         article: isArticle ? elapsedSeconds : 0,
@@ -106,11 +126,14 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         feed: isFeed ? elapsedSeconds : 0
     };
 
-    // Prepare Interactions
     const interactions = [...sessionData.current.pendingInteractions];
-    sessionData.current.pendingInteractions = []; // Clear queue
+    sessionData.current.pendingInteractions = []; 
 
-    // Add current view duration interaction (if valid content)
+    // Snapshot the accumulated quarters
+    const currentQuarters = [...sessionData.current.quarters];
+    // Reset quarters after sending so we don't double count
+    sessionData.current.quarters = [0, 0, 0, 0];
+
     if (contentId) {
         interactions.push({
             contentType: contentType || (isArticle ? 'article' : 'narrative'),
@@ -118,13 +141,15 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             duration: elapsedSeconds,
             scrollDepth: sessionData.current.maxScroll,
             wordCount: sessionData.current.cachedWordCount, 
+            // NEW: Send the quarterly breakdown
+            quarters: currentQuarters,
             timestamp: new Date()
         });
     }
 
     const payload = {
         sessionId: sessionData.current.sessionId,
-        userId: user?.uid, // Will attach User ID if available
+        userId: user?.uid, 
         metrics,
         interactions, 
         meta: {
@@ -148,26 +173,22 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         }).catch(err => console.warn('Analytics Error', err));
     }
 
-    // Reset clock
     sessionData.current.lastPingTime = now;
   }, [contentId, contentType, isRadioPlaying, user?.uid]);
 
-  // 5. Listeners
+  // 6. Listeners (Same as before)
   useEffect(() => {
     const handleUserActivity = () => {
         if (!sessionData.current.isActive) {
             sessionData.current.isActive = true;
-            sessionData.current.lastPingTime = Date.now(); // Reset clock on resume
+            sessionData.current.lastPingTime = Date.now(); 
         }
-        
         if (sessionData.current.idleTimer) clearTimeout(sessionData.current.idleTimer);
-        
         sessionData.current.idleTimer = setTimeout(() => {
             sessionData.current.isActive = false;
         }, ACTIVITY_TIMEOUT);
     };
 
-    // Scroll Handler
     const handleScroll = () => {
         handleUserActivity(); 
         const scrollTop = window.scrollY;
@@ -179,7 +200,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         }
     };
 
-    // Copy Event Handler
     const handleCopy = () => {
         const selection = window.getSelection()?.toString();
         if (selection && selection.length > 10) {
@@ -194,12 +214,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         }
     };
 
-    // NEW: Generic Click Tracker
-    // Looks for elements with 'data-track-click="event_name"'
     const handleClick = (e: MouseEvent) => {
         handleUserActivity();
         const target = e.target as HTMLElement;
-        // Traverse up in case they clicked an icon inside a button
         const trackable = target.closest('[data-track-click]');
         
         if (trackable) {
@@ -207,14 +224,12 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             sessionData.current.pendingInteractions.push({
                 contentType: 'ui_interaction',
                 contentId: contentId || 'global',
-                text: actionName || 'unknown_click', // Storing action name in text field
+                text: actionName || 'unknown_click', 
                 timestamp: new Date()
             });
-            // We don't force flush for clicks, just bundle them
         }
     };
 
-    // Audio Event Handler
     const handleAudioEvent = (e: any) => {
         const { action, articleId } = e.detail;
         sessionData.current.pendingInteractions.push({
@@ -229,7 +244,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     events.forEach(ev => window.addEventListener(ev, handleUserActivity, { passive: true }));
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('copy', handleCopy); 
-    window.addEventListener('click', handleClick); // Added click listener
+    window.addEventListener('click', handleClick); 
     window.addEventListener('narrative-audio-event', handleAudioEvent as EventListener); 
 
     return () => {
@@ -242,7 +257,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     };
   }, [contentId, sendData]);
 
-  // 6. The Heartbeat Interval
+  // 7. Heartbeat
   useEffect(() => {
     const interval = setInterval(() => {
         sendData(false);
@@ -250,7 +265,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     return () => clearInterval(interval);
   }, [sendData]); 
 
-  // 7. The "Exit Beacon"
+  // 8. Exit Beacon
   useEffect(() => {
     const handleVisibilityChange = () => {
         if (document.visibilityState === 'hidden') {

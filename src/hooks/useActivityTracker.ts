@@ -9,9 +9,9 @@ const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 const ACTIVITY_TIMEOUT = 60000;   // 1 minute idle = inactive
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// FIX: Accept optional arguments (legacyId, legacyType) so existing components 
-// like UnifiedFeed.tsx don't break the build. We ignore them and use internal logic.
-export const useActivityTracker = (legacyId?: any, legacyType?: any) => {
+// UPDATED: Now actively uses contentId and contentType if provided, 
+// while maintaining URL-based fallback for backward compatibility.
+export const useActivityTracker = (contentId?: string, contentType?: 'article' | 'narrative' | 'feed') => {
   const location = useLocation();
   const { isPlaying: isRadioPlaying } = useAudio();
   const { user } = useAuth();
@@ -22,7 +22,9 @@ export const useActivityTracker = (legacyId?: any, legacyType?: any) => {
     accumulatedTime: { total: 0, article: 0, radio: 0, narrative: 0, feed: 0 },
     lastPingTime: Date.now(),
     isActive: true,
-    idleTimer: null as any
+    idleTimer: null as any,
+    // NEW: Track maximum scroll depth for this session/page view
+    maxScroll: 0
   });
 
   // 1. Initialize Session ID (Once per page load)
@@ -34,6 +36,8 @@ export const useActivityTracker = (legacyId?: any, legacyType?: any) => {
       
       console.log('Analytics Session Started:', sessionData.current.sessionId);
     }
+    // Reset scroll on mount
+    sessionData.current.maxScroll = 0;
   }, []);
 
   // 2. Helper: The Data Sender
@@ -47,11 +51,12 @@ export const useActivityTracker = (legacyId?: any, legacyType?: any) => {
         return; 
     }
 
-    // Determine context based on URL, not passed args
+    // Determine context based on arguments first, then URL (Fallback)
     const path = window.location.pathname;
-    const isArticle = path.includes('/article/');
-    const isNarrative = path.includes('/narrative/');
+    const isArticle = contentType === 'article' || path.includes('/article/');
+    const isNarrative = contentType === 'narrative' || path.includes('/narrative/');
     const isRadio = isRadioPlaying; // Can be true even if on other pages
+    const isFeed = contentType === 'feed' || (!isArticle && !isNarrative);
 
     // Prepare Metrics
     const metrics = {
@@ -59,13 +64,23 @@ export const useActivityTracker = (legacyId?: any, legacyType?: any) => {
         article: isArticle ? elapsedSeconds : 0,
         narrative: isNarrative ? elapsedSeconds : 0,
         radio: isRadio ? elapsedSeconds : 0,
-        feed: (!isArticle && !isNarrative) ? elapsedSeconds : 0
+        feed: isFeed ? elapsedSeconds : 0
     };
+
+    // NEW: specific interaction object if we have an ID
+    const currentInteraction = contentId ? [{
+        contentType: contentType || (isArticle ? 'article' : 'narrative'),
+        contentId: contentId,
+        duration: elapsedSeconds,
+        scrollDepth: sessionData.current.maxScroll,
+        timestamp: new Date()
+    }] : [];
 
     const payload = {
         sessionId: sessionData.current.sessionId,
         userId: user?.uid,
         metrics,
+        interactions: currentInteraction, // Send detailed interaction
         meta: {
             platform: 'web',
             userAgent: navigator.userAgent
@@ -106,12 +121,28 @@ export const useActivityTracker = (legacyId?: any, legacyType?: any) => {
         }, ACTIVITY_TIMEOUT);
     };
 
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    // NEW: Specific Scroll Handler to calculate percentage
+    const handleScroll = () => {
+        handleUserActivity(); // Mark as active
+        
+        const scrollTop = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const scrollPercent = docHeight > 0 ? Math.round((scrollTop / docHeight) * 100) : 0;
+        
+        // Only update if deeper than before
+        if (scrollPercent > sessionData.current.maxScroll) {
+            sessionData.current.maxScroll = scrollPercent;
+        }
+    };
+
+    const events = ['mousedown', 'keydown', 'touchstart'];
     events.forEach(ev => window.addEventListener(ev, handleUserActivity, { passive: true }));
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     // Cleanup
     return () => {
         events.forEach(ev => window.removeEventListener(ev, handleUserActivity));
+        window.removeEventListener('scroll', handleScroll);
         if (sessionData.current.idleTimer) clearTimeout(sessionData.current.idleTimer);
     };
   }, []);
@@ -122,7 +153,7 @@ export const useActivityTracker = (legacyId?: any, legacyType?: any) => {
         sendData(false);
     }, HEARTBEAT_INTERVAL);
     return () => clearInterval(interval);
-  }, [isRadioPlaying, location.pathname]); 
+  }, [isRadioPlaying, location.pathname, contentId]); 
 
   // 5. The "Exit Beacon" (Tab Close / Hide)
   useEffect(() => {

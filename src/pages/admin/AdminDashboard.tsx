@@ -23,24 +23,29 @@ interface IDashboardStats {
   audioRetention?: number;
 }
 
-// Updated Graph Data: Split by type
 interface IChartDataPoint { 
     _id: string; 
     reading: number; 
     listening: number; 
 }
 
-// New Pie Data
 interface ILeanData {
     left: number;
     center: number;
     right: number;
 }
 
+// NEW: Search Data Interface
+interface ISearchData {
+    _id: string; // The query
+    count: number;
+}
+
 const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<IDashboardStats | null>(null);
   const [chartData, setChartData] = useState<IChartDataPoint[]>([]);
   const [leanData, setLeanData] = useState<ILeanData>({ left: 0, center: 0, right: 0 });
+  const [topSearches, setTopSearches] = useState<ISearchData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,6 +54,7 @@ const AdminDashboard: React.FC = () => {
          setStats(res.data.data.stats);
          if (res.data.data.graphData) setChartData(res.data.data.graphData);
          if (res.data.data.leanData) setLeanData(res.data.data.leanData);
+         if (res.data.data.topSearches) setTopSearches(res.data.data.topSearches);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -64,14 +70,14 @@ const AdminDashboard: React.FC = () => {
 
   if (loading) return <PageLoader />;
 
-  // 1. Line Graph: Reading vs Listening (Minutes)
+  // 1. Line Graph: Reading vs Listening
   const lineData = {
     labels: chartData.map(d => d._id),
     datasets: [
       {
         label: 'Reading Time (sec)',
         data: chartData.map(d => d.reading),
-        borderColor: '#0891b2', // Cyan
+        borderColor: '#0891b2', 
         backgroundColor: 'rgba(8, 145, 178, 0.1)',
         tension: 0.4,
         fill: true
@@ -79,7 +85,7 @@ const AdminDashboard: React.FC = () => {
       {
         label: 'Listening Time (sec)',
         data: chartData.map(d => d.listening),
-        borderColor: '#db2777', // Pink
+        borderColor: '#db2777', 
         backgroundColor: 'rgba(219, 39, 119, 0.1)',
         tension: 0.4,
         fill: true
@@ -99,11 +105,7 @@ const AdminDashboard: React.FC = () => {
       labels: ['Left', 'Center', 'Right'],
       datasets: [{
           data: [leanData.left, leanData.center, leanData.right],
-          backgroundColor: [
-              '#3b82f6', // Blue (Left)
-              '#a855f7', // Purple (Center)
-              '#ef4444'  // Red (Right)
-          ],
+          backgroundColor: ['#3b82f6', '#a855f7', '#ef4444'],
           borderWidth: 1
       }]
   };
@@ -158,7 +160,7 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Row 3: Visualizations */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '32px' }}>
           <AdminCard title="Engagement Split (Last 7 Days)">
             <div style={{height:'300px'}}>
                <Line options={lineOptions} data={lineData} />
@@ -174,6 +176,35 @@ const AdminDashboard: React.FC = () => {
              </p>
           </AdminCard>
       </div>
+
+      {/* Row 4: Trending Searches (NEW) */}
+      <AdminCard title="Top Trending Searches (Last 7 Days)">
+          <div style={{display: 'flex', flexWrap: 'wrap', gap: '10px'}}>
+              {topSearches.length > 0 ? topSearches.map((item, index) => (
+                  <div key={index} style={{
+                      padding: '8px 16px',
+                      background: '#f1f5f9',
+                      borderRadius: '20px',
+                      fontSize: '0.9rem',
+                      color: '#334155',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                  }}>
+                      <span style={{fontWeight: 600}}>#{index + 1}</span>
+                      {item._id}
+                      <span style={{
+                          background: '#cbd5e1', 
+                          padding: '2px 6px', 
+                          borderRadius: '10px', 
+                          fontSize: '0.75rem'
+                      }}>{item.count}</span>
+                  </div>
+              )) : (
+                  <p style={{color: '#94a3b8', fontStyle: 'italic'}}>No searches recorded yet.</p>
+              )}
+          </div>
+      </AdminCard>
     </div>
   );
 };

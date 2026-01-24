@@ -2,25 +2,25 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import PageLoader from '../../components/PageLoader';
-import AdminPageHeader from '../../components/admin/AdminPageHeader';
-import AdminCard from '../../components/admin/AdminCard';
+// FIXED: Changed to named imports (added curly braces)
+import { AdminPageHeader } from '../../components/admin/AdminPageHeader';
+import { AdminCard } from '../../components/admin/AdminCard';
 import {
   Chart as ChartJS, 
   CategoryScale, 
   LinearScale, 
   PointElement, 
   LineElement, 
-  BarElement, // NEW: Added for Habit Heatmap
+  BarElement, 
   Title, 
   Tooltip, 
   Legend, 
   ChartOptions, 
   ArcElement
 } from 'chart.js';
-import { Line, Pie, Bar } from 'react-chartjs-2'; // NEW: Added Bar
-import './Admin.css'; // Ensure CSS is imported
+import { Line, Pie, Bar } from 'react-chartjs-2'; 
+import './Admin.css'; 
 
-// Register ChartJS components
 ChartJS.register(
     CategoryScale, 
     LinearScale, 
@@ -57,18 +57,18 @@ interface ILeanData {
     right: number;
 }
 
+// FIXED: Updated Interface to include 'query'
 interface ISearchData {
-    _id: string; // The query
+    _id: string; 
+    query: string; // Added this property
     count: number;
 }
 
-// NEW: Interface for Analytics Extension
 interface IExtendedDashboardData {
     stats: IDashboardStats;
     graphData: IChartDataPoint[];
     leanData: ILeanData;
     topSearches: ISearchData[];
-    // New Fields from our Backend Update
     contentGaps?: ISearchData[];
     hourlyActivity?: number[]; 
 }
@@ -78,7 +78,6 @@ const AdminDashboard: React.FC = () => {
   const [chartData, setChartData] = useState<IChartDataPoint[]>([]);
   const [leanData, setLeanData] = useState<ILeanData>({ left: 0, center: 0, right: 0 });
   
-  // Search & Habits
   const [topSearches, setTopSearches] = useState<ISearchData[]>([]);
   const [contentGaps, setContentGaps] = useState<ISearchData[]>([]);
   const [hourlyActivity, setHourlyActivity] = useState<number[]>([]);
@@ -89,6 +88,7 @@ const AdminDashboard: React.FC = () => {
     adminService.getDashboardStats()
       .then(res => {
          // Handle the nested data structure
+         // The API returns { data: { stats: ..., topSearches: ... } }
          const data = res.data.data; 
          
          if (data.stats) setStats(data.stats);
@@ -96,7 +96,6 @@ const AdminDashboard: React.FC = () => {
          if (data.leanData) setLeanData(data.leanData);
          if (data.topSearches) setTopSearches(data.topSearches);
          
-         // NEW: Set Extended Metrics
          if (data.contentGaps) setContentGaps(data.contentGaps);
          if (data.hourlyActivity) setHourlyActivity(data.hourlyActivity);
       })
@@ -116,7 +115,6 @@ const AdminDashboard: React.FC = () => {
 
   // --- CHART CONFIGURATIONS ---
 
-  // 1. Line Graph: Reading vs Listening (EXISTING)
   const lineData = {
     labels: chartData.map(d => d._id),
     datasets: [
@@ -146,7 +144,6 @@ const AdminDashboard: React.FC = () => {
     scales: { x: { grid: { display: false } }, y: { beginAtZero: true } }
   };
 
-  // 2. Pie Chart: Political Compass (EXISTING)
   const pieData = {
       labels: ['Left', 'Center', 'Right'],
       datasets: [{
@@ -156,8 +153,6 @@ const AdminDashboard: React.FC = () => {
       }]
   };
 
-  // 3. Bar Chart: Hourly Habits (NEW)
-  // Maps 0-23 index to "12 AM", "1 AM"... labels
   const hourLabels = Array.from({ length: 24 }, (_, i) => {
       const h = i % 12 || 12;
       const ampm = i < 12 ? 'AM' : 'PM';
@@ -168,7 +163,7 @@ const AdminDashboard: React.FC = () => {
       labels: hourLabels,
       datasets: [{
           label: 'Active Minutes',
-          data: hourlyActivity.map(seconds => Math.round(seconds / 60)), // Convert to minutes
+          data: hourlyActivity.map(seconds => Math.round(seconds / 60)), 
           backgroundColor: '#6366f1',
           borderRadius: 4,
       }]
@@ -187,7 +182,7 @@ const AdminDashboard: React.FC = () => {
       },
       scales: {
           x: { grid: { display: false }, ticks: { maxTicksLimit: 12, font: { size: 10 } } },
-          y: { display: false } // Minimalist look
+          y: { display: false } 
       }
   };
 
@@ -200,7 +195,7 @@ const AdminDashboard: React.FC = () => {
         onAction={() => window.location.reload()}
       />
       
-      {/* Row 1: Basic Counters (EXISTING) */}
+      {/* Row 1: Basic Counters */}
       <div className="admin-grid-3" style={{marginBottom: '32px'}}>
         <AdminCard title="System Status" icon="🖥️">
           <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
@@ -221,7 +216,7 @@ const AdminDashboard: React.FC = () => {
         </AdminCard>
       </div>
 
-      {/* Row 2: Deep Insight Metrics (EXISTING) */}
+      {/* Row 2: Deep Insight Metrics */}
       <div className="admin-grid-3" style={{marginBottom: '32px'}}>
           <AdminCard title="Real Attention" icon="⏱️">
               <p style={{fontSize:'2rem', fontWeight:'bold', color: '#7c3aed'}}>
@@ -245,7 +240,7 @@ const AdminDashboard: React.FC = () => {
           </AdminCard>
       </div>
 
-      {/* Row 3: Visualizations (EXISTING + RESTORED) */}
+      {/* Row 3: Visualizations */}
       <div className="admin-grid-split" style={{ marginBottom: '32px' }}>
           <AdminCard title="Engagement Split (7 Days)">
             <div style={{height:'300px'}}>
@@ -263,7 +258,7 @@ const AdminDashboard: React.FC = () => {
           </AdminCard>
       </div>
 
-      {/* Row 4: NEW Habit Heatmap (ADDED) */}
+      {/* Row 4: NEW Habit Heatmap */}
       <div style={{ marginBottom: '32px' }}>
           <AdminCard title="Daily Habit Heatmap (Active Hours UTC)" icon="🕰️">
               <div style={{ height: '200px', width: '100%' }}>
@@ -276,7 +271,7 @@ const AdminDashboard: React.FC = () => {
           </AdminCard>
       </div>
 
-      {/* Row 5: Search Intelligence (ENHANCED SPLIT VIEW) */}
+      {/* Row 5: Search Intelligence */}
       <div className="admin-grid-split">
           {/* Column 1: Trends */}
           <AdminCard title="🔥 Trending Searches" icon="🔍">
@@ -284,7 +279,7 @@ const AdminDashboard: React.FC = () => {
                 {topSearches.length > 0 ? topSearches.map((item, index) => (
                   <div key={index} className="search-item">
                       <div className="search-rank">#{index + 1}</div>
-                      <div className="search-term">{item._id || item.query}</div> {/* Handle both formats */}
+                      <div className="search-term">{item.query || item._id}</div> 
                       <div className="search-count">{item.count}</div>
                   </div>
                 )) : (
@@ -293,12 +288,12 @@ const AdminDashboard: React.FC = () => {
             </div>
           </AdminCard>
 
-          {/* Column 2: Content Gaps (NEW) */}
+          {/* Column 2: Content Gaps */}
           <AdminCard title="⚠️ Content Gaps (Zero Results)" icon="🚫">
              <div className="search-list-container">
                 {contentGaps.length > 0 ? contentGaps.map((item, index) => (
                   <div key={index} className="search-item gap-item">
-                      <div className="search-term">{item._id || item.query}</div>
+                      <div className="search-term">{item.query || item._id}</div>
                       <div className="search-count">{item.count}</div>
                   </div>
                 )) : (

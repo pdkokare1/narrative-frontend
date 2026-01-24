@@ -20,7 +20,6 @@ interface HeaderProps {
 
 const getFormattedDate = () => {
     const date = new Date();
-    // Returns format like: "Monday, 12 January 2026"
     return date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 };
 
@@ -74,6 +73,12 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      // NEW: Log Search Intent
+      const sessionId = sessionStorage.getItem('current_analytics_session_id');
+      if (sessionId) {
+          api.logSearch(searchQuery.trim(), sessionId).catch(console.error);
+      }
+
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
       setIsSearchOpen(false);
       setSuggestions([]);

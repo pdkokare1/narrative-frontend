@@ -1,5 +1,5 @@
 // src/hooks/useActivityTracker.ts
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAudio } from '../context/AudioContext';
 import { useAuth } from '../context/AuthContext';
@@ -9,14 +9,13 @@ const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 const ACTIVITY_TIMEOUT = 60000;   // 1 minute idle = inactive
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// FIX: We accept 'any' here to prevent build errors from legacy components (like UnifiedFeed)
-// passing objects/maps. We then sanitize them inside.
+// FIX: We accept 'any' here to prevent build errors from legacy components
 export const useActivityTracker = (rawId?: any, rawType?: any) => {
   const location = useLocation();
   const { isPlaying: isRadioPlaying } = useAudio();
   const { user } = useAuth();
 
-  // SANITIZATION: Only accept strings. Ignore Maps/Objects from legacy calls.
+  // SANITIZATION: Only accept strings.
   const contentId = (typeof rawId === 'string') ? rawId : undefined;
   const contentType = (typeof rawType === 'string' && ['article', 'narrative', 'feed'].includes(rawType)) 
     ? rawType as 'article' | 'narrative' | 'feed' 
@@ -30,7 +29,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     isActive: true,
     idleTimer: null as any,
     maxScroll: 0,
-    // Interaction Queue for \"one-off\" events like Copies or Audio Skips
+    // OPTIMIZATION: Calculate word count once per content load
+    cachedWordCount: 0,
+    // Interaction Queue for "one-off" events like Copies or Audio Skips
     pendingInteractions: [] as any[]
   });
 
@@ -40,21 +41,33 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
       sessionData.current.sessionId = 
         Date.now().toString(36) + Math.random().toString(36).substring(2);
       
-      // NEW: Expose Session ID for other components (like Search) to piggyback on
       sessionStorage.setItem('current_analytics_session_id', sessionData.current.sessionId);
-
       console.log('Analytics Session Started:', sessionData.current.sessionId);
     }
     // Reset scroll on mount
     sessionData.current.maxScroll = 0;
   }, []);
 
-  // 2. Helper: The Data Sender
-  const sendData = (isBeacon = false, forceFlush = false) => {
+  // 2. OPTIMIZATION: Calculate Word Count on Content Change
+  useEffect(() => {
+    if (contentId && (contentType === 'article' || contentType === 'narrative')) {
+        // Run this in a timeout to allow DOM to settle
+        setTimeout(() => {
+            const text = document.body.innerText || "";
+            // Rough estimation: Split by spaces
+            sessionData.current.cachedWordCount = text.split(/\s+/).length;
+        }, 1000);
+    } else {
+        sessionData.current.cachedWordCount = 0;
+    }
+  }, [contentId, contentType]);
+
+  // 3. Helper: The Data Sender
+  const sendData = useCallback((isBeacon = false, forceFlush = false) => {
     const now = Date.now();
     const elapsedSeconds = Math.round((now - sessionData.current.lastPingTime) / 1000);
     
-    // Only send if active and time has passed (unless forcing a flush of interactions)
+    // Only send if active and time has passed (unless forcing a flush)
     if (!forceFlush && (elapsedSeconds <= 0 || !sessionData.current.isActive)) {
         sessionData.current.lastPingTime = now;
         return; 
@@ -76,15 +89,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         feed: isFeed ? elapsedSeconds : 0
     };
 
-    // Prepare Interactions: Combine the \"Time\" interaction with any \"Pending\" events
+    // Prepare Interactions
     const interactions = [...sessionData.current.pendingInteractions];
-    
-    // Clear pending queue immediately after grabbing them
-    sessionData.current.pendingInteractions = [];
-
-    // IMPROVEMENT: Estimate Word Count for Reading Velocity
-    // We grab the body text length as a rough proxy for content size
-    const estimatedWordCount = document.body.innerText.split(/\\s+/).length;
+    sessionData.current.pendingInteractions = []; // Clear queue
 
     // Add current view duration interaction (if valid content)
     if (contentId) {
@@ -93,8 +100,8 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             contentId: contentId,
             duration: elapsedSeconds,
             scrollDepth: sessionData.current.maxScroll,
-            // NEW: Send word count so backend can calc Reading Speed (Words/Min)
-            wordCount: estimatedWordCount, 
+            // USE CACHED VALUE
+            wordCount: sessionData.current.cachedWordCount, 
             timestamp: new Date()
         });
     }
@@ -107,18 +114,17 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         meta: {
             platform: 'web',
             userAgent: navigator.userAgent,
-            // NEW: Track where they came from (Search, Internal, External)
             referrer: document.referrer || 'direct' 
         }
     };
 
+    const endpoint = `${API_URL}/analytics/track`;
+
     if (isBeacon) {
-        // Beacon requires Blob for JSON
         const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-        navigator.sendBeacon(`${API_URL}/analytics/track`, blob);
+        navigator.sendBeacon(endpoint, blob);
     } else {
-        // Standard Heartbeat
-        fetch(`${API_URL}/analytics/track`, {
+        fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -128,9 +134,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
 
     // Reset clock
     sessionData.current.lastPingTime = now;
-  };
+  }, [contentId, contentType, isRadioPlaying, user?.uid]);
 
-  // 3. Listeners
+  // 4. Listeners
   useEffect(() => {
     const handleUserActivity = () => {
         if (!sessionData.current.isActive) {
@@ -138,7 +144,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             sessionData.current.lastPingTime = Date.now(); // Reset clock on resume
         }
         
-        // Reset Idle Timer
         if (sessionData.current.idleTimer) clearTimeout(sessionData.current.idleTimer);
         
         sessionData.current.idleTimer = setTimeout(() => {
@@ -148,13 +153,11 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
 
     // Scroll Handler
     const handleScroll = () => {
-        handleUserActivity(); // Mark as active
-        
+        handleUserActivity(); 
         const scrollTop = window.scrollY;
         const docHeight = document.documentElement.scrollHeight - window.innerHeight;
         const scrollPercent = docHeight > 0 ? Math.round((scrollTop / docHeight) * 100) : 0;
         
-        // Only update if deeper than before
         if (scrollPercent > sessionData.current.maxScroll) {
             sessionData.current.maxScroll = scrollPercent;
         }
@@ -164,19 +167,18 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     const handleCopy = () => {
         const selection = window.getSelection()?.toString();
         if (selection && selection.length > 10) {
-             const cleanText = selection.substring(0, 200); // Truncate
+             const cleanText = selection.substring(0, 200); 
              sessionData.current.pendingInteractions.push({
                  contentType: 'copy',
                  contentId: contentId || 'unknown',
                  text: cleanText,
                  timestamp: new Date()
              });
-             // Force flush for immediate capture
              sendData(false, true); 
         }
     };
 
-    // Audio Event Handler (Dispatched from AudioPlayer)
+    // Audio Event Handler
     const handleAudioEvent = (e: any) => {
         const { action, articleId } = e.detail;
         sessionData.current.pendingInteractions.push({
@@ -185,7 +187,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             audioAction: action,
             timestamp: new Date()
         });
-        // We don't force flush for audio, let it ride the next heartbeat
     };
 
     const events = ['mousedown', 'keydown', 'touchstart'];
@@ -194,7 +195,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     window.addEventListener('copy', handleCopy); 
     window.addEventListener('narrative-audio-event', handleAudioEvent as EventListener); 
 
-    // Cleanup
     return () => {
         events.forEach(ev => window.removeEventListener(ev, handleUserActivity));
         window.removeEventListener('scroll', handleScroll);
@@ -202,21 +202,21 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         window.removeEventListener('narrative-audio-event', handleAudioEvent as EventListener);
         if (sessionData.current.idleTimer) clearTimeout(sessionData.current.idleTimer);
     };
-  }, [contentId]); // Re-bind if contentId changes
+  }, [contentId, sendData]);
 
-  // 4. The Heartbeat Interval (Every 30s)
+  // 5. The Heartbeat Interval
   useEffect(() => {
     const interval = setInterval(() => {
         sendData(false);
     }, HEARTBEAT_INTERVAL);
     return () => clearInterval(interval);
-  }, [isRadioPlaying, location.pathname, contentId]); 
+  }, [sendData]); 
 
-  // 5. The \"Exit Beacon\" (Tab Close / Hide)
+  // 6. The "Exit Beacon"
   useEffect(() => {
     const handleVisibilityChange = () => {
         if (document.visibilityState === 'hidden') {
-            sendData(true); // Send beacon immediately when hiding
+            sendData(true); 
         }
     };
 
@@ -226,7 +226,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     return () => {
         window.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [sendData]);
 
   return null; 
 };

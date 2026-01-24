@@ -18,6 +18,10 @@ interface IDashboardStats {
   systemConfigs: number;
   systemStatus: string;
   databaseStatus: string;
+  // NEW: Deep Engagement Metrics
+  avgSessionTime?: number;
+  avgScrollDepth?: number;
+  audioRetention?: number;
 }
 
 interface IChartDataPoint { _id: string; count: number; }
@@ -36,6 +40,15 @@ const AdminDashboard: React.FC = () => {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  // Helper to format seconds into m s
+  const formatSeconds = (seconds: number) => {
+    if (!seconds) return '0s';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    if (m === 0) return `${s}s`;
+    return `${m}m ${s}s`;
+  };
 
   if (loading) return <PageLoader />;
 
@@ -62,7 +75,7 @@ const AdminDashboard: React.FC = () => {
     <div>
       <AdminPageHeader title="System Overview" description="Real-time metrics and system health." />
       
-      {/* Replaced Tailwind Grid with CSS Grid */}
+      {/* 1. Primary Counters */}
       <div className="admin-grid-3" style={{marginBottom: '32px'}}>
         <AdminCard title="System Status">
           <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
@@ -81,6 +94,30 @@ const AdminDashboard: React.FC = () => {
           <p style={{fontSize:'2rem', fontWeight:'bold'}}>{stats?.activeArticles || 0}</p>
           <p style={{color:'#64748b', fontSize:'0.8rem'}}>Archived: {stats?.archivedArticles}</p>
         </AdminCard>
+      </div>
+
+      {/* 2. NEW: Deep Insight Metrics */}
+      <div className="admin-grid-3" style={{marginBottom: '32px'}}>
+          <AdminCard title="Real Attention">
+              <p style={{fontSize:'2rem', fontWeight:'bold', color: '#7c3aed'}}>
+                  {formatSeconds(stats?.avgSessionTime || 0)}
+              </p>
+              <p style={{color:'#64748b', fontSize:'0.8rem'}}>Avg. Session Duration</p>
+          </AdminCard>
+
+          <AdminCard title="Content Depth">
+              <p style={{fontSize:'2rem', fontWeight:'bold', color: '#0891b2'}}>
+                  {stats?.avgScrollDepth || 0}%
+              </p>
+              <p style={{color:'#64748b', fontSize:'0.8rem'}}>Avg. Scroll per Article</p>
+          </AdminCard>
+
+          <AdminCard title="Audio Stickiness">
+              <p style={{fontSize:'2rem', fontWeight:'bold', color: '#db2777'}}>
+                  {stats?.audioRetention || 0}%
+              </p>
+              <p style={{color:'#64748b', fontSize:'0.8rem'}}>Radio Completion Rate</p>
+          </AdminCard>
       </div>
 
       <AdminCard title="Activity Trend">

@@ -9,6 +9,8 @@
   --admin-border: #e2e8f0;
   --admin-text-primary: #1e293b;
   --admin-text-secondary: #64748b;
+  --admin-danger: #ef4444;
+  --admin-success: #10b981;
 }
 
 /* --- Global Admin Reset --- */
@@ -125,14 +127,20 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   margin-bottom: 24px;
   overflow: hidden;
+  height: 100%; /* Ensure full height in flex/grid */
+  display: flex;
+  flex-direction: column;
 }
 .admin-card-header {
   padding: 16px 24px;
   border-bottom: 1px solid var(--admin-bg);
   background: #fdfdfd;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-.admin-card-body { padding: 24px; }
+.admin-card-body { padding: 24px; flex: 1; }
 
 /* Grid System */
 .admin-grid-3 {
@@ -145,8 +153,15 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 24px;
 }
+/* NEW: Split Grid for Graphs */
+.admin-grid-split {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+}
+
 @media (max-width: 1024px) {
-  .admin-grid-3, .admin-grid-2 { grid-template-columns: 1fr; }
+  .admin-grid-3, .admin-grid-2, .admin-grid-split { grid-template-columns: 1fr; }
 }
 
 /* Tables */
@@ -203,7 +218,7 @@
 }
 .form-input:focus { outline: 2px solid var(--admin-sidebar-active); border-color: transparent; }
 
-/* Icons (The Fix) */
+/* Icons */
 .icon-sm { width: 20px; height: 20px; display: block; }
 .icon-md { width: 24px; height: 24px; display: block; }
 
@@ -213,8 +228,12 @@
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
 .gap-2 { gap: 8px; }
 .mb-4 { margin-bottom: 16px; }
+.fade-in { animation: fadeIn 0.3s ease-in; }
 
-/* --- Append to src/pages/admin/Admin.css --- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
 /* Tabs (for Newsroom) */
 .admin-tabs {
@@ -239,7 +258,7 @@
   border-bottom-color: var(--admin-sidebar-active);
 }
 
-/* Alert Box (for Warnings) */
+/* Alert Box */
 .admin-alert {
   padding: 16px;
   border-radius: 8px;
@@ -254,9 +273,75 @@
 .alert-title { font-weight: bold; margin-bottom: 4px; display: block; }
 .alert-desc { font-size: 0.9rem; }
 
-/* Code/Monospace (for Config & Prompts) */
+/* Code/Monospace */
 .font-mono {
   font-family: 'Courier New', Courier, monospace;
   font-size: 0.85rem;
   line-height: 1.5;
+}
+
+/* --- NEW: Search Intelligence Styles --- */
+.search-list-container {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.search-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.search-item:last-child {
+    border-bottom: none;
+}
+
+.search-rank {
+    font-weight: 700;
+    color: var(--admin-sidebar-active);
+    width: 30px;
+}
+
+.search-term {
+    flex: 1;
+    font-weight: 500;
+    color: var(--admin-text-primary);
+}
+
+.search-count {
+    background: #f1f5f9;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    color: var(--admin-text-secondary);
+    font-weight: 600;
+}
+
+/* Gap Item Variance */
+.gap-item .search-term {
+    color: var(--admin-danger); /* Red text for warnings/gaps */
+}
+.gap-item .search-count {
+    background: #fef2f2;
+    color: var(--admin-danger);
+}
+
+.empty-text {
+    color: var(--admin-text-secondary);
+    font-style: italic;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--admin-text-secondary);
+    font-style: italic;
+    background: #f8fafc;
+    border-radius: 8px;
 }

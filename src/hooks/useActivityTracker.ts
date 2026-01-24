@@ -29,9 +29,8 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     isActive: true,
     idleTimer: null as any,
     maxScroll: 0,
-    // OPTIMIZATION: Calculate word count once per content load
     cachedWordCount: 0,
-    // Interaction Queue for "one-off" events like Copies or Audio Skips
+    hasStitchedSession: false, // Prevents duplicate link requests
     pendingInteractions: [] as any[]
   });
 
@@ -48,7 +47,25 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     sessionData.current.maxScroll = 0;
   }, []);
 
-  // 2. OPTIMIZATION: Calculate Word Count on Content Change
+  // 2. SESSION STITCHING: Link anonymous session to User ID upon login
+  useEffect(() => {
+    if (user && sessionData.current.sessionId && !sessionData.current.hasStitchedSession) {
+        // Fire and forget: Tell backend this session belongs to this user
+        fetch(`${API_URL}/analytics/link-session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sessionId: sessionData.current.sessionId,
+                userId: user.uid
+            }),
+            keepalive: true
+        }).catch(err => console.warn('Session Stitching Failed', err));
+        
+        sessionData.current.hasStitchedSession = true;
+    }
+  }, [user]);
+
+  // 3. OPTIMIZATION: Calculate Word Count on Content Change
   useEffect(() => {
     if (contentId && (contentType === 'article' || contentType === 'narrative')) {
         // Run this in a timeout to allow DOM to settle
@@ -62,7 +79,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     }
   }, [contentId, contentType]);
 
-  // 3. Helper: The Data Sender
+  // 4. Helper: The Data Sender
   const sendData = useCallback((isBeacon = false, forceFlush = false) => {
     const now = Date.now();
     const elapsedSeconds = Math.round((now - sessionData.current.lastPingTime) / 1000);
@@ -100,7 +117,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             contentId: contentId,
             duration: elapsedSeconds,
             scrollDepth: sessionData.current.maxScroll,
-            // USE CACHED VALUE
             wordCount: sessionData.current.cachedWordCount, 
             timestamp: new Date()
         });
@@ -108,7 +124,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
 
     const payload = {
         sessionId: sessionData.current.sessionId,
-        userId: user?.uid,
+        userId: user?.uid, // Will attach User ID if available
         metrics,
         interactions, 
         meta: {
@@ -136,7 +152,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     sessionData.current.lastPingTime = now;
   }, [contentId, contentType, isRadioPlaying, user?.uid]);
 
-  // 4. Listeners
+  // 5. Listeners
   useEffect(() => {
     const handleUserActivity = () => {
         if (!sessionData.current.isActive) {
@@ -178,6 +194,26 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         }
     };
 
+    // NEW: Generic Click Tracker
+    // Looks for elements with 'data-track-click="event_name"'
+    const handleClick = (e: MouseEvent) => {
+        handleUserActivity();
+        const target = e.target as HTMLElement;
+        // Traverse up in case they clicked an icon inside a button
+        const trackable = target.closest('[data-track-click]');
+        
+        if (trackable) {
+            const actionName = trackable.getAttribute('data-track-click');
+            sessionData.current.pendingInteractions.push({
+                contentType: 'ui_interaction',
+                contentId: contentId || 'global',
+                text: actionName || 'unknown_click', // Storing action name in text field
+                timestamp: new Date()
+            });
+            // We don't force flush for clicks, just bundle them
+        }
+    };
+
     // Audio Event Handler
     const handleAudioEvent = (e: any) => {
         const { action, articleId } = e.detail;
@@ -193,18 +229,20 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     events.forEach(ev => window.addEventListener(ev, handleUserActivity, { passive: true }));
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('copy', handleCopy); 
+    window.addEventListener('click', handleClick); // Added click listener
     window.addEventListener('narrative-audio-event', handleAudioEvent as EventListener); 
 
     return () => {
         events.forEach(ev => window.removeEventListener(ev, handleUserActivity));
         window.removeEventListener('scroll', handleScroll);
         window.removeEventListener('copy', handleCopy);
+        window.removeEventListener('click', handleClick);
         window.removeEventListener('narrative-audio-event', handleAudioEvent as EventListener);
         if (sessionData.current.idleTimer) clearTimeout(sessionData.current.idleTimer);
     };
   }, [contentId, sendData]);
 
-  // 5. The Heartbeat Interval
+  // 6. The Heartbeat Interval
   useEffect(() => {
     const interval = setInterval(() => {
         sendData(false);
@@ -212,7 +250,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     return () => clearInterval(interval);
   }, [sendData]); 
 
-  // 6. The "Exit Beacon"
+  // 7. The "Exit Beacon"
   useEffect(() => {
     const handleVisibilityChange = () => {
         if (document.visibilityState === 'hidden') {

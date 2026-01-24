@@ -9,12 +9,18 @@ const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 const ACTIVITY_TIMEOUT = 60000;   // 1 minute idle = inactive
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// UPDATED: Now actively uses contentId and contentType if provided, 
-// while maintaining URL-based fallback for backward compatibility.
-export const useActivityTracker = (contentId?: string, contentType?: 'article' | 'narrative' | 'feed') => {
+// FIX: We accept 'any' here to prevent build errors from legacy components (like UnifiedFeed)
+// passing objects/maps. We then sanitize them inside.
+export const useActivityTracker = (rawId?: any, rawType?: any) => {
   const location = useLocation();
   const { isPlaying: isRadioPlaying } = useAudio();
   const { user } = useAuth();
+
+  // SANITIZATION: Only accept strings. Ignore Maps/Objects from legacy calls.
+  const contentId = (typeof rawId === 'string') ? rawId : undefined;
+  const contentType = (typeof rawType === 'string' && ['article', 'narrative', 'feed'].includes(rawType)) 
+    ? rawType as 'article' | 'narrative' | 'feed' 
+    : undefined;
   
   // Refs to hold mutable state without triggering re-renders
   const sessionData = useRef({
@@ -23,7 +29,7 @@ export const useActivityTracker = (contentId?: string, contentType?: 'article' |
     lastPingTime: Date.now(),
     isActive: true,
     idleTimer: null as any,
-    // NEW: Track maximum scroll depth for this session/page view
+    // Track maximum scroll depth for this session/page view
     maxScroll: 0
   });
 
@@ -51,7 +57,7 @@ export const useActivityTracker = (contentId?: string, contentType?: 'article' |
         return; 
     }
 
-    // Determine context based on arguments first, then URL (Fallback)
+    // Determine context based on validated arguments first, then URL (Fallback)
     const path = window.location.pathname;
     const isArticle = contentType === 'article' || path.includes('/article/');
     const isNarrative = contentType === 'narrative' || path.includes('/narrative/');
@@ -67,7 +73,7 @@ export const useActivityTracker = (contentId?: string, contentType?: 'article' |
         feed: isFeed ? elapsedSeconds : 0
     };
 
-    // NEW: specific interaction object if we have an ID
+    // NEW: specific interaction object if we have a valid ID
     const currentInteraction = contentId ? [{
         contentType: contentType || (isArticle ? 'article' : 'narrative'),
         contentId: contentId,

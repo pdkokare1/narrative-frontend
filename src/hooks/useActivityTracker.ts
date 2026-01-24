@@ -9,7 +9,9 @@ const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 const ACTIVITY_TIMEOUT = 60000;   // 1 minute idle = inactive
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-export const useActivityTracker = () => {
+// FIX: Accept optional arguments (legacyId, legacyType) so existing components 
+// like UnifiedFeed.tsx don't break the build. We ignore them and use internal logic.
+export const useActivityTracker = (legacyId?: any, legacyType?: any) => {
   const location = useLocation();
   const { isPlaying: isRadioPlaying } = useAudio();
   const { user } = useAuth();
@@ -45,7 +47,7 @@ export const useActivityTracker = () => {
         return; 
     }
 
-    // Determine context
+    // Determine context based on URL, not passed args
     const path = window.location.pathname;
     const isArticle = path.includes('/article/');
     const isNarrative = path.includes('/narrative/');
@@ -120,7 +122,7 @@ export const useActivityTracker = () => {
         sendData(false);
     }, HEARTBEAT_INTERVAL);
     return () => clearInterval(interval);
-  }, [isRadioPlaying, location.pathname]); // Re-create if context changes to capture new state
+  }, [isRadioPlaying, location.pathname]); 
 
   // 5. The "Exit Beacon" (Tab Close / Hide)
   useEffect(() => {
@@ -131,7 +133,6 @@ export const useActivityTracker = () => {
     };
 
     window.addEventListener('visibilitychange', handleVisibilityChange);
-    // 'beforeunload' is less reliable on mobile, but good fallback
     window.addEventListener('beforeunload', () => sendData(true));
 
     return () => {
@@ -139,5 +140,5 @@ export const useActivityTracker = () => {
     };
   }, []);
 
-  return null; // This hook renders nothing
+  return null; 
 };

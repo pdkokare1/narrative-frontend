@@ -185,7 +185,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     sessionData.current.lastPingTime = now;
   }, [contentId, contentType, isRadioPlaying, user?.uid]);
 
-  // 6. Listeners (Same as before)
+  // 6. Listeners (Same as before + NEW Impression Listener)
   useEffect(() => {
     const handleUserActivity = () => {
         // Update the strict attention timer
@@ -252,12 +252,26 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         });
     };
 
+    // NEW: Capture Feed Impressions
+    const handleImpression = (e: any) => {
+        const { itemId, itemType, category } = e.detail;
+        sessionData.current.pendingInteractions.push({
+            contentType: 'impression', // NEW Type
+            contentId: itemId,
+            text: `${itemType}:${category}`, // Meta info for easy parsing
+            timestamp: new Date()
+        });
+        // Optional: Trigger send if we want near real-time, 
+        // but batching (default) is better for performance.
+    };
+
     const events = ['mousedown', 'keydown', 'touchstart'];
     events.forEach(ev => window.addEventListener(ev, handleUserActivity, { passive: true }));
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('copy', handleCopy); 
     window.addEventListener('click', handleClick); 
     window.addEventListener('narrative-audio-event', handleAudioEvent as EventListener); 
+    window.addEventListener('narrative-impression', handleImpression as EventListener);
 
     return () => {
         events.forEach(ev => window.removeEventListener(ev, handleUserActivity));
@@ -265,6 +279,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         window.removeEventListener('copy', handleCopy);
         window.removeEventListener('click', handleClick);
         window.removeEventListener('narrative-audio-event', handleAudioEvent as EventListener);
+        window.removeEventListener('narrative-impression', handleImpression as EventListener);
         if (sessionData.current.idleTimer) clearTimeout(sessionData.current.idleTimer);
     };
   }, [contentId, sendData]);

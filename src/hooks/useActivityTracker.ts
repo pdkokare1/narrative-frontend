@@ -29,39 +29,38 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     lastPingTime: Date.now(),
     isActive: true,
     idleTimer: null as any,
-    // Track maximum scroll depth for this session/page view
-    maxScroll: 0
+    maxScroll: 0,
+    // NEW: Interaction Queue for "one-off" events like Copies or Audio Skips
+    pendingInteractions: [] as any[]
   });
 
   // 1. Initialize Session ID (Once per page load)
   useEffect(() => {
     if (!sessionData.current.sessionId) {
-      // Simple random ID generation (sufficient for analytics)
       sessionData.current.sessionId = 
         Date.now().toString(36) + Math.random().toString(36).substring(2);
       
       console.log('Analytics Session Started:', sessionData.current.sessionId);
     }
-    // Reset scroll on mount
     sessionData.current.maxScroll = 0;
   }, []);
 
   // 2. Helper: The Data Sender
-  const sendData = (isBeacon = false) => {
+  const sendData = (isBeacon = false, forceFlush = false) => {
     const now = Date.now();
     const elapsedSeconds = Math.round((now - sessionData.current.lastPingTime) / 1000);
     
-    // Only send if active and time has passed
-    if (elapsedSeconds <= 0 || !sessionData.current.isActive) {
+    // Only send if active and time has passed (unless forcing a flush of interactions)
+    if (!forceFlush && (elapsedSeconds <= 0 || !sessionData.current.isActive)) {
         sessionData.current.lastPingTime = now;
         return; 
     }
 
-    // Determine context based on validated arguments first, then URL (Fallback)
+    // Determine context
     const path = window.location.pathname;
     const isArticle = contentType === 'article' || path.includes('/article/');
     const isNarrative = contentType === 'narrative' || path.includes('/narrative/');
-    const isRadio = isRadioPlaying; // Can be true even if on other pages
+    const isRadio = isRadioPlaying; 
     const isFeed = contentType === 'feed' || (!isArticle && !isNarrative);
 
     // Prepare Metrics
@@ -73,20 +72,28 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         feed: isFeed ? elapsedSeconds : 0
     };
 
-    // NEW: specific interaction object if we have a valid ID
-    const currentInteraction = contentId ? [{
-        contentType: contentType || (isArticle ? 'article' : 'narrative'),
-        contentId: contentId,
-        duration: elapsedSeconds,
-        scrollDepth: sessionData.current.maxScroll,
-        timestamp: new Date()
-    }] : [];
+    // Prepare Interactions: Combine the "Time" interaction with any "Pending" events
+    const interactions = [...sessionData.current.pendingInteractions];
+    
+    // Clear pending queue immediately after grabbing them
+    sessionData.current.pendingInteractions = [];
+
+    // Add current view duration interaction
+    if (contentId) {
+        interactions.push({
+            contentType: contentType || (isArticle ? 'article' : 'narrative'),
+            contentId: contentId,
+            duration: elapsedSeconds,
+            scrollDepth: sessionData.current.maxScroll,
+            timestamp: new Date()
+        });
+    }
 
     const payload = {
         sessionId: sessionData.current.sessionId,
         userId: user?.uid,
         metrics,
-        interactions: currentInteraction, // Send detailed interaction
+        interactions, 
         meta: {
             platform: 'web',
             userAgent: navigator.userAgent
@@ -94,16 +101,14 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     };
 
     if (isBeacon) {
-        // Beacon requires Blob for JSON
         const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
         navigator.sendBeacon(`${API_URL}/analytics/track`, blob);
     } else {
-        // Standard Heartbeat
         fetch(`${API_URL}/analytics/track`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
-            keepalive: true // Crucial for reliable background sending
+            keepalive: true 
         }).catch(err => console.warn('Analytics Error', err));
     }
 
@@ -111,49 +116,73 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     sessionData.current.lastPingTime = now;
   };
 
-  // 3. User Activity Listeners (Mouse/Scroll/Touch)
+  // 3. Listeners
   useEffect(() => {
     const handleUserActivity = () => {
         if (!sessionData.current.isActive) {
             sessionData.current.isActive = true;
-            sessionData.current.lastPingTime = Date.now(); // Reset clock on resume
+            sessionData.current.lastPingTime = Date.now(); 
         }
-        
-        // Reset Idle Timer
         if (sessionData.current.idleTimer) clearTimeout(sessionData.current.idleTimer);
-        
         sessionData.current.idleTimer = setTimeout(() => {
             sessionData.current.isActive = false;
         }, ACTIVITY_TIMEOUT);
     };
 
-    // NEW: Specific Scroll Handler to calculate percentage
     const handleScroll = () => {
-        handleUserActivity(); // Mark as active
-        
+        handleUserActivity();
         const scrollTop = window.scrollY;
         const docHeight = document.documentElement.scrollHeight - window.innerHeight;
         const scrollPercent = docHeight > 0 ? Math.round((scrollTop / docHeight) * 100) : 0;
-        
-        // Only update if deeper than before
         if (scrollPercent > sessionData.current.maxScroll) {
             sessionData.current.maxScroll = scrollPercent;
         }
     };
 
+    // NEW: Handle Copy Event
+    const handleCopy = () => {
+        const selection = window.getSelection()?.toString();
+        if (selection && selection.length > 10) {
+             const cleanText = selection.substring(0, 200); // Truncate
+             sessionData.current.pendingInteractions.push({
+                 contentType: 'copy',
+                 contentId: contentId || 'unknown',
+                 text: cleanText,
+                 timestamp: new Date()
+             });
+             // Force flush for immediate capture
+             sendData(false, true); 
+        }
+    };
+
+    // NEW: Handle Audio Events (Dispatched from AudioPlayer)
+    const handleAudioEvent = (e: any) => {
+        const { action, articleId } = e.detail;
+        sessionData.current.pendingInteractions.push({
+            contentType: 'audio_action',
+            contentId: articleId,
+            audioAction: action,
+            timestamp: new Date()
+        });
+        // We don't force flush for audio, let it ride the next heartbeat
+    };
+
     const events = ['mousedown', 'keydown', 'touchstart'];
     events.forEach(ev => window.addEventListener(ev, handleUserActivity, { passive: true }));
     window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('copy', handleCopy); 
+    window.addEventListener('narrative-audio-event', handleAudioEvent as EventListener); 
 
-    // Cleanup
     return () => {
         events.forEach(ev => window.removeEventListener(ev, handleUserActivity));
         window.removeEventListener('scroll', handleScroll);
+        window.removeEventListener('copy', handleCopy);
+        window.removeEventListener('narrative-audio-event', handleAudioEvent as EventListener);
         if (sessionData.current.idleTimer) clearTimeout(sessionData.current.idleTimer);
     };
-  }, []);
+  }, [contentId]); // Re-bind if contentId changes
 
-  // 4. The Heartbeat Interval (Every 30s)
+  // 4. Heartbeat
   useEffect(() => {
     const interval = setInterval(() => {
         sendData(false);
@@ -161,17 +190,15 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     return () => clearInterval(interval);
   }, [isRadioPlaying, location.pathname, contentId]); 
 
-  // 5. The "Exit Beacon" (Tab Close / Hide)
+  // 5. Exit Beacon
   useEffect(() => {
     const handleVisibilityChange = () => {
         if (document.visibilityState === 'hidden') {
-            sendData(true); // Send beacon immediately when hiding
+            sendData(true); 
         }
     };
-
     window.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', () => sendData(true));
-
     return () => {
         window.removeEventListener('visibilitychange', handleVisibilityChange);
     };

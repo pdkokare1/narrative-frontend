@@ -21,8 +21,9 @@ const DataTransparencyModal: React.FC<Props> = ({ onClose }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Note: getUserStats returns the object directly, not wrapped in another 'data' object
     api.get('/analytics/user-stats')
-      .then(res => setStats(res.data)) // Corrected: getUserStats returns object directly, not { data: ... }
+      .then(res => setStats(res.data)) 
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);

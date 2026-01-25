@@ -16,7 +16,7 @@ import './App.css';
 import './MyDashboard.css';
 
 // --- ICONS ---
-import { Shield, TrendingUp, Snowflake, ChevronRight, Target, Zap, Clock, BookOpen } from 'lucide-react';
+import { Shield, TrendingUp, Snowflake, ChevronRight, Target, Zap, Clock, BookOpen, Award } from 'lucide-react';
 
 import DashboardSkeleton from './components/ui/DashboardSkeleton';
 import Card from './components/ui/Card';
@@ -58,6 +58,14 @@ const formatTime = (seconds: number) => {
   const m = Math.floor(seconds / 60);
   const s = Math.round(seconds % 60);
   return `${m}m ${s}s`;
+};
+
+// --- NEW: Reader Persona Logic ---
+const getReaderPersona = (avgSpan: number, readCount: number) => {
+    if (readCount < 5) return { label: "Newcomer", color: "#9CA3AF", icon: BookOpen, desc: "Start reading to unlock your persona." }; // Gray
+    if (avgSpan < 45) return { label: "Skimmer", color: "#F59E0B", icon: Zap, desc: "You prefer quick updates. Try slowing down for deeper insights." }; // Amber
+    if (avgSpan < 180) return { label: "Balanced Reader", color: "#3B82F6", icon: Clock, desc: "Good balance between speed and depth." }; // Blue
+    return { label: "Deep Diver", color: "#10B981", icon: Award, desc: "You engage deeply with content. Excellent focus!" }; // Emerald
 };
 
 interface MyDashboardProps {
@@ -183,6 +191,11 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
     const weeklyTarget = 3;
     const weeklyProgress = Math.min(100, Math.round((weeklyReads / weeklyTarget) * 100));
 
+    // Calculate Persona
+    const persona = getReaderPersona(statsData?.averageAttentionSpan || 0, statsData?.articlesReadCount || 0);
+    // Deep Diver Goal = 3 minutes (180s)
+    const attentionProgress = Math.min(((statsData?.averageAttentionSpan || 0) / 180) * 100, 100);
+
     return (
     <div className="dashboard-grid animate-fade-in">
         
@@ -239,6 +252,48 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
                 <div className="stat-label">Avg Trust Score</div>
             </Card>
         </div>
+
+        {/* --- ROW 1.5: READER PERSONA & FOCUS METER (NEW) --- */}
+        <Card 
+            className="full-width-card" 
+            style={{ 
+                borderLeft: `4px solid ${persona.color}`,
+                background: `linear-gradient(to right, ${persona.color}08, transparent)` 
+            }}
+        >
+            <div className="flex flex-col md:flex-row gap-4 md:items-center justify-between">
+                
+                {/* Persona Label */}
+                <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-full bg-white shadow-sm" style={{ color: persona.color }}>
+                        <persona.icon size={24} />
+                    </div>
+                    <div>
+                        <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">Reader Personality</div>
+                        <div className="text-xl font-bold" style={{ color: persona.color }}>{persona.label}</div>
+                    </div>
+                </div>
+
+                {/* Focus Meter */}
+                <div className="flex-1 md:max-w-md w-full">
+                    <div className="flex justify-between text-xs mb-1 text-gray-500">
+                        <span>Current Focus: {formatTime(statsData?.averageAttentionSpan || 0)}</span>
+                        <span>Goal: Deep Diver (3m+)</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div 
+                            className="h-3 rounded-full transition-all duration-1000 ease-out relative"
+                            style={{ width: `${attentionProgress}%`, backgroundColor: persona.color }}
+                        >
+                            <div className="absolute top-0 left-0 w-full h-full bg-white opacity-20 animate-pulse"></div>
+                        </div>
+                    </div>
+                    <p className="text-xs mt-1 text-gray-500 italic">
+                        {persona.desc}
+                    </p>
+                </div>
+            </div>
+        </Card>
 
         {/* --- ROW 2: HABITS & TRANSPARENCY (NEW) --- */}
         <div className="grid-2-col">

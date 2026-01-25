@@ -12,6 +12,7 @@ interface Props {
 interface UserStats {
   topicInterest: Record<string, number>;
   negativeInterest: Record<string, number>;
+  topicImpressions?: Record<string, number>; // Added for context
   leanExposure: { Left: number; Center: number; Right: number };
 }
 
@@ -21,7 +22,7 @@ const DataTransparencyModal: React.FC<Props> = ({ onClose }) => {
 
   useEffect(() => {
     api.get('/analytics/user-stats')
-      .then(res => setStats(res.data.data))
+      .then(res => setStats(res.data)) // Corrected: getUserStats returns object directly, not { data: ... }
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   }, []);
@@ -67,17 +68,23 @@ const DataTransparencyModal: React.FC<Props> = ({ onClose }) => {
 
                 {/* 2. What You Ignore */}
                 <div className="t-section">
-                   <h3><EyeOff className="inline-icon" size={16}/> Negative Filters</h3>
-                   <p className="t-desc">Topics we hide because you scroll past them often.</p>
+                   <h3><EyeOff className="inline-icon" size={16}/> Negative Filters (Survivorship Bias)</h3>
+                   <p className="t-desc">Topics we hide because you see them but rarely click.</p>
                    <div className="pill-cloud">
                       {Object.entries(stats.negativeInterest || {}).length > 0 ? (
                         Object.entries(stats.negativeInterest)
                           .sort(([,a], [,b]) => b - a)
-                          .map(([topic, score]) => (
-                            <span key={topic} className="t-pill negative">
-                                {topic}
-                            </span>
-                          ))
+                          .map(([topic, score]) => {
+                             // Contextual Data
+                             const seen = stats.topicImpressions ? (stats.topicImpressions[topic] || 0) : 0;
+                             return (
+                                <div key={topic} className="t-pill-wrapper" title={`Seen ${seen} times, rarely clicked.`}>
+                                    <span className="t-pill negative">
+                                        {topic} <span className="pill-detail">({seen}x)</span>
+                                    </span>
+                                </div>
+                             );
+                          })
                       ) : (
                         <span className="empty-text">No negative filters established.</span>
                       )}

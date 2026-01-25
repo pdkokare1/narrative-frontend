@@ -1,10 +1,11 @@
 // src/components/ui/Button.tsx
 import React from 'react';
 import useHaptic from '../../hooks/useHaptic';
-import './Button.css'; // We will create this next
+import './Button.css';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'icon' | 'text';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'icon' | 'text' | 'outline';
+  size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   isActive?: boolean;
   icon?: React.ReactNode;
@@ -12,6 +13,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const Button: React.FC<ButtonProps> = ({ 
   variant = 'primary', 
+  size = 'md',
   isLoading = false, 
   isActive = false,
   icon,
@@ -31,7 +33,7 @@ const Button: React.FC<ButtonProps> = ({
 
   return (
     <button 
-      className={`ui-btn btn-${variant} ${isActive ? 'active' : ''} ${className}`}
+      className={`ui-btn btn-${variant} btn-${size} ${isActive ? 'active' : ''} ${className}`}
       onClick={handleClick}
       disabled={isLoading || props.disabled}
       {...props}
@@ -40,7 +42,7 @@ const Button: React.FC<ButtonProps> = ({
         <div className="btn-spinner"></div>
       ) : (
         <>
-          {icon && <span className="btn-icon">{icon}</span>}
+          {icon && <span className="btn-icon-wrapper">{icon}</span>}
           {children}
         </>
       )}

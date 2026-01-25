@@ -149,10 +149,12 @@ export interface IUserProfile {
 // --- NEW: User Stats Interface (The Intelligence Layer) ---
 export interface IUserStats {
   userId: string;
-  totalTimeSpent: number; // seconds
+  totalTimeSpent: number; // seconds (LIFETIME)
   articlesReadCount: number; // True Reads
   averageAttentionSpan: number; // seconds
   engagementScore: number;
+  
+  // Personalization Data
   leanExposure: {
     Left: number;
     Center: number;
@@ -160,6 +162,15 @@ export interface IUserStats {
   };
   topicInterest: Record<string, number>;
   negativeInterest: Record<string, number>;
+  
+  // NEW: Daily Progress (Resets daily on backend)
+  dailyStats?: {
+    date: string;
+    timeSpent: number;   // seconds (TODAY)
+    articlesRead: number;
+    goalsMet: boolean;
+  };
+
   activityByHour: Record<string, number>;
   lastUpdated: string;
 }

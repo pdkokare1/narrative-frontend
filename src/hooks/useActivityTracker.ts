@@ -8,7 +8,6 @@ import { useAuth } from '../context/AuthContext';
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 const SAMPLING_INTERVAL = 1000;   // 1 second (High res sampling)
 const ACTIVITY_TIMEOUT = 60000;   // 1 minute idle = inactive
-// DELETED: const ATTENTION_THRESHOLD = 5000; // Replaced by Dynamic Logic
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const useActivityTracker = (rawId?: any, rawType?: any) => {
@@ -49,7 +48,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         Date.now().toString(36) + Math.random().toString(36).substring(2);
       
       sessionStorage.setItem('current_analytics_session_id', sessionData.current.sessionId);
-      console.log('Analytics Session Started:', sessionData.current.sessionId);
     }
     sessionData.current.maxScroll = 0;
   }, []);
@@ -83,7 +81,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     }
     // Reset quarters on new content
     sessionData.current.quarters = [0, 0, 0, 0];
-    sessionData.current.lastScrollTop = window.scrollY; // Reset scroll tracker
+    sessionData.current.lastScrollTop = window.scrollY; 
   }, [contentId, contentType]);
 
   // 4. NEW: High-Resolution Sampling with Dynamic Attention
@@ -91,6 +89,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     const sampler = setInterval(() => {
         // Broad check: Is the session active? (60s timeout)
         if (!sessionData.current.isActive) return;
+
+        // OPTIMIZATION: Instant fail if tab is hidden (User tabbed away)
+        if (document.hidden) return; 
         
         const timeSinceInteraction = Date.now() - sessionData.current.lastActiveInteraction;
         

@@ -32,7 +32,7 @@ export const qualityColors: Record<string, string> = {
 const categoryColorsDark = ['#D4AF37', '#AA8C2C', '#F2D06B', '#8C7324', '#E6C657', '#997D26', '#D9B948', '#BF9E30', '#FFDE7D', '#735F1D'];
 const categoryColorsLight = ['#9C7C50', '#7A5F3A', '#B89668', '#5E492C', '#D6B485', '#4A3922', '#8F7249', '#A38253', '#E0C297', '#3D2F1C'];
 
-interface ThemeColors {
+export interface ThemeColors {
     textPrimary: string;
     textSecondary: string;
     textTertiary: string;
@@ -42,12 +42,18 @@ interface ThemeColors {
     accentPrimary: string;
     trendUp: string;
     trendDown: string;
+    
+    // Mapped aliases for compatibility
+    primary: string;
+    secondary: string;
+    charts: string[];
 }
 
 // --- Helper to get Theme Variables ---
-export const getChartTheme = (theme: string): ThemeColors => {
+export const getChartTheme = (theme: string = 'light'): ThemeColors => {
     const isDark = theme === 'dark';
-    return {
+    
+    const colors = {
         textPrimary: isDark ? '#EAEAEA' : '#1A1A1A',
         textSecondary: isDark ? '#999999' : '#5A5A5A',
         textTertiary: isDark ? '#666666' : '#8C8C8C',
@@ -57,6 +63,14 @@ export const getChartTheme = (theme: string): ThemeColors => {
         accentPrimary: isDark ? '#D4AF37' : '#9C7C50',
         trendUp: '#4E9F54',
         trendDown: '#CF5C5C',
+        secondaryColor: isDark ? '#8DABE0' : '#5C8BCF', // Blueish secondary
+    };
+
+    return {
+        ...colors,
+        primary: colors.accentPrimary,
+        secondary: colors.secondaryColor,
+        charts: colors.categoryPalette
     };
 };
 

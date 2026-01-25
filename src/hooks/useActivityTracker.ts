@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 const SAMPLING_INTERVAL = 1000;   // 1 second (High res sampling)
 const ACTIVITY_TIMEOUT = 60000;   // 1 minute idle = inactive
-const ATTENTION_THRESHOLD = 5000; // 5 seconds (Strict attention timeout)
+// DELETED: const ATTENTION_THRESHOLD = 5000; // Replaced by Dynamic Logic
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const useActivityTracker = (rawId?: any, rawType?: any) => {
@@ -26,17 +26,20 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
   const sessionData = useRef({
     sessionId: '',
     accumulatedTime: { total: 0, article: 0, radio: 0, narrative: 0, feed: 0 },
-    // NEW: Track seconds spent in each quarter of the page [Q1, Q2, Q3, Q4]
     quarters: [0, 0, 0, 0], 
     lastPingTime: Date.now(),
     isActive: true,
-    // NEW: Strict interaction tracking for "Active Gaze"
     lastActiveInteraction: Date.now(),
     idleTimer: null as any,
     maxScroll: 0,
     cachedWordCount: 0,
     hasStitchedSession: false,
-    pendingInteractions: [] as any[]
+    pendingInteractions: [] as any[],
+    
+    // NEW: Velocity Tracking
+    lastScrollTop: 0,
+    lastScrollTime: Date.now(),
+    scrollVelocity: 0 // pixels per ms
   });
 
   // 1. Initialize Session ID
@@ -80,30 +83,33 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     }
     // Reset quarters on new content
     sessionData.current.quarters = [0, 0, 0, 0];
+    sessionData.current.lastScrollTop = window.scrollY; // Reset scroll tracker
   }, [contentId, contentType]);
 
-  // 4. NEW: High-Resolution Sampling (1s Interval)
-  // This tracks *where* they are every second to build the Quarter distribution
+  // 4. NEW: High-Resolution Sampling with Dynamic Attention
   useEffect(() => {
     const sampler = setInterval(() => {
         // Broad check: Is the session active? (60s timeout)
         if (!sessionData.current.isActive) return;
         
-        // Strict check: Has the user interacted in the last 5 seconds?
-        // This prevents "Scroll & Park" from inflating the reading depth.
         const timeSinceInteraction = Date.now() - sessionData.current.lastActiveInteraction;
-        if (timeSinceInteraction > ATTENTION_THRESHOLD) return;
+        
+        // NEW: Dynamic Attention Threshold
+        // If velocity is low (< 0.05 px/ms), they are likely "Reading" -> Allow 20s pause
+        // If velocity is high (Scrolling), they are "Scanning" -> Strict 5s pause
+        const isReading = sessionData.current.scrollVelocity < 0.05;
+        const dynamicThreshold = isReading ? 20000 : 5000;
+
+        if (timeSinceInteraction > dynamicThreshold) return;
 
         const scrollTop = window.scrollY;
         const docHeight = document.documentElement.scrollHeight - window.innerHeight;
         
         if (docHeight > 0) {
             const pct = scrollTop / docHeight;
-            // Map 0.0-1.0 to 0-3 (Q1-Q4)
             const quarter = Math.min(Math.floor(pct * 4), 3);
             sessionData.current.quarters[quarter]++;
         } else {
-            // If page is short, attribute to Q1
             sessionData.current.quarters[0]++;
         }
     }, SAMPLING_INTERVAL);
@@ -138,9 +144,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     const interactions = [...sessionData.current.pendingInteractions];
     sessionData.current.pendingInteractions = []; 
 
-    // Snapshot the accumulated quarters
     const currentQuarters = [...sessionData.current.quarters];
-    // Reset quarters after sending so we don't double count
     sessionData.current.quarters = [0, 0, 0, 0];
 
     if (contentId) {
@@ -150,7 +154,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             duration: elapsedSeconds,
             scrollDepth: sessionData.current.maxScroll,
             wordCount: sessionData.current.cachedWordCount, 
-            // NEW: Send the quarterly breakdown
             quarters: currentQuarters,
             timestamp: new Date()
         });
@@ -185,10 +188,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     sessionData.current.lastPingTime = now;
   }, [contentId, contentType, isRadioPlaying, user?.uid]);
 
-  // 6. Listeners (Same as before + NEW Impression Listener)
+  // 6. Listeners
   useEffect(() => {
     const handleUserActivity = () => {
-        // Update the strict attention timer
         sessionData.current.lastActiveInteraction = Date.now();
 
         if (!sessionData.current.isActive) {
@@ -203,7 +205,20 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
 
     const handleScroll = () => {
         handleUserActivity(); 
+        
         const scrollTop = window.scrollY;
+        
+        // NEW: Calculate Velocity
+        const now = Date.now();
+        const dt = now - sessionData.current.lastScrollTime;
+        if (dt > 50) { // Only calc every 50ms to avoid noise
+            const dy = Math.abs(scrollTop - sessionData.current.lastScrollTop);
+            sessionData.current.scrollVelocity = dy / dt; // px per ms
+            
+            sessionData.current.lastScrollTop = scrollTop;
+            sessionData.current.lastScrollTime = now;
+        }
+
         const docHeight = document.documentElement.scrollHeight - window.innerHeight;
         const scrollPercent = docHeight > 0 ? Math.round((scrollTop / docHeight) * 100) : 0;
         
@@ -252,17 +267,14 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         });
     };
 
-    // NEW: Capture Feed Impressions
     const handleImpression = (e: any) => {
         const { itemId, itemType, category } = e.detail;
         sessionData.current.pendingInteractions.push({
-            contentType: 'impression', // NEW Type
+            contentType: 'impression', 
             contentId: itemId,
-            text: `${itemType}:${category}`, // Meta info for easy parsing
+            text: `${itemType}:${category}`, 
             timestamp: new Date()
         });
-        // Optional: Trigger send if we want near real-time, 
-        // but batching (default) is better for performance.
     };
 
     const events = ['mousedown', 'keydown', 'touchstart'];

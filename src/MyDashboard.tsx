@@ -170,7 +170,20 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
 
   // --- RENDER FUNCTIONS ---
 
-  const renderOverview = () => (
+  const renderOverview = () => {
+    // CALCULATE DAILY PROGRESS
+    // Goal: 15 minutes (900 seconds)
+    // Use dailyStats.timeSpent (TODAY) instead of totalTimeSpent (LIFETIME)
+    const dailySeconds = statsData?.dailyStats?.timeSpent || 0;
+    const dailyGoal = 900; 
+    const dailyProgress = Math.min(100, Math.round((dailySeconds / dailyGoal) * 100));
+
+    // Weekly Goal (Example: 3 Deep Dives)
+    const weeklyReads = statsData?.articlesReadCount || 0; // This might be lifetime in current API, ideal to have weekly
+    const weeklyTarget = 3;
+    const weeklyProgress = Math.min(100, Math.round((weeklyReads / weeklyTarget) * 100));
+
+    return (
     <div className="dashboard-grid animate-fade-in">
         
         {/* --- ROW 1: KEY STATS (Enhanced) --- */}
@@ -241,30 +254,28 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
                     <div className="flex justify-between text-sm mb-1">
                         <span>Daily Reading (15m)</span>
                         <span className="font-bold text-primary">
-                             {/* Mock calculation for demo, eventually link to real goal */}
-                             {Math.min(100, Math.round(((statsData?.totalTimeSpent || 0) / 900) * 100))}%
+                             {dailyProgress}%
                         </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
-                            className="bg-primary h-2 rounded-full" 
-                            style={{ width: `${Math.min(100, Math.round(((statsData?.totalTimeSpent || 0) / 900) * 100))}%` }}
+                            className="bg-primary h-2 rounded-full transition-all duration-500" 
+                            style={{ width: `${dailyProgress}%` }}
                         ></div>
                     </div>
                 </div>
 
                 <div className="habit-item mt-2">
                     <div className="flex justify-between text-sm mb-1">
-                        <span>Deep Dives (3/wk)</span>
+                        <span>Deep Dives (True Reads)</span>
                         <span className="font-bold text-green-600">
-                             {/* Show True Reads vs Target */}
-                             {statsData?.articlesReadCount || 0}/3
+                             {weeklyReads}
                         </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
-                             className="bg-green-500 h-2 rounded-full" 
-                             style={{ width: `${Math.min(100, ((statsData?.articlesReadCount || 0) / 3) * 100)}%` }}
+                             className="bg-green-500 h-2 rounded-full transition-all duration-500" 
+                             style={{ width: `${weeklyProgress}%` }}
                         ></div>
                     </div>
                 </div>
@@ -333,7 +344,7 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
         </div>
 
     </div>
-  );
+  )};
 
   return (
     <div className="dashboard-container">

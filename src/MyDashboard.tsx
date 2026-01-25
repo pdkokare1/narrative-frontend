@@ -103,13 +103,13 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
   // 2. Bar Chart (Categories)
   const categoryReadData: ChartData<'bar'> = useMemo(() => {
     if (!statsData?.categoryDistribution_read) return { datasets: [] };
-    const sorted = [...statsData.categoryDistribution_read].sort((a,b) => b.count - a.count).slice(0, 5);
+    const sorted = [...statsData.categoryDistribution_read].sort((a: any, b: any) => b.count - a.count).slice(0, 5);
     return {
       labels: sorted.map((d: any) => d.category),
       datasets: [{
         label: 'Articles',
         data: sorted.map((d: any) => d.count),
-        backgroundColor: sorted.map((_, i) => themeConfig.charts[i % themeConfig.charts.length]),
+        backgroundColor: sorted.map((_: any, i: number) => themeConfig.charts[i % themeConfig.charts.length]),
         borderRadius: 4,
       }]
     };
@@ -253,7 +253,7 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
         <Card className="full-width-card">
             <SectionHeader title="Bias vs. Trust Map" subtitle="The political landscape of your reading" />
             <div className="chart-container-large">
-                <BiasMap articles={statsData?.allArticles || []} theme={themeConfig} />
+                <BiasMap articles={statsData?.allArticles || []} theme={theme} />
             </div>
         </Card>
 

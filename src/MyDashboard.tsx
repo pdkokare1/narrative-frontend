@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; 
 import { useQuery } from '@tanstack/react-query'; 
-import * as api from './services/api'; 
+import api from './services/api'; 
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
 import { useAuth } from './context/AuthContext'; 
 import useIsMobile from './hooks/useIsMobile';
@@ -15,7 +15,7 @@ import 'chartjs-adapter-date-fns';
 import './App.css';
 import './MyDashboard.css';
 
-// --- ICONS (New & Existing) ---
+// --- ICONS ---
 import { Shield, TrendingUp, Snowflake, ChevronRight, Target, Zap } from 'lucide-react';
 
 import DashboardSkeleton from './components/ui/DashboardSkeleton';
@@ -51,7 +51,11 @@ const getActionCount = (totals: any[], action: string) => {
   return item ? item.count : 0;
 };
 
-const MyDashboard: React.FC = () => {
+interface MyDashboardProps {
+    theme: string;
+}
+
+const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -74,7 +78,7 @@ const MyDashboard: React.FC = () => {
   });
 
   // Theme Logic
-  const theme = useMemo(() => getChartTheme(), []);
+  const themeConfig = useMemo(() => getChartTheme(theme), [theme]);
 
   // --- CHART DATA PREPARATION ---
   
@@ -87,14 +91,14 @@ const MyDashboard: React.FC = () => {
         {
           label: 'Articles Read',
           data: statsData.dailyCounts.map((d: any) => d.count),
-          borderColor: theme.primary,
-          backgroundColor: theme.primary + '33', // 20% opacity
+          borderColor: themeConfig.primary,
+          backgroundColor: themeConfig.primary + '33', // 20% opacity
           fill: true,
           tension: 0.4,
         }
       ]
     };
-  }, [statsData, theme]);
+  }, [statsData, themeConfig]);
 
   // 2. Bar Chart (Categories)
   const categoryReadData: ChartData<'bar'> = useMemo(() => {
@@ -105,11 +109,11 @@ const MyDashboard: React.FC = () => {
       datasets: [{
         label: 'Articles',
         data: sorted.map((d: any) => d.count),
-        backgroundColor: sorted.map((_, i) => Object.values(theme.charts)[i % 5]),
+        backgroundColor: sorted.map((_, i) => themeConfig.charts[i % themeConfig.charts.length]),
         borderRadius: 4,
       }]
     };
-  }, [statsData, theme]);
+  }, [statsData, themeConfig]);
 
   // 3. Bar Chart (Top Sources) - RESTORED
   const topSourcesData: ChartData<'bar'> = useMemo(() => {
@@ -120,11 +124,11 @@ const MyDashboard: React.FC = () => {
          datasets: [{
             label: 'Articles',
             data: sorted.map((d: any) => d.count),
-            backgroundColor: theme.secondary,
+            backgroundColor: themeConfig.secondary,
             borderRadius: 4
          }]
      };
-  }, [statsData, theme]);
+  }, [statsData, themeConfig]);
 
   // 4. Doughnut (Sentiment) - RESTORED
   const sentimentReadData: ChartData<'doughnut'> = useMemo(() => {
@@ -249,7 +253,7 @@ const MyDashboard: React.FC = () => {
         <Card className="full-width-card">
             <SectionHeader title="Bias vs. Trust Map" subtitle="The political landscape of your reading" />
             <div className="chart-container-large">
-                <BiasMap articles={statsData?.allArticles || []} theme={theme} />
+                <BiasMap articles={statsData?.allArticles || []} theme={themeConfig} />
             </div>
         </Card>
 
@@ -330,7 +334,13 @@ const MyDashboard: React.FC = () => {
         {activeTab === 'overview' && renderOverview()}
         
         {activeTab === 'saved' && (
-            <SavedArticles />
+            <SavedArticles 
+                onToggleSave={() => {}} 
+                onCompare={() => {}} 
+                onAnalyze={() => {}} 
+                onRead={() => {}} 
+                showTooltip={() => {}} 
+            />
         )}
 
         {activeTab === 'history' && (
@@ -341,7 +351,10 @@ const MyDashboard: React.FC = () => {
         )}
 
         {activeTab === 'settings' && (
-            <AccountSettings />
+            <AccountSettings 
+                currentFontSize="medium" 
+                onSetFontSize={() => {}} 
+            />
         )}
       </div>
 

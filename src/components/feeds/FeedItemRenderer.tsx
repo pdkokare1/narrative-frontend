@@ -66,11 +66,13 @@ const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({
             // 2. Dispatch Global Custom Event
             // This allows the global ActivityTracker to pick it up without 
             // needing to pass props through every intermediate component.
+            const safeCategory = item.category || 'General'; // Safety fallback
+            
             const event = new CustomEvent('narrative-impression', {
               detail: {
                 itemId: item._id,
                 itemType: isNarrative(item) ? 'Narrative' : 'Article',
-                category: item.category,
+                category: safeCategory,
                 timestamp: new Date()
               }
             });

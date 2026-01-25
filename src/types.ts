@@ -163,7 +163,10 @@ export interface IUserStats {
   topicInterest: Record<string, number>;
   negativeInterest: Record<string, number>;
   
-  // NEW: Daily Progress (Resets daily on backend)
+  // NEW: Impressions (What you saw)
+  topicImpressions?: Record<string, number>;
+
+  // Daily Progress (Resets daily on backend)
   dailyStats?: {
     date: string;
     timeSpent: number;   // seconds (TODAY)

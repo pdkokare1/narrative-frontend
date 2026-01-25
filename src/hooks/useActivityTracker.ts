@@ -148,6 +148,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     const currentQuarters = [...sessionData.current.quarters];
     sessionData.current.quarters = [0, 0, 0, 0];
 
+    // Determine Timezone for Streak Accuracy
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
     if (contentId) {
         interactions.push({
             contentType: contentType || (isArticle ? 'article' : 'narrative'),
@@ -156,6 +159,8 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             scrollDepth: sessionData.current.maxScroll,
             wordCount: sessionData.current.cachedWordCount, 
             quarters: currentQuarters,
+            // NEW: Add exact scroll position for "Resume Reading"
+            scrollPosition: Math.round(sessionData.current.lastScrollTop),
             timestamp: new Date()
         });
     }
@@ -168,7 +173,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         meta: {
             platform: 'web',
             userAgent: navigator.userAgent,
-            referrer: document.referrer || 'direct' 
+            referrer: document.referrer || 'direct',
+            // NEW: Send Timezone
+            timezone: userTimezone
         }
     };
 

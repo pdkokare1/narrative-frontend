@@ -136,6 +136,7 @@ export interface IUserProfile {
   currentStreak?: number;
   badges?: IBadge[];
   lastActiveDate?: string;
+  streakFreezes: number; // Added explicitly
   
   // Settings
   savedArticles: string[]; 
@@ -143,6 +144,24 @@ export interface IUserProfile {
   fcmToken?: string | null;
   
   createdAt?: string; // Added for Admin display
+}
+
+// --- NEW: User Stats Interface (The Intelligence Layer) ---
+export interface IUserStats {
+  userId: string;
+  totalTimeSpent: number; // seconds
+  articlesReadCount: number; // True Reads
+  averageAttentionSpan: number; // seconds
+  engagementScore: number;
+  leanExposure: {
+    Left: number;
+    Center: number;
+    Right: number;
+  };
+  topicInterest: Record<string, number>;
+  negativeInterest: Record<string, number>;
+  activityByHour: Record<string, number>;
+  lastUpdated: string;
 }
 
 // --- 5. Filters & Search ---

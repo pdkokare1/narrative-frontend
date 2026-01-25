@@ -16,7 +16,7 @@ import './App.css';
 import './MyDashboard.css';
 
 // --- ICONS ---
-import { Shield, TrendingUp, Snowflake, ChevronRight, Target, Zap } from 'lucide-react';
+import { Shield, TrendingUp, Snowflake, ChevronRight, Target, Zap, Clock, BookOpen } from 'lucide-react';
 
 import DashboardSkeleton from './components/ui/DashboardSkeleton';
 import Card from './components/ui/Card';
@@ -49,6 +49,15 @@ ChartJS.register(
 const getActionCount = (totals: any[], action: string) => {
   const item = (totals || []).find((t: any) => t.action === action);
   return item ? item.count : 0;
+};
+
+// Helper for Time Formatting
+const formatTime = (seconds: number) => {
+  if (!seconds || seconds === 0) return '0s';
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = Math.round(seconds % 60);
+  return `${m}m ${s}s`;
 };
 
 interface MyDashboardProps {
@@ -166,11 +175,22 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
         
         {/* --- ROW 1: KEY STATS (Enhanced) --- */}
         <div className="stats-row">
+            {/* 1. True Reads Card */}
             <Card className="stat-card">
-                <div className="stat-value">{statsData?.profile?.articlesViewedCount || 0}</div>
-                <div className="stat-label">Stories Read</div>
+                <div className="flex-row-between">
+                     <div className="stat-value">
+                        {/* Show True Reads, fall back to 0 */}
+                        {statsData?.articlesReadCount || 0}
+                     </div>
+                     <BookOpen size={24} className="text-gray-400 opacity-60" />
+                </div>
+                <div className="stat-label">True Reads</div>
+                <div className="text-xs text-gray-400 mt-1">
+                    out of {statsData?.profile?.articlesViewedCount || 0} clicks
+                </div>
             </Card>
 
+            {/* 2. Streak Card */}
             <Card className="stat-card highlight-card">
                 <div className="flex-row-between">
                     <div className="stat-value">
@@ -187,6 +207,18 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
                 </div>
             </Card>
 
+            {/* 3. Attention Span (NEW) */}
+            <Card className="stat-card">
+                <div className="flex-row-between">
+                     <div className="stat-value">
+                        {formatTime(statsData?.averageAttentionSpan || 0)}
+                     </div>
+                     <Clock size={24} className="text-gray-400 opacity-60" />
+                </div>
+                <div className="stat-label">Avg. Attention Span</div>
+            </Card>
+
+            {/* 4. Trust Score (Preserved) */}
             <Card className="stat-card">
                 <div className="stat-value">
                    {statsData?.qualityDistribution_read?.length ? 'B+' : '-'}
@@ -208,20 +240,32 @@ const MyDashboard: React.FC<MyDashboardProps> = ({ theme }) => {
                 <div className="habit-item">
                     <div className="flex justify-between text-sm mb-1">
                         <span>Daily Reading (15m)</span>
-                        <span className="font-bold text-primary">45%</span>
+                        <span className="font-bold text-primary">
+                             {/* Mock calculation for demo, eventually link to real goal */}
+                             {Math.min(100, Math.round(((statsData?.totalTimeSpent || 0) / 900) * 100))}%
+                        </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-primary h-2 rounded-full" style={{ width: '45%' }}></div>
+                        <div 
+                            className="bg-primary h-2 rounded-full" 
+                            style={{ width: `${Math.min(100, Math.round(((statsData?.totalTimeSpent || 0) / 900) * 100))}%` }}
+                        ></div>
                     </div>
                 </div>
 
                 <div className="habit-item mt-2">
                     <div className="flex justify-between text-sm mb-1">
                         <span>Deep Dives (3/wk)</span>
-                        <span className="font-bold text-green-600">1/3</span>
+                        <span className="font-bold text-green-600">
+                             {/* Show True Reads vs Target */}
+                             {statsData?.articlesReadCount || 0}/3
+                        </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-green-500 h-2 rounded-full" style={{ width: '33%' }}></div>
+                        <div 
+                             className="bg-green-500 h-2 rounded-full" 
+                             style={{ width: `${Math.min(100, ((statsData?.articlesReadCount || 0) / 3) * 100)}%` }}
+                        ></div>
                     </div>
                 </div>
             </Card>

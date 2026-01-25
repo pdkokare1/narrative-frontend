@@ -10,6 +10,7 @@
   font-family: var(--font-body);
   position: relative;
   overflow: hidden;
+  gap: 8px; /* Added gap for icon/text spacing */
 }
 
 .ui-btn:disabled {
@@ -18,16 +19,32 @@
   filter: grayscale(1);
 }
 
+/* --- SIZES --- */
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 10px;
+  border-radius: 16px;
+}
+
+.btn-md {
+  padding: 10px 20px;
+  font-size: 11px;
+  border-radius: 20px;
+}
+
+.btn-lg {
+  padding: 14px 28px;
+  font-size: 13px;
+  border-radius: 24px;
+}
+
 /* --- VARIANTS --- */
 
 /* 1. Primary (Gold Fill/Outline) */
 .btn-primary {
-  padding: 10px 20px;
   background: var(--accent-dim);
   border: 1px solid var(--accent-primary);
   color: var(--accent-primary);
-  border-radius: 20px;
-  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -42,12 +59,9 @@
 
 /* 2. Secondary (Glass/Ghost) */
 .btn-secondary {
-  padding: 10px 20px;
   background: transparent;
   border: 1px solid var(--border-color);
   color: var(--text-tertiary);
-  border-radius: 20px;
-  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -63,7 +77,7 @@
 .btn-icon {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: 50%; /* Force circle */
   background: transparent;
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
@@ -90,7 +104,6 @@
   color: var(--text-primary);
   font-weight: 700;
   text-transform: uppercase;
-  font-size: 11px;
   letter-spacing: 1px;
   border-bottom: 2px solid var(--accent-primary);
   border-radius: 0;
@@ -101,7 +114,28 @@
   padding-bottom: 4px;
 }
 
-/* --- INTERNAL SPINNER --- */
+/* 5. Outline (New) */
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn-outline:hover {
+  background: var(--accent-dim);
+  color: var(--accent-primary);
+}
+
+/* --- INTERNAL ELEMENTS --- */
+.btn-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .btn-spinner {
   width: 16px;
   height: 16px;

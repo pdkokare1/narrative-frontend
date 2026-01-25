@@ -15,15 +15,15 @@ import 'chartjs-adapter-date-fns';
 import './App.css';
 import './MyDashboard.css';
 
-// --- ICONS (New) ---
+// --- ICONS (New & Existing) ---
 import { Shield, TrendingUp, Snowflake, ChevronRight, Target, Zap } from 'lucide-react';
 
 import DashboardSkeleton from './components/ui/DashboardSkeleton';
 import Card from './components/ui/Card';
 import Button from './components/ui/Button';
 import SectionHeader from './components/ui/SectionHeader';
-import SavedArticles from './SavedArticles'; // Preserved
-import AccountSettings from './AccountSettings'; // Preserved
+import SavedArticles from './SavedArticles'; 
+import AccountSettings from './AccountSettings'; 
 
 // --- NEW MODAL ---
 import DataTransparencyModal from './components/modals/DataTransparencyModal';
@@ -61,7 +61,7 @@ const MyDashboard: React.FC = () => {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'all'>('week');
   const [showTransparency, setShowTransparency] = useState(false); // New State
 
-  // Fetch Data (Preserved Existing Logic)
+  // Fetch Data
   const { data: statsData, isLoading, error } = useQuery({
     queryKey: ['profileStats', timeRange],
     queryFn: async () => {
@@ -76,7 +76,9 @@ const MyDashboard: React.FC = () => {
   // Theme Logic
   const theme = useMemo(() => getChartTheme(), []);
 
-  // --- CHART DATA PREPARATION (Preserved) ---
+  // --- CHART DATA PREPARATION ---
+  
+  // 1. Line Chart (Stories over time)
   const storiesReadData: ChartData<'line'> = useMemo(() => {
     if (!statsData?.dailyCounts) return { datasets: [] };
     return {
@@ -86,7 +88,7 @@ const MyDashboard: React.FC = () => {
           label: 'Articles Read',
           data: statsData.dailyCounts.map((d: any) => d.count),
           borderColor: theme.primary,
-          backgroundColor: theme.primary + '33',
+          backgroundColor: theme.primary + '33', // 20% opacity
           fill: true,
           tension: 0.4,
         }
@@ -94,6 +96,7 @@ const MyDashboard: React.FC = () => {
     };
   }, [statsData, theme]);
 
+  // 2. Bar Chart (Categories)
   const categoryReadData: ChartData<'bar'> = useMemo(() => {
     if (!statsData?.categoryDistribution_read) return { datasets: [] };
     const sorted = [...statsData.categoryDistribution_read].sort((a,b) => b.count - a.count).slice(0, 5);
@@ -108,19 +111,35 @@ const MyDashboard: React.FC = () => {
     };
   }, [statsData, theme]);
 
+  // 3. Bar Chart (Top Sources) - RESTORED
   const topSourcesData: ChartData<'bar'> = useMemo(() => {
-     // Placeholder if source data isn't in backend yet, strictly preserving structure
+     if (!statsData?.sourceDistribution) return { labels: [], datasets: [] };
+     const sorted = [...statsData.sourceDistribution].sort((a: any, b: any) => b.count - a.count).slice(0, 5);
      return {
-         labels: [],
-         datasets: []
+         labels: sorted.map((d: any) => d.source),
+         datasets: [{
+            label: 'Articles',
+            data: sorted.map((d: any) => d.count),
+            backgroundColor: theme.secondary,
+            borderRadius: 4
+         }]
      };
-  }, [statsData]);
+  }, [statsData, theme]);
 
+  // 4. Doughnut (Sentiment) - RESTORED
   const sentimentReadData: ChartData<'doughnut'> = useMemo(() => {
-      // Placeholder structure
-      return { labels: [], datasets: [] };
+      if (!statsData?.sentimentDistribution) return { labels: [], datasets: [] };
+      return {
+        labels: statsData.sentimentDistribution.map((d: any) => d.label),
+        datasets: [{
+            data: statsData.sentimentDistribution.map((d: any) => d.count),
+            backgroundColor: statsData.sentimentDistribution.map((d: any) => sentimentColors[d.label as keyof typeof sentimentColors] || '#ccc'),
+            borderWidth: 0
+        }]
+      };
   }, [statsData]);
 
+  // 5. Doughnut (Quality)
   const qualityReadData: ChartData<'doughnut'> = useMemo(() => {
     if (!statsData?.qualityDistribution_read) return { datasets: [] };
     return {
@@ -141,7 +160,7 @@ const MyDashboard: React.FC = () => {
   const renderOverview = () => (
     <div className="dashboard-grid animate-fade-in">
         
-        {/* --- ROW 1: KEY STATS (Enhanced with Streak Freezes) --- */}
+        {/* --- ROW 1: KEY STATS (Enhanced) --- */}
         <div className="stats-row">
             <Card className="stat-card">
                 <div className="stat-value">{statsData?.profile?.articlesViewedCount || 0}</div>
@@ -157,7 +176,7 @@ const MyDashboard: React.FC = () => {
                 </div>
                 <div className="stat-label text-white">Current Streak</div>
                 
-                {/* NEW: Freeze Indicator */}
+                {/* Freeze Indicator */}
                 <div className="freeze-indicator mt-2 flex items-center gap-1 text-xs text-white opacity-90">
                     <Snowflake size={12} />
                     {statsData?.profile?.streakFreezes || 0} Freezes Available
@@ -175,7 +194,7 @@ const MyDashboard: React.FC = () => {
         {/* --- ROW 2: HABITS & TRANSPARENCY (NEW) --- */}
         <div className="grid-2-col">
             
-            {/* 1. Habit Tracking Card */}
+            {/* Habit Tracking Card */}
             <Card className="flex flex-col gap-3">
                 <div className="flex-row-between mb-2">
                     <h3 className="flex items-center gap-2"><Target size={18} /> Daily Habits</h3>
@@ -203,7 +222,7 @@ const MyDashboard: React.FC = () => {
                 </div>
             </Card>
 
-            {/* 2. Data Transparency Card */}
+            {/* Data Transparency Card */}
             <Card 
                 className="cursor-pointer hover:shadow-md transition-all flex flex-col justify-center items-center text-center gap-2"
                 onClick={() => setShowTransparency(true)}
@@ -219,7 +238,7 @@ const MyDashboard: React.FC = () => {
             </Card>
         </div>
 
-        {/* --- ROW 3: CHARTS (Preserved) --- */}
+        {/* --- ROW 3: BIG CHARTS (Reading Activity & Bias Map) --- */}
         <Card className="full-width-card">
             <SectionHeader title="Reading Activity" subtitle="Your consumption over time" />
             <div className="chart-container">
@@ -234,11 +253,26 @@ const MyDashboard: React.FC = () => {
             </div>
         </Card>
 
+        {/* --- ROW 4: DETAILED GRIDS (Restored All 4 Charts) --- */}
         <div className="charts-grid-row">
             <Card>
                 <h3>Top Categories</h3>
                 <div className="chart-container">
                     <Bar options={getBarChartOptions('', 'Articles', theme)} data={categoryReadData} />
+                </div>
+            </Card>
+
+            <Card>
+                <h3>Top Sources</h3>
+                <div className="chart-container">
+                    <Bar options={getBarChartOptions('', 'Articles', theme)} data={topSourcesData} />
+                </div>
+            </Card>
+
+            <Card>
+                <h3>Sentiment</h3>
+                <div className="chart-container">
+                    <Doughnut options={getDoughnutChartOptions('', theme)} data={sentimentReadData} />
                 </div>
             </Card>
 

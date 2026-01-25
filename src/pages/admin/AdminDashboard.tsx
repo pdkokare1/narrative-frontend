@@ -64,6 +64,12 @@ interface ISearchData {
     count: number;
 }
 
+interface IIgnoredTopic {
+    _id: string; // Topic name
+    userCount: number;
+    totalIntensity: number;
+}
+
 interface IExtendedDashboardData {
     stats: IDashboardStats;
     graphData: IChartDataPoint[];
@@ -71,6 +77,7 @@ interface IExtendedDashboardData {
     topSearches: ISearchData[];
     contentGaps?: ISearchData[];
     hourlyActivity?: number[]; 
+    mostIgnored?: IIgnoredTopic[]; // NEW
 }
 
 const AdminDashboard: React.FC = () => {
@@ -80,6 +87,7 @@ const AdminDashboard: React.FC = () => {
   
   const [topSearches, setTopSearches] = useState<ISearchData[]>([]);
   const [contentGaps, setContentGaps] = useState<ISearchData[]>([]);
+  const [mostIgnored, setMostIgnored] = useState<IIgnoredTopic[]>([]); // NEW
   const [hourlyActivity, setHourlyActivity] = useState<number[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -98,6 +106,7 @@ const AdminDashboard: React.FC = () => {
          
          if (data.contentGaps) setContentGaps(data.contentGaps);
          if (data.hourlyActivity) setHourlyActivity(data.hourlyActivity);
+         if (data.mostIgnored) setMostIgnored(data.mostIgnored); // NEW
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -271,8 +280,8 @@ const AdminDashboard: React.FC = () => {
           </AdminCard>
       </div>
 
-      {/* Row 5: Search Intelligence */}
-      <div className="admin-grid-split">
+      {/* Row 5: Search Intelligence & Survivorship Bias */}
+      <div className="admin-grid-3">
           {/* Column 1: Trends */}
           <AdminCard title="🔥 Trending Searches" icon="🔍">
             <div className="search-list-container">
@@ -297,9 +306,27 @@ const AdminDashboard: React.FC = () => {
                       <div className="search-count">{item.count}</div>
                   </div>
                 )) : (
-                  <p className="empty-text">No content gaps found. Good job!</p>
+                  <p className="empty-text">No content gaps found.</p>
                 )}
             </div>
+          </AdminCard>
+
+          {/* Column 3: NEW Survivorship Bias */}
+          <AdminCard title="👻 Top Ignored Topics" icon="🙈">
+             <div className="search-list-container">
+                {mostIgnored.length > 0 ? mostIgnored.map((item, index) => (
+                  <div key={index} className="search-item">
+                      <div className="search-rank">#{index + 1}</div>
+                      <div className="search-term">{item._id}</div> 
+                      <div className="search-count" title="Users Ignoring">{item.userCount} users</div>
+                  </div>
+                )) : (
+                  <p className="empty-text">No ignored topics detected yet.</p>
+                )}
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
+                Users see these often but rarely click.
+            </p>
           </AdminCard>
       </div>
 

@@ -26,7 +26,7 @@ export const useSessionCore = (
   // 2. Link Anonymous Session to User
   useEffect(() => {
     if (user && sessionRef.current.sessionId && !sessionRef.current.hasStitchedSession) {
-        fetch(\`\${ANALYTICS_CONFIG.API_URL}/analytics/link-session\`, {
+        fetch(`${ANALYTICS_CONFIG.API_URL}/analytics/link-session`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

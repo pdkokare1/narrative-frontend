@@ -1,16 +1,18 @@
 // src/hooks/useSmartResume.ts
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, RefObject } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ANALYTICS_CONFIG } from '../config/analyticsConfig';
 
 interface UseSmartResumeProps {
   articleId?: string;
-  minScrollThreshold?: number; // Don't prompt if they only read the header (e.g. 500px)
+  minScrollThreshold?: number; 
+  scrollRef?: RefObject<HTMLElement>; // Optional: If scrolling a specific div instead of window
 }
 
 export const useSmartResume = ({ 
   articleId, 
-  minScrollThreshold = 500 
+  minScrollThreshold = 500,
+  scrollRef
 }: UseSmartResumeProps) => {
   const { user } = useAuth();
   const [resumePosition, setResumePosition] = useState<number | null>(null);
@@ -51,13 +53,22 @@ export const useSmartResume = ({
   // 2. Action to perform the scroll
   const handleResume = useCallback(() => {
     if (resumePosition) {
-        window.scrollTo({
-            top: resumePosition,
-            behavior: 'smooth'
-        });
+        if (scrollRef?.current) {
+            // Scroll the container (Modal)
+            scrollRef.current.scrollTo({
+                top: resumePosition,
+                behavior: 'smooth'
+            });
+        } else {
+            // Scroll the window (Standard Page)
+            window.scrollTo({
+                top: resumePosition,
+                behavior: 'smooth'
+            });
+        }
         setResumePosition(null); // Clear prompt after using
     }
-  }, [resumePosition]);
+  }, [resumePosition, scrollRef]);
 
   return { resumePosition, handleResume };
 };

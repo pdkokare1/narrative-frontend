@@ -1,5 +1,5 @@
 // src/components/modals/NarrativeModal.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './NarrativeModal.css';
 import { INarrative } from '../../types';
@@ -7,6 +7,9 @@ import { getClusterById } from '../../services/articleService';
 import TopicTimeline from '../TopicTimeline';
 import { useAuth } from '../../context/AuthContext';
 import { LockIcon } from '../ui/Icons';
+import { useActivityTracker } from '../../hooks/useActivityTracker'; // NEW
+import { useSmartResume } from '../../hooks/useSmartResume'; // NEW
+import { useToast } from '../../context/ToastContext'; // NEW
 
 interface NarrativeModalProps {
   data: INarrative | null;
@@ -21,8 +24,32 @@ const NarrativeModal: React.FC<NarrativeModalProps> = ({ data, onClose }) => {
   const [clusterData, setClusterData] = useState<any>(null);
   const [loadingTimeline, setLoadingTimeline] = useState(false);
 
+  // Scroll Container Ref for Smart Resume
+  const modalContentRef = useRef<HTMLDivElement>(null);
+
   const { isGuest } = useAuth();
+  const { addToast } = useToast();
   const navigate = useNavigate();
+
+  // 1. TRACKING: Start monitoring time spent and engagement on this Narrative
+  useActivityTracker(data?._id, 'narrative');
+
+  // 2. SMART RESUME: Check if user has read this before
+  const { resumePosition, handleResume } = useSmartResume({
+      articleId: data?._id,
+      minScrollThreshold: 300,
+      scrollRef: modalContentRef // Pass the ref so we scroll the DIV, not the window
+  });
+
+  // 3. TOAST: Trigger popup if resume position is found
+  useEffect(() => {
+      if (resumePosition) {
+          addToast('Resume where you left off?', 'info', {
+              label: 'Resume',
+              onClick: handleResume
+          });
+      }
+  }, [resumePosition, addToast, handleResume]);
 
   useEffect(() => {
     if (activeTab === 'timeline' && !clusterData && data?.clusterId && !isGuest) {
@@ -63,7 +90,12 @@ const NarrativeModal: React.FC<NarrativeModalProps> = ({ data, onClose }) => {
 
   return (
     <div className="narrative-modal-overlay" onClick={handleOverlayClick}>
-      <div className="narrative-modal-content" onClick={(e) => e.stopPropagation()}>
+      {/* 4. Ref attached here to control scrolling */}
+      <div 
+        className="narrative-modal-content" 
+        onClick={(e) => e.stopPropagation()}
+        ref={modalContentRef}
+      >
         
         {/* --- HEADER --- */}
         <div className="nm-header">

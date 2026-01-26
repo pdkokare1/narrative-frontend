@@ -3,6 +3,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAudio } from '../context/AudioContext';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext'; // NEW: Import Toast
 import { SessionData, ANALYTICS_CONFIG } from '../config/analyticsConfig';
 
 // Modular Hooks
@@ -16,6 +17,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
   const location = useLocation();
   const { isPlaying: isRadioPlaying } = useAudio();
   const { user } = useAuth();
+  const { showToast } = useToast(); // NEW: Use Toast
 
   // 1. Sanitization
   const contentId = (typeof rawId === 'string') ? rawId : undefined;
@@ -58,7 +60,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     timestamp: 0
   });
 
-  // Throttle Ref to prevent excessive CPU usage on mousemove
+  // Throttle Ref
   const throttleRef = useRef<number>(0);
 
   // 3. User Activity Signal (The Pulse)
@@ -66,7 +68,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     const now = Date.now();
     
     // OPTIMIZATION: Throttle activity checks to once every 500ms
-    // This prevents high CPU usage during rapid mouse movements or scrolling
     if (now - throttleRef.current < 500) {
         return;
     }
@@ -102,8 +103,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
   useEffect(() => {
     if (contentId && (contentType === 'article' || contentType === 'narrative')) {
         const timer = setTimeout(() => {
-            // OPTIMIZATION: Target specific content containers first for accuracy.
-            // This avoids counting navbars, footers, and sidebars in the reading speed calc.
             const target = document.getElementById('narrative-content') 
                         || document.getElementById('article-content') 
                         || document.body;
@@ -206,9 +205,16 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
                 keepalive: true 
-            }).catch(err => {
+            })
+            .then(res => res.json()) // NEW: Parse response for triggers
+            .then(response => {
+                // NEW: Handle Backend Commands (Feedback Loop)
+                if (response.command === 'trigger_palate_cleanser') {
+                    showToast("Take a breath. You've been reading a lot of heavy content lately.", 'info');
+                }
+            })
+            .catch(err => {
                 console.warn('Analytics Error, queueing:', err);
-                // If fetch fails (and not Beacon), queue it
                 try {
                     const queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
                     queue.push(data);
@@ -230,7 +236,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     }
 
     sessionRef.current.lastPingTime = now;
-  }, [contentId, contentType, isRadioPlaying, user?.uid]);
+  }, [contentId, contentType, isRadioPlaying, user?.uid, showToast]);
 
 
   // 6. High-Res Sampling & Flush Queue

@@ -35,10 +35,14 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     hasStitchedSession: false,
     pendingInteractions: [] as any[],
     
-    // NEW: Velocity Tracking
+    // Velocity Tracking
     lastScrollTop: 0,
     lastScrollTime: Date.now(),
-    scrollVelocity: 0 // pixels per ms
+    scrollVelocity: 0, // pixels per ms
+
+    // NEW: Focus Quality Tracking
+    tabSwitchCount: 0,
+    isTabActive: true
   });
 
   // 1. Initialize Session ID
@@ -69,7 +73,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     }
   }, [user]);
 
-  // 3. Calculate Word Count
+  // 3. Calculate Word Count & Reset Focus
   useEffect(() => {
     if (contentId && (contentType === 'article' || contentType === 'narrative')) {
         setTimeout(() => {
@@ -79,23 +83,24 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     } else {
         sessionData.current.cachedWordCount = 0;
     }
-    // Reset quarters on new content
+    // Reset quarters and Focus on new content
     sessionData.current.quarters = [0, 0, 0, 0];
     sessionData.current.lastScrollTop = window.scrollY; 
+    sessionData.current.tabSwitchCount = 0; // Reset tab switches
   }, [contentId, contentType]);
 
-  // 4. NEW: High-Resolution Sampling with Dynamic Attention
+  // 4. High-Resolution Sampling with Dynamic Attention
   useEffect(() => {
     const sampler = setInterval(() => {
         // Broad check: Is the session active? (60s timeout)
         if (!sessionData.current.isActive) return;
 
-        // OPTIMIZATION: Instant fail if tab is hidden (User tabbed away)
+        // OPTIMIZATION: Instant fail if tab is hidden
         if (document.hidden) return; 
         
         const timeSinceInteraction = Date.now() - sessionData.current.lastActiveInteraction;
         
-        // NEW: Dynamic Attention Threshold
+        // Dynamic Attention Threshold
         // If velocity is low (< 0.05 px/ms), they are likely "Reading" -> Allow 20s pause
         // If velocity is high (Scrolling), they are "Scanning" -> Strict 5s pause
         const isReading = sessionData.current.scrollVelocity < 0.05;
@@ -148,10 +153,14 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     const currentQuarters = [...sessionData.current.quarters];
     sessionData.current.quarters = [0, 0, 0, 0];
 
-    // Determine Timezone for Streak Accuracy
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     if (contentId) {
+        // NEW: Calculate Focus Score (100 - (switches * 10))
+        // Minimum score of 0
+        const rawScore = 100 - (sessionData.current.tabSwitchCount * 10);
+        const focusScore = Math.max(0, rawScore);
+
         interactions.push({
             contentType: contentType || (isArticle ? 'article' : 'narrative'),
             contentId: contentId,
@@ -159,8 +168,11 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             scrollDepth: sessionData.current.maxScroll,
             wordCount: sessionData.current.cachedWordCount, 
             quarters: currentQuarters,
-            // NEW: Add exact scroll position for "Resume Reading"
             scrollPosition: Math.round(sessionData.current.lastScrollTop),
+            
+            // NEW: Send Focus Quality
+            focusScore: focusScore,
+
             timestamp: new Date()
         });
     }
@@ -174,7 +186,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             platform: 'web',
             userAgent: navigator.userAgent,
             referrer: document.referrer || 'direct',
-            // NEW: Send Timezone
             timezone: userTimezone
         }
     };
@@ -216,12 +227,12 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         
         const scrollTop = window.scrollY;
         
-        // NEW: Calculate Velocity
+        // Velocity
         const now = Date.now();
         const dt = now - sessionData.current.lastScrollTime;
-        if (dt > 50) { // Only calc every 50ms to avoid noise
+        if (dt > 50) { 
             const dy = Math.abs(scrollTop - sessionData.current.lastScrollTop);
-            sessionData.current.scrollVelocity = dy / dt; // px per ms
+            sessionData.current.scrollVelocity = dy / dt; 
             
             sessionData.current.lastScrollTop = scrollTop;
             sessionData.current.lastScrollTime = now;
@@ -285,6 +296,18 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         });
     };
 
+    // NEW: Tab Visibility Tracking (Counts towards Focus Score)
+    const handleVisibilityChange = () => {
+        if (document.hidden) {
+            sessionData.current.isTabActive = false;
+            sessionData.current.tabSwitchCount++; // Penalty!
+            sendData(true); // Send data immediately on hide
+        } else {
+            sessionData.current.isTabActive = true;
+            sessionData.current.lastActiveInteraction = Date.now(); // Resume immediately
+        }
+    };
+
     const events = ['mousedown', 'keydown', 'touchstart'];
     events.forEach(ev => window.addEventListener(ev, handleUserActivity, { passive: true }));
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -292,6 +315,8 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     window.addEventListener('click', handleClick); 
     window.addEventListener('narrative-audio-event', handleAudioEvent as EventListener); 
     window.addEventListener('narrative-impression', handleImpression as EventListener);
+    // NEW Listener
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
         events.forEach(ev => window.removeEventListener(ev, handleUserActivity));
@@ -300,6 +325,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         window.removeEventListener('click', handleClick);
         window.removeEventListener('narrative-audio-event', handleAudioEvent as EventListener);
         window.removeEventListener('narrative-impression', handleImpression as EventListener);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
         if (sessionData.current.idleTimer) clearTimeout(sessionData.current.idleTimer);
     };
   }, [contentId, sendData]);
@@ -314,17 +340,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
 
   // 8. Exit Beacon
   useEffect(() => {
-    const handleVisibilityChange = () => {
-        if (document.visibilityState === 'hidden') {
-            sendData(true); 
-        }
-    };
-
-    window.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', () => sendData(true));
-
     return () => {
-        window.removeEventListener('visibilitychange', handleVisibilityChange);
+        // Cleanup not strictly necessary for beforeunload but good practice
     };
   }, [sendData]);
 

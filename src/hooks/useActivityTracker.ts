@@ -178,11 +178,13 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         }
     };
 
+    const endpoint = `${ANALYTICS_CONFIG.API_URL}/analytics/track`;
+
     if (isBeacon) {
         const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-        navigator.sendBeacon(`${ANALYTICS_CONFIG.API_URL}/analytics/track`, blob);
+        navigator.sendBeacon(endpoint, blob);
     } else {
-        fetch(`${ANALYTICS_CONFIG.API_URL}/analytics/track`, {
+        fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -324,7 +326,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         
         if (sessionRef.current.idleTimer) clearTimeout(sessionRef.current.idleTimer);
     };
-  }, [contentId, sendData, handleUserActivity]); // Removed handleScroll ref (handled by hook)
+  }, [contentId, sendData, handleUserActivity]);
 
   return null; 
 };

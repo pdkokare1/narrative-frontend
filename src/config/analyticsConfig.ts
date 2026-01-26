@@ -27,7 +27,13 @@ export const ANALYTICS_CONFIG = {
 // Shared Interface for the Session Reference
 export interface SessionData {
   sessionId: string;
-  accumulatedTime: { total: 0; article: 0; radio: 0; narrative: 0; feed: 0 };
+  accumulatedTime: { 
+    total: number; 
+    article: number; 
+    radio: number; 
+    narrative: number; 
+    feed: number;
+  };
   quarters: number[]; // [0,0,0,0]
   lastPingTime: number;
   isActive: boolean;
@@ -35,7 +41,7 @@ export interface SessionData {
   idleTimer: any;
   maxScroll: number;
   cachedWordCount: number;
-  hasStitchedSession: false;
+  hasStitchedSession: boolean;
   pendingInteractions: any[];
   
   // Velocity Tracking

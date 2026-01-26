@@ -1,6 +1,6 @@
 /* src/MyDashboard.css */
 
-/* ==================== LAYOUT CONTAINERS ==================== */
+/* ==================== LAYOUT CONTAINERS (Preserved) ==================== */
 .dashboard-page {
   width: 100%;
   height: calc(100vh - 65px); /* Match new header */
@@ -19,7 +19,7 @@
   margin: 0 auto;
 }
 
-/* ==================== LEFT COLUMN ==================== */
+/* ==================== LEFT COLUMN (Preserved) ==================== */
 .dashboard-left-column {
   flex: 0 0 340px; 
   min-width: 0;
@@ -31,7 +31,7 @@
   overflow-y: auto; 
   padding-right: 5px;
   scrollbar-width: none;
-  z-index: 10; /* Ensure it stays above relative content if sticky */
+  z-index: 10;
 }
 .dashboard-left-column::-webkit-scrollbar { display: none; }
 
@@ -40,7 +40,7 @@
   padding-top: 30px;
 }
 
-/* ==================== RIGHT COLUMN ==================== */
+/* ==================== RIGHT COLUMN (Preserved) ==================== */
 .dashboard-right-column {
   flex: 1 1 auto;
   min-width: 0;
@@ -56,7 +56,7 @@
 .dashboard-right-column::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
 .dashboard-right-column::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 3px; }
 
-/* ==================== HEADERS ==================== */
+/* ==================== HEADERS (Preserved) ==================== */
 .section-title-header {
   display: flex;
   justify-content: space-between;
@@ -92,25 +92,30 @@
   letter-spacing: 0.5px;
 }
 
-/* ==================== CARDS (GLASS) ==================== */
-.dashboard-card {
-  background: var(--bg-card); /* Should be slightly transparent in theme */
+/* ==================== MAIN CARDS (Merged) ==================== */
+/* Mapped .stat-card (New TSX) to match .dashboard-card (Original CSS) */
+.dashboard-card, 
+.stat-card {
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 25px;
-  margin-bottom: 25px;
+  margin-bottom: 25px; /* Spacing between rows */
   box-shadow: var(--shadow-sm);
   transition: transform 0.2s ease, border-color 0.2s ease;
+  position: relative; /* For absolute positioning inside */
 }
 
-.dashboard-card:hover {
+.dashboard-card:hover,
+.stat-card:hover {
   border-color: var(--accent-primary);
   transform: translateY(-2px);
 }
 
 .dashboard-card.card-tight { padding: 20px; }
 
-.dashboard-card h3 {
+.dashboard-card h3,
+.stat-card h3 {
   font-family: var(--font-body);
   font-size: 11px;
   font-weight: 700;
@@ -118,11 +123,11 @@
   margin-bottom: 20px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  border-bottom: 1px solid var(--border-light);
+  /* border-bottom: 1px solid var(--border-light); */ /* Optional: Remove line if strictly checking new design */
   padding-bottom: 10px;
 }
 
-/* ==================== WEEKLY PULSE ==================== */
+/* ==================== WEEKLY PULSE (Preserved) ==================== */
 .pulse-card {
   margin-top: 0;
   border-left: none;
@@ -138,8 +143,8 @@
 }
 
 .pulse-text-col {
-  flex: 1 1 250px; /* Allows text to take space but wrap if needed */
-  min-width: 0; /* Prevents overflow issues */
+  flex: 1 1 250px;
+  min-width: 0;
   margin-right: 10px;
 }
 
@@ -167,7 +172,7 @@
   border-radius: 8px;
   border: 1px solid var(--border-color);
   width: 100%;
-  max-width: 320px; /* Keep it compact on desktop */
+  max-width: 320px;
   flex: 0 0 auto;
 }
 
@@ -196,20 +201,32 @@
   margin-top: 10px;
 }
 
-/* ==================== STAT BOXES ==================== */
+/* ==================== STAT BOXES / MINI CARDS (Merged) ==================== */
 .stat-box-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 15px;
 }
 
-.stat-box {
+/* Merging Original .stat-box with New .stat-card-mini */
+.stat-box,
+.stat-card-mini {
   background: var(--bg-elevated);
   padding: 20px 15px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   text-align: center;
-  min-width: 0; /* Prevents flex/grid overflow */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.stat-card-mini:hover {
+  transform: translateY(-2px);
+  background: rgba(30, 41, 59, 0.6); /* Slight highlight */
 }
 
 .stat-box h3 {
@@ -220,12 +237,19 @@
   padding: 0;
 }
 
-.stat-number {
+/* Unified Number Styling */
+.stat-number,
+.stat-card-mini .text-2xl {
   font-family: var(--font-heading);
   font-size: 28px;
   font-weight: 700;
-  color: var(--accent-primary);
+  color: var(--accent-primary); /* Cyan/Blue */
   line-height: 1.1;
+}
+
+/* New: Specifically for the white numbers in the new design */
+.stat-card-mini .text-white {
+  color: #fff !important;
 }
 
 .stat-desc {
@@ -234,7 +258,20 @@
   margin-top: 5px;
 }
 
-/* ==================== CHARTS GRID ==================== */
+/* ==================== DNA & NUTRITION CARDS (NEW) ==================== */
+/* Specific styling for the Reading Persona & Golden Hour cards */
+.dna-card {
+  min-height: 160px;
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6));
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.dna-card:hover {
+  border-color: var(--accent-primary);
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
+}
+
+/* ==================== CHARTS GRID (Preserved) ==================== */
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -255,7 +292,7 @@
 
 .full-width-card { grid-column: 1 / -1; }
 
-/* ==================== BIAS BAR ==================== */
+/* ==================== BIAS BAR / DIGITAL NUTRITION (Merged) ==================== */
 .lean-legend {
   display: flex;
   justify-content: center;
@@ -310,7 +347,6 @@
     gap: 20px;
   }
   
-  /* FIX: Reset sticky position to prevent overlaying content */
   .dashboard-left-column { 
     width: 100%; 
     height: auto; 
@@ -325,21 +361,25 @@
     height: auto; 
     overflow: visible; 
     padding-right: 0;
-    padding-bottom: 100px; /* Space for bottom nav */
+    padding-bottom: 100px;
   }
   
   .dashboard-grid { grid-template-columns: 1fr; }
   
-  /* Pulse Card Mobile Tweaks */
   .pulse-rec-box { max-width: 100%; margin-top: 10px; }
   .pulse-text-col { margin-right: 0; margin-bottom: 10px; }
 }
 
 @media (max-width: 768px) {
   .section-title { font-size: 18px; }
-  .dashboard-card { padding: 20px; }
+  .dashboard-card, .stat-card { padding: 20px; }
   .stat-number { font-size: 24px; }
   .chart-container { height: 220px; }
+  
+  /* Stack the DNA Cards on mobile */
+  .grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
   
   .mobile-only-footer { display: block; margin-top: 30px; margin-bottom: 50px; text-align: center; }
   
@@ -355,7 +395,7 @@
   .dashboard-tabs::-webkit-scrollbar { display: none; }
   
   .dashboard-tabs button {
-    flex: 0 0 auto; /* Don't shrink */
+    flex: 0 0 auto; 
     white-space: nowrap;
     padding: 10px 16px;
     border-radius: 25px;
@@ -374,9 +414,8 @@
   }
 }
 
-/* FIX: Handle very small screens for stats */
 @media (max-width: 480px) {
   .stat-box-grid {
-    grid-template-columns: 1fr; /* Stack vertically on small phones */
+    grid-template-columns: 1fr; 
   }
 }

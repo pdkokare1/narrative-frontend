@@ -42,7 +42,10 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
 
     // NEW: Focus Quality Tracking
     tabSwitchCount: 0,
-    isTabActive: true
+    isTabActive: true,
+
+    // NEW: Heatmap Tracking
+    heatmap: {} as Record<string, number>
   });
 
   // 1. Initialize Session ID
@@ -85,6 +88,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     }
     // Reset quarters and Focus on new content
     sessionData.current.quarters = [0, 0, 0, 0];
+    sessionData.current.heatmap = {}; // Reset heatmap
     sessionData.current.lastScrollTop = window.scrollY; 
     sessionData.current.tabSwitchCount = 0; // Reset tab switches
   }, [contentId, contentType]);
@@ -123,6 +127,47 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     return () => clearInterval(sampler);
   }, []);
 
+  // NEW: Intersection Observer for Heatmaps
+  useEffect(() => {
+    // Only run if we are on content that supports granular tracking
+    if (!contentId) return;
+
+    // Use a WeakMap to track start times for elements currently in view
+    const visibleElements = new Map<string, number>();
+
+    const observer = new IntersectionObserver((entries) => {
+        const now = Date.now();
+
+        entries.forEach(entry => {
+            const trackId = entry.target.getAttribute('data-track-id');
+            if (!trackId) return;
+
+            if (entry.isIntersecting) {
+                // Started looking at this element
+                visibleElements.set(trackId, now);
+            } else {
+                // Stopped looking
+                const startTime = visibleElements.get(trackId);
+                if (startTime) {
+                    const duration = (now - startTime) / 1000; // in seconds
+                    sessionData.current.heatmap[trackId] = (sessionData.current.heatmap[trackId] || 0) + duration;
+                    visibleElements.delete(trackId);
+                }
+            }
+        });
+    }, { threshold: 0.5 }); // Count it if 50% of the element is visible
+
+    // Find all trackable elements
+    // Components should add data-track-id="intro", data-track-id="conclusion", etc.
+    const elements = document.querySelectorAll('[data-track-id]');
+    elements.forEach(el => observer.observe(el));
+
+    return () => {
+        observer.disconnect();
+        visibleElements.clear();
+    };
+  }, [contentId, location.pathname]); // Re-run when content changes
+
   // 5. The Data Sender
   const sendData = useCallback((isBeacon = false, forceFlush = false) => {
     const now = Date.now();
@@ -153,6 +198,10 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     const currentQuarters = [...sessionData.current.quarters];
     sessionData.current.quarters = [0, 0, 0, 0];
 
+    // Clone and reset heatmap
+    const currentHeatmap = { ...sessionData.current.heatmap };
+    sessionData.current.heatmap = {}; 
+
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     if (contentId) {
@@ -170,8 +219,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             quarters: currentQuarters,
             scrollPosition: Math.round(sessionData.current.lastScrollTop),
             
-            // NEW: Send Focus Quality
+            // NEW: Send Focus Quality & Heatmap
             focusScore: focusScore,
+            heatmap: currentHeatmap,
 
             timestamp: new Date()
         });

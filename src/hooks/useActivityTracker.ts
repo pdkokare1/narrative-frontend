@@ -58,14 +58,26 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     timestamp: 0
   });
 
+  // Throttle Ref to prevent excessive CPU usage on mousemove
+  const throttleRef = useRef<number>(0);
+
   // 3. User Activity Signal (The Pulse)
   const handleUserActivity = useCallback(() => {
-    sessionRef.current.lastActiveInteraction = Date.now();
-    sessionRef.current.lastCursorMove = Date.now();
+    const now = Date.now();
+    
+    // OPTIMIZATION: Throttle activity checks to once every 500ms
+    // This prevents high CPU usage during rapid mouse movements or scrolling
+    if (now - throttleRef.current < 500) {
+        return;
+    }
+    throttleRef.current = now;
+
+    sessionRef.current.lastActiveInteraction = now;
+    sessionRef.current.lastCursorMove = now;
 
     if (!sessionRef.current.isActive) {
         sessionRef.current.isActive = true;
-        sessionRef.current.lastPingTime = Date.now(); 
+        sessionRef.current.lastPingTime = now; 
     }
     
     // Reset Idle Timer
@@ -90,7 +102,13 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
   useEffect(() => {
     if (contentId && (contentType === 'article' || contentType === 'narrative')) {
         const timer = setTimeout(() => {
-            const text = document.body.innerText || "";
+            // OPTIMIZATION: Target specific content containers first for accuracy.
+            // This avoids counting navbars, footers, and sidebars in the reading speed calc.
+            const target = document.getElementById('narrative-content') 
+                        || document.getElementById('article-content') 
+                        || document.body;
+
+            const text = target.innerText || "";
             sessionRef.current.cachedWordCount = text.split(/\s+/).length;
         }, 1500);
         return () => clearTimeout(timer);

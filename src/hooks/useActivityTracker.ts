@@ -10,6 +10,8 @@ import { useSessionCore } from './analytics/useSessionCore';
 import { useScrollTracking } from './analytics/useScrollTracking';
 import { useElementTracking } from './analytics/useElementTracking';
 
+const QUEUE_KEY = 'analytics_offline_queue';
+
 export const useActivityTracker = (rawId?: any, rawType?: any) => {
   const location = useLocation();
   const { isPlaying: isRadioPlaying } = useAudio();
@@ -49,6 +51,13 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     heatmap: {}
   });
 
+  // Rage Click Tracking Ref
+  const clickTracker = useRef<{ target: EventTarget | null, count: number, timestamp: number }>({
+    target: null,
+    count: 0,
+    timestamp: 0
+  });
+
   // 3. User Activity Signal (The Pulse)
   const handleUserActivity = useCallback(() => {
     sessionRef.current.lastActiveInteraction = Date.now();
@@ -73,22 +82,13 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
   }, [isRadioPlaying, contentType]);
 
   // --- PLUG IN MODULAR HOOKS ---
-
-  // A. Session Lifecycle & Stitching
   useSessionCore(sessionRef, user);
-
-  // B. Scroll Intelligence & Velocity
   useScrollTracking(sessionRef, handleUserActivity);
-
-  // C. Element Visibility (Heatmaps)
   useElementTracking(sessionRef, contentId, location.pathname);
-
-  // -----------------------------
 
   // 4. Calculate Word Count (Context Specific)
   useEffect(() => {
     if (contentId && (contentType === 'article' || contentType === 'narrative')) {
-        // Delay slightly to allow render
         const timer = setTimeout(() => {
             const text = document.body.innerText || "";
             sessionRef.current.cachedWordCount = text.split(/\s+/).length;
@@ -97,7 +97,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     } else {
         sessionRef.current.cachedWordCount = 0;
     }
-    // Reset Context-Specific Metrics on change
     sessionRef.current.quarters = [0, 0, 0, 0];
     sessionRef.current.heatmap = {}; 
     sessionRef.current.lastScrollTop = window.scrollY; 
@@ -105,7 +104,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
   }, [contentId, contentType]);
 
 
-  // 5. The Data Sender (Pipeline)
+  // 5. The Data Sender (Pipeline with Offline Support)
   const sendData = useCallback((isBeacon = false, forceFlush = false) => {
     const now = Date.now();
     const elapsedSeconds = Math.round((now - sessionRef.current.lastPingTime) / 1000);
@@ -145,9 +144,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
 
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    // Snapshot Interaction (if viewing content)
     if (contentId) {
-        // Calculate Focus Score (100 - (switches * 10))
         const rawScore = 100 - (sessionRef.current.tabSwitchCount * 10);
         const focusScore = Math.max(0, rawScore);
 
@@ -180,38 +177,79 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
 
     const endpoint = `${ANALYTICS_CONFIG.API_URL}/analytics/track`;
 
-    if (isBeacon) {
-        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-        navigator.sendBeacon(endpoint, blob);
+    // --- NEW: Offline Queue Logic ---
+    const sendPayload = (data: any) => {
+        if (isBeacon) {
+            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            navigator.sendBeacon(endpoint, blob);
+        } else {
+            fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+                keepalive: true 
+            }).catch(err => {
+                console.warn('Analytics Error, queueing:', err);
+                // If fetch fails (and not Beacon), queue it
+                try {
+                    const queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+                    queue.push(data);
+                    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+                } catch (e) { /* Storage full */ }
+            });
+        }
+    };
+
+    if (navigator.onLine) {
+        sendPayload(payload);
     } else {
-        fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            keepalive: true 
-        }).catch(err => console.warn('Analytics Error', err));
+        // Store directly if we know we are offline
+        try {
+            const queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+            queue.push(payload);
+            localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+        } catch (e) { /* Storage full */ }
     }
 
     sessionRef.current.lastPingTime = now;
   }, [contentId, contentType, isRadioPlaying, user?.uid]);
 
 
-  // 6. High-Res Sampling (The Heartbeat)
+  // 6. High-Res Sampling & Flush Queue
   useEffect(() => {
-    // A. 1-Second Sampling for Quarters & Focus
+    // Flush Offline Queue when coming online
+    const flushQueue = () => {
+        if (!navigator.onLine) return;
+        const queueStr = localStorage.getItem(QUEUE_KEY);
+        if (queueStr) {
+            const queue = JSON.parse(queueStr);
+            if (queue.length > 0) {
+                // Send individually to avoid massive payloads
+                queue.forEach((payload: any) => {
+                    fetch(`${ANALYTICS_CONFIG.API_URL}/analytics/track`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }).catch(console.error);
+                });
+                localStorage.removeItem(QUEUE_KEY);
+            }
+        }
+    };
+    
+    window.addEventListener('online', flushQueue);
+    // Try flush on mount just in case
+    flushQueue();
+
     const sampler = setInterval(() => {
         if (!sessionRef.current.isActive) return;
         if (document.hidden) return; 
         
-        // Ghost Check: If cursor hasn't moved for 60s, stop counting "Reading"
-        // even if tab is active
         const timeSinceCursor = Date.now() - sessionRef.current.lastCursorMove;
         if (timeSinceCursor > ANALYTICS_CONFIG.TIMEOUTS.CURSOR_IDLE && !isRadioPlaying) return;
 
-        // Velocity Check: Don't count "Reading" if they are speed scrolling
         const isReading = sessionRef.current.scrollVelocity < ANALYTICS_CONFIG.VELOCITY.READING_MAX;
         
-        // Calculate Quarters
         if (isReading) {
             const scrollTop = window.scrollY;
             const docHeight = document.documentElement.scrollHeight - window.innerHeight;
@@ -225,7 +263,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         }
     }, ANALYTICS_CONFIG.SAMPLING_INTERVAL);
 
-    // B. 30-Second Data Flush
     const heartbeat = setInterval(() => {
         sendData(false);
     }, ANALYTICS_CONFIG.HEARTBEAT_INTERVAL);
@@ -233,13 +270,13 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     return () => {
         clearInterval(sampler);
         clearInterval(heartbeat);
+        window.removeEventListener('online', flushQueue);
     };
   }, [sendData, isRadioPlaying]);
 
 
   // 7. Global Event Listeners
   useEffect(() => {
-    // Copy Tracking
     const handleCopy = () => {
         const selection = window.getSelection()?.toString();
         if (selection && selection.length > 10) {
@@ -250,16 +287,33 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
                  text: cleanText,
                  timestamp: new Date()
              });
-             sendData(false, true); // Flush immediately
+             sendData(false, true); 
         }
     };
 
-    // Click Tracking (Data-Attributes)
+    // Click & Rage Click Tracking
     const handleClick = (e: MouseEvent) => {
         handleUserActivity();
         const target = e.target as HTMLElement;
+
+        // --- NEW: Rage Click Detection ---
+        const now = Date.now();
+        if (clickTracker.current.target === target && (now - clickTracker.current.timestamp) < 1000) {
+            clickTracker.current.count++;
+            if (clickTracker.current.count === 3) {
+                 sessionRef.current.pendingInteractions.push({
+                    contentType: 'ui_interaction',
+                    contentId: contentId || 'global',
+                    text: 'RAGE_CLICK',
+                    timestamp: new Date()
+                });
+            }
+        } else {
+            clickTracker.current = { target, count: 1, timestamp: now };
+        }
+        // ---------------------------------
+
         const trackable = target.closest('[data-track-click]');
-        
         if (trackable) {
             const actionName = trackable.getAttribute('data-track-click');
             sessionRef.current.pendingInteractions.push({
@@ -271,7 +325,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         }
     };
 
-    // Audio Events
     const handleAudioEvent = (e: any) => {
         const { action, articleId } = e.detail;
         sessionRef.current.pendingInteractions.push({
@@ -282,7 +335,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         });
     };
 
-    // Impression Events
     const handleImpression = (e: any) => {
         const { itemId, itemType, category } = e.detail;
         sessionRef.current.pendingInteractions.push({
@@ -293,12 +345,11 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         });
     };
 
-    // Tab Visibility
     const handleVisibilityChange = () => {
         if (document.hidden) {
             sessionRef.current.isTabActive = false;
             sessionRef.current.tabSwitchCount++; 
-            sendData(true); // Flush on hide
+            sendData(true); 
         } else {
             sessionRef.current.isTabActive = true;
             sessionRef.current.lastActiveInteraction = Date.now();

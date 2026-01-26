@@ -17,7 +17,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
   const location = useLocation();
   const { isPlaying: isRadioPlaying } = useAudio();
   const { user } = useAuth();
-  const { showToast } = useToast(); // NEW: Use Toast
+  const { addToast } = useToast(); // CORRECTED: Use addToast instead of showToast
 
   // 1. Sanitization
   const contentId = (typeof rawId === 'string') ? rawId : undefined;
@@ -210,7 +210,8 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             .then(response => {
                 // NEW: Handle Backend Commands (Feedback Loop)
                 if (response.command === 'trigger_palate_cleanser') {
-                    showToast("Take a breath. You've been reading a lot of heavy content lately.", 'info');
+                    // CORRECTED: Use addToast here
+                    addToast("Take a breath. You've been reading a lot of heavy content lately.", 'info');
                 }
             })
             .catch(err => {
@@ -236,7 +237,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     }
 
     sessionRef.current.lastPingTime = now;
-  }, [contentId, contentType, isRadioPlaying, user?.uid, showToast]);
+  }, [contentId, contentType, isRadioPlaying, user?.uid, addToast]); // CORRECTED: Dependency is addToast
 
 
   // 6. High-Res Sampling & Flush Queue

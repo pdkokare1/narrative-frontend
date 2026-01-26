@@ -214,7 +214,7 @@ export default function MainLayout({ profile }: MainLayoutProps) {
             <Route path="/legal" element={<Legal />} />
 
             {/* PROTECTED ROUTES */}
-            <Route path="/my-dashboard" element={<RequireAuth><MyDashboard theme={theme} /></RequireAuth>} />
+            <Route path="/my-dashboard" element={<RequireAuth><MyDashboard /></RequireAuth>} />
             <Route path="/saved-articles" element={ 
                 <RequireAuth>
                   <SavedArticles 

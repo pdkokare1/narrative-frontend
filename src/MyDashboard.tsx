@@ -7,13 +7,17 @@ import {
   BookOpen, 
   Target, 
   TrendingUp, 
-  Calendar,
   BarChart2,
   Share2,
   Award,
-  Snowflake, // NEW: For Streak Freeze
-  Zap,       // NEW: For Focus Score
-  Brain      // NEW: For Focus Icon
+  Snowflake, 
+  Zap,       
+  Brain,
+  Wind,      // NEW: For Skimmer Persona
+  Anchor,    // NEW: For Deep Reader Persona
+  Scale,     // NEW: For Balanced Persona
+  Sun,       // NEW: For Golden Hour
+  Activity   // NEW: For General Activity
 } from 'lucide-react';
 import './MyDashboard.css';
 import DashboardSkeleton from './components/ui/DashboardSkeleton';
@@ -49,6 +53,7 @@ interface DailyStat {
   goalsMet: boolean;
 }
 
+// Updated Interface to match Backend 'UserStats' model
 interface UserStats {
   userId: string;
   totalTimeSpent: number;
@@ -56,9 +61,20 @@ interface UserStats {
   averageAttentionSpan: number;
   currentStreak: number;
   longestStreak: number;
-  streakFreezes?: number; // NEW
-  focusScoreAvg?: number; // NEW
+  streakFreezes?: number;
+  focusScoreAvg?: number;
   engagementScore: number;
+  
+  // NEW: Reading DNA & Nutrition
+  readingStyle?: 'skimmer' | 'deep_reader' | 'balanced' | 'learner';
+  diversityScore?: number; // 0-100
+  peakLearningTime?: number; // 0-23 Hour
+  leanExposure?: {
+    Left: number;
+    Center: number;
+    Right: number;
+  };
+
   dailyStats: {
     date: string;
     timeSpent: number;
@@ -146,6 +162,40 @@ const MyDashboard: React.FC = () => {
 
   const focusData = getFocusLabel(stats?.focusScoreAvg || 100);
 
+  // NEW: Persona Logic
+  const getPersonaDetails = (style: string = 'balanced') => {
+    switch(style) {
+      case 'skimmer': 
+        return { label: 'The Scanner', desc: 'Fast & efficient. You hunt for key info.', icon: <Wind size={20} className="text-cyan-400" /> };
+      case 'deep_reader': 
+        return { label: 'Deep Diver', desc: 'Thorough & focused. You read every word.', icon: <Anchor size={20} className="text-indigo-400" /> };
+      case 'learner': 
+        return { label: 'The Scholar', desc: 'Curious & steady. You read to understand.', icon: <BookOpen size={20} className="text-emerald-400" /> };
+      default: 
+        return { label: 'Balanced', desc: 'Adaptive. You skim news but read stories.', icon: <Scale size={20} className="text-violet-400" /> };
+    }
+  };
+
+  const persona = getPersonaDetails(stats?.readingStyle);
+
+  // NEW: Diversity Logic
+  const getDiversityLabel = (score: number = 50) => {
+    if (score >= 90) return { label: 'Omnivore', desc: 'Perfectly balanced diet.', color: 'bg-green-500' };
+    if (score >= 70) return { label: 'Balanced', desc: 'Healthy mix of views.', color: 'bg-blue-500' };
+    if (score >= 50) return { label: 'Leaning', desc: 'Slight preference detected.', color: 'bg-yellow-500' };
+    return { label: 'Echo Chamber', desc: 'High risk of bias.', color: 'bg-red-500' };
+  };
+
+  const diversity = getDiversityLabel(stats?.diversityScore);
+
+  // NEW: Format Golden Hour
+  const formatGoldenHour = (hour: number) => {
+    if (hour === undefined || hour === null) return 'Not yet calculated';
+    const d = new Date();
+    d.setHours(hour, 0, 0);
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  };
+
   // --- Chart Configuration ---
   const chartData = {
     labels: stats?.recentDailyHistory?.map(d => {
@@ -208,6 +258,12 @@ const MyDashboard: React.FC = () => {
     }
   };
 
+  // Calculate Lean Percentages
+  const totalLean = (stats?.leanExposure?.Left || 0) + (stats?.leanExposure?.Center || 0) + (stats?.leanExposure?.Right || 0) || 1;
+  const pctLeft = Math.round(((stats?.leanExposure?.Left || 0) / totalLean) * 100);
+  const pctCenter = Math.round(((stats?.leanExposure?.Center || 0) / totalLean) * 100);
+  const pctRight = Math.round(((stats?.leanExposure?.Right || 0) / totalLean) * 100);
+
   return (
     <div className="dashboard-container pb-24 md:pb-8 animate-in fade-in duration-500">
       
@@ -242,7 +298,7 @@ const MyDashboard: React.FC = () => {
               </h2>
               <span className="text-slate-500">days</span>
               
-              {/* NEW: Streak Freeze Indicator */}
+              {/* Streak Freeze Indicator */}
               {(stats?.streakFreezes || 0) > 0 && (
                 <div 
                   className="flex items-center gap-1 ml-auto bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20"
@@ -261,7 +317,7 @@ const MyDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* NEW: Focus Quality Card */}
+        {/* Focus Quality Card */}
         <div className="stat-card relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <Brain size={80} />
@@ -334,7 +390,76 @@ const MyDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. Activity Chart */}
+      {/* 4. Reading DNA & Digital Nutrition (NEW SECTION) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        
+        {/* Reading Persona */}
+        <div className="stat-card dna-card flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-3 text-slate-400 text-sm font-medium uppercase tracking-wider">
+              <Activity size={16} /> Reading Style
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-slate-800 rounded-xl border border-slate-700">
+                {persona.icon}
+              </div>
+              <div>
+                <h4 className="text-white font-bold text-lg">{persona.label}</h4>
+                <p className="text-xs text-slate-400 leading-tight">{persona.desc}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Golden Hour */}
+        <div className="stat-card dna-card flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-3 text-slate-400 text-sm font-medium uppercase tracking-wider">
+              <Sun size={16} /> Peak Learning Time
+            </div>
+            <div className="mt-2">
+              <h4 className="text-white font-bold text-3xl">
+                {stats?.peakLearningTime !== undefined ? formatGoldenHour(stats.peakLearningTime) : '--:--'}
+              </h4>
+              <p className="text-xs text-slate-400 mt-1">
+                Your brain is most active at this time.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Digital Nutrition Label (Bias) */}
+        <div className="stat-card dna-card">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-slate-400 text-sm font-medium uppercase tracking-wider flex items-center gap-2">
+               Media Diet
+            </div>
+            <span className={`text-xs px-2 py-0.5 rounded font-bold text-white ${diversity.color}`}>
+              {diversity.label}
+            </span>
+          </div>
+
+          {/* Nutrition Bar */}
+          <div className="w-full h-4 bg-slate-800 rounded-full overflow-hidden flex mb-2 border border-slate-700">
+            {totalLean > 0 && (
+              <>
+                <div style={{ width: `${pctLeft}%` }} className="h-full bg-blue-500 transition-all duration-1000" title="Left Leaning" />
+                <div style={{ width: `${pctCenter}%` }} className="h-full bg-slate-500 transition-all duration-1000" title="Center" />
+                <div style={{ width: `${pctRight}%` }} className="h-full bg-red-500 transition-all duration-1000" title="Right Leaning" />
+              </>
+            )}
+            {totalLean === 0 && <div className="w-full h-full bg-slate-800" />}
+          </div>
+          
+          <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+            <span>Left: {pctLeft}%</span>
+            <span>Center: {pctCenter}%</span>
+            <span>Right: {pctRight}%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Activity Chart */}
       <div className="stat-card mb-8">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
@@ -353,7 +478,7 @@ const MyDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 5. Today's Progress */}
+      {/* 6. Today's Progress */}
       <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 border border-slate-700/50">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-white flex items-center gap-2">
@@ -381,7 +506,7 @@ const MyDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 6. Footer Actions */}
+      {/* 7. Footer Actions */}
       <div className="mt-8 flex gap-4">
         <button 
           onClick={() => navigate('/settings')}

@@ -7,7 +7,6 @@ import { useAuth } from '../context/AuthContext';
 // Constants
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 const SAMPLING_INTERVAL = 1000;   // 1 second (High res sampling)
-const ACTIVITY_TIMEOUT = 60000;   // 1 minute idle = inactive
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const useActivityTracker = (rawId?: any, rawType?: any) => {
@@ -47,6 +46,18 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     // NEW: Heatmap Tracking
     heatmap: {} as Record<string, number>
   });
+
+  // Helper: Get Dynamic Timeout based on Context
+  const getDynamicTimeout = useCallback(() => {
+    // 1. Audio Mode: If listening, allow 20 minutes of "mouse idleness"
+    if (isRadioPlaying) return 1200000; 
+    
+    // 2. Feed Mode: Quick browsing requires strict timeout (15s)
+    if (contentType === 'feed') return 15000;
+    
+    // 3. Deep Reading (Article/Narrative): Standard 60s
+    return 60000;
+  }, [isRadioPlaying, contentType]);
 
   // 1. Initialize Session ID
   useEffect(() => {
@@ -96,7 +107,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
   // 4. High-Resolution Sampling with Dynamic Attention
   useEffect(() => {
     const sampler = setInterval(() => {
-        // Broad check: Is the session active? (60s timeout)
+        // Broad check: Is the session active?
         if (!sessionData.current.isActive) return;
 
         // OPTIMIZATION: Instant fail if tab is hidden
@@ -257,7 +268,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     sessionData.current.lastPingTime = now;
   }, [contentId, contentType, isRadioPlaying, user?.uid]);
 
-  // 6. Listeners
+  // 6. Listeners (Updated for Dynamic Boredom)
   useEffect(() => {
     const handleUserActivity = () => {
         sessionData.current.lastActiveInteraction = Date.now();
@@ -266,11 +277,18 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             sessionData.current.isActive = true;
             sessionData.current.lastPingTime = Date.now(); 
         }
+        
+        // Reset Idle Timer
         if (sessionData.current.idleTimer) clearTimeout(sessionData.current.idleTimer);
+        
+        const timeoutDuration = getDynamicTimeout();
         sessionData.current.idleTimer = setTimeout(() => {
             sessionData.current.isActive = false;
-        }, ACTIVITY_TIMEOUT);
+        }, timeoutDuration);
     };
+
+    // If Audio State changes, trigger an activity reset to update the timeout duration
+    handleUserActivity();
 
     const handleScroll = () => {
         handleUserActivity(); 
@@ -346,7 +364,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         });
     };
 
-    // NEW: Tab Visibility Tracking (Counts towards Focus Score)
+    // Tab Visibility
     const handleVisibilityChange = () => {
         if (document.hidden) {
             sessionData.current.isTabActive = false;
@@ -365,7 +383,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     window.addEventListener('click', handleClick); 
     window.addEventListener('narrative-audio-event', handleAudioEvent as EventListener); 
     window.addEventListener('narrative-impression', handleImpression as EventListener);
-    // NEW Listener
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
@@ -378,7 +395,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
         if (sessionData.current.idleTimer) clearTimeout(sessionData.current.idleTimer);
     };
-  }, [contentId, sendData]);
+  }, [contentId, sendData, getDynamicTimeout]); // Added getDynamicTimeout (depends on isRadioPlaying)
 
   // 7. Heartbeat
   useEffect(() => {
@@ -392,7 +409,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
   useEffect(() => {
     window.addEventListener('beforeunload', () => sendData(true));
     return () => {
-        // Cleanup not strictly necessary for beforeunload but good practice
+        // Cleanup not strictly necessary for beforeunload
     };
   }, [sendData]);
 

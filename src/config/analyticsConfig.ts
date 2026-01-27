@@ -61,6 +61,10 @@ export interface SessionData {
   scrollVelocity: number;
   scrollDirection: 'up' | 'down' | 'steady'; // NEW: Track direction
 
+  // NEW: Average Velocity for Cognitive Load Calculation
+  avgVelocity: number; // Rolling average of non-zero movements
+  velocitySamples: number; // Count of samples for the average
+
   // Focus & Ghost Tracking
   tabSwitchCount: number;
   isTabActive: boolean;

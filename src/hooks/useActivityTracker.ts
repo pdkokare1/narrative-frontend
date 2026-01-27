@@ -47,6 +47,10 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     confusionCount: 0,         
     tempUpScroll: 0,           
 
+    // NEW: Init Average Velocity
+    avgVelocity: 0,
+    velocitySamples: 0,
+
     // Focus & Presence
     tabSwitchCount: 0,
     isTabActive: true,
@@ -167,6 +171,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     // Reset Flow
     sessionRef.current.currentFlowDuration = 0;
     sessionRef.current.totalFlowDuration = 0;
+    // NEW: Reset Velocity Tracking
+    sessionRef.current.avgVelocity = 0;
+    sessionRef.current.velocitySamples = 0;
   }, [contentId, contentType]);
 
 
@@ -232,6 +239,8 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             // NEW METRICS
             flowDuration: currentFlow,
             dropOffElement: sessionRef.current.lastVisibleElementId,
+            // NEW: Send Average Velocity for Cognitive Load Analysis
+            avgVelocity: sessionRef.current.avgVelocity, 
             timestamp: new Date()
         });
     }

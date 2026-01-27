@@ -7,7 +7,8 @@ import '../DashboardPages.css';
 
 import useIsMobile from '../hooks/useIsMobile';
 import useArticleSave from '../hooks/useArticleSave';
-import usePWAInstall from '../hooks/usePWAInstall'; // NEW: Import Install Hook
+import usePWAInstall from '../hooks/usePWAInstall'; 
+import { useActivityTracker } from '../hooks/useActivityTracker'; // NEW: Import Tracker
 import * as api from '../services/api';
 
 import Header from '../components/Header';
@@ -17,7 +18,7 @@ import BottomNav from '../components/ui/BottomNav';
 import CustomTooltip from '../components/ui/CustomTooltip';
 import PageLoader from '../components/PageLoader';
 import { useAuth } from '../context/AuthContext'; 
-import { useToast } from '../context/ToastContext'; // NEW: Import Toast for the Pop-Up
+import { useToast } from '../context/ToastContext'; 
 
 import { IFilters, IArticle, IUserProfile, INarrative } from '../types';
 
@@ -33,6 +34,7 @@ const Legal = lazy(() => import('../pages/Legal'));
 const CompareCoverageModal = lazy(() => import('../components/modals/CompareCoverageModal'));
 const DetailedAnalysisModal = lazy(() => import('../components/modals/DetailedAnalysisModal'));
 const FilterModal = lazy(() => import('../components/modals/FilterModal'));
+const PalateCleanserModal = lazy(() => import('../components/modals/PalateCleanserModal')); // NEW: Lazy load intervention
 
 // Protected Route Wrapper for inner routes
 const RequireAuth = ({ children }: { children: JSX.Element }) => {
@@ -73,11 +75,26 @@ export default function MainLayout({ profile }: MainLayoutProps) {
   const [compareModal, setCompareModal] = useState<{ open: boolean; clusterId: number | null; articleTitle: string; articleId: string | null }>({ open: false, clusterId: null, articleTitle: '', articleId: null });
   const [analysisModal, setAnalysisModal] = useState<{ open: boolean; article: IArticle | null }>({ open: false, article: null });
   
+  // NEW: Intervention State
+  const [showPalateCleanser, setShowPalateCleanser] = useState(false);
+
   // --- TOOLTIP STATE ---
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
   // --- LOGIC HOOKS ---
   const { savedArticleIds, handleToggleSave } = useArticleSave(profile?.savedArticles || []);
+
+  // --- NEW: Global Tracker Integration ---
+  // We define the handler here so we can control UI (Modals) from the layout
+  const handleTrackerTrigger = useCallback((command: string) => {
+      if (command === 'trigger_palate_cleanser') {
+          setShowPalateCleanser(true);
+      }
+  }, []);
+
+  // Initialize Global Session Tracker
+  // We pass 'feed' as default type for the main layout context
+  useActivityTracker(undefined, 'feed', handleTrackerTrigger);
 
   // --- EFFECTS ---
 
@@ -266,6 +283,13 @@ export default function MainLayout({ profile }: MainLayoutProps) {
                 filters={filters} 
                 onFilterChange={handleFilterChange} 
                 onClose={() => setShowFilterModal(false)} 
+            />
+        )}
+        {/* NEW: Palate Cleanser Intervention */}
+        {showPalateCleanser && (
+            <PalateCleanserModal 
+                open={showPalateCleanser}
+                onClose={() => setShowPalateCleanser(false)}
             />
         )}
       </Suspense>

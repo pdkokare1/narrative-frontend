@@ -18,39 +18,32 @@ export const useScrollTracking = (
     
     // Only calculate if enough time has passed (50ms) to avoid noise
     if (dt > 50) { 
-        const dy = scrollTop - sessionRef.current.lastScrollTop; // Signed difference
+        const dy = scrollTop - sessionRef.current.lastScrollTop; // Signed diff
         const absDy = Math.abs(dy);
         
         // 1. Calculate Velocity
         sessionRef.current.scrollVelocity = absDy / dt; 
 
-        // 2. Determine Direction
-        const currentDirection = dy > 0 ? 'down' : (dy < 0 ? 'up' : 'steady');
+        // 2. Determine Direction & Confusion
+        if (dy < 0) {
+            // SCROLLING UP (Reading back / Confusion)
+            sessionRef.current.scrollDirection = 'up';
+            sessionRef.current.tempUpScroll += absDy;
 
-        // 3. Detect "Confusion" / Re-reading
-        // If they were scrolling down, and now scroll UP significantly
-        if (
-            sessionRef.current.scrollDirection === 'down' && 
-            currentDirection === 'up'
-        ) {
-             // We just switched direction. 
-             // Ideally we'd track *how far* they go up, but for now, 
-             // let's count significant upward movements.
-        }
-        
-        // Simpler approach for Confusion: 
-        // If current direction is UP and they move more than threshold
-        if (currentDirection === 'up' && absDy > 10) {
-            // We accumulate "upward pixels" in a temporary var if we wanted, 
-            // but for this MVP, let's just count sustained upward scrolls.
-             // Actually, let's just track major scroll-ups (> 300px) as discrete events?
-             // No, let's stick to the plan: simple direction tracking first.
-        }
+            // Threshold Check
+            if (sessionRef.current.tempUpScroll > ANALYTICS_CONFIG.CONFUSION.SCROLL_UP_THRESHOLD) {
+                sessionRef.current.confusionCount += 1;
+                sessionRef.current.tempUpScroll = 0; // Reset after counting one event
+                // Optional: Log this event to analytics queue here if granular precision is needed
+            }
 
-        // REVISED CONFUSION LOGIC:
-        // If user scrolls UP more than threshold (e.g. 300px) within a short window, count it.
-        // For now, let's just update the direction state so other components can use it.
-        sessionRef.current.scrollDirection = currentDirection;
+        } else if (dy > 0) {
+            // SCROLLING DOWN (Progressing)
+            sessionRef.current.scrollDirection = 'down';
+            sessionRef.current.tempUpScroll = 0; // Reset confusion tracker on progress
+        } else {
+            sessionRef.current.scrollDirection = 'steady';
+        }
         
         sessionRef.current.lastScrollTop = scrollTop;
         sessionRef.current.lastScrollTime = now;

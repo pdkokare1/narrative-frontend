@@ -49,6 +49,12 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     isTabActive: true,
     lastCursorMove: Date.now(),
 
+    // NEW: Flow State Init
+    currentFlowDuration: 0,
+    totalFlowDuration: 0,
+    isFlowing: false,
+    lastVisibleElementId: undefined,
+
     // Heatmap
     heatmap: {}
   });
@@ -118,6 +124,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     sessionRef.current.heatmap = {}; 
     sessionRef.current.lastScrollTop = window.scrollY; 
     sessionRef.current.tabSwitchCount = 0; 
+    // Reset Flow
+    sessionRef.current.currentFlowDuration = 0;
+    sessionRef.current.totalFlowDuration = 0;
   }, [contentId, contentType]);
 
 
@@ -159,6 +168,11 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     const currentHeatmap = { ...sessionRef.current.heatmap };
     sessionRef.current.heatmap = {}; 
 
+    // NEW: Flow Packet
+    const currentFlow = sessionRef.current.totalFlowDuration;
+    // Reset flow accumulator for this ping (we send the delta)
+    sessionRef.current.totalFlowDuration = 0;
+
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     if (contentId) {
@@ -175,6 +189,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             scrollPosition: Math.round(sessionRef.current.lastScrollTop),
             focusScore: focusScore,
             heatmap: currentHeatmap,
+            // NEW METRICS
+            flowDuration: currentFlow,
+            dropOffElement: sessionRef.current.lastVisibleElementId,
             timestamp: new Date()
         });
     }
@@ -307,7 +324,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         if (selection && selection.length > 10) {
              const cleanText = selection.substring(0, 200); 
              sessionRef.current.pendingInteractions.push({
-                 contentType: 'copy',
+                 contentType: 'copy', 
                  contentId: contentId || 'unknown',
                  text: cleanText,
                  timestamp: new Date()

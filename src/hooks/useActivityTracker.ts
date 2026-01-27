@@ -3,7 +3,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAudio } from '../context/AudioContext';
 import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext'; // NEW: Import Toast
+import { useToast } from '../context/ToastContext'; 
 import { SessionData, ANALYTICS_CONFIG } from '../config/analyticsConfig';
 
 // Modular Hooks
@@ -17,7 +17,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
   const location = useLocation();
   const { isPlaying: isRadioPlaying } = useAudio();
   const { user } = useAuth();
-  const { addToast } = useToast(); // CORRECTED: Use addToast instead of showToast
+  const { addToast } = useToast(); 
 
   // 1. Sanitization
   const contentId = (typeof rawId === 'string') ? rawId : undefined;
@@ -43,6 +43,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     lastScrollTop: 0,
     lastScrollTime: Date.now(),
     scrollVelocity: 0,
+    scrollDirection: 'steady', // NEW: Fixes TS Error
+    confusionCount: 0,         // NEW: Fixes TS Error
+    tempUpScroll: 0,           // NEW: Fixes TS Error
 
     // Focus & Presence
     tabSwitchCount: 0,
@@ -227,7 +230,6 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             .then(response => {
                 // NEW: Handle Backend Commands (Feedback Loop)
                 if (response.command === 'trigger_palate_cleanser') {
-                    // CORRECTED: Use addToast here
                     addToast("Take a breath. You've been reading a lot of heavy content lately.", 'info');
                 }
             })
@@ -254,7 +256,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     }
 
     sessionRef.current.lastPingTime = now;
-  }, [contentId, contentType, isRadioPlaying, user?.uid, addToast]); // CORRECTED: Dependency is addToast
+  }, [contentId, contentType, isRadioPlaying, user?.uid, addToast]);
 
 
   // 6. High-Res Sampling & Flush Queue

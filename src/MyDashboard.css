@@ -1,486 +1,193 @@
 /* src/MyDashboard.css */
 
-/* ==================== NEW LAYOUT FIXES (POLISHED) ==================== */
-
-/* Main Container - Centered with optimal max-width for readability */
+/* ==================== DASHBOARD CONTAINER ==================== */
 .dashboard-container {
   width: 100%;
-  max-width: 1200px; 
-  margin: 0 auto;    
-  padding: 20px;     
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
   min-height: 100vh;
   box-sizing: border-box;
+  animation: fadeIn 0.5s ease-out;
 }
 
-/* Explicit Grid Definitions */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-/* 2-Column Grid (Hero & Quests) */
-.dashboard-grid-hero,
-.dashboard-grid-quests {
+/* ==================== BENTO GRID SYSTEM ==================== */
+/* A unified 12-column grid for precise control */
+.dashboard-bento-grid {
   display: grid;
-  grid-template-columns: 1fr; /* Mobile default */
-  gap: 16px; /* Tighter gap */
-  margin-bottom: 24px; /* Reduced bottom margin */
-}
-
-@media (min-width: 768px) {
-  .dashboard-grid-hero,
-  .dashboard-grid-quests {
-    grid-template-columns: repeat(2, 1fr); 
-  }
-}
-
-/* 4-Column Grid (Stats) - RESPONSIVE FIX */
-.dashboard-grid-stats {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); /* Mobile: 2 cols */
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-/* On standard laptops, keep 2 columns to prevent squashing. Only go 4 on large screens. */
-@media (min-width: 1200px) {
-  .dashboard-grid-stats {
-    grid-template-columns: repeat(4, 1fr); /* Large Screens: 4 cols */
-  }
-}
-
-/* 3-Column Grid (DNA/Nutrition) */
-.dashboard-grid-dna {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-@media (min-width: 768px) {
-  .dashboard-grid-dna {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* ==================== END NEW FIXES ==================== */
-
-
-/* ==================== LAYOUT CONTAINERS (Preserved) ==================== */
-.dashboard-page {
+  grid-template-columns: repeat(12, 1fr);
+  gap: 20px;
   width: 100%;
-  height: calc(100vh - 65px); 
-  overflow: hidden; 
-  display: flex;
-  background-color: var(--bg-primary);
 }
 
-.dashboard-content-wrapper {
-  display: flex;
-  flex-grow: 1;
-  gap: 30px;
-  width: 100%;
-  padding: 30px;
-  max-width: 1600px;
-  margin: 0 auto;
+/* --- Responsive Spans --- */
+
+/* Mobile: Everything is full width (12 cols) */
+.col-span-12, .col-span-8, .col-span-6, .col-span-4, .col-span-3 {
+  grid-column: span 12;
 }
 
-/* ==================== LEFT COLUMN (Preserved) ==================== */
-.dashboard-left-column {
-  flex: 0 0 340px; 
-  min-width: 0;
+/* Tablet (768px+): Allow for 2-column splits */
+@media (min-width: 768px) {
+  .col-span-6 { grid-column: span 6; } /* Half width */
+  .col-span-4 { grid-column: span 6; } /* Thirds become halves on tablet */
+  .col-span-3 { grid-column: span 6; } /* Quarters become halves on tablet */
+  .col-span-8 { grid-column: span 12; } /* Large charts stay full on tablet */
+}
+
+/* Desktop (1024px+): Full 12-column layout active */
+@media (min-width: 1024px) {
+  .col-span-12 { grid-column: span 12; }
+  .col-span-8  { grid-column: span 8; }  /* 2/3 width */
+  .col-span-6  { grid-column: span 6; }  /* 1/2 width */
+  .col-span-4  { grid-column: span 4; }  /* 1/3 width */
+  .col-span-3  { grid-column: span 3; }  /* 1/4 width */
+}
+
+/* ==================== CARD STYLES ==================== */
+.bento-card {
+  background: #1e293b; /* Slate-800 equivalent */
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 16px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  position: sticky;
-  top: 0;
-  height: 100%;
-  overflow-y: auto; 
-  padding-right: 5px;
-  scrollbar-width: none;
-  z-index: 10;
-}
-.dashboard-left-column::-webkit-scrollbar { display: none; }
-
-.dashboard-left-footer {
-  margin-top: auto;
-  padding-top: 30px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  height: 100%; /* Stretch to fill grid cell */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-/* ==================== RIGHT COLUMN (Preserved) ==================== */
-.dashboard-right-column {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow-y: auto;
-  height: 100%;
-  padding-right: 5px;
-  padding-bottom: 60px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--accent-primary) var(--bg-secondary);
+.bento-card:hover {
+  border-color: rgba(96, 165, 250, 0.3); /* Blue highlight */
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-.dashboard-right-column::-webkit-scrollbar { width: 6px; }
-.dashboard-right-column::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
-.dashboard-right-column::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 3px; }
+/* Background icon decoration */
+.card-bg-icon {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  opacity: 0.05;
+  transform: rotate(15deg);
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
 
-/* ==================== HEADERS (Preserved) ==================== */
-.section-title-header {
+.bento-card:hover .card-bg-icon {
+  opacity: 0.1;
+}
+
+/* ==================== TYPOGRAPHY & ELEMENTS ==================== */
+.card-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid var(--border-color);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.card-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8; /* Slate-400 */
+}
+
+.stat-value-large {
+  font-size: 2rem;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+}
+
+.stat-subtext {
+  font-size: 0.75rem;
+  color: #64748b; /* Slate-500 */
+  margin-top: 4px;
+}
+
+/* ==================== SPECIFIC COMPONENT TWEAKS ==================== */
+
+/* Chart Container */
+.chart-wrapper {
+  flex-grow: 1;
+  min-height: 250px;
+  width: 100%;
+}
+
+/* DNA / Insight Cards */
+.dna-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dna-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-.section-title {
-  font-family: var(--font-heading);
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.section-margin-top {
-  margin-top: 30px;
-  margin-bottom: 15px;
-}
-
-.date-range-badge {
-  font-size: 10px;
-  padding: 5px 12px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  color: var(--text-tertiary);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* ==================== MAIN CARDS (Merged & Tightened) ==================== */
-.dashboard-card, 
-.stat-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 20px; /* Reduced from 25px for tighter feel */
-  margin-bottom: 0; 
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.2s ease, border-color 0.2s ease;
-  position: relative; 
-  height: 100%; 
-  box-sizing: border-box;
+/* Quest Items */
+.quest-item {
   display: flex;
-  flex-direction: column;
-}
-
-.dashboard-card:hover,
-.stat-card:hover {
-  border-color: var(--accent-primary);
-  transform: translateY(-2px);
-}
-
-.dashboard-card.card-tight { padding: 16px; }
-
-.dashboard-card h3,
-.stat-card h3 {
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  margin-bottom: 16px; /* Reduced from 20px */
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  padding-bottom: 0;
-}
-
-/* ==================== WEEKLY PULSE (Preserved) ==================== */
-.pulse-card {
-  margin-top: 0;
-  border-left: none;
-  background: linear-gradient(to right, var(--bg-elevated), var(--bg-card));
-}
-
-.pulse-layout {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.pulse-text-col {
-  flex: 1 1 250px;
-  min-width: 0;
-  margin-right: 10px;
-}
-
-.pulse-title {
-  font-family: var(--font-heading) !important;
-  font-size: 18px !important;
-  text-transform: none !important;
-  color: var(--text-primary) !important;
-  border: none !important;
-}
-
-.pulse-status.bubble { color: var(--color-error); }
-.pulse-status.balanced { color: var(--color-success); }
-
-.pulse-desc {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-top: 5px;
-  line-height: 1.5;
-}
-
-.pulse-rec-box {
-  background: var(--bg-primary);
-  padding: 15px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  width: 100%;
-  max-width: 320px;
-  flex: 0 0 auto;
-}
-
-.pulse-rec-label {
-  font-size: 9px;
-  color: var(--accent-primary);
-  text-transform: uppercase;
-  font-weight: 700;
-  letter-spacing: 1px;
-  margin-bottom: 6px;
-}
-
-.pulse-rec-headline {
-  font-family: var(--font-heading);
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 5px;
-  line-height: 1.4;
-  color: var(--text-primary);
-}
-
-.pulse-rec-footer {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: 10px;
-}
-
-/* ==================== STAT BOXES / MINI CARDS (Merged) ==================== */
-.stat-box-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
-
-.stat-box,
-.stat-card-mini {
-  background: var(--bg-elevated);
-  padding: 16px; /* Reduced from 20px */
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  text-align: center;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s ease;
-  height: 100%;
-  box-sizing: border-box;
-}
-
-.stat-card-mini:hover {
-  transform: translateY(-2px);
-  background: rgba(30, 41, 59, 0.6); 
-}
-
-.stat-box h3 {
-  font-size: 9px;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 12px;
   margin-bottom: 8px;
-  border: none;
-  color: var(--text-tertiary);
-  padding: 0;
+  border: 1px solid transparent;
 }
 
-.stat-number,
-.stat-card-mini .text-2xl {
-  font-family: var(--font-heading);
-  font-size: 24px; /* Reduced from 28px for scale */
-  font-weight: 700;
-  color: var(--accent-primary);
-  line-height: 1.1;
+.quest-item:last-child { margin-bottom: 0; }
+.quest-item:hover { border-color: rgba(255, 255, 255, 0.05); }
+
+/* Progress Bar (Global) */
+.progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(51, 65, 85, 0.5);
+  border-radius: 10px;
+  overflow: hidden;
 }
 
-.stat-card-mini .text-white {
-  color: #fff !important;
+.progress-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.stat-desc {
-  font-size: 10px;
-  color: var(--text-secondary);
-  margin-top: 5px;
-}
-
-/* ==================== DNA & NUTRITION CARDS (NEW) ==================== */
-.dna-card {
-  min-height: auto; /* Changed from fixed 160px to auto */
-  background: linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6));
+/* Footer Buttons */
+.action-btn {
+  background: #1e293b;
+  color: #cbd5e1;
   border: 1px solid rgba(148, 163, 184, 0.1);
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
   display: flex;
-  flex-direction: column;
-  justify-content: center; /* Center content vertically */
-}
-
-.dna-card:hover {
-  border-color: var(--accent-primary);
-  background: linear-gradient(145deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
-}
-
-/* ==================== CHARTS GRID (Preserved) ==================== */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 25px;
-}
-
-.chart-container {
-  position: relative;
-  height: 250px;
-  width: 100%;
-}
-
-.chart-container-large {
-  position: relative;
-  min-height: 320px;
-  width: 100%;
-}
-
-.full-width-card { grid-column: 1 / -1; }
-
-/* ==================== BIAS BAR / DIGITAL NUTRITION (Merged) ==================== */
-.lean-legend {
-  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 15px;
-  margin-bottom: 15px;
-  font-size: 10px;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  font-weight: 600;
+  gap: 8px;
+  cursor: pointer;
 }
 
-.legend-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  display: inline-block; margin-right: 6px;
-}
-
-.lean-bar-container {
-  display: flex; height: 8px; border-radius: 4px;
-  overflow: hidden; background: var(--bg-elevated); margin-bottom: 20px;
-}
-
-.lean-segment {
-  height: 100%; transition: width 0.6s ease;
-}
-
-.lean-details li {
-  font-size: 12px; color: var(--text-secondary);
-  margin-bottom: 8px; list-style: none;
-  display: flex; justify-content: space-between;
-}
-
-.lean-details span {
-  font-weight: 700; color: var(--text-primary); font-family: var(--font-body);
-}
-
-/* ==================== MOBILE LAYOUT (Major Fixes) ==================== */
-.mobile-only-footer { display: none; }
-.dashboard-tabs { display: none; }
-.dashboard-mobile-content { display: flex; flex-direction: column; gap: 20px; }
-
-@media (max-width: 1024px) {
-  .dashboard-page { 
-    height: auto; 
-    min-height: 100vh;
-    overflow-y: auto; 
-    display: block; 
-  }
-  
-  .dashboard-content-wrapper { 
-    flex-direction: column; 
-    padding: 15px; 
-    gap: 20px;
-  }
-  
-  .dashboard-left-column { 
-    width: 100%; 
-    height: auto; 
-    overflow: visible; 
-    margin-bottom: 10px;
-    position: relative; 
-    top: auto;
-    z-index: 1;
-  }
-  
-  .dashboard-right-column { 
-    height: auto; 
-    overflow: visible; 
-    padding-right: 0;
-    padding-bottom: 100px;
-  }
-  
-  .dashboard-grid { grid-template-columns: 1fr; }
-  
-  .pulse-rec-box { max-width: 100%; margin-top: 10px; }
-  .pulse-text-col { margin-right: 0; margin-bottom: 10px; }
-}
-
-@media (max-width: 768px) {
-  .section-title { font-size: 18px; }
-  .dashboard-card, .stat-card { padding: 16px; }
-  .stat-number { font-size: 24px; }
-  .chart-container { height: 220px; }
-  
-  /* Stack the DNA Cards on mobile */
-  .grid-cols-3 {
-    grid-template-columns: 1fr !important;
-  }
-  
-  .mobile-only-footer { display: block; margin-top: 30px; margin-bottom: 50px; text-align: center; }
-  
-  /* Tabs */
-  .dashboard-tabs {
-    display: flex;
-    overflow-x: auto;
-    gap: 10px;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-    scrollbar-width: none;
-  }
-  .dashboard-tabs::-webkit-scrollbar { display: none; }
-  
-  .dashboard-tabs button {
-    flex: 0 0 auto; 
-    white-space: nowrap;
-    padding: 10px 16px;
-    border-radius: 25px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-card);
-    color: var(--text-secondary);
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-
-  .dashboard-tabs button.active {
-    background: var(--accent-primary);
-    color: #000;
-    border-color: var(--accent-primary);
-  }
-}
-
-@media (max-width: 480px) {
-  .stat-box-grid {
-    grid-template-columns: 1fr; 
-  }
+.action-btn:hover {
+  background: #334155;
+  color: white;
 }

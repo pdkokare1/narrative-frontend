@@ -19,8 +19,8 @@ import {
   Scale,     
   Sun,       
   Activity,
-  CheckCircle, // NEW: For Completed Quests
-  Circle       // NEW: For Pending Quests
+  CheckCircle, 
+  Circle       
 } from 'lucide-react';
 import './MyDashboard.css';
 import DashboardSkeleton from './components/ui/DashboardSkeleton';
@@ -36,7 +36,7 @@ import {
   Legend,
   Filler
 } from 'chart.js';
-import { IQuest } from './types'; // NEW: Import Quest Interface
+import { IQuest } from './types'; 
 
 // Register ChartJS components
 ChartJS.register(
@@ -57,7 +57,6 @@ interface DailyStat {
   goalsMet: boolean;
 }
 
-// Updated Interface to match Backend 'UserStats' model + Quests
 interface UserStats {
   userId: string;
   totalTimeSpent: number;
@@ -70,10 +69,9 @@ interface UserStats {
   deepFocusMinutes?: number; 
   engagementScore: number;
   
-  // NEW: Reading DNA & Nutrition
   readingStyle?: 'skimmer' | 'deep_reader' | 'balanced' | 'learner';
-  diversityScore?: number; // 0-100
-  peakLearningTime?: number; // 0-23 Hour
+  diversityScore?: number; 
+  peakLearningTime?: number; 
   leanExposure?: {
     Left: number;
     Center: number;
@@ -88,7 +86,6 @@ interface UserStats {
   };
   recentDailyHistory?: DailyStat[];
   
-  // NEW: Quests included in the response
   quests?: IQuest[];
 }
 
@@ -301,21 +298,21 @@ const MyDashboard: React.FC = () => {
         
         {/* Streak Card */}
         <div className="stat-card relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Flame size={80} />
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Flame size={50} /> {/* REDUCED FROM 80 */}
           </div>
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-2">
               <div className="p-2 bg-orange-500/20 rounded-lg">
-                <Flame className="text-orange-500" size={20} />
+                <Flame className="text-orange-500" size={18} />
               </div>
-              <span className="text-slate-400 font-medium">Daily Streak</span>
+              <span className="text-slate-400 font-medium text-sm">Daily Streak</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <h2 className="text-4xl font-bold text-white">
+              <h2 className="text-3xl font-bold text-white"> {/* REDUCED FROM 4xl */}
                 {stats?.currentStreak || 0}
               </h2>
-              <span className="text-slate-500">days</span>
+              <span className="text-slate-500 text-sm">days</span>
               
               {/* Streak Freeze Indicator */}
               {(stats?.streakFreezes || 0) > 0 && (
@@ -323,14 +320,14 @@ const MyDashboard: React.FC = () => {
                   className="flex items-center gap-1 ml-auto bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20"
                   title={`${stats?.streakFreezes} Streak Freeze(s) Available`}
                 >
-                  <Snowflake size={16} className="text-blue-400" />
-                  <span className="text-blue-400 font-bold text-sm">
+                  <Snowflake size={14} className="text-blue-400" />
+                  <span className="text-blue-400 font-bold text-xs">
                     {stats?.streakFreezes} Safe
                   </span>
                 </div>
               )}
             </div>
-            <p className="text-sm text-slate-500 mt-2">
+            <p className="text-xs text-slate-500 mt-2">
               Best: <span className="text-orange-400">{stats?.longestStreak || 0} days</span>
             </p>
           </div>
@@ -338,32 +335,32 @@ const MyDashboard: React.FC = () => {
 
         {/* Focus Quality Card - UPDATED: Now includes Time in Flow */}
         <div className="stat-card relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Brain size={80} />
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Brain size={50} /> {/* REDUCED FROM 80 */}
           </div>
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-2">
               <div className="p-2 bg-indigo-500/20 rounded-lg">
-                <Zap className="text-indigo-400" size={20} />
+                <Zap className="text-indigo-400" size={18} />
               </div>
-              <span className="text-slate-400 font-medium">Focus Quality</span>
+              <span className="text-slate-400 font-medium text-sm">Focus Quality</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <h2 className="text-4xl font-bold text-white">
+              <h2 className="text-3xl font-bold text-white"> {/* REDUCED FROM 4xl */}
                 {stats?.focusScoreAvg || 100}
               </h2>
-              <span className="text-slate-500">/ 100</span>
+              <span className="text-slate-500 text-sm">/ 100</span>
             </div>
-            <p className={`text-sm font-medium mt-2 ${focusData.color}`}>
+            <p className={`text-xs font-medium mt-2 ${focusData.color}`}>
               {focusData.label}
             </p>
 
             {/* NEW: Deep Work Visualization (Time in Flow) */}
             <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
-                <span className="text-slate-400 text-xs uppercase tracking-wider font-semibold flex items-center gap-1">
+                <span className="text-slate-400 text-[10px] uppercase tracking-wider font-semibold flex items-center gap-1">
                   <Brain size={12} /> Time in Flow
                 </span>
-                <span className="text-white font-mono font-bold">
+                <span className="text-white font-mono font-bold text-sm">
                     {Math.round(stats?.deepFocusMinutes || 0)}m
                 </span>
             </div>
@@ -425,8 +422,8 @@ const MyDashboard: React.FC = () => {
         {/* Reading Persona */}
         <div className="stat-card dna-card flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-2 mb-3 text-slate-400 text-sm font-medium uppercase tracking-wider">
-              <Activity size={16} /> Reading Style
+            <div className="flex items-center gap-2 mb-3 text-slate-400 text-xs font-medium uppercase tracking-wider">
+              <Activity size={14} /> Reading Style
             </div>
             <div className="flex items-center gap-3">
               <div className="p-3 bg-slate-800 rounded-xl border border-slate-700">
@@ -434,7 +431,7 @@ const MyDashboard: React.FC = () => {
               </div>
               <div>
                 <h4 className="text-white font-bold text-lg">{persona.label}</h4>
-                <p className="text-xs text-slate-400 leading-tight">{persona.desc}</p>
+                <p className="text-[10px] text-slate-400 leading-tight mt-1">{persona.desc}</p>
               </div>
             </div>
           </div>
@@ -443,14 +440,14 @@ const MyDashboard: React.FC = () => {
         {/* Golden Hour */}
         <div className="stat-card dna-card flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-2 mb-3 text-slate-400 text-sm font-medium uppercase tracking-wider">
-              <Sun size={16} /> Peak Learning Time
+            <div className="flex items-center gap-2 mb-3 text-slate-400 text-xs font-medium uppercase tracking-wider">
+              <Sun size={14} /> Peak Learning Time
             </div>
-            <div className="mt-2">
-              <h4 className="text-white font-bold text-3xl">
+            <div className="mt-1">
+              <h4 className="text-white font-bold text-2xl">
                 {stats?.peakLearningTime !== undefined ? formatGoldenHour(stats.peakLearningTime) : '--:--'}
               </h4>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-[10px] text-slate-400 mt-1">
                 Your brain is most active at this time.
               </p>
             </div>
@@ -460,10 +457,10 @@ const MyDashboard: React.FC = () => {
         {/* Digital Nutrition Label (Bias) */}
         <div className="stat-card dna-card">
           <div className="flex items-center justify-between mb-3">
-            <div className="text-slate-400 text-sm font-medium uppercase tracking-wider flex items-center gap-2">
+            <div className="text-slate-400 text-xs font-medium uppercase tracking-wider flex items-center gap-2">
                Media Diet
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded font-bold text-white ${diversity.color}`}>
+            <span className={`text-[10px] px-2 py-0.5 rounded font-bold text-white ${diversity.color}`}>
               {diversity.label}
             </span>
           </div>
@@ -504,14 +501,14 @@ const MyDashboard: React.FC = () => {
                           <div className="flex items-center gap-4">
                               {/* Status Icon */}
                               <div className={`p-2 rounded-full ${quest.isCompleted ? 'bg-green-500/20 text-green-400' : 'bg-slate-700/50 text-slate-500'}`}>
-                                  {quest.isCompleted ? <CheckCircle size={20} /> : <Circle size={20} />}
+                                  {quest.isCompleted ? <CheckCircle size={18} /> : <Circle size={18} />}
                               </div>
                               
                               <div>
-                                  <h4 className={`font-medium ${quest.isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
+                                  <h4 className={`text-sm font-medium ${quest.isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
                                       {quest.description}
                                   </h4>
-                                  <div className="flex items-center gap-3 mt-1">
+                                  <div className="flex items-center gap-3 mt-2">
                                       {/* Progress Bar */}
                                       <div className="w-24 h-1.5 bg-slate-700 rounded-full overflow-hidden">
                                           <div 
@@ -519,7 +516,7 @@ const MyDashboard: React.FC = () => {
                                               style={{ width: `${Math.min(100, (quest.progress / quest.target) * 100)}%` }}
                                           />
                                       </div>
-                                      <span className="text-xs text-slate-500 font-mono">
+                                      <span className="text-[10px] text-slate-500 font-mono">
                                           {quest.progress} / {quest.target}
                                       </span>
                                   </div>
@@ -529,7 +526,7 @@ const MyDashboard: React.FC = () => {
                           {/* Reward Pill */}
                           <div className={`flex flex-col items-center justify-center px-3 py-1 rounded-lg border ${quest.isCompleted ? 'bg-slate-800 border-slate-700 opacity-50' : 'bg-slate-800/80 border-slate-700'}`}>
                               {getRewardIcon(quest.reward)}
-                              <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase">
+                              <span className="text-[9px] font-bold text-slate-400 mt-1 uppercase">
                                   {getRewardLabel(quest.reward)}
                               </span>
                           </div>

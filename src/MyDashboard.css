@@ -1,5 +1,66 @@
 /* src/MyDashboard.css */
 
+/* ==================== NEW LAYOUT FIXES ==================== */
+
+/* Main Container - Fixes "Stacking to left" by centering and padding */
+.dashboard-container {
+  width: 100%;
+  max-width: 1200px; /* Constrain width on large screens */
+  margin: 0 auto;    /* Center the container */
+  padding: 20px;     /* Add breathing room */
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Explicit Grid Definitions (Fallbacks/Enforcement for Tailwind) */
+
+/* 2-Column Grid (Hero & Quests) */
+.dashboard-grid-hero,
+.dashboard-grid-quests {
+  display: grid;
+  grid-template-columns: 1fr; /* Mobile default */
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .dashboard-grid-hero,
+  .dashboard-grid-quests {
+    grid-template-columns: repeat(2, 1fr); /* Desktop: 2 columns */
+  }
+}
+
+/* 4-Column Grid (Stats) */
+.dashboard-grid-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Mobile: 2 columns */
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .dashboard-grid-stats {
+    grid-template-columns: repeat(4, 1fr); /* Desktop: 4 columns */
+  }
+}
+
+/* 3-Column Grid (DNA/Nutrition) */
+.dashboard-grid-dna {
+  display: grid;
+  grid-template-columns: 1fr; /* Mobile: 1 column */
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .dashboard-grid-dna {
+    grid-template-columns: repeat(3, 1fr); /* Desktop: 3 columns */
+  }
+}
+
+/* ==================== END NEW FIXES ==================== */
+
+
 /* ==================== LAYOUT CONTAINERS (Preserved) ==================== */
 .dashboard-page {
   width: 100%;
@@ -100,10 +161,12 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 25px;
-  margin-bottom: 25px; /* Spacing between rows */
+  margin-bottom: 0; /* REMOVED MARGIN BOTTOM as grid handles gap now */
   box-shadow: var(--shadow-sm);
   transition: transform 0.2s ease, border-color 0.2s ease;
   position: relative; /* For absolute positioning inside */
+  height: 100%; /* Ensure cards fill grid height */
+  box-sizing: border-box;
 }
 
 .dashboard-card:hover,
@@ -222,6 +285,8 @@
   align-items: center;
   justify-content: center;
   transition: transform 0.2s ease;
+  height: 100%; /* Ensure consistent height */
+  box-sizing: border-box;
 }
 
 .stat-card-mini:hover {
@@ -264,6 +329,8 @@
   min-height: 160px;
   background: linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6));
   border: 1px solid rgba(148, 163, 184, 0.1);
+  display: flex;
+  flex-direction: column;
 }
 
 .dna-card:hover {

@@ -21,6 +21,12 @@ export const ANALYTICS_CONFIG = {
   VELOCITY: {
     READING_MAX: 0.05, // Below this, user is likely reading
     SCANNING_MIN: 0.1, // Above this, user is likely scanning/skipping
+  },
+
+  // NEW: Flow State Configuration
+  FLOW: {
+    THRESHOLD_MS: 300000, // 5 minutes of stability to enter "Flow"
+    VELOCITY_MAX: 0.03,   // Must be very stable to count as flow
   }
 };
 
@@ -53,6 +59,14 @@ export interface SessionData {
   tabSwitchCount: number;
   isTabActive: boolean;
   lastCursorMove: number; // NEW: Track physical presence
+
+  // NEW: Flow State Tracking
+  currentFlowDuration: number; // Duration in current flow state (ms)
+  totalFlowDuration: number;   // Total flow time this session (seconds)
+  isFlowing: boolean;
+
+  // NEW: Drop-off Detection
+  lastVisibleElementId?: string;
 
   // Heatmap
   heatmap: Record<string, number>;

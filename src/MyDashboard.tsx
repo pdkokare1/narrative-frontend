@@ -14,11 +14,13 @@ import {
   Snowflake, 
   Zap,       
   Brain,
-  Wind,      // NEW: For Skimmer Persona
-  Anchor,    // NEW: For Deep Reader Persona
-  Scale,     // NEW: For Balanced Persona
-  Sun,       // NEW: For Golden Hour
-  Activity   // NEW: For General Activity
+  Wind,      
+  Anchor,    
+  Scale,     
+  Sun,       
+  Activity,
+  CheckCircle, // NEW: For Completed Quests
+  Circle       // NEW: For Pending Quests
 } from 'lucide-react';
 import './MyDashboard.css';
 import DashboardSkeleton from './components/ui/DashboardSkeleton';
@@ -34,6 +36,7 @@ import {
   Legend,
   Filler
 } from 'chart.js';
+import { IQuest } from './types'; // NEW: Import Quest Interface
 
 // Register ChartJS components
 ChartJS.register(
@@ -54,7 +57,7 @@ interface DailyStat {
   goalsMet: boolean;
 }
 
-// Updated Interface to match Backend 'UserStats' model
+// Updated Interface to match Backend 'UserStats' model + Quests
 interface UserStats {
   userId: string;
   totalTimeSpent: number;
@@ -64,7 +67,7 @@ interface UserStats {
   longestStreak: number;
   streakFreezes?: number;
   focusScoreAvg?: number;
-  deepFocusMinutes?: number; // NEW: Added to track Flow State duration
+  deepFocusMinutes?: number; 
   engagementScore: number;
   
   // NEW: Reading DNA & Nutrition
@@ -84,6 +87,9 @@ interface UserStats {
     goalsMet: boolean;
   };
   recentDailyHistory?: DailyStat[];
+  
+  // NEW: Quests included in the response
+  quests?: IQuest[];
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -266,6 +272,17 @@ const MyDashboard: React.FC = () => {
   const pctCenter = Math.round(((stats?.leanExposure?.Center || 0) / totalLean) * 100);
   const pctRight = Math.round(((stats?.leanExposure?.Right || 0) / totalLean) * 100);
 
+  // Helper for Quest Rewards
+  const getRewardIcon = (type: string) => {
+      if (type === 'streak_freeze') return <Snowflake size={14} className="text-blue-400" />;
+      return <Award size={14} className="text-yellow-400" />;
+  };
+
+  const getRewardLabel = (type: string) => {
+      if (type === 'streak_freeze') return 'Freeze';
+      return 'XP';
+  };
+
   return (
     <div className="dashboard-container pb-24 md:pb-8 animate-in fade-in duration-500">
       
@@ -402,7 +419,7 @@ const MyDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. Reading DNA & Digital Nutrition (NEW SECTION) */}
+      {/* 4. Reading DNA & Digital Nutrition */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         
         {/* Reading Persona */}
@@ -471,7 +488,58 @@ const MyDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 5. Activity Chart */}
+      {/* 5. NEW: Daily Quests Section */}
+      {stats?.quests && stats.quests.length > 0 && (
+          <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                    <Target size={20} className="text-slate-400" />
+                    Daily Quests
+                  </h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {stats.quests.map((quest) => (
+                      <div key={quest.id} className="stat-card flex items-center justify-between p-4">
+                          <div className="flex items-center gap-4">
+                              {/* Status Icon */}
+                              <div className={`p-2 rounded-full ${quest.isCompleted ? 'bg-green-500/20 text-green-400' : 'bg-slate-700/50 text-slate-500'}`}>
+                                  {quest.isCompleted ? <CheckCircle size={20} /> : <Circle size={20} />}
+                              </div>
+                              
+                              <div>
+                                  <h4 className={`font-medium ${quest.isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
+                                      {quest.description}
+                                  </h4>
+                                  <div className="flex items-center gap-3 mt-1">
+                                      {/* Progress Bar */}
+                                      <div className="w-24 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                                          <div 
+                                              className="h-full bg-indigo-500 transition-all duration-500"
+                                              style={{ width: `${Math.min(100, (quest.progress / quest.target) * 100)}%` }}
+                                          />
+                                      </div>
+                                      <span className="text-xs text-slate-500 font-mono">
+                                          {quest.progress} / {quest.target}
+                                      </span>
+                                  </div>
+                              </div>
+                          </div>
+
+                          {/* Reward Pill */}
+                          <div className={`flex flex-col items-center justify-center px-3 py-1 rounded-lg border ${quest.isCompleted ? 'bg-slate-800 border-slate-700 opacity-50' : 'bg-slate-800/80 border-slate-700'}`}>
+                              {getRewardIcon(quest.reward)}
+                              <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase">
+                                  {getRewardLabel(quest.reward)}
+                              </span>
+                          </div>
+                      </div>
+                  ))}
+              </div>
+          </div>
+      )}
+
+      {/* 6. Activity Chart */}
       <div className="stat-card mb-8">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
@@ -490,7 +558,7 @@ const MyDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 6. Today's Progress */}
+      {/* 7. Today's Progress */}
       <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 border border-slate-700/50">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-white flex items-center gap-2">
@@ -518,7 +586,7 @@ const MyDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 7. Footer Actions */}
+      {/* 8. Footer Actions */}
       <div className="mt-8 flex gap-4">
         <button 
           onClick={() => navigate('/settings')}

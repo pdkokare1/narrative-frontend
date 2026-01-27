@@ -13,7 +13,12 @@ import { useElementTracking } from './analytics/useElementTracking';
 
 const QUEUE_KEY = 'analytics_offline_queue';
 
-export const useActivityTracker = (rawId?: any, rawType?: any) => {
+// UPDATED: Added onTrigger callback to signature to support MainLayout integration
+export const useActivityTracker = (
+  rawId?: any, 
+  rawType?: any, 
+  onTrigger?: (command: string) => void
+) => {
   const location = useLocation();
   const { isPlaying: isRadioPlaying } = useAudio();
   const { user } = useAuth();
@@ -275,8 +280,15 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
             .then(res => res.json()) // NEW: Parse response for triggers
             .then(response => {
                 // NEW: Handle Backend Commands (Feedback Loop)
-                if (response.command === 'trigger_palate_cleanser') {
-                    addToast("Take a breath. You've been reading a lot of heavy content lately.", 'info');
+                if (response?.command) {
+                    // 1. Toast Notification
+                    if (response.command === 'trigger_palate_cleanser') {
+                        addToast("Take a breath. You've been reading a lot of heavy content lately.", 'info');
+                    }
+                    // 2. Execute Callback (e.g. Open Modal)
+                    if (onTrigger) {
+                        onTrigger(response.command);
+                    }
                 }
             })
             .catch(err => {
@@ -302,7 +314,7 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     }
 
     sessionRef.current.lastPingTime = now;
-  }, [contentId, contentType, isRadioPlaying, user?.uid, addToast]);
+  }, [contentId, contentType, isRadioPlaying, user?.uid, addToast, onTrigger]);
 
 
   // 6. High-Res Sampling & Flush Queue

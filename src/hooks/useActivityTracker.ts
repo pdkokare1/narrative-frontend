@@ -43,9 +43,9 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
     lastScrollTop: 0,
     lastScrollTime: Date.now(),
     scrollVelocity: 0,
-    scrollDirection: 'steady', // NEW: Fixes TS Error
-    confusionCount: 0,         // NEW: Fixes TS Error
-    tempUpScroll: 0,           // NEW: Fixes TS Error
+    scrollDirection: 'steady', 
+    confusionCount: 0,         
+    tempUpScroll: 0,           
 
     // Focus & Presence
     tabSwitchCount: 0,
@@ -102,6 +102,43 @@ export const useActivityTracker = (rawId?: any, rawType?: any) => {
         sessionRef.current.isActive = false;
     }, timeoutDuration);
   }, [isRadioPlaying, contentType]);
+
+  // --- IMPROVEMENT: Mobile Micro-Interaction Tracking ---
+  // Fixes "Ghost Reading" issues on mobile where users hold the screen without scrolling.
+  useEffect(() => {
+    // Only run on touch-enabled devices
+    if (!('ontouchstart' in window)) return;
+
+    let lastTouchY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+        lastTouchY = e.touches[0].clientY;
+        handleUserActivity();
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+        const currentY = e.touches[0].clientY;
+        const diff = Math.abs(currentY - lastTouchY);
+        
+        // If the user is holding their thumb on the screen but moving slightly
+        // (Micro-movements indicate reading flow on mobile, even if not scrolling)
+        if (diff < 10 && diff > 0) {
+            // We manually trigger "Presence" here without triggering full activity logic
+            // to avoid resetting idle timers too aggressively, but enough to stay "Active"
+            sessionRef.current.lastCursorMove = Date.now(); 
+        }
+        lastTouchY = currentY;
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    
+    return () => {
+        window.removeEventListener('touchstart', handleTouchStart);
+        window.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [handleUserActivity]);
+  // -----------------------------------------------------
 
   // --- PLUG IN MODULAR HOOKS ---
   useSessionCore(sessionRef, user);

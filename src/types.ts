@@ -9,6 +9,18 @@ export interface IBadge {
   earnedAt: string;  
 }
 
+// --- NEW: Quest Interface (Gamification) ---
+export interface IQuest {
+  id: string;
+  type: 'read_opposing' | 'read_deep' | 'share_article' | 'topic_explorer';
+  target: number;      
+  progress: number;    
+  isCompleted: boolean;
+  reward: string;      // 'xp', 'streak_freeze'
+  description: string;
+  expiresAt: string;   // Date string from JSON
+}
+
 // --- 2. Article Interface (Synchronized with Backend) ---
 export interface IArticle {
   _id: string;
@@ -135,6 +147,7 @@ export interface IUserProfile {
   // Gamification 
   currentStreak?: number;
   badges?: IBadge[];
+  quests?: IQuest[]; // Added Quests support
   lastActiveDate?: string;
   streakFreezes: number; // Added explicitly
   

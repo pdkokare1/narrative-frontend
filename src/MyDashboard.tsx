@@ -297,7 +297,7 @@ const MyDashboard: React.FC = () => {
       </header>
 
       {/* 2. Main Hero Cards (Streak & Focus) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 dashboard-grid-hero">
         
         {/* Streak Card */}
         <div className="stat-card relative overflow-hidden group">
@@ -372,7 +372,7 @@ const MyDashboard: React.FC = () => {
       </div>
 
       {/* 3. Secondary Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 dashboard-grid-stats">
         
         {/* Time Spent */}
         <div className="stat-card-mini">
@@ -420,7 +420,7 @@ const MyDashboard: React.FC = () => {
       </div>
 
       {/* 4. Reading DNA & Digital Nutrition */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 dashboard-grid-dna">
         
         {/* Reading Persona */}
         <div className="stat-card dna-card flex flex-col justify-between">
@@ -498,7 +498,7 @@ const MyDashboard: React.FC = () => {
                   </h3>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 dashboard-grid-quests">
                   {stats.quests.map((quest) => (
                       <div key={quest.id} className="stat-card flex items-center justify-between p-4">
                           <div className="flex items-center gap-4">

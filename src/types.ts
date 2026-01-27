@@ -60,6 +60,9 @@ export interface IArticle {
   trustScore?: number;
   trustLevel?: string;
 
+  // NEW: Cognitive Load Metric
+  complexityScore?: number; 
+
   // Coverage Stats
   coverageLeft?: number;
   coverageCenter?: number;

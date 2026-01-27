@@ -27,6 +27,11 @@ export const ANALYTICS_CONFIG = {
   FLOW: {
     THRESHOLD_MS: 300000, // 5 minutes of stability to enter "Flow"
     VELOCITY_MAX: 0.03,   // Must be very stable to count as flow
+  },
+  
+  // NEW: Confusion / Re-reading Detection
+  CONFUSION: {
+    SCROLL_UP_THRESHOLD: 300, // Pixels scrolled up to count as "Re-reading/Confusion"
   }
 };
 
@@ -54,6 +59,7 @@ export interface SessionData {
   lastScrollTop: number;
   lastScrollTime: number;
   scrollVelocity: number;
+  scrollDirection: 'up' | 'down' | 'steady'; // NEW: Track direction
 
   // Focus & Ghost Tracking
   tabSwitchCount: number;
@@ -64,6 +70,9 @@ export interface SessionData {
   currentFlowDuration: number; // Duration in current flow state (ms)
   totalFlowDuration: number;   // Total flow time this session (seconds)
   isFlowing: boolean;
+
+  // NEW: Confusion / Re-reading Metric
+  confusionCount: number; // How many times they scrolled back up to re-read
 
   // NEW: Drop-off Detection
   lastVisibleElementId?: string;

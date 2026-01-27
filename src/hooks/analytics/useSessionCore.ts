@@ -39,4 +39,38 @@ export const useSessionCore = (
         sessionRef.current.hasStitchedSession = true;
     }
   }, [user]);
+
+  // 3. NEW: Flow State Tracker
+  // Monitors deep focus. If user reads consistently for > 5 mins, we count "Flow Minutes".
+  useEffect(() => {
+    const flowInterval = setInterval(() => {
+        const sess = sessionRef.current;
+
+        // Criteria for Flow:
+        // 1. Tab must be active
+        // 2. User must be active (not idle)
+        // 3. Scroll velocity must be low (Reading, not scanning)
+        // 4. No recent tab switches
+        if (
+            sess.isTabActive && 
+            sess.isActive && 
+            sess.scrollVelocity < ANALYTICS_CONFIG.FLOW.VELOCITY_MAX
+        ) {
+            sess.currentFlowDuration += 1000; // Add 1 second
+
+            // If they have sustained focus for enough time, count it as "True Flow"
+            if (sess.currentFlowDuration >= ANALYTICS_CONFIG.FLOW.THRESHOLD_MS) {
+                sess.isFlowing = true;
+                sess.totalFlowDuration += 1; // Add to global counter (seconds)
+            }
+        } else {
+            // Disruption! Reset current flow accumulator.
+            // Note: We do not reset totalFlowDuration, that is cumulative.
+            sess.currentFlowDuration = 0;
+            sess.isFlowing = false;
+        }
+    }, 1000);
+
+    return () => clearInterval(flowInterval);
+  }, []);
 };

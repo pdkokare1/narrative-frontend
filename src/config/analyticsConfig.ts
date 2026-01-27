@@ -28,7 +28,7 @@ export const ANALYTICS_CONFIG = {
     THRESHOLD_MS: 300000, // 5 minutes of stability to enter "Flow"
     VELOCITY_MAX: 0.03,   // Must be very stable to count as flow
   },
-  
+
   // NEW: Confusion / Re-reading Detection
   CONFUSION: {
     SCROLL_UP_THRESHOLD: 300, // Pixels scrolled up to count as "Re-reading/Confusion"
@@ -73,6 +73,7 @@ export interface SessionData {
 
   // NEW: Confusion / Re-reading Metric
   confusionCount: number; // How many times they scrolled back up to re-read
+  tempUpScroll: number;   // Internal counter for upward pixels
 
   // NEW: Drop-off Detection
   lastVisibleElementId?: string;

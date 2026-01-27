@@ -20,7 +20,12 @@ export const useSessionCore = (
         sessionStorage.setItem('current_analytics_session_id', newId);
       }
     }
+    // Reset / Init defaults
     sessionRef.current.maxScroll = 0;
+    sessionRef.current.confusionCount = 0;
+    sessionRef.current.tempUpScroll = 0;
+    sessionRef.current.scrollDirection = 'steady';
+    
   }, []); // Run once on mount
 
   // 2. Link Anonymous Session to User

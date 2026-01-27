@@ -38,7 +38,21 @@ export const useScrollTracking = (
               const absDy = Math.abs(dy);
               
               // A. Calculate Velocity
-              sessionRef.current.scrollVelocity = absDy / dt; 
+              const currentVelocity = absDy / dt; 
+              sessionRef.current.scrollVelocity = currentVelocity;
+
+              // NEW: Update Running Average (Cognitive Load Input)
+              // Only count velocities that are "Reading speed" or "Scanning speed", 
+              // ignoring near-zero jitter or massive jumps (page up/down keys).
+              // We filter out super-fast jumps (>5 px/ms) which are usually navigation/Find-in-page
+              if (currentVelocity > 0 && currentVelocity < 5.0) {
+                 const n = sessionRef.current.velocitySamples || 0;
+                 const avg = sessionRef.current.avgVelocity || 0;
+                 
+                 // Cumulative Moving Average
+                 sessionRef.current.avgVelocity = (avg * n + currentVelocity) / (n + 1);
+                 sessionRef.current.velocitySamples = n + 1;
+              }
 
               // B. Determine Direction & Confusion
               if (dy < 0) {

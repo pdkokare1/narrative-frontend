@@ -24,6 +24,11 @@ export const useElementTracking = (
             if (entry.isIntersecting) {
                 // Started looking at this element
                 visibleElements.set(trackId, now);
+
+                // NEW: Update Drop-off Point
+                // As user scrolls down, this keeps track of the latest element they saw.
+                sessionRef.current.lastVisibleElementId = trackId;
+
             } else {
                 // Stopped looking
                 const startTime = visibleElements.get(trackId);

@@ -1,3 +1,4 @@
+// src/MyDashboard.tsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
@@ -63,6 +64,7 @@ interface UserStats {
   longestStreak: number;
   streakFreezes?: number;
   focusScoreAvg?: number;
+  deepFocusMinutes?: number; // NEW: Added to track Flow State duration
   engagementScore: number;
   
   // NEW: Reading DNA & Nutrition
@@ -317,7 +319,7 @@ const MyDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Focus Quality Card */}
+        {/* Focus Quality Card - UPDATED: Now includes Time in Flow */}
         <div className="stat-card relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <Brain size={80} />
@@ -338,6 +340,16 @@ const MyDashboard: React.FC = () => {
             <p className={`text-sm font-medium mt-2 ${focusData.color}`}>
               {focusData.label}
             </p>
+
+            {/* NEW: Deep Work Visualization (Time in Flow) */}
+            <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+                <span className="text-slate-400 text-xs uppercase tracking-wider font-semibold flex items-center gap-1">
+                  <Brain size={12} /> Time in Flow
+                </span>
+                <span className="text-white font-mono font-bold">
+                    {Math.round(stats?.deepFocusMinutes || 0)}m
+                </span>
+            </div>
           </div>
         </div>
       </div>

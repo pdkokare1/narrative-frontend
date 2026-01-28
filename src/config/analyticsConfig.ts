@@ -11,6 +11,7 @@ export const ANALYTICS_CONFIG = {
     AUDIO_MODE: 1200000, // 20 mins (Listening allows long pauses)
     FEED_MODE: 15000,    // 15 sec (Scanning requires constant interaction)
     READING_MODE: 60000, // 60 sec (Deep reading)
+    NARRATIVE_MODE: 120000, // NEW: 120 sec (Long-form Narrative tolerance)
     
     // NEW: Ghost Reading Protection
     // If cursor hasn't moved in this time, stop counting "Reading" time
@@ -28,12 +29,14 @@ export const ANALYTICS_CONFIG = {
   FLOW: {
     THRESHOLD_MS: 300000, // 5 minutes of stability to enter "Flow"
     VELOCITY_MAX: 0.03,   // Must be very stable to count as flow
+    GRACE_PERIOD_MS: 5000, // NEW: Allow 5s of interruption before breaking flow
   },
 
   // NEW: Confusion / Re-reading Detection
   CONFUSION: {
     SCROLL_UP_THRESHOLD: 300, // Pixels scrolled up to count as "Re-reading/Confusion"
     ABANDONMENT_THRESHOLD: 3, // NEW: How many rapid up-scrolls trigger the intervention
+    REFERENCE_DEPTH_THRESHOLD: 30, // NEW: If deeper than 30%, assume referencing, not confusion
   }
 };
 
@@ -76,6 +79,7 @@ export interface SessionData {
   currentFlowDuration: number; // Duration in current flow state (ms)
   totalFlowDuration: number;   // Total flow time this session (seconds)
   isFlowing: boolean;
+  flowGraceCounter: number;    // NEW: Track seconds of invalid state before reset
 
   // NEW: Confusion / Re-reading Metric
   confusionCount: number; // How many times they scrolled back up to re-read

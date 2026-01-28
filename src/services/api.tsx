@@ -23,17 +23,18 @@ export const getAudio = (text: string, voiceId: string, articleId?: string, pref
 };
 
 // --- ANALYTICS ---
-// NEW: Log Search Intent
+// NEW: Log Search Intent (Batched via Event Bus)
 export const logSearch = (query: string, sessionId: string) => {
-    return api.post('/analytics/track', {
-        sessionId,
-        interactions: [{
-            contentType: 'search',
-            query,
-            timestamp: new Date()
-        }],
-        meta: { platform: 'web', userAgent: navigator.userAgent }
+    // Dispatch event to be caught by useActivityTracker
+    const event = new CustomEvent('narrative-standard-log', {
+        detail: {
+            eventType: 'search',
+            data: { query, sessionId }
+        }
     });
+    window.dispatchEvent(event);
+    
+    return Promise.resolve();
 };
 
 export default api; 

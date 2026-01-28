@@ -13,11 +13,12 @@ import { useElementTracking } from './analytics/useElementTracking';
 
 const QUEUE_KEY = 'analytics_offline_queue';
 
-// UPDATED: Added onTrigger callback to signature to support MainLayout integration
+// UPDATED: Added onFlowChange callback for Zen Mode support
 export const useActivityTracker = (
   rawId?: any, 
   rawType?: any, 
-  onTrigger?: (command: string) => void
+  onTrigger?: (command: string) => void,
+  onFlowChange?: (isFlowing: boolean) => void // NEW ARGUMENT
 ) => {
   const location = useLocation();
   const { isPlaying: isRadioPlaying } = useAudio();
@@ -150,7 +151,9 @@ export const useActivityTracker = (
   // -----------------------------------------------------
 
   // --- PLUG IN MODULAR HOOKS ---
-  useSessionCore(sessionRef, user);
+  // UPDATED: Pass onFlowChange to Core
+  useSessionCore(sessionRef, user, onFlowChange);
+  
   useScrollTracking(sessionRef, handleUserActivity);
   useElementTracking(sessionRef, contentId, location.pathname);
 

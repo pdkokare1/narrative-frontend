@@ -33,6 +33,7 @@ export const ANALYTICS_CONFIG = {
   // NEW: Confusion / Re-reading Detection
   CONFUSION: {
     SCROLL_UP_THRESHOLD: 300, // Pixels scrolled up to count as "Re-reading/Confusion"
+    ABANDONMENT_THRESHOLD: 3, // NEW: How many rapid up-scrolls trigger the intervention
   }
 };
 

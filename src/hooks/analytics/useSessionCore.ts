@@ -1,11 +1,16 @@
 // src/hooks/analytics/useSessionCore.ts
-import { useEffect, MutableRefObject } from 'react';
+import { useEffect, MutableRefObject, useRef } from 'react';
 import { SessionData, ANALYTICS_CONFIG } from '../../config/analyticsConfig';
 
+// UPDATED: Added onFlowChange callback to signature
 export const useSessionCore = (
   sessionRef: MutableRefObject<SessionData>,
-  user: any
+  user: any,
+  onFlowChange?: (isFlowing: boolean) => void
 ) => {
+  // NEW: Track previous state to trigger updates only on change
+  const prevFlowState = useRef<boolean>(false);
+
   // 1. Initialize Session ID
   useEffect(() => {
     if (!sessionRef.current.sessionId) {
@@ -74,8 +79,19 @@ export const useSessionCore = (
             sess.currentFlowDuration = 0;
             sess.isFlowing = false;
         }
+
+        // --- NEW: Trigger Flow Change Callback ---
+        // If state changed (e.g. False -> True or True -> False), notify parent
+        if (prevFlowState.current !== sess.isFlowing) {
+            prevFlowState.current = sess.isFlowing;
+            if (onFlowChange) {
+                onFlowChange(sess.isFlowing);
+            }
+        }
+        // -----------------------------------------
+
     }, 1000);
 
     return () => clearInterval(flowInterval);
-  }, []);
+  }, [onFlowChange]); // Added dependency
 };

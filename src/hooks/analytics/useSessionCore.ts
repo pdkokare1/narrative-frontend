@@ -30,6 +30,8 @@ export const useSessionCore = (
     sessionRef.current.confusionCount = 0;
     sessionRef.current.tempUpScroll = 0;
     sessionRef.current.scrollDirection = 'steady';
+    // Init Flow Grace
+    sessionRef.current.flowGraceCounter = 0;
     
   }, []); // Run once on mount
 
@@ -60,12 +62,15 @@ export const useSessionCore = (
         // 1. Tab must be active
         // 2. User must be active (not idle)
         // 3. Scroll velocity must be low (Reading, not scanning)
-        // 4. No recent tab switches
-        if (
+        const isValidFlowState = (
             sess.isTabActive && 
             sess.isActive && 
             sess.scrollVelocity < ANALYTICS_CONFIG.FLOW.VELOCITY_MAX
-        ) {
+        );
+
+        if (isValidFlowState) {
+            // Valid State: Reset Grace Counter & Accumulate Time
+            sess.flowGraceCounter = 0;
             sess.currentFlowDuration += 1000; // Add 1 second
 
             // If they have sustained focus for enough time, count it as "True Flow"
@@ -74,10 +79,22 @@ export const useSessionCore = (
                 sess.totalFlowDuration += 1; // Add to global counter (seconds)
             }
         } else {
-            // Disruption! Reset current flow accumulator.
-            // Note: We do not reset totalFlowDuration, that is cumulative.
-            sess.currentFlowDuration = 0;
-            sess.isFlowing = false;
+            // Invalid State: Check Grace Period
+            // Instead of immediate reset, we allow a few seconds of "jitter"
+            if (sess.isFlowing || sess.currentFlowDuration > 0) {
+                sess.flowGraceCounter += 1000;
+
+                // Only RESET if we exceed the grace period
+                if (sess.flowGraceCounter > ANALYTICS_CONFIG.FLOW.GRACE_PERIOD_MS) {
+                    sess.currentFlowDuration = 0;
+                    sess.isFlowing = false;
+                    sess.flowGraceCounter = 0;
+                }
+            } else {
+                 // Not flowing, just reset
+                 sess.currentFlowDuration = 0;
+                 sess.isFlowing = false;
+            }
         }
 
         // --- NEW: Trigger Flow Change Callback ---

@@ -10,7 +10,6 @@ import { SessionData, ANALYTICS_CONFIG } from '../config/analyticsConfig';
 import { useSessionCore } from './analytics/useSessionCore';
 import { useScrollTracking } from './analytics/useScrollTracking';
 import { useElementTracking } from './analytics/useElementTracking';
-import { useArticleSave } from './useArticleSave'; // NEW: Import for triggering save logic if needed
 
 const QUEUE_KEY = 'analytics_offline_queue';
 

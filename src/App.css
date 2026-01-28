@@ -235,3 +235,48 @@ body.font-large .article-content p { font-size: 15px !important; }
 body.font-xl .article-headline { font-size: 22px !important; line-height: 1.4; }
 body.font-xl .article-summary { font-size: 16px !important; line-height: 1.6; }
 body.font-xl .article-content p { font-size: 17px !important; }
+
+
+
+/* src/App.css */
+
+/* ... Existing Styles ... */
+
+/* --- ZEN MODE (Focus Intervention) --- */
+.zen-mode {
+    --transition-speed: 0.6s;
+}
+
+/* Dim non-essential UI to reduce cognitive load */
+.zen-mode .bottom-nav, 
+.zen-mode .header-container, 
+.zen-mode .sidebar-container,
+.zen-mode .floating-action {
+    opacity: 0.2;
+    transition: opacity var(--transition-speed) ease;
+    filter: grayscale(0.5); /* Slight desaturation */
+}
+
+/* Restore on Intent (Hover) */
+.zen-mode .bottom-nav:hover, 
+.zen-mode .header-container:hover, 
+.zen-mode .sidebar-container:hover,
+.zen-mode .floating-action:hover {
+    opacity: 1;
+    filter: grayscale(0);
+}
+
+/* Suppress Non-Urgent Toasts */
+.zen-mode .toast-container .toast-info {
+    opacity: 0;
+    pointer-events: none;
+    height: 0;
+    overflow: hidden;
+    margin: 0;
+}
+
+/* Ensure Critical Alerts are still seen */
+.zen-mode .toast-container .toast-error,
+.zen-mode .toast-container .toast-success {
+    opacity: 1;
+}

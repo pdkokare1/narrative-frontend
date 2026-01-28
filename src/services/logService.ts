@@ -1,34 +1,29 @@
+// src/services/logService.ts
 import { auth } from '../firebaseConfig';
-import { API_URL } from './axiosInstance';
+// Removed axios/fetch import as we now dispatch events to the central tracker
 
-// --- ANALYTICS: Beacon / Keepalive Implementation ---
-// Replaces api.post for logs to ensure they survive page navigation
-const sendBeaconRequest = async (endpoint: string, body: any) => {
-    const url = `${API_URL}${endpoint}`;
-    const user = auth.currentUser;
-    const headers: HeadersInit = { 'Content-Type': 'application/json' };
-
-    if (user) {
-        try {
-            const token = await user.getIdToken();
-            headers['Authorization'] = `Bearer ${token}`;
-        } catch (e) { /* Ignore token error for logs */ }
-    }
-
-    // Use fetch with keepalive: true (modern replacement for sendBeacon with headers support)
+// --- ANALYTICS: Event Bus Implementation ---
+// Replaces direct HTTP calls with CustomEvents to allow Client-Side Batching
+// in useActivityTracker.ts
+const dispatchAnalyticsEvent = (eventType: string, data: any) => {
+    // We wrap in a try-catch to ensure no errors propagate to UI
     try {
-        fetch(url, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(body),
-            keepalive: true
+        const event = new CustomEvent('narrative-standard-log', {
+            detail: {
+                eventType, // e.g. 'view_analysis', 'share_article'
+                data
+            }
         });
+        window.dispatchEvent(event);
     } catch (err) {
-        console.warn('Analytics Log Failed:', err);
+        console.warn('Analytics Dispatch Failed:', err);
     }
+    
+    // Return resolved promise to maintain compatibility with existing 'await' calls
+    return Promise.resolve();
 };
 
-export const logView = (id: string) => sendBeaconRequest('/activity/log-view', { articleId: id });
-export const logCompare = (id: string) => sendBeaconRequest('/activity/log-compare', { articleId: id });
-export const logShare = (id: string) => sendBeaconRequest('/activity/log-share', { articleId: id });
-export const logRead = (id: string) => sendBeaconRequest('/activity/log-read', { articleId: id });
+export const logView = (id: string) => dispatchAnalyticsEvent('view_analysis', { articleId: id });
+export const logCompare = (id: string) => dispatchAnalyticsEvent('view_comparison', { articleId: id });
+export const logShare = (id: string) => dispatchAnalyticsEvent('share_article', { articleId: id });
+export const logRead = (id: string) => dispatchAnalyticsEvent('read_external', { articleId: id });

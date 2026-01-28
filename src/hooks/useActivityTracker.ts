@@ -377,7 +377,7 @@ export const useActivityTracker = (
   }, [sendData, isRadioPlaying]);
 
 
-  // 7. Global Event Listeners
+  // 7. Global Event Listeners & Batch Logic
   useEffect(() => {
     const handleCopy = () => {
         const selection = window.getSelection()?.toString();
@@ -447,6 +447,26 @@ export const useActivityTracker = (
         });
     };
 
+    // --- NEW: Standard Log Listener (Batching Support) ---
+    const handleStandardLog = (e: any) => {
+        const { eventType, data } = e.detail;
+        
+        sessionRef.current.pendingInteractions.push({
+             contentType: eventType, // 'view_analysis', 'share_article', etc.
+             contentId: data.articleId || data.contentId || 'unknown',
+             query: data.query, // For search logs
+             ...data,
+             timestamp: new Date()
+        });
+
+        // OPTIMIZATION: Flush Immediately if Buffer is Full
+        // This prevents memory bloat and ensures data isn't lost if the user leaves
+        if (sessionRef.current.pendingInteractions.length >= ANALYTICS_CONFIG.BATCH_THRESHOLD) {
+             sendData(false, true); // Force flush
+        }
+    };
+    // ---------------------------------------------------
+
     const handleVisibilityChange = () => {
         if (document.hidden) {
             sessionRef.current.isTabActive = false;
@@ -465,6 +485,9 @@ export const useActivityTracker = (
     window.addEventListener('click', handleClick); 
     window.addEventListener('narrative-audio-event', handleAudioEvent as EventListener); 
     window.addEventListener('narrative-impression', handleImpression as EventListener);
+    // NEW Listener
+    window.addEventListener('narrative-standard-log', handleStandardLog as EventListener);
+    
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', () => sendData(true));
 
@@ -474,6 +497,7 @@ export const useActivityTracker = (
         window.removeEventListener('click', handleClick);
         window.removeEventListener('narrative-audio-event', handleAudioEvent as EventListener);
         window.removeEventListener('narrative-impression', handleImpression as EventListener);
+        window.removeEventListener('narrative-standard-log', handleStandardLog as EventListener);
         document.removeEventListener('visibilitychange', handleVisibilityChange);
         window.removeEventListener('beforeunload', () => sendData(true));
         

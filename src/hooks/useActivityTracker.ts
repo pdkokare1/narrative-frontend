@@ -10,6 +10,7 @@ import { SessionData, ANALYTICS_CONFIG } from '../config/analyticsConfig';
 import { useSessionCore } from './analytics/useSessionCore';
 import { useScrollTracking } from './analytics/useScrollTracking';
 import { useElementTracking } from './analytics/useElementTracking';
+import { useArticleSave } from './useArticleSave'; // NEW: Import for triggering save logic if needed
 
 const QUEUE_KEY = 'analytics_offline_queue';
 
@@ -81,6 +82,9 @@ export const useActivityTracker = (
 
   // Throttle Ref
   const throttleRef = useRef<number>(0);
+  
+  // NEW: Frustration Cooldown to prevent spamming the Toast
+  const frustrationCooldown = useRef<number>(0);
 
   // 3. User Activity Signal (The Pulse)
   const handleUserActivity = useCallback(() => {
@@ -157,6 +161,43 @@ export const useActivityTracker = (
   useScrollTracking(sessionRef, handleUserActivity);
   useElementTracking(sessionRef, contentId, location.pathname);
 
+  // --- NEW: Strategy A - Predictive Abandonment / Frustration Monitor ---
+  useEffect(() => {
+     if (!contentId || !contentType) return;
+
+     const monitor = setInterval(() => {
+         const now = Date.now();
+         const sess = sessionRef.current;
+         
+         // If "Confusion Count" (rapid up-scrolls) exceeds threshold
+         if (sess.confusionCount >= ANALYTICS_CONFIG.CONFUSION.ABANDONMENT_THRESHOLD) {
+             
+             // Check Cooldown (Don't spam user every 10 seconds)
+             if (now - frustrationCooldown.current > 300000) { // 5 minute cooldown
+                 
+                 // Trigger Intervention
+                 addToast("Short on time? You can save this to your Smart Brief for later.", 'info');
+                 
+                 // Log Intervention
+                 sess.pendingInteractions.push({
+                     contentType: 'ui_interaction',
+                     contentId: contentId,
+                     text: 'INTERVENTION:SAVED_SUGGESTION',
+                     timestamp: new Date()
+                 });
+
+                 // Reset score and set cooldown
+                 sess.confusionCount = 0;
+                 frustrationCooldown.current = now;
+             }
+         }
+     }, 2000); // Check every 2 seconds
+
+     return () => clearInterval(monitor);
+  }, [contentId, contentType, addToast]);
+  // ----------------------------------------------------------------------
+
+
   // 4. Calculate Word Count (Context Specific)
   useEffect(() => {
     if (contentId && (contentType === 'article' || contentType === 'narrative')) {
@@ -182,6 +223,9 @@ export const useActivityTracker = (
     // NEW: Reset Velocity Tracking
     sessionRef.current.avgVelocity = 0;
     sessionRef.current.velocitySamples = 0;
+    // NEW: Reset Frustration
+    sessionRef.current.confusionCount = 0;
+    frustrationCooldown.current = 0;
   }, [contentId, contentType]);
 
 

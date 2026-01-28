@@ -78,6 +78,9 @@ export default function MainLayout({ profile }: MainLayoutProps) {
   // NEW: Intervention State
   const [showPalateCleanser, setShowPalateCleanser] = useState(false);
 
+  // --- NEW: ZEN MODE (Flow State) ---
+  const [zenMode, setZenMode] = useState(false);
+
   // --- TOOLTIP STATE ---
   const [tooltip, setTooltip] = useState({ visible: false, text: '', x: 0, y: 0 });
 
@@ -92,9 +95,15 @@ export default function MainLayout({ profile }: MainLayoutProps) {
       }
   }, []);
 
+  // NEW: Handle Flow State Changes (Zen Mode)
+  const handleFlowChange = useCallback((isFlowing: boolean) => {
+    setZenMode(isFlowing);
+  }, []);
+
   // Initialize Global Session Tracker
   // We pass 'feed' as default type for the main layout context
-  useActivityTracker(undefined, 'feed', handleTrackerTrigger);
+  // UPDATED: Pass handleFlowChange
+  useActivityTracker(undefined, 'feed', handleTrackerTrigger, handleFlowChange);
 
   // --- EFFECTS ---
 
@@ -192,8 +201,9 @@ export default function MainLayout({ profile }: MainLayoutProps) {
     api.logCompare(article._id).catch(err => console.error("Log Compare Error:", err));
   }, []);
 
+  // UPDATED: Added zen-mode class conditional
   return (
-    <div className="app">
+    <div className={`app ${zenMode ? 'zen-mode' : ''}`}>
       <Header 
         theme={theme} 
         toggleTheme={toggleTheme} 

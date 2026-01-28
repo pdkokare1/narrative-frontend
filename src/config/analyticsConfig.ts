@@ -3,6 +3,7 @@
 export const ANALYTICS_CONFIG = {
   HEARTBEAT_INTERVAL: 30000, // 30 seconds
   SAMPLING_INTERVAL: 1000,   // 1 second (High res sampling)
+  BATCH_THRESHOLD: 10,       // NEW: Flush queue if we have 10+ items pending
   API_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
 
   // Dynamic Timeouts (How long until we consider the user "Idle")

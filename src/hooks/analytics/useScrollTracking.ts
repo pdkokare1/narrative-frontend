@@ -55,15 +55,27 @@ export const useScrollTracking = (
               }
 
               // B. Determine Direction & Confusion
+              const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+              const scrollPercent = docHeight > 0 ? Math.round((scrollTop / docHeight) * 100) : 0;
+
               if (dy < 0) {
                   // SCROLLING UP (Reading back / Confusion)
                   sessionRef.current.scrollDirection = 'up';
-                  sessionRef.current.tempUpScroll += absDy;
+                  
+                  // NEW: "Reference vs Confusion" Logic
+                  // If user is deep in the article (>30%), scrolling up is likely checking a reference.
+                  // If user is near the top (<30%), scrolling up is likely "Bailing" or confusion.
+                  if (scrollPercent < ANALYTICS_CONFIG.CONFUSION.REFERENCE_DEPTH_THRESHOLD) {
+                      sessionRef.current.tempUpScroll += absDy;
 
-                  // Threshold Check
-                  if (sessionRef.current.tempUpScroll > ANALYTICS_CONFIG.CONFUSION.SCROLL_UP_THRESHOLD) {
-                      sessionRef.current.confusionCount += 1;
-                      sessionRef.current.tempUpScroll = 0; // Reset after counting one event
+                      // Threshold Check
+                      if (sessionRef.current.tempUpScroll > ANALYTICS_CONFIG.CONFUSION.SCROLL_UP_THRESHOLD) {
+                          sessionRef.current.confusionCount += 1;
+                          sessionRef.current.tempUpScroll = 0; // Reset after counting one event
+                      }
+                  } else {
+                      // Reset tempUpScroll if they are deep in the article (valid referencing)
+                      sessionRef.current.tempUpScroll = 0;
                   }
 
               } else if (dy > 0) {
@@ -76,15 +88,12 @@ export const useScrollTracking = (
               
               sessionRef.current.lastScrollTop = scrollTop;
               sessionRef.current.lastScrollTime = now;
-          }
-
-          // C. Max Scroll Depth 
-          // (Runs on every scroll movement frame, matching original behavior)
-          const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-          const scrollPercent = docHeight > 0 ? Math.round((scrollTop / docHeight) * 100) : 0;
-          
-          if (scrollPercent > sessionRef.current.maxScroll) {
-              sessionRef.current.maxScroll = scrollPercent;
+              
+              // C. Max Scroll Depth 
+              // (Moved here to use the scrollPercent calculated above)
+              if (scrollPercent > sessionRef.current.maxScroll) {
+                  sessionRef.current.maxScroll = scrollPercent;
+              }
           }
 
           // Update local tracker for the loop

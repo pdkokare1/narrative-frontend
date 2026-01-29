@@ -1,6 +1,7 @@
 // src/hooks/useArticleSave.ts
 import { useState, useRef, useCallback, useEffect } from 'react';
 import * as api from '../services/api';
+import offlineStorage from '../services/offlineStorage';
 import { useToast } from '../context/ToastContext';
 import { IArticle } from '../types';
 
@@ -28,7 +29,10 @@ export default function useArticleSave(initialSavedIds: string[] = []) {
             return next;
         });
 
-        // 2. Schedule API Call (Allows Undo)
+        // 2. Remove from Offline Storage immediately
+        offlineStorage.removeOfflineArticle(articleId);
+
+        // 3. Schedule API Call (Allows Undo)
         const timeoutId = setTimeout(async () => {
             try {
                 await api.saveArticle(articleId); // API toggle (save/unsave)
@@ -38,12 +42,15 @@ export default function useArticleSave(initialSavedIds: string[] = []) {
                 // Rollback on failure
                 setSavedArticleIds(prev => new Set(prev).add(articleId));
                 addToast('Failed to sync. Article restored.', 'error');
+                
+                // Re-save to offline storage if server sync fails
+                offlineStorage.saveOfflineArticle(article);
             }
         }, 3500);
 
         pendingDeletesRef.current.set(articleId, timeoutId);
 
-        // 3. Show Toast with Undo
+        // 4. Show Toast with Undo
         addToast('Article removed', 'info', {
             label: 'UNDO',
             onClick: () => {
@@ -53,6 +60,8 @@ export default function useArticleSave(initialSavedIds: string[] = []) {
                     pendingDeletesRef.current.delete(articleId);
                     // Immediate Restore
                     setSavedArticleIds(prev => new Set(prev).add(articleId));
+                    // Restore to Offline Storage
+                    offlineStorage.saveOfflineArticle(article);
                 }
             }
         });
@@ -65,12 +74,19 @@ export default function useArticleSave(initialSavedIds: string[] = []) {
             clearTimeout(pendingDeletesRef.current.get(articleId)!);
             pendingDeletesRef.current.delete(articleId);
             setSavedArticleIds(prev => new Set(prev).add(articleId));
+            
+            // Ensure it's in offline storage
+            offlineStorage.saveOfflineArticle(article);
+            
             addToast('Removal cancelled', 'success');
             return;
         }
 
         // Standard Save
         setSavedArticleIds(prev => new Set(prev).add(articleId));
+
+        // Trigger Offline Download (Non-blocking)
+        offlineStorage.saveOfflineArticle(article);
 
         try {
             await api.saveArticle(articleId);
@@ -83,6 +99,9 @@ export default function useArticleSave(initialSavedIds: string[] = []) {
                 next.delete(articleId);
                 return next;
             });
+            // Cleanup offline if server failed
+            offlineStorage.removeOfflineArticle(articleId);
+            
             addToast('Failed to save article', 'error');
         }
     }

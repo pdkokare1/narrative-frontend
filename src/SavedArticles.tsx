@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from './services/api'; 
 import offlineStorage from './services/offlineStorage'; 
 import { useToast } from './context/ToastContext'; 
-import { useRadio } from './context/RadioContext'; // Import Radio
+import { useRadio } from './context/RadioContext'; 
 import ArticleCard from './components/ArticleCard'; 
 import SkeletonCard from './components/ui/SkeletonCard'; 
 import useIsMobile from './hooks/useIsMobile';
@@ -14,7 +14,6 @@ import './App.css';
 import './SavedArticles.css'; 
 import { IArticle } from './types';
 
-// --- NEW IMPORTS ---
 import SectionHeader from './components/ui/SectionHeader';
 import Button from './components/ui/Button';
 
@@ -37,7 +36,7 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
   const isMobileView = useIsMobile();
   const { addToast } = useToast(); 
   const { handleShare } = useShare(); 
-  const { updateContextQueue } = useRadio(); // Get smart queue updater
+  const { updateContextQueue } = useRadio(); 
   const queryClient = useQueryClient(); 
 
   const { 
@@ -48,15 +47,39 @@ const SavedArticles: React.FC<SavedArticlesProps> = ({
     queryKey: ['savedArticles'],
     queryFn: async () => {
       try {
+        // 1. Try fetching from API (Online)
         const { data } = await api.fetchSavedArticles();
         const articles = data.articles || [];
+        
+        // Update the simple list cache
         if (articles.length > 0) offlineStorage.save('saved-library', articles);
+        
         return articles;
       } catch (err) {
+        // 2. Fallback to Offline Storage
+        console.warn('Network failed, attempting offline load:', err);
         const cachedLibrary = await offlineStorage.get('saved-library');
-        if (cachedLibrary) {
+        
+        if (cachedLibrary && Array.isArray(cachedLibrary)) {
             addToast('Offline mode: Showing cached library', 'info');
-            return cachedLibrary;
+            
+            // 3. Hydrate Articles with Offline Images (Blobs)
+            // We map through the cached list and try to find the full offline record for each
+            const hydratedArticles = await Promise.all(cachedLibrary.map(async (art: IArticle) => {
+                // Fetch full record (text + image blob)
+                const offlineRecord = await offlineStorage.getOfflineArticle(art._id);
+                
+                if (offlineRecord && offlineRecord.offlineImageBlob) {
+                    return {
+                        ...art,
+                        // Create a temporary Blob URL for the <img> tag
+                        imageUrl: URL.createObjectURL(offlineRecord.offlineImageBlob)
+                    };
+                }
+                return art;
+            }));
+
+            return hydratedArticles;
         }
         throw err; 
       }

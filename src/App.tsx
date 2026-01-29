@@ -10,8 +10,8 @@ import { ToastProvider, useToast } from './context/ToastContext';
 import { RadioProvider } from './context/RadioContext'; 
 
 import useNativeFeatures from './hooks/useNativeFeatures';
-import { useActivityTracker } from './hooks/useActivityTracker'; // NEW: Global Tracker
-import { upgradeHabitGoal } from './services/userService';    // NEW: Service
+import { useActivityTracker } from './hooks/useActivityTracker'; // Global Tracker
+import { upgradeHabitGoal } from './services/userService';    // Service
 
 import PageLoader from './components/PageLoader';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -29,8 +29,9 @@ import SystemConfig from './pages/admin/SystemConfig';
 import Prompts from './pages/admin/Prompts';
 import Narratives from './pages/admin/Narratives'; 
 
-// --- NEW: Modal Import ---
+// --- Modal Imports ---
 import LevelUpModal from './components/modals/LevelUpModal';
+import PalateCleanserModal from './components/modals/PalateCleanserModal'; // NEW IMPORT
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,22 +48,25 @@ function AppRoutes() {
   const { user } = useAuth();
   const { addToast } = useToast();
   
-  // --- NEW: Level Up Modal State ---
+  // --- Global Modal States ---
   const [showLevelUp, setShowLevelUp] = useState(false);
+  const [showPalateCleanser, setShowPalateCleanser] = useState(false);
 
-  // --- NEW: Global Activity Listener ---
-  // This hook ensures we track the session globally and listen for the "Level Up" command
+  // --- Global Activity Listener ---
+  // This hook ensures we track the session globally and listen for commands
   // from the backend (analyticsController).
   const handleGlobalTrigger = useCallback((command: string) => {
     if (command === 'trigger_goal_upgrade') {
       setShowLevelUp(true);
+    } else if (command === 'trigger_palate_cleanser') {
+      setShowPalateCleanser(true);
     }
   }, []);
 
   // Initialize Global Tracker ('root' context, 'feed' type for general tracking)
   useActivityTracker('app_root', 'feed', handleGlobalTrigger);
 
-  // Handle "Accept Challenge"
+  // Handle "Accept Challenge" (Level Up)
   const handleConfirmLevelUp = async () => {
     try {
       await upgradeHabitGoal();
@@ -95,11 +99,24 @@ function AppRoutes() {
         <Route path="/*" element={<MainLayout profile={null} />} />
       </Routes>
 
-      {/* --- NEW: Global Modal --- */}
+      {/* --- Global Modals --- */}
+      
+      {/* 1. Gamification: Level Up */}
       <LevelUpModal 
         isOpen={showLevelUp} 
         onClose={() => setShowLevelUp(false)}
         onConfirm={handleConfirmLevelUp}
+      />
+
+      {/* 2. Health: Palate Cleanser (Doomscrolling Protection) */}
+      <PalateCleanserModal 
+        open={showPalateCleanser}
+        onClose={() => setShowPalateCleanser(false)}
+        // Optional: Can be wired to a "Positive News" filter later
+        onSwitchToPositive={() => {
+            setShowPalateCleanser(false);
+            addToast('We are curating lighter stories for you...', 'info');
+        }}
       />
 
     </Suspense>

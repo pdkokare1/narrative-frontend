@@ -37,6 +37,13 @@ export const ANALYTICS_CONFIG = {
     SCROLL_UP_THRESHOLD: 300, // Pixels scrolled up to count as "Re-reading/Confusion"
     ABANDONMENT_THRESHOLD: 3, // NEW: How many rapid up-scrolls trigger the intervention
     REFERENCE_DEPTH_THRESHOLD: 30, // NEW: If deeper than 30%, assume referencing, not confusion
+  },
+
+  // NEW: Skim Detection Thresholds
+  SKIMMING: {
+    MIN_OPM: 50,  // Minimum "Observations Per Minute" to count as reading
+    MAX_WPM: 800, // Words Per Minute: Above this, it's impossible to read (Skimming)
+    MIN_READ_TIME_RATIO: 0.2, // Must spend at least 20% of "Estimated Read Time" to count
   }
 };
 

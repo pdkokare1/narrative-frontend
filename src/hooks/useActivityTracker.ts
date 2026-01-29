@@ -66,6 +66,7 @@ export const useActivityTracker = (
     currentFlowDuration: 0,
     totalFlowDuration: 0,
     isFlowing: false,
+    flowGraceCounter: 0, // NEW: Init Grace Counter
     lastVisibleElementId: undefined,
 
     // Heatmap
@@ -108,8 +109,14 @@ export const useActivityTracker = (
     
     // Determine Dynamic Timeout
     let timeoutDuration = ANALYTICS_CONFIG.TIMEOUTS.READING_MODE; // Default 60s
-    if (isRadioPlaying) timeoutDuration = ANALYTICS_CONFIG.TIMEOUTS.AUDIO_MODE; // 20m
-    else if (contentType === 'feed') timeoutDuration = ANALYTICS_CONFIG.TIMEOUTS.FEED_MODE; // 15s
+    
+    if (isRadioPlaying) {
+        timeoutDuration = ANALYTICS_CONFIG.TIMEOUTS.AUDIO_MODE; // 20m
+    } else if (contentType === 'feed') {
+        timeoutDuration = ANALYTICS_CONFIG.TIMEOUTS.FEED_MODE; // 15s
+    } else if (contentType === 'narrative') {
+        timeoutDuration = ANALYTICS_CONFIG.TIMEOUTS.NARRATIVE_MODE; // NEW: 120s
+    }
 
     sessionRef.current.idleTimer = setTimeout(() => {
         sessionRef.current.isActive = false;
@@ -219,6 +226,7 @@ export const useActivityTracker = (
     // Reset Flow
     sessionRef.current.currentFlowDuration = 0;
     sessionRef.current.totalFlowDuration = 0;
+    sessionRef.current.flowGraceCounter = 0;
     // NEW: Reset Velocity Tracking
     sessionRef.current.avgVelocity = 0;
     sessionRef.current.velocitySamples = 0;

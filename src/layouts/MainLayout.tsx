@@ -201,7 +201,7 @@ export default function MainLayout({ profile }: MainLayoutProps) {
     api.logCompare(article._id).catch(err => console.error("Log Compare Error:", err));
   }, []);
 
-  // UPDATED: Added zen-mode class conditional
+  // UPDATED: Added zen-mode class conditional and Visual Indicator
   return (
     <div className={`app ${zenMode ? 'zen-mode' : ''}`}>
       <Header 
@@ -211,6 +211,14 @@ export default function MainLayout({ profile }: MainLayoutProps) {
         currentFilters={filters}
       />
       
+      {/* NEW: Zen Mode Visual Indicator */}
+      {zenMode && (
+         <div className="zen-indicator">
+            <span className="zen-dot"></span>
+            <span className="zen-text">Flow State Active</span>
+         </div>
+      )}
+
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
 
       <div className="main-container">

@@ -114,7 +114,8 @@ const offlineStorage = {
         savedAt: Date.now()
       });
 
-      console.log(`📗 [Offline] Article Cached: ${article.title}`);
+      // FIXED: Used article.headline instead of article.title
+      console.log(`📗 [Offline] Article Cached: ${article.headline}`);
 
     } catch (error) {
       console.error('Offline Article Save Failed:', error);

@@ -1,0 +1,186 @@
+/* src/components/modals/LevelUpModal.css */
+.levelup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 60;
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+  .levelup-card {
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    border: 1px solid rgba(250, 204, 21, 0.2);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+    box-shadow: 0 0 30px rgba(250, 204, 21, 0.1);
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .levelup-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    color: #64748b;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  
+  .levelup-close-btn:hover {
+    color: #cbd5e1;
+  }
+  
+  .levelup-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .levelup-icon-pulse {
+    background: rgba(250, 204, 21, 0.1);
+    border-radius: 50%;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    animation: pulse-gold 2s infinite;
+  }
+  
+  .levelup-header h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: linear-gradient(to right, #facc15, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+  }
+  
+  .levelup-content {
+    text-align: center;
+    color: #94a3b8;
+    margin-bottom: 2rem;
+  }
+  
+  .levelup-message {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+  }
+  
+  .highlight {
+    color: #facc15;
+    font-weight: 600;
+  }
+  
+  .levelup-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 1rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .stat-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .stat-row .label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+  }
+  
+  .stat-row .value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #cbd5e1;
+  }
+  
+  .highlight-row .value {
+    color: #facc15;
+  }
+  
+  .stat-arrow {
+    color: #64748b;
+  }
+  
+  .levelup-subtext {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-style: italic;
+  }
+  
+  .levelup-actions {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .btn-secondary {
+    flex: 1;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    background: rgba(30, 41, 59, 0.5);
+    color: #94a3b8;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .btn-secondary:hover {
+    background: rgba(30, 41, 59, 0.8);
+    color: #cbd5e1;
+  }
+  
+  .btn-primary-glow {
+    flex: 2;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, #facc15, #ca8a04);
+    color: #0f172a;
+    border: none;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(250, 204, 21, 0.3);
+  }
+  
+  .btn-primary-glow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(250, 204, 21, 0.4);
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  
+  @keyframes pulse-gold {
+    0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(250, 204, 21, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
+  }

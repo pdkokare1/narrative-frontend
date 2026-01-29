@@ -20,7 +20,8 @@ import {
   Activity,
   CheckCircle, 
   Circle,
-  Settings
+  Settings,
+  AlertTriangle // ADDED for warnings
 } from 'lucide-react';
 import './MyDashboard.css';
 import DashboardSkeleton from './components/ui/DashboardSkeleton';
@@ -57,6 +58,7 @@ interface DailyStat {
   goalsMet: boolean;
 }
 
+// UPDATED: Matched with backend UserStats model
 interface UserStats {
   userId: string;
   totalTimeSpent: number;
@@ -71,6 +73,7 @@ interface UserStats {
   
   readingStyle?: 'skimmer' | 'deep_reader' | 'balanced' | 'learner';
   diversityScore?: number; 
+  suggestPalateCleanser?: boolean; // NEW: Doomscrolling Flag
   peakLearningTime?: number; 
   leanExposure?: {
     Left: number;
@@ -183,15 +186,49 @@ const MyDashboard: React.FC = () => {
 
   const persona = getPersonaDetails(stats?.readingStyle);
 
-  // Diversity Logic
-  const getDiversityLabel = (score: number = 50) => {
-    if (score >= 90) return { label: 'Omnivore', desc: 'Balanced diet.', color: 'bg-green-500', text: 'text-green-400' };
-    if (score >= 70) return { label: 'Balanced', desc: 'Healthy mix.', color: 'bg-blue-500', text: 'text-blue-400' };
-    if (score >= 50) return { label: 'Leaning', desc: 'Slight preference.', color: 'bg-yellow-500', text: 'text-yellow-400' };
-    return { label: 'Echo Chamber', desc: 'High bias.', color: 'bg-red-500', text: 'text-red-400' };
+  // --- NEW: Narrative Health Logic ---
+  const calculateHealth = () => {
+     // 1. Base Score = (Diversity + Focus) / 2
+     const diversity = stats?.diversityScore || 50;
+     const focus = stats?.focusScoreAvg || 75;
+     
+     let score = (diversity + focus) / 2;
+
+     // 2. Penalty for Doomscrolling
+     if (stats?.suggestPalateCleanser) {
+        score -= 15;
+     }
+
+     score = Math.max(0, Math.min(100, Math.round(score)));
+
+     // 3. Status
+     let label = 'Balanced';
+     let color = 'bg-blue-500';
+     let textColor = 'text-blue-400';
+
+     if (score >= 85) {
+         label = 'Optimal';
+         color = 'bg-emerald-500';
+         textColor = 'text-emerald-400';
+     } else if (score >= 60) {
+         label = 'Healthy';
+         color = 'bg-blue-500';
+         textColor = 'text-blue-400';
+     } else if (score >= 40) {
+         label = 'Unbalanced';
+         color = 'bg-yellow-500';
+         textColor = 'text-yellow-400';
+     } else {
+         label = 'Critical';
+         color = 'bg-red-500';
+         textColor = 'text-red-400';
+     }
+
+     return { score, label, color, textColor };
   };
 
-  const diversity = getDiversityLabel(stats?.diversityScore);
+  const health = calculateHealth();
+  // -----------------------------------
 
   // Golden Hour
   const formatGoldenHour = (hour: number) => {
@@ -436,29 +473,47 @@ const MyDashboard: React.FC = () => {
            </div>
         </div>
 
-        {/* Media Diet (4 Cols) */}
-        <div className="bento-card col-span-4">
-           <Scale className="card-bg-icon text-slate-600" size={100} />
-           <div className="card-header justify-between">
+        {/* NEW: Cognitive Health (Replaces Media Diet) (4 Cols) */}
+        <div className="bento-card col-span-4 relative overflow-hidden group">
+           <Brain className="card-bg-icon text-pink-500/50 group-hover:text-pink-500/20 transition-all duration-500" size={120} />
+           
+           <div className="card-header justify-between relative z-10">
               <div className="flex items-center gap-2">
-                 <Scale size={16} className="text-slate-400" />
-                 <span className="card-title">Media Diet</span>
+                 <Brain size={16} className="text-pink-400" />
+                 <span className="card-title text-pink-400">Cognitive Health</span>
               </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${diversity.color} text-white`}>
-                {diversity.label}
+              <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${health.color} text-white`}>
+                {health.label}
               </span>
            </div>
 
-           <div className="mt-2">
-              <div className="flex h-3 w-full rounded-full overflow-hidden bg-slate-800 mb-2">
-                 <div style={{ width: `${pctLeft}%` }} className="h-full bg-blue-500" />
-                 <div style={{ width: `${pctCenter}%` }} className="h-full bg-slate-500" />
-                 <div style={{ width: `${pctRight}%` }} className="h-full bg-red-500" />
+           <div className="mt-2 relative z-10">
+              <div className="flex items-end justify-between mb-3">
+                 <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-bold text-white">{health.score}</span>
+                    <span className="text-xs text-slate-400">/ 100</span>
+                 </div>
+                 {/* Warning for Doomscrolling */}
+                 {stats?.suggestPalateCleanser && (
+                     <div className="flex items-center gap-1.5 text-[10px] font-bold text-orange-400 bg-orange-500/10 px-2 py-1 rounded-full animate-pulse border border-orange-500/20">
+                        <AlertTriangle size={10} />
+                        <span>High Load</span>
+                     </div>
+                 )}
               </div>
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                 <span>L: {pctLeft}%</span>
-                 <span>C: {pctCenter}%</span>
-                 <span>R: {pctRight}%</span>
+              
+              {/* Diversity Bar Integration */}
+              <div className="space-y-1">
+                 <div className="flex justify-between text-[10px] text-slate-400 font-mono uppercase tracking-wider">
+                    <span>L</span>
+                    <span>Diversity Mix</span>
+                    <span>R</span>
+                 </div>
+                 <div className="flex h-2 w-full rounded-full overflow-hidden bg-slate-800 border border-slate-700">
+                    <div style={{ width: `${pctLeft}%` }} className="h-full bg-blue-500/80 transition-all duration-700" />
+                    <div style={{ width: `${pctCenter}%` }} className="h-full bg-slate-500/80 transition-all duration-700" />
+                    <div style={{ width: `${pctRight}%` }} className="h-full bg-red-500/80 transition-all duration-700" />
+                 </div>
               </div>
            </div>
         </div>

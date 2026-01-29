@@ -219,17 +219,25 @@ export const useActivityTracker = (
     } else {
         sessionRef.current.cachedWordCount = 0;
     }
+    // Reset Context Specific Data
     sessionRef.current.quarters = [0, 0, 0, 0];
     sessionRef.current.heatmap = {}; 
     sessionRef.current.lastScrollTop = window.scrollY; 
     sessionRef.current.tabSwitchCount = 0; 
+    
     // Reset Flow
     sessionRef.current.currentFlowDuration = 0;
     sessionRef.current.totalFlowDuration = 0;
     sessionRef.current.flowGraceCounter = 0;
+    
+    // Reset Accumulators for new content
+    sessionRef.current.accumulatedTime.article = 0;
+    sessionRef.current.accumulatedTime.narrative = 0;
+
     // NEW: Reset Velocity Tracking
     sessionRef.current.avgVelocity = 0;
     sessionRef.current.velocitySamples = 0;
+    
     // NEW: Reset Frustration
     sessionRef.current.confusionCount = 0;
     frustrationCooldown.current = 0;
@@ -253,7 +261,13 @@ export const useActivityTracker = (
     const isRadio = isRadioPlaying; 
     const isFeed = contentType === 'feed' || (!isArticle && !isNarrative);
 
-    // Metrics Packet
+    // --- NEW: Accumulate Total Time Locally (For Skim Detection) ---
+    if (isArticle) sessionRef.current.accumulatedTime.article += elapsedSeconds;
+    if (isNarrative) sessionRef.current.accumulatedTime.narrative += elapsedSeconds;
+    if (isRadio) sessionRef.current.accumulatedTime.radio += elapsedSeconds;
+    sessionRef.current.accumulatedTime.total += elapsedSeconds;
+
+    // Metrics Packet (Delta)
     const metrics = {
         total: elapsedSeconds,
         article: isArticle ? elapsedSeconds : 0,
@@ -285,6 +299,26 @@ export const useActivityTracker = (
         const rawScore = 100 - (sessionRef.current.tabSwitchCount * 10);
         const focusScore = Math.max(0, rawScore);
 
+        // --- NEW: Skim Detector Logic ---
+        let readConfidence = 'unknown';
+        const totalTimeOnContent = isArticle ? sessionRef.current.accumulatedTime.article : sessionRef.current.accumulatedTime.narrative;
+        const wordCount = sessionRef.current.cachedWordCount;
+        
+        if (wordCount > 100 && totalTimeOnContent > 0) {
+            // Calculate Words Per Minute
+            const wpm = (wordCount / totalTimeOnContent) * 60;
+            const maxScroll = sessionRef.current.maxScroll;
+
+            if (maxScroll < 50) {
+                readConfidence = 'partial'; // Haven't finished it
+            } else if (wpm > ANALYTICS_CONFIG.SKIMMING.MAX_WPM) {
+                readConfidence = 'skimmed'; // Impossible speed
+            } else {
+                readConfidence = 'read'; // Normal speed
+            }
+        }
+        // --------------------------------
+
         interactions.push({
             contentType: contentType || (isArticle ? 'article' : 'narrative'),
             contentId: contentId,
@@ -298,8 +332,8 @@ export const useActivityTracker = (
             // NEW METRICS
             flowDuration: currentFlow,
             dropOffElement: sessionRef.current.lastVisibleElementId,
-            // NEW: Send Average Velocity for Cognitive Load Analysis
-            avgVelocity: sessionRef.current.avgVelocity, 
+            avgVelocity: sessionRef.current.avgVelocity,
+            readConfidence: readConfidence, // NEW FIELD
             timestamp: new Date()
         });
     }

@@ -170,6 +170,13 @@ export interface IUserStats {
   averageAttentionSpan: number; // seconds
   engagementScore: number;
   
+  // Cognitive Health Metrics
+  focusScoreAvg?: number;
+  diversityScore?: number;
+  deepFocusMinutes?: number;
+  suggestPalateCleanser?: boolean;
+  readingStyle?: 'skimmer' | 'deep_reader' | 'balanced' | 'learner';
+  
   // Personalization Data
   leanExposure: {
     Left: number;

@@ -1,5 +1,5 @@
 // src/layouts/MainLayout.tsx
-import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useCallback, useRef } from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 
 import '../App.css'; 
@@ -102,8 +102,28 @@ export default function MainLayout({ profile }: MainLayoutProps) {
 
   // Initialize Global Session Tracker
   // We pass 'feed' as default type for the main layout context
-  // UPDATED: Pass handleFlowChange
   useActivityTracker(undefined, 'feed', handleTrackerTrigger, handleFlowChange);
+
+  // --- NEW: Scroll Progress Logic (Direct DOM) ---
+  const progressBarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const updateProgress = () => {
+        if (!progressBarRef.current) return;
+        
+        const scrollTop = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        
+        if (docHeight > 0) {
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            // Direct style manipulation avoids re-renders
+            progressBarRef.current.style.width = \`\${scrollPercent}%\`;
+        }
+    };
+
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    return () => window.removeEventListener('scroll', updateProgress);
+  }, []);
 
   // --- EFFECTS ---
 
@@ -157,7 +177,7 @@ export default function MainLayout({ profile }: MainLayoutProps) {
   }, []);
 
   useEffect(() => {
-      document.body.className = `${theme}-mode font-${fontSize}`;
+      document.body.className = \`\${theme}-mode font-\${fontSize}\`;
       localStorage.setItem('theme', theme);
       localStorage.setItem('fontSize', fontSize);
   }, [theme, fontSize]);
@@ -201,9 +221,14 @@ export default function MainLayout({ profile }: MainLayoutProps) {
     api.logCompare(article._id).catch(err => console.error("Log Compare Error:", err));
   }, []);
 
-  // UPDATED: Added zen-mode class conditional and Visual Indicator
   return (
-    <div className={`app ${zenMode ? 'zen-mode' : ''}`}>
+    <div className={\`app \${zenMode ? 'zen-mode' : ''}\`}>
+      {/* NEW: Scroll Progress Bar */}
+      <div 
+        ref={progressBarRef} 
+        className="scroll-progress-bar" 
+      />
+
       <Header 
         theme={theme} 
         toggleTheme={toggleTheme} 

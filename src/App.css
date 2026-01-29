@@ -237,11 +237,6 @@ body.font-xl .article-summary { font-size: 16px !important; line-height: 1.6; }
 body.font-xl .article-content p { font-size: 17px !important; }
 
 
-
-/* src/App.css */
-
-/* ... Existing Styles ... */
-
 /* --- ZEN MODE (Focus Intervention) --- */
 .zen-mode {
     --transition-speed: 0.6s;
@@ -279,4 +274,51 @@ body.font-xl .article-content p { font-size: 17px !important; }
 .zen-mode .toast-container .toast-error,
 .zen-mode .toast-container .toast-success {
     opacity: 1;
+}
+
+/* --- ZEN INDICATOR (New) --- */
+.zen-indicator {
+    position: fixed;
+    top: 60px; /* Below Header */
+    right: 20px;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.zen-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--accent-primary);
+    box-shadow: 0 0 8px var(--accent-primary);
+    animation: pulseGlow 2s infinite ease-in-out;
+}
+
+.zen-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+}
+
+@keyframes pulseGlow {
+    0% { opacity: 0.6; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0.6; transform: scale(0.9); }
+}
+
+@media (max-width: 768px) {
+    .zen-indicator {
+        top: auto;
+        bottom: 80px; /* Above Bottom Nav */
+        right: 16px;
+    }
 }

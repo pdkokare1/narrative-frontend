@@ -17,10 +17,21 @@ const SmartImage: React.FC<SmartImageProps> = ({
   alt, 
   ...props 
 }) => {
+  // Check if this is an Offline Blob URL (starts with blob:)
+  const isOfflineBlob = imageUrl?.startsWith('blob:');
+
   // Compute initial state
   const fallbackImg = getFallbackImage(category);
-  const optimizedSrc = getOptimizedImageUrl(imageUrl, width) || fallbackImg;
-  const initialSrcSet = imageUrl ? generateImageSrcSet(imageUrl) : undefined;
+  
+  // LOGIC CHANGE: If it's a blob, use it directly. Otherwise, optimize it.
+  const optimizedSrc = isOfflineBlob 
+      ? imageUrl 
+      : (getOptimizedImageUrl(imageUrl, width) || fallbackImg);
+
+  // LOGIC CHANGE: Do not generate SrcSet for blobs (they don't support responsive sizing)
+  const initialSrcSet = (imageUrl && !isOfflineBlob) 
+      ? generateImageSrcSet(imageUrl) 
+      : undefined;
 
   const [src, setSrc] = useState(optimizedSrc);
   const [srcSet, setSrcSet] = useState(initialSrcSet);
@@ -29,9 +40,15 @@ const SmartImage: React.FC<SmartImageProps> = ({
 
   // Reset when props change
   useEffect(() => {
-      const newOptimized = getOptimizedImageUrl(imageUrl, width) || getFallbackImage(category);
+      const isBlob = imageUrl?.startsWith('blob:');
+
+      const newOptimized = isBlob 
+          ? imageUrl 
+          : (getOptimizedImageUrl(imageUrl, width) || getFallbackImage(category));
+      
       setSrc(newOptimized);
-      setSrcSet(imageUrl ? generateImageSrcSet(imageUrl) : undefined);
+      setSrcSet((imageUrl && !isBlob) ? generateImageSrcSet(imageUrl) : undefined);
+      
       setLoaded(false);
       setError(false);
   }, [imageUrl, category, width]);

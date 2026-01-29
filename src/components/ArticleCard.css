@@ -52,6 +52,26 @@
 .badge.comfort { background: rgba(255, 255, 255, 0.9); color: #000; }
 .badge.opinion { background: #EAEAEA; color: #000; border: 1px solid #999; }
 
+/* --- NEW: Truth Serum Badges (Added for Reading Quality) --- */
+.badge.badge-gold {
+  background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+  color: #000;
+  border: 1px solid rgba(255,255,255,0.3);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+
+.badge.badge-grey {
+  background: rgba(100, 100, 100, 0.85);
+  color: #ddd;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.badge.badge-resume {
+  background: rgba(16, 185, 129, 0.9); /* Green */
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
 /* ==================== IMAGE ==================== */
 .article-image {
   width: 100%;

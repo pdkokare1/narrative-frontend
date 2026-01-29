@@ -1,74 +1,74 @@
 // src/hooks/useSmartResume.ts
-import { useEffect, useState, useCallback, RefObject } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { ANALYTICS_CONFIG } from '../config/analyticsConfig';
+import { useCallback } from 'react';
 
-interface UseSmartResumeProps {
-  articleId?: string;
-  minScrollThreshold?: number; 
-  scrollRef?: RefObject<HTMLElement>; // Optional: If scrolling a specific div instead of window
+const STORAGE_KEY = 'narrative_reading_progress';
+
+interface ProgressRecord {
+    articleId: string;
+    scrollPercent: number; // 0-100
+    timestamp: number;
+    status: 'read' | 'skimmed' | 'partial';
 }
 
-export const useSmartResume = ({ 
-  articleId, 
-  minScrollThreshold = 500,
-  scrollRef
-}: UseSmartResumeProps) => {
-  const { user } = useAuth();
-  const [resumePosition, setResumePosition] = useState<number | null>(null);
+export const useSmartResume = () => {
 
-  // 1. Check for saved progress
-  useEffect(() => {
-    if (!user || !articleId) return;
-
-    const checkProgress = async () => {
-      try {
-        const token = await user.getIdToken();
-        const response = await fetch(`${ANALYTICS_CONFIG.API_URL}/analytics/user-stats`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+    // 1. Save Progress (Called by Analytics Tracker)
+    const saveProgress = useCallback((articleId: string, scrollPercent: number, status: 'read' | 'skimmed' | 'partial') => {
+        try {
+            const store = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            
+            // Only update if we are deeper than before or if status improved
+            const prev = store[articleId] as ProgressRecord;
+            if (prev && prev.scrollPercent > scrollPercent) {
+                return; // Don't overwrite deep progress with top-of-page
             }
+
+            store[articleId] = {
+                articleId,
+                scrollPercent,
+                timestamp: Date.now(),
+                status
+            };
+
+            // Cleanup: Keep only last 50 items to save space
+            const keys = Object.keys(store);
+            if (keys.length > 50) {
+                delete store[keys[0]]; 
+            }
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+        } catch (e) {
+            console.warn('Smart Resume Save Failed', e);
+        }
+    }, []);
+
+    // 2. Get Progress (Called by ArticleCard or Page)
+    const getProgress = useCallback((articleId: string): ProgressRecord | null => {
+        try {
+            const store = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            return store[articleId] || null;
+        } catch (e) {
+            return null;
+        }
+    }, []);
+
+    // 3. Auto Scroll (The Action)
+    const autoResume = useCallback((articleId: string) => {
+        const progress = getProgress(articleId);
+        if (!progress || progress.scrollPercent < 5) return; // Don't jump if barely started
+
+        // Calculate Pixel Position
+        const docHeight = document.documentElement.scrollHeight;
+        const targetY = (progress.scrollPercent / 100) * docHeight;
+
+        // Smooth Scroll
+        window.scrollTo({
+            top: targetY,
+            behavior: 'smooth'
         });
+    }, [getProgress]);
 
-        if (!response.ok) return;
-
-        const stats = await response.json();
-        
-        // Check readingProgress Map
-        if (stats.readingProgress && stats.readingProgress[articleId]) {
-            const savedPos = stats.readingProgress[articleId];
-            if (savedPos > minScrollThreshold) {
-                setResumePosition(savedPos);
-            }
-        }
-      } catch (err) {
-        console.warn('Failed to fetch reading progress', err);
-      }
-    };
-
-    checkProgress();
-  }, [user, articleId, minScrollThreshold]);
-
-  // 2. Action to perform the scroll
-  const handleResume = useCallback(() => {
-    if (resumePosition) {
-        if (scrollRef?.current) {
-            // Scroll the container (Modal)
-            scrollRef.current.scrollTo({
-                top: resumePosition,
-                behavior: 'smooth'
-            });
-        } else {
-            // Scroll the window (Standard Page)
-            window.scrollTo({
-                top: resumePosition,
-                behavior: 'smooth'
-            });
-        }
-        setResumePosition(null); // Clear prompt after using
-    }
-  }, [resumePosition, scrollRef]);
-
-  return { resumePosition, handleResume };
+    return { saveProgress, getProgress, autoResume };
 };
+
+export default useSmartResume;

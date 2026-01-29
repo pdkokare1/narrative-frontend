@@ -1,4 +1,4 @@
-/* src/App.css */
+* src/App.css */
 
 /* ==================== GLOBAL RESET & BASE ==================== */
 * {
@@ -313,6 +313,20 @@ body.font-xl .article-content p { font-size: 17px !important; }
     0% { opacity: 0.6; transform: scale(0.9); }
     50% { opacity: 1; transform: scale(1.1); }
     100% { opacity: 0.6; transform: scale(0.9); }
+}
+
+/* --- SCROLL PROGRESS BAR (New) --- */
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: var(--accent-primary); /* Uses the theme accent */
+  z-index: 10001; /* Above everything */
+  width: 0%;
+  transition: width 0.1s ease-out; /* Smooth little transition */
+  pointer-events: none; /* Click through */
+  box-shadow: 0 0 10px var(--accent-primary); /* Glow effect */
 }
 
 @media (max-width: 768px) {

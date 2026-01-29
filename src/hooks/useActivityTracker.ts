@@ -197,10 +197,32 @@ export const useActivityTracker = (
                  frustrationCooldown.current = now;
              }
          }
+
+         // --- NEW: Fatigue / Zombie Scroll Monitor ---
+         // If they have been scrolling for > 5 mins (accumulated) and velocity drops to near-zero
+         // but they are still "active", they are likely fatigued.
+         if (sess.accumulatedTime.total > 300 && sess.avgVelocity > 0 && sess.avgVelocity < 0.01) {
+             if (now - frustrationCooldown.current > 600000) { // 10 minute cooldown for this one
+                  if (onTrigger) {
+                      onTrigger('trigger_palate_cleanser'); // Open the modal
+                      
+                      sess.pendingInteractions.push({
+                        contentType: 'ui_interaction',
+                        contentId: contentId,
+                        text: 'INTERVENTION:FATIGUE_DETECTED',
+                        timestamp: new Date()
+                      });
+                      
+                      frustrationCooldown.current = now;
+                  }
+             }
+         }
+         // ---------------------------------------------
+
      }, 2000); // Check every 2 seconds
 
      return () => clearInterval(monitor);
-  }, [contentId, contentType, addToast]);
+  }, [contentId, contentType, addToast, onTrigger]);
   // ----------------------------------------------------------------------
 
 
@@ -351,7 +373,7 @@ export const useActivityTracker = (
         }
     };
 
-    const endpoint = `${ANALYTICS_CONFIG.API_URL}/analytics/track`;
+    const endpoint = \`\${ANALYTICS_CONFIG.API_URL}/analytics/track\`;
 
     // --- NEW: Offline Queue Logic ---
     const sendPayload = (data: any) => {
@@ -416,7 +438,7 @@ export const useActivityTracker = (
             if (queue.length > 0) {
                 // Send individually to avoid massive payloads
                 queue.forEach((payload: any) => {
-                    fetch(`${ANALYTICS_CONFIG.API_URL}/analytics/track`, {
+                    fetch(\`\${ANALYTICS_CONFIG.API_URL}/analytics/track\`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -530,7 +552,7 @@ export const useActivityTracker = (
         sessionRef.current.pendingInteractions.push({
             contentType: 'impression', 
             contentId: itemId,
-            text: `${itemType}:${category}`, 
+            text: \`\${itemType}:\${category}\`, 
             timestamp: new Date()
         });
     };

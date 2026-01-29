@@ -122,7 +122,7 @@ const ArticleCard = memo(function ArticleCard({
 
   return (
     <>
-      <article className={\`article-card \${isPlaying ? 'now-playing' : ''} \${showBrief ? 'show-brief-mode' : ''}\`}>
+      <article className={`article-card ${isPlaying ? 'now-playing' : ''} ${showBrief ? 'show-brief-mode' : ''}`}>
         
         {/* --- BADGE ZONE (Top Left) --- */}
         <div className="card-badges">
@@ -177,7 +177,7 @@ const ArticleCard = memo(function ArticleCard({
                 preventBubble(e); 
                 handleInteraction(() => isHardNews ? setShowBrief(!showBrief) : null); 
             }}
-            aria-label={\`Read analysis for \${article.headline}\`}
+            aria-label={`Read analysis for ${article.headline}`}
           >
             {article.headline}
           </button>
@@ -204,7 +204,7 @@ const ArticleCard = memo(function ArticleCard({
                         {article.politicalLean && (
                             <div className="stat-item">
                                 <span>Lean:</span>
-                                <span className={\`stat-val \${getLeanClass(article.politicalLean)}\`}>
+                                <span className={`stat-val ${getLeanClass(article.politicalLean)}`}>
                                     {(article.politicalLean === 'Unknown' || article.politicalLean === 'Not Applicable') 
                                       ? 'NA' 
                                       : article.politicalLean}
@@ -227,7 +227,7 @@ const ArticleCard = memo(function ArticleCard({
                         {article.sentiment && (
                             <div className="stat-item">
                                 <span>Sentiment:</span>
-                                <span className={\`stat-val \${getSentimentClass(article.sentiment)}\`}>
+                                <span className={`stat-val ${getSentimentClass(article.sentiment)}`}>
                                     {getSentimentDisplay(article.sentiment)}
                                 </span>
                             </div>

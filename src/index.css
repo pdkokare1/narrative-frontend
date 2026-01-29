@@ -1,42 +1,72 @@
 /* src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* ==================== GLOBAL RESET & SCROLLBAR HIDING ==================== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
 
-  /* Hide Scrollbar - Firefox */
-  scrollbar-width: none;
-  /* Hide Scrollbar - IE/Edge */
-  -ms-overflow-style: none;
-}
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
 
-/* Hide Scrollbar - Chrome/Safari/Webkit */
-*::-webkit-scrollbar {
-  display: none;
-  width: 0px;
-  background: transparent;
-}
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
 
-html {
-  /* Critical for preventing pull-to-refresh on some mobile browsers */
-  overscroll-behavior-y: none;
-  height: 100%;
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+
+  --radius: 0.5rem;
+
+  /* --- COGNITIVE UI VARIABLES --- */
+  --font-size-base: 1rem;
+  --line-height-base: 1.5;
+  --contrast-opacity: 1;
 }
 
 body {
-  margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-  height: 100%;
-
-  /* Prevent pull-to-refresh globally */
-  overscroll-behavior-y: none;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Inter', sans-serif;
+  
+  /* Apply Cognitive Variables */
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  transition: font-size 0.5s ease, line-height 0.5s ease;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+/* --- COGNITIVE MODES --- */
+
+/* 1. FATIGUE MODE: Larger text, looser spacing to reduce strain */
+body[data-cognitive-mode="fatigued"] {
+  --font-size-base: 1.05rem;
+  --line-height-base: 1.7;
+}
+
+/* 2. FLOW MODE: Dim distractions */
+body[data-cognitive-mode="flow"] .distraction {
+  opacity: 0.3;
+  transition: opacity 1s ease;
+}
+
+/* 3. CONFUSION MODE: Clearer text weight */
+body[data-cognitive-mode="confusion"] {
+  --font-size-base: 1.02rem;
+  font-weight: 450; /* Slightly heavier than normal 400 */
 }

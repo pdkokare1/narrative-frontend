@@ -117,7 +117,7 @@ export default function MainLayout({ profile }: MainLayoutProps) {
         if (docHeight > 0) {
             const scrollPercent = (scrollTop / docHeight) * 100;
             // Direct style manipulation avoids re-renders
-            progressBarRef.current.style.width = \`\${scrollPercent}%\`;
+            progressBarRef.current.style.width = `${scrollPercent}%`;
         }
     };
 
@@ -177,7 +177,7 @@ export default function MainLayout({ profile }: MainLayoutProps) {
   }, []);
 
   useEffect(() => {
-      document.body.className = \`\${theme}-mode font-\${fontSize}\`;
+      document.body.className = `${theme}-mode font-${fontSize}`;
       localStorage.setItem('theme', theme);
       localStorage.setItem('fontSize', fontSize);
   }, [theme, fontSize]);
@@ -222,7 +222,7 @@ export default function MainLayout({ profile }: MainLayoutProps) {
   }, []);
 
   return (
-    <div className={\`app \${zenMode ? 'zen-mode' : ''}\`}>
+    <div className={`app ${zenMode ? 'zen-mode' : ''}`}>
       {/* NEW: Scroll Progress Bar */}
       <div 
         ref={progressBarRef} 

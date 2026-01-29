@@ -154,6 +154,9 @@ export interface IUserProfile {
   lastActiveDate?: string;
   streakFreezes: number; // Added explicitly
   
+  // NEW: Habits
+  habits?: any[];
+
   // Settings
   savedArticles: string[]; 
   notificationsEnabled: boolean;
@@ -174,7 +177,10 @@ export interface IUserStats {
   focusScoreAvg?: number;
   diversityScore?: number;
   deepFocusMinutes?: number;
+  
   suggestPalateCleanser?: boolean;
+  suggestGoalUpgrade?: boolean; // NEW: Level Up Flag
+
   readingStyle?: 'skimmer' | 'deep_reader' | 'balanced' | 'learner';
   
   // Personalization Data

@@ -5,6 +5,7 @@ import { isOpinion, getOptimizedImageUrl, generateImageSrcSet } from '../utils/h
 import { getFallbackImage } from '../utils/constants'; 
 import { IArticle } from '../types';
 import useHaptic from '../hooks/useHaptic'; 
+import useSmartResume from '../hooks/useSmartResume'; // NEW
 import InlineSmartBrief from './InlineSmartBrief'; 
 
 // --- UI Components ---
@@ -41,6 +42,12 @@ const ArticleCard = memo(function ArticleCard({
   
   const [showBrief, setShowBrief] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  
+  // NEW: Smart Resume Data
+  const { getProgress } = useSmartResume();
+  const [readStatus, setReadStatus] = useState<'read' | 'skimmed' | 'partial' | null>(null);
+  const [resumePercent, setResumePercent] = useState<number>(0);
+
   const triggerHaptic = useHaptic(); 
 
   const isHardNews = article?.analysisType === 'Full';
@@ -61,7 +68,15 @@ const ArticleCard = memo(function ArticleCard({
       setCurrentSrcSet(newSrcSet);
       setImageLoaded(false); 
       setShowBrief(false); 
-  }, [article?.imageUrl, article?.category, article?._id]);
+
+      // NEW: Check for local progress
+      const progress = getProgress(article._id);
+      if (progress) {
+          setReadStatus(progress.status);
+          setResumePercent(Math.round(progress.scrollPercent));
+      }
+
+  }, [article?.imageUrl, article?.category, article?._id, getProgress]);
 
   const handleImageError = () => {
       setCurrentSrc(getFallbackImage(article?.category));
@@ -107,11 +122,26 @@ const ArticleCard = memo(function ArticleCard({
 
   return (
     <>
-      <article className={`article-card ${isPlaying ? 'now-playing' : ''} ${showBrief ? 'show-brief-mode' : ''}`}>
+      <article className={\`article-card \${isPlaying ? 'now-playing' : ''} \${showBrief ? 'show-brief-mode' : ''}\`}>
         
+        {/* --- BADGE ZONE (Top Left) --- */}
         <div className="card-badges">
+          {/* 1. Existing Badges */}
           {article.suggestionType === 'Challenge' && <span className="badge challenge">Perspective</span>}
           {isOpEd && <span className="badge opinion">Opinion</span>}
+
+          {/* 2. NEW: Truth Serum Badges (Read Quality) */}
+          {readStatus === 'read' && (
+              <span className="badge badge-gold" title="You read this deeply">Deep Read</span>
+          )}
+          {readStatus === 'skimmed' && (
+              <span className="badge badge-grey" title="You skimmed this quickly">Skimmed</span>
+          )}
+          {readStatus === 'partial' && resumePercent > 10 && (
+              <span className="badge badge-resume" title="Pick up where you left off">
+                  Resume {resumePercent}%
+              </span>
+          )}
         </div>
         
         <div className="article-image">
@@ -147,7 +177,7 @@ const ArticleCard = memo(function ArticleCard({
                 preventBubble(e); 
                 handleInteraction(() => isHardNews ? setShowBrief(!showBrief) : null); 
             }}
-            aria-label={`Read analysis for ${article.headline}`}
+            aria-label={\`Read analysis for \${article.headline}\`}
           >
             {article.headline}
           </button>
@@ -174,7 +204,7 @@ const ArticleCard = memo(function ArticleCard({
                         {article.politicalLean && (
                             <div className="stat-item">
                                 <span>Lean:</span>
-                                <span className={`stat-val ${getLeanClass(article.politicalLean)}`}>
+                                <span className={\`stat-val \${getLeanClass(article.politicalLean)}\`}>
                                     {(article.politicalLean === 'Unknown' || article.politicalLean === 'Not Applicable') 
                                       ? 'NA' 
                                       : article.politicalLean}
@@ -197,7 +227,7 @@ const ArticleCard = memo(function ArticleCard({
                         {article.sentiment && (
                             <div className="stat-item">
                                 <span>Sentiment:</span>
-                                <span className={`stat-val ${getSentimentClass(article.sentiment)}`}>
+                                <span className={\`stat-val \${getSentimentClass(article.sentiment)}\`}>
                                     {getSentimentDisplay(article.sentiment)}
                                 </span>
                             </div>

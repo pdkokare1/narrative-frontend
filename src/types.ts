@@ -81,6 +81,10 @@ export interface IArticle {
   recommendations?: string[];
   suggestionType?: 'Comfort' | 'Challenge';
 
+  // NEW: Truth Serum & Smart Resume Data
+  readStatus?: 'read' | 'skimmed' | 'partial' | 'unread'; // Truth Serum
+  lastScrollPercent?: number; // Smart Resume (0-100)
+
   // State (New for Admin)
   isLatest?: boolean;
   deletedAt?: string | null; 

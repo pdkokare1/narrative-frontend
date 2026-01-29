@@ -1,3 +1,4 @@
+// src/services/userService.ts
 import api from './axiosInstance';
 import { IUserProfile } from '../types';
 
@@ -10,3 +11,7 @@ export const deleteAccount = () => api.delete('/profile');
 
 // Notification Token
 export const saveNotificationToken = (token: string) => api.post('/profile/save-token', { token });
+
+// --- NEW: Smart Habit Upgrades ---
+// Called when user accepts the "Level Up" challenge in the modal
+export const upgradeHabitGoal = () => api.post<{ status: string, newTarget: number }>('/profile/upgrade-habit');

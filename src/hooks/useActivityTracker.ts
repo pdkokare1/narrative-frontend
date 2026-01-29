@@ -86,6 +86,9 @@ export const useActivityTracker = (
   // NEW: Frustration Cooldown to prevent spamming the Toast
   const frustrationCooldown = useRef<number>(0);
 
+  // NEW: Track last emitted cognitive state to avoid event spam
+  const lastEmittedState = useRef<string>('standard');
+
   // 3. User Activity Signal (The Pulse)
   const handleUserActivity = useCallback(() => {
     const now = Date.now();
@@ -167,6 +170,18 @@ export const useActivityTracker = (
   useScrollTracking(sessionRef, handleUserActivity);
   useElementTracking(sessionRef, contentId, location.pathname);
 
+  // --- NEW: Helper to dispatch cognitive state events ---
+  const dispatchStateChange = (newState: 'standard' | 'flow' | 'fatigue' | 'confusion') => {
+      if (lastEmittedState.current !== newState) {
+          lastEmittedState.current = newState;
+          // Dispatch custom event for the Context to pick up
+          const event = new CustomEvent('narrative-cognitive-change', { 
+              detail: { state: newState } 
+          });
+          window.dispatchEvent(event);
+      }
+  };
+
   // --- NEW: Strategy A - Predictive Abandonment / Frustration Monitor ---
   useEffect(() => {
      if (!contentId || !contentType) return;
@@ -175,9 +190,12 @@ export const useActivityTracker = (
          const now = Date.now();
          const sess = sessionRef.current;
          
+         // Priority 1: Confusion (High Urgency)
          // If "Confusion Count" (rapid up-scrolls) exceeds threshold
          if (sess.confusionCount >= ANALYTICS_CONFIG.CONFUSION.ABANDONMENT_THRESHOLD) {
              
+             dispatchStateChange('confusion');
+
              // Check Cooldown (Don't spam user every 10 seconds)
              if (now - frustrationCooldown.current > 300000) { // 5 minute cooldown
                  
@@ -197,11 +215,13 @@ export const useActivityTracker = (
                  frustrationCooldown.current = now;
              }
          }
-
-         // --- NEW: Fatigue / Zombie Scroll Monitor ---
+         // Priority 2: Fatigue / Zombie Scroll Monitor
          // If they have been scrolling for > 5 mins (accumulated) and velocity drops to near-zero
          // but they are still "active", they are likely fatigued.
-         if (sess.accumulatedTime.total > 300 && sess.avgVelocity > 0 && sess.avgVelocity < 0.01) {
+         else if (sess.accumulatedTime.total > 300 && sess.avgVelocity > 0 && sess.avgVelocity < 0.01) {
+             
+             dispatchStateChange('fatigue');
+
              if (now - frustrationCooldown.current > 600000) { // 10 minute cooldown for this one
                   if (onTrigger) {
                       onTrigger('trigger_palate_cleanser'); // Open the modal
@@ -216,6 +236,14 @@ export const useActivityTracker = (
                       frustrationCooldown.current = now;
                   }
              }
+         }
+         // Priority 3: Flow State (Positive)
+         else if (sess.isFlowing) {
+             dispatchStateChange('flow');
+         }
+         // Priority 4: Standard
+         else {
+             dispatchStateChange('standard');
          }
          // ---------------------------------------------
 
@@ -263,6 +291,10 @@ export const useActivityTracker = (
     // NEW: Reset Frustration
     sessionRef.current.confusionCount = 0;
     frustrationCooldown.current = 0;
+    
+    // Reset Cognitive State
+    dispatchStateChange('standard');
+
   }, [contentId, contentType]);
 
 
@@ -373,7 +405,7 @@ export const useActivityTracker = (
         }
     };
 
-    const endpoint = \`\${ANALYTICS_CONFIG.API_URL}/analytics/track\`;
+    const endpoint = `${ANALYTICS_CONFIG.API_URL}/analytics/track`;
 
     // --- NEW: Offline Queue Logic ---
     const sendPayload = (data: any) => {
@@ -438,7 +470,7 @@ export const useActivityTracker = (
             if (queue.length > 0) {
                 // Send individually to avoid massive payloads
                 queue.forEach((payload: any) => {
-                    fetch(\`\${ANALYTICS_CONFIG.API_URL}/analytics/track\`, {
+                    fetch(`${ANALYTICS_CONFIG.API_URL}/analytics/track`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -552,7 +584,7 @@ export const useActivityTracker = (
         sessionRef.current.pendingInteractions.push({
             contentType: 'impression', 
             contentId: itemId,
-            text: \`\${itemType}:\${category}\`, 
+            text: `${itemType}:${category}`, 
             timestamp: new Date()
         });
     };

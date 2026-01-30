@@ -187,7 +187,9 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
 
   return (
     <main 
-        className="content" 
+        /* UPDATED: Reset padding/overflow for Feed page to allow full width control */
+        className="content"
+        style={isMobile ? { padding: 0, overflow: 'hidden', height: '100vh' } : undefined}
         onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
     >
       <Helmet><title>{getPageTitle()}</title></Helmet>

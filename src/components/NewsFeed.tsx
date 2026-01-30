@@ -7,7 +7,7 @@ import LoginModal from './modals/LoginModal';
 import useIsMobile from '../hooks/useIsMobile';
 import useHaptic from '../hooks/useHaptic';
 import { useAuth } from '../context/AuthContext'; 
-import { LockIcon } from './ui/Icons'; // Import Minimal Lock Icon
+import { LockIcon } from './ui/Icons'; 
 import '../App.css'; 
 import { IArticle, IFilters, INarrative } from '../types';
 
@@ -21,7 +21,8 @@ interface NewsFeedProps {
   showTooltip: (text: string, e: React.MouseEvent) => void;
 }
 
-type FeedMode = 'latest' | 'infocus' | 'balanced';
+// UPDATED: Removed 'balanced' mode
+type FeedMode = 'latest' | 'infocus';
 
 const NewsFeed: React.FC<NewsFeedProps> = ({ 
   filters, 
@@ -45,17 +46,9 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
   const vibrate = useHaptic();
   const { isGuest } = useAuth();
 
-  // --- MODE SWITCHER (Protected) ---
+  // --- MODE SWITCHER ---
   const attemptChangeMode = (newMode: FeedMode, direction: 'enter-right' | 'enter-left') => {
       vibrate();
-      
-      // GUEST PROTECTION
-      // CHANGED: Guests can now access 'infocus'. Only 'balanced' is locked.
-      if (isGuest && newMode === 'balanced') {
-          setShowLoginModal(true);
-          return;
-      }
-
       setAnimDirection(direction);
       setMode(newMode);
   };
@@ -102,19 +95,17 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
     const isLeftSwipe = xDistance > minSwipeDistance;
     const isRightSwipe = xDistance < -minSwipeDistance;
 
-    if (isLeftSwipe) { 
-        if (mode === 'latest') attemptChangeMode('infocus', 'enter-right');
-        else if (mode === 'infocus') attemptChangeMode('balanced', 'enter-right');
+    // Simplified Swipe Logic (Only 2 modes)
+    if (isLeftSwipe && mode === 'latest') { 
+        attemptChangeMode('infocus', 'enter-right');
     }
-    if (isRightSwipe) { 
-        if (mode === 'balanced') attemptChangeMode('infocus', 'enter-left');
-        else if (mode === 'infocus') attemptChangeMode('latest', 'enter-left');
+    if (isRightSwipe && mode === 'infocus') { 
+        attemptChangeMode('latest', 'enter-left');
     }
   };
 
   const getPageTitle = () => {
-    if (mode === 'balanced') return 'Balanced Perspectives | The Gamut';
-    if (mode === 'infocus') return 'Narratives | The Gamut'; // Updated Title
+    if (mode === 'infocus') return 'Narratives | The Gamut';
     if (filters.category && filters.category !== 'All Categories') return `${filters.category} News | The Gamut`;
     return 'The Gamut - Analyse The Full Spectrum';
   };
@@ -126,7 +117,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
         display: 'flex', background: 'var(--bg-elevated)', borderRadius: '25px', 
         padding: '4px', border: '1px solid var(--border-color)', position: 'relative' 
       }}>
-        {['latest', 'infocus', 'balanced'].map((m) => (
+        {['latest', 'infocus'].map((m) => (
             <button
               key={m}
               onClick={() => attemptChangeMode(m as FeedMode, 'enter-right')}
@@ -139,10 +130,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
                 display: 'flex', alignItems: 'center', gap: '6px'
               }}
             >
-              {/* Updated Label: 'In Focus' -> 'Narratives' */}
-              {m === 'infocus' ? 'Narratives' : m === 'balanced' ? 'Balanced' : 'Top Stories'}
-              {/* Only show lock for Balanced now, using minimal icon */}
-              {isGuest && m === 'balanced' && <LockIcon size={12} />}
+              {m === 'infocus' ? 'Narratives' : 'Top Stories'}
             </button>
         ))}
       </div>
@@ -160,14 +148,13 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
         <div style={{ display: 'flex', width: '100%' }}>
             {[
                 { id: 'latest', label: 'Latest' },
-                { id: 'infocus', label: 'Narratives' }, // Updated Label
-                { id: 'balanced', label: 'Balanced' }
+                { id: 'infocus', label: 'Narratives' }
             ].map(tab => {
                 const isActive = mode === tab.id;
+                // Calculate slide direction based on active tab
                 let clickDirection: 'enter-right' | 'enter-left' = 'enter-right';
-                if (mode === 'latest') clickDirection = 'enter-right';
-                else if (mode === 'balanced') clickDirection = 'enter-left';
-                else if (mode === 'infocus') clickDirection = tab.id === 'balanced' ? 'enter-right' : 'enter-left';
+                if (mode === 'latest' && tab.id === 'infocus') clickDirection = 'enter-right';
+                if (mode === 'infocus' && tab.id === 'latest') clickDirection = 'enter-left';
 
                 return (
                     <div 
@@ -184,7 +171,6 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
                         }}
                     >
                         {tab.label}
-                        {isGuest && tab.id === 'balanced' && <LockIcon size={10} />}
                         <div style={{ 
                             position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px',
                             background: 'var(--accent-primary)',
@@ -228,7 +214,7 @@ const NewsFeed: React.FC<NewsFeedProps> = ({
       <LoginModal 
         isOpen={showLoginModal} 
         onClose={() => setShowLoginModal(false)}
-        message="Login to access advanced feeds like 'Balanced Perspective'."
+        message="Login to access this feature."
       />
     </main>
   );

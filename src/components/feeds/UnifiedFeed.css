@@ -133,6 +133,9 @@
         /* Margins on sides */
         padding: 0 20px; 
         
+        /* UPDATED: Ensure items are centered to avoid "pushed left" alignment */
+        align-items: center; 
+
         /* Eliminate Gap for strict snap */
         gap: 0; 
         

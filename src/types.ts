@@ -79,7 +79,8 @@ export interface IArticle {
   // Actionable Insights
   keyFindings?: string[];
   recommendations?: string[];
-  suggestionType?: 'Comfort' | 'Challenge';
+  // UPDATED: Added 'Perspective'
+  suggestionType?: 'Comfort' | 'Challenge' | 'Perspective';
 
   // NEW: Truth Serum & Smart Resume Data
   readStatus?: 'read' | 'skimmed' | 'partial' | 'unread'; // Truth Serum

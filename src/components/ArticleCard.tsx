@@ -5,7 +5,7 @@ import { isOpinion, getOptimizedImageUrl, generateImageSrcSet } from '../utils/h
 import { getFallbackImage } from '../utils/constants'; 
 import { IArticle } from '../types';
 import useHaptic from '../hooks/useHaptic'; 
-import useSmartResume from '../hooks/useSmartResume'; // NEW
+import useSmartResume from '../hooks/useSmartResume'; 
 import InlineSmartBrief from './InlineSmartBrief'; 
 
 // --- UI Components ---
@@ -126,11 +126,14 @@ const ArticleCard = memo(function ArticleCard({
         
         {/* --- BADGE ZONE (Top Left) --- */}
         <div className="card-badges">
-          {/* 1. Existing Badges */}
-          {article.suggestionType === 'Challenge' && <span className="badge challenge">Perspective</span>}
+          {/* 1. Suggestion Badges */}
+          {article.suggestionType === 'Challenge' && <span className="badge challenge">Challenge</span>}
+          {article.suggestionType === 'Perspective' && <span className="badge challenge">Perspective Shift</span>}
+          
+          {/* 2. Content Type Badges */}
           {isOpEd && <span className="badge opinion">Opinion</span>}
 
-          {/* 2. NEW: Truth Serum Badges (Read Quality) */}
+          {/* 3. Truth Serum Badges (Read Quality) */}
           {readStatus === 'read' && (
               <span className="badge badge-gold" title="You read this deeply">Deep Read</span>
           )}

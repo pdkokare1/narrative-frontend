@@ -18,7 +18,7 @@ import FeedItemRenderer from './FeedItemRenderer';
 import { useAuth } from '../../context/AuthContext'; 
 
 interface UnifiedFeedProps {
-  mode: 'latest' | 'infocus' | 'balanced'; 
+  mode: 'latest' | 'infocus'; // UPDATED: Removed 'balanced'
   filters?: IFilters; 
   onFilterChange?: (filters: IFilters) => void;
   onAnalyze: (article: IArticle) => void;
@@ -35,10 +35,9 @@ const FeedHeader: React.FC<{
   filters: IFilters; 
   onFilterChange?: (f: IFilters) => void; 
   vibrate: () => void; 
-  metaData: any;
   activeTopic?: string | null; 
   onClearTopic?: () => void;
-}> = React.memo(({ mode, filters, onFilterChange, vibrate, metaData, activeTopic, onClearTopic }) => {
+}> = React.memo(({ mode, filters, onFilterChange, vibrate, activeTopic, onClearTopic }) => {
   return (
     <div className="feed-header-sticky">
         <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -69,11 +68,6 @@ const FeedHeader: React.FC<{
                     <p style={{margin:0, fontSize: '0.9rem', color: 'var(--accent-primary)', fontWeight: 600 }}>Developing Narratives</p>
                  </div>
             )}
-            {mode === 'balanced' && metaData && (
-                 <div style={{ padding: '8px 12px', background: 'var(--surface-paper)', borderBottom: '1px solid var(--border-color)' }}>
-                    <p style={{margin:0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{metaData.reason || 'Broadening your perspective'}</p>
-                 </div>
-            )}
         </div>
     </div>
   );
@@ -100,7 +94,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   const { 
       feedItems, status, isRefreshing, refresh, loadMoreRef, showNewPill, 
-      metaData, isFetchingNextPage, hasNextPage 
+      isFetchingNextPage, hasNextPage 
   } = useFeedQuery(mode, effectiveFilters);
 
   const { startRadio, playSingle, stop, currentArticle, updateContextQueue, updateVisibleArticle, isPlaying } = useRadio();
@@ -137,7 +131,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       if (!contentSignature) return;
       if (contentSignature !== prevSentIds.current) {
           let label = 'Latest News';
-          if (mode === 'balanced') label = 'Balanced View';
           if (mode === 'infocus') label = 'In Focus';
           if (filters?.category && filters.category !== 'All') label = filters.category;
           
@@ -233,7 +226,6 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             filters={effectiveFilters} 
             onFilterChange={onFilterChange} 
             vibrate={vibrate} 
-            metaData={metaData} 
             activeTopic={activeTopic}
             onClearTopic={() => handleTopicClick(activeTopic!)}
         />
@@ -256,10 +248,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                 <>
                     {feedItems.map((item, index) => (
                         <React.Fragment key={item._id}>
-                             {/* IMPORTANT: You MUST replace '1234567890' with a real 'In-feed ad' 
-                                Unit ID from your Google AdSense Dashboard.
-                                If you keep the test ID, ads will not show, and approval may fail.
-                             */}
+                             {/* AD SLOT (Every 7 items) */}
                              {index > 0 && index % 7 === 0 && (
                                 <NativeAdUnit 
                                     slotId="1234567890" 

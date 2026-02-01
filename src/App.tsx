@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { Suspense, useState, useCallback } from 'react'; 
+import React, { Suspense, useState, useCallback, useRef } from 'react'; 
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; 
 
@@ -52,14 +52,29 @@ function AppRoutes() {
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [showPalateCleanser, setShowPalateCleanser] = useState(false);
 
+  // --- SAFETY: Prevent Modal Spam ---
+  // Tracks the timestamp of the last time we showed a backend-triggered intervention.
+  // We ignore subsequent triggers for 30 minutes.
+  const lastInterventionRef = useRef<number>(0);
+
   // --- Global Activity Listener ---
   // This hook ensures we track the session globally and listen for commands
   // from the backend (analyticsController).
   const handleGlobalTrigger = useCallback((command: string) => {
+    const now = Date.now();
+    const COOLDOWN = 1000 * 60 * 30; // 30 Minutes
+
     if (command === 'trigger_goal_upgrade') {
       setShowLevelUp(true);
-    } else if (command === 'trigger_palate_cleanser') {
-      setShowPalateCleanser(true);
+    } 
+    else if (command === 'trigger_palate_cleanser') {
+      // Check Safety Valve
+      if (now - lastInterventionRef.current > COOLDOWN) {
+          setShowPalateCleanser(true);
+          lastInterventionRef.current = now; // Mark as shown
+      } else {
+          console.log("Palate Cleanser suppressed by frontend safety cooldown.");
+      }
     }
   }, []);
 

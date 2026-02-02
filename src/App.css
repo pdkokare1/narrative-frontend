@@ -1,4 +1,4 @@
-* src/App.css */
+/* src/App.css */
 
 /* ==================== GLOBAL RESET & BASE ==================== */
 * {
@@ -197,15 +197,15 @@ a:hover {
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
   .main-container {
-    /* Slightly taller top padding on mobile to account for safe area if needed, 
-       but mostly handled by body padding now */
+    /* Slightly taller top padding on mobile to account for safe area if needed */
     padding-top: 40px; 
     height: 100vh;
     overflow: hidden;
   }
   
   .content {
-    padding: 0 10px 70px 10px; 
+    /* UPDATED: Removed horizontal padding (0) to allow full-width feed */
+    padding: 0 0 70px 0; 
     height: calc(100vh - 40px); 
     overflow-y: auto; 
     overflow-x: hidden;

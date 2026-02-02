@@ -121,8 +121,8 @@
     }
 
     .feed-header-sticky {
-        /* UPDATED: Consistent small padding on mobile */
-        padding: 4px 20px 8px 20px;
+        /* UPDATED: Minimized horizontal padding to match grid */
+        padding: 4px 6px 8px 6px;
         gap: 6px;
     }
 
@@ -130,8 +130,8 @@
         display: flex;
         flex-direction: column;
         
-        /* Margins on sides */
-        padding: 0 20px; 
+        /* UPDATED: Significantly reduced side padding for wider cards */
+        padding: 0 6px; 
         
         /* UPDATED: Fix for Horizontal Shift - Lock width and hide overflow */
         align-items: stretch; /* Was center, now stretch to force full width lock */
@@ -169,8 +169,8 @@
         flex-direction: column;
         justify-content: center;
         
-        /* Separation between "Pages" */
-        padding: 12px 0; 
+        /* UPDATED: Reduced vertical padding to maximize card height */
+        padding: 6px 0; 
         box-sizing: border-box;
     }
 
@@ -179,7 +179,7 @@
         height: 100%;
         scroll-snap-align: start;
         scroll-snap-stop: always;
-        padding: 12px 0;
+        padding: 6px 0; /* Match feed-article-wrapper */
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -192,7 +192,7 @@
     .now-playing-highlight::before {
         content: '';
         position: absolute;
-        left: -15px; 
+        left: -4px; /* Tighter align */
         top: 20%;
         bottom: 20%;
         width: 3px;

@@ -370,7 +370,7 @@
     aspect-ratio: unset;
     height: auto;
     /* UPDATED: Reduced flex ratio from 32% to 26% to reduce image height */
-    flex: 0 0 26%; 
+    flex: 0 0 30%; 
     width: 100%;
   }
   

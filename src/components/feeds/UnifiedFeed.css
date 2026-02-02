@@ -121,8 +121,8 @@
     }
 
     .feed-header-sticky {
-        /* UPDATED: Minimized horizontal padding to match grid */
-        padding: 4px 6px 8px 6px;
+        /* UPDATED: Increased horizontal padding to 12px to match new grid spacing */
+        padding: 4px 12px 8px 12px;
         gap: 6px;
     }
 
@@ -130,8 +130,8 @@
         display: flex;
         flex-direction: column;
         
-        /* UPDATED: Significantly reduced side padding for wider cards */
-        padding: 0 6px; 
+        /* UPDATED: Increased side padding from 6px to 12px for a little more space */
+        padding: 0 12px; 
         
         /* UPDATED: Fix for Horizontal Shift - Lock width and hide overflow */
         align-items: stretch; /* Was center, now stretch to force full width lock */

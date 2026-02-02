@@ -133,8 +133,9 @@
         /* Margins on sides */
         padding: 0 20px; 
         
-        /* UPDATED: Ensure items are centered to avoid "pushed left" alignment */
-        align-items: center; 
+        /* UPDATED: Fix for Horizontal Shift - Lock width and hide overflow */
+        align-items: stretch; /* Was center, now stretch to force full width lock */
+        overflow-x: hidden;   /* Strictly prevent horizontal wobble */
 
         /* Eliminate Gap for strict snap */
         gap: 0; 

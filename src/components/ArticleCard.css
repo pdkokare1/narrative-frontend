@@ -369,8 +369,8 @@
   .article-image {
     aspect-ratio: unset;
     height: auto;
-    /* UPDATED: Slightly reduced flex ratio to give text more vertical space */
-    flex: 0 0 32%; 
+    /* UPDATED: Reduced flex ratio from 32% to 26% to reduce image height */
+    flex: 0 0 26%; 
     width: 100%;
   }
   

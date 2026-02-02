@@ -130,8 +130,8 @@
         display: flex;
         flex-direction: column;
         
-        /* UPDATED: Increased side padding from 6px to 12px for a little more space */
-        padding: 0 12px; 
+        /* UPDATED: Increased side padding from 12px to 24px for wider gutters on mobile */
+        padding: 0 24px; 
         
         /* UPDATED: Fix for Horizontal Shift - Lock width and hide overflow */
         align-items: stretch; /* Was center, now stretch to force full width lock */

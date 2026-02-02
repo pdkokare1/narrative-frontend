@@ -357,7 +357,8 @@
 /* ==================== MOBILE ADJUSTMENTS ==================== */
 @media (max-width: 768px) {
   .article-card {
-    border-radius: 16px; 
+    /* UPDATED: Reduced border radius for tighter, fuller look */
+    border-radius: 12px; 
     box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
     background: var(--bg-card); 
     height: 100%;
@@ -366,7 +367,8 @@
   .article-image {
     aspect-ratio: unset;
     height: auto;
-    flex: 0 0 35%; /* Fixed height for Snap View */
+    /* UPDATED: Slightly reduced flex ratio to give text more vertical space */
+    flex: 0 0 32%; 
     width: 100%;
   }
   

@@ -7,6 +7,7 @@ export const API_URL = import.meta.env.VITE_API_URL || 'https://api.thegamut.in/
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 10000, // <--- NEW: Timeout after 10 seconds to prevent infinite hanging
   headers: {
     'Content-Type': 'application/json',
   },

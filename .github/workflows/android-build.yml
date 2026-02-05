@@ -14,13 +14,19 @@ jobs:
       - name: Checkout Source
         uses: actions/checkout@v4
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22' # Updated from 20 to 22 to satisfy @capacitor/cli requirements
+          node-version: '22'
 
       - name: Install Dependencies
-        run: npm install # Changed from npm ci to resolve lockfile mismatches
+        run: npm install
 
       - name: Build Project
         run: npm run build
@@ -32,4 +38,4 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebugs

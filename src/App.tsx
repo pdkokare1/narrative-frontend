@@ -1,7 +1,10 @@
 // src/App.tsx
-import React, { Suspense, useState, useCallback, useRef } from 'react'; 
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import React, { Suspense, useState, useCallback, useRef, useEffect } from 'react'; 
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; 
+import { Capacitor } from '@capacitor/core';
+import { SplashScreen } from '@capacitor/splash-screen';
+import { StatusBar, Style } from '@capacitor/status-bar';
 
 import './App.css'; 
 
@@ -9,9 +12,10 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider, useToast } from './context/ToastContext';
 import { RadioProvider } from './context/RadioContext'; 
 
+// UPDATED: Now we will actually USE this hook
 import useNativeFeatures from './hooks/useNativeFeatures';
-import { useActivityTracker } from './hooks/useActivityTracker'; // Global Tracker
-import { upgradeHabitGoal } from './services/userService';    // Service
+import { useActivityTracker } from './hooks/useActivityTracker'; 
+import { upgradeHabitGoal } from './services/userService';    
 
 import PageLoader from './components/PageLoader';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -31,7 +35,7 @@ import Narratives from './pages/admin/Narratives';
 
 // --- Modal Imports ---
 import LevelUpModal from './components/modals/LevelUpModal';
-import PalateCleanserModal from './components/modals/PalateCleanserModal'; // NEW IMPORT
+import PalateCleanserModal from './components/modals/PalateCleanserModal'; 
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,18 +52,30 @@ function AppRoutes() {
   const { user } = useAuth();
   const { addToast } = useToast();
   
+  // --- UPDATED: 1. ACTIVATE NATIVE FEATURES ---
+  // This initializes Push Notifications and Permissions when user is logged in
+  useNativeFeatures(user);
+
+  // --- UPDATED: 2. HANDLE SPLASH SCREEN & STATUS BAR ---
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      // Hide the splash screen once React is mounted
+      SplashScreen.hide();
+
+      // Set Status Bar to Dark (matches your Zinc-950 background)
+      StatusBar.setStyle({ style: Style.Dark });
+      StatusBar.setBackgroundColor({ color: '#09090b' }); // Zinc-950
+    }
+  }, []);
+  
   // --- Global Modal States ---
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [showPalateCleanser, setShowPalateCleanser] = useState(false);
 
   // --- SAFETY: Prevent Modal Spam ---
-  // Tracks the timestamp of the last time we showed a backend-triggered intervention.
-  // We ignore subsequent triggers for 30 minutes.
   const lastInterventionRef = useRef<number>(0);
 
   // --- Global Activity Listener ---
-  // This hook ensures we track the session globally and listen for commands
-  // from the backend (analyticsController).
   const handleGlobalTrigger = useCallback((command: string) => {
     const now = Date.now();
     const COOLDOWN = 1000 * 60 * 30; // 30 Minutes
@@ -68,20 +84,17 @@ function AppRoutes() {
       setShowLevelUp(true);
     } 
     else if (command === 'trigger_palate_cleanser') {
-      // Check Safety Valve
       if (now - lastInterventionRef.current > COOLDOWN) {
           setShowPalateCleanser(true);
-          lastInterventionRef.current = now; // Mark as shown
+          lastInterventionRef.current = now; 
       } else {
           console.log("Palate Cleanser suppressed by frontend safety cooldown.");
       }
     }
   }, []);
 
-  // Initialize Global Tracker ('root' context, 'feed' type for general tracking)
   useActivityTracker('app_root', 'feed', handleGlobalTrigger);
 
-  // Handle "Accept Challenge" (Level Up)
   const handleConfirmLevelUp = async () => {
     try {
       await upgradeHabitGoal();
@@ -115,19 +128,15 @@ function AppRoutes() {
       </Routes>
 
       {/* --- Global Modals --- */}
-      
-      {/* 1. Gamification: Level Up */}
       <LevelUpModal 
         isOpen={showLevelUp} 
         onClose={() => setShowLevelUp(false)}
         onConfirm={handleConfirmLevelUp}
       />
 
-      {/* 2. Health: Palate Cleanser (Doomscrolling Protection) */}
       <PalateCleanserModal 
         open={showPalateCleanser}
         onClose={() => setShowPalateCleanser(false)}
-        // Optional: Can be wired to a "Positive News" filter later
         onSwitchToPositive={() => {
             setShowPalateCleanser(false);
             addToast('We are curating lighter stories for you...', 'info');

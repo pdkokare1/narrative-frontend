@@ -1,6 +1,7 @@
 name: Build Android
 
 on:
+  workflow_dispatch: # <--- This adds the "Run workflow" button
   push:
     branches: [ main ]
   pull_request:
@@ -9,6 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # ... (rest of the file stays the same)
 
     steps:
       - name: Checkout Source

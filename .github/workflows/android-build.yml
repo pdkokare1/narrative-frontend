@@ -38,4 +38,4 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebugs
+          ./gradlew assembleDebug

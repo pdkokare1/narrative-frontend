@@ -60,7 +60,12 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentFilters, onOpenFilters }) 
   const iconProps = { width: 22, height: 22, fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as "round", strokeLinejoin: "round" as "round" };
 
   return (
-    <nav className="bottom-nav">
+    // UPDATED: Added paddingBottom using --sab variable to handle the Home Indicator area
+    <nav className="bottom-nav" style={{ 
+      paddingBottom: 'var(--sab)', 
+      height: 'calc(60px + var(--sab))',
+      boxSizing: 'content-box' 
+    }}>
       
       {/* 1. FEED (Grid Icon) */}
       <NavLink 

@@ -1,26 +1,30 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'in.thegamut.app',
-  appName: 'The Gamut',
-  webDir: 'build',
+  appId: 'com.narrative.app',
+  appName: 'Narrative',
+  webDir: 'dist',
   server: {
     androidScheme: 'https'
   },
   plugins: {
+    Keyboard: {
+      resize: 'body',
+      style: 'dark',
+      resizeOnFullScreen: true,
+    },
     SplashScreen: {
       launchShowDuration: 2000,
-      backgroundColor: "#121212",
-      showSpinner: false,
+      launchAutoHide: true,
+      backgroundColor: "#09090b", // Matches your Zinc-950 background
       androidSplashResourceName: "splash",
-      iosSplashResourceName: "Default-568h@2x~iphone"
+      showSpinner: false,
     },
     StatusBar: {
-      style: "DARK",
-      backgroundColor: "#121212"
+      style: 'DARK',
+      overlay: false,
     }
   }
 };
 
 export default config;
-}

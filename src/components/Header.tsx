@@ -8,7 +8,6 @@ import { useAuth } from '../context/AuthContext';
 import './Header.css'; 
 import { IArticle, INarrative, IFilters, FeedItem } from '../types';
 import { Capacitor } from '@capacitor/core'; 
-import WeatherWidget from './WeatherWidget'; 
 import LoginModal from './modals/LoginModal'; 
 
 interface HeaderProps {
@@ -118,7 +117,13 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   };
 
   return (
-    <header className="header">
+    // UPDATED: Added paddingTop using --sat variable to handle notch/status bar area
+    <header className="header" style={{ 
+      paddingTop: 'var(--sat)', 
+      height: 'auto', 
+      minHeight: 'calc(60px + var(--sat))',
+      boxSizing: 'border-box'
+    }}>
       <div className="header-left">
         <div className="logo-container">
           <Link to="/" style={{ textDecoration: 'none' }}>

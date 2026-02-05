@@ -246,7 +246,11 @@ export default function MainLayout({ profile }: MainLayoutProps) {
 
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
 
-      <div className="main-container">
+      {/* UPDATED: Added paddingTop (for Header + Notch) and paddingBottom (for Nav + HomeBar) */}
+      <div className="main-container" style={{
+         paddingTop: 'calc(20px + var(--sat))',  // 20px buffer + safe area
+         paddingBottom: 'calc(60px + var(--sab))' // Nav height + safe area
+      }}>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* PUBLIC ROUTES */}

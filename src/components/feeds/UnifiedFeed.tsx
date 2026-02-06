@@ -16,7 +16,7 @@ import './UnifiedFeed.css';
 import { useFeedQuery } from '../../hooks/useFeedQuery';
 import FeedItemRenderer from './FeedItemRenderer';
 import { useAuth } from '../../context/AuthContext'; 
-import { API_URL } from '../../services/axiosInstance'; // Import URL for debug
+import { API_URL } from '../../services/axiosInstance'; 
 
 interface UnifiedFeedProps {
   mode: 'latest' | 'infocus'; 
@@ -93,12 +93,11 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       topic: activeTopic
   }), [filters, activeTopic]);
 
-  // Capture specific error from hook
   const { 
       feedItems, status, isRefreshing, refresh, loadMoreRef, showNewPill, 
       isFetchingNextPage, hasNextPage,
-      error // Assumes useFeedQuery returns 'error' object if status === 'error'
-  } = useFeedQuery(mode, effectiveFilters) as any; // Cast to any to access 'error' if not in type def yet
+      error 
+  } = useFeedQuery(mode, effectiveFilters) as any; 
 
   const { startRadio, playSingle, stop, currentArticle, updateContextQueue, updateVisibleArticle, isPlaying } = useRadio();
   const { handleShare } = useShare(); 

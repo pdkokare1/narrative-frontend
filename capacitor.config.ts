@@ -6,8 +6,8 @@ const config: CapacitorConfig = {
   webDir: 'build',
   server: {
     androidScheme: 'https',
-    cleartext: true, // ALLOWS API REQUESTS ON ANDROID
-    allowNavigation: ['*'] // Ensures we can navigate to external auth pages if needed
+    cleartext: true,
+    allowNavigation: ['*'] 
   },
   plugins: {
     SplashScreen: {

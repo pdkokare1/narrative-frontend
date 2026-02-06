@@ -10,6 +10,7 @@ import {
 } from "firebase/auth";
 import { auth } from './firebaseConfig';
 import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core'; // IMPORT CAPACITOR UTILS
 
 // UI Components
 import Card from './components/ui/Card';
@@ -165,11 +166,18 @@ const Login: React.FC = () => {
     setLoading(true);
     
     try {
-      console.log("👉 Attempting signInWithPopup..."); 
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      
-      await signInWithPopup(auth, provider);
+
+      // DETECT PLATFORM: If Native, skip Popup and go straight to Redirect
+      if (Capacitor.isNativePlatform()) {
+          console.log("📱 Native Platform Detected: Using Redirect Method");
+          await signInWithRedirect(auth, provider);
+          return; // Redirecting...
+      } else {
+          console.log("💻 Web Platform Detected: Using Popup Method");
+          await signInWithPopup(auth, provider);
+      }
       
       console.log("✅ Google Sign-In Success");
       addToast('Successfully signed in with Google.', 'success');
@@ -184,17 +192,6 @@ const Login: React.FC = () => {
       if (errorCode === 'auth/popup-closed-by-user') msg = 'Sign-in cancelled.';
       if (errorCode === 'auth/unauthorized-domain') msg = 'Domain not authorized (Add localhost to Firebase).';
       if (errorCode === 'auth/operation-not-supported-in-this-environment') msg = 'Popup not supported on Android.';
-      
-      // Attempt Fallback
-      if (errorCode === 'auth/operation-not-supported-in-this-environment' || errorCode === 'auth/popup-blocked') {
-          try {
-             addToast('Popup blocked. Trying redirect...', 'info');
-             await signInWithRedirect(auth, new GoogleAuthProvider());
-             return; 
-          } catch (redirectError: any) {
-             msg = `Redirect failed: ${redirectError.code}`;
-          }
-      }
 
       const fullError = `Error: ${msg} [${errorCode}]`;
       setErrorMsg(fullError);

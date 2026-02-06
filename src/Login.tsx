@@ -43,7 +43,7 @@ const Login: React.FC = () => {
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'PHONE' | 'OTP'>('PHONE');
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null); // Explicit error state
+  const [errorMsg, setErrorMsg] = useState<string | null>(null); 
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   
   const { addToast } = useToast();
@@ -51,7 +51,6 @@ const Login: React.FC = () => {
   
   const recaptchaRendered = useRef(false);
 
-  // Cleanup on unmount only
   useEffect(() => {
     return () => {
       if (window.recaptchaVerifier) {
@@ -64,17 +63,15 @@ const Login: React.FC = () => {
   // --- HANDLERS ---
 
   const setupRecaptcha = async () => {
-    // Return existing verifier if ready
     if (window.recaptchaVerifier) return window.recaptchaVerifier;
 
     try {
       console.log("Initializing Recaptcha...");
-      // We use 'normal' (Visible) because it is the most robust
       const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'normal',
         'callback': (response: any) => {
           console.log("ReCAPTCHA Solved");
-          setErrorMsg(null); // Clear errors when user solves it
+          setErrorMsg(null); 
         },
         'expired-callback': () => {
           setErrorMsg("Security check expired. Please check the box again.");
@@ -104,16 +101,13 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      // 1. Prepare Number
       const cleanNumber = phoneNumber.replace(/\D/g, ''); 
       const formattedNumber = `${countryCode}${cleanNumber}`;
       console.log("Sending to:", formattedNumber);
 
-      // 2. Ensure Recaptcha is Ready
       const verifier = await setupRecaptcha();
       if (!verifier) throw new Error("Security check failed to load.");
 
-      // 3. Send SMS
       const confirmation = await signInWithPhoneNumber(auth, formattedNumber, window.recaptchaVerifier);
       
       setConfirmationResult(confirmation);
@@ -133,13 +127,9 @@ const Login: React.FC = () => {
         msg = 'Domain not authorized in Firebase Console.';
       }
       
-      // We display the specific error text on screen so you can see it
       setErrorMsg(msg);
       addToast(msg, 'error');
 
-      // Note: We DO NOT clear the verifier here automatically anymore.
-      // This allows the user to see the error without the box resetting immediately.
-      // If it's a specific internal error, we might need to reset, but let's be passive.
       if (error.code === 'auth/internal-error') {
          if (window.recaptchaVerifier) {
              window.recaptchaVerifier.clear();
@@ -168,20 +158,31 @@ const Login: React.FC = () => {
   };
 
   const handleGoogleLogin = async () => {
+    setErrorMsg(null);
+    setLoading(true);
     try {
       await signInWithPopup(auth, new GoogleAuthProvider());
       addToast('Successfully signed in with Google.', 'success');
       navigate('/');
     } catch (error: any) {
-      addToast(error.message || 'Google sign-in failed.', 'error');
+      console.error("Google Auth Error:", error);
+      
+      let msg = 'Google sign-in failed.';
+      if (error.code === 'auth/popup-blocked') msg = 'Popup blocked. Please check browser settings.';
+      if (error.code === 'auth/popup-closed-by-user') msg = 'Sign-in cancelled.';
+      if (error.code === 'auth/unauthorized-domain') msg = 'Domain not authorized in Firebase Console.';
+      if (error.code === 'auth/operation-not-supported-in-this-environment') msg = 'Google Sign-In not supported in this view.';
+      
+      setErrorMsg(msg);
+      addToast(msg, 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleApplePlaceholder = () => {
     addToast('Apple Sign-In is coming soon.', 'info');
   };
-
-  // --- RENDER HELPERS ---
 
   const renderGhostColumn = (speedClass: string, reverse: boolean = false) => (
     <div className={`ghost-column ${speedClass} ${reverse ? 'reverse' : ''}`}>
@@ -221,7 +222,6 @@ const Login: React.FC = () => {
                 <p>Analyze the full spectrum of the narrative.</p>
             </div>
 
-            {/* STEP 1: PHONE INPUT */}
             {step === 'PHONE' && (
                 <div className="login-step fade-in">
                     <div className="input-group" style={{ display: 'flex', gap: '8px' }}>
@@ -259,7 +259,6 @@ const Login: React.FC = () => {
                         />
                     </div>
 
-                    {/* ERROR MESSAGE DISPLAY */}
                     {errorMsg && (
                         <div style={{ color: '#ff6b6b', fontSize: '0.85rem', marginTop: '8px', textAlign: 'center' }}>
                             {errorMsg}
@@ -278,7 +277,6 @@ const Login: React.FC = () => {
                 </div>
             )}
 
-            {/* STEP 2: OTP INPUT */}
             {step === 'OTP' && (
                 <div className="login-step fade-in">
                     <div className="input-group">
@@ -318,14 +316,12 @@ const Login: React.FC = () => {
                 </div>
             )}
 
-            {/* DIVIDER */}
             <div className="login-divider">
                 <span>OR CONTINUE WITH</span>
             </div>
 
-            {/* SOCIAL BUTTONS */}
             <div className="social-row">
-                <button className="social-btn google" onClick={handleGoogleLogin}>
+                <button className="social-btn google" onClick={handleGoogleLogin} disabled={loading}>
                     <svg viewBox="0 0 24 24" width="24" height="24"><path fill="#fff" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
                 </button>
                 
@@ -336,11 +332,6 @@ const Login: React.FC = () => {
                 </button>
             </div>
 
-            {/* CRITICAL FIX: 
-               Moved this div OUTSIDE the conditional rendering ({step === 'PHONE'}).
-               It now exists in the DOM at all times, hidden by CSS if step is not PHONE.
-               This prevents ReCAPTCHA from crashing/resetting when the component updates.
-            */}
             <div 
               id="recaptcha-container" 
               style={{ 
@@ -358,7 +349,6 @@ const Login: React.FC = () => {
   );
 };
 
-// Global definition for Recaptcha
 declare global {
   interface Window {
     recaptchaVerifier: any;

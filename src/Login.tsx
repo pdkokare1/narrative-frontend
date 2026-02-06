@@ -4,7 +4,7 @@ import {
   RecaptchaVerifier, 
   signInWithPhoneNumber, 
   signInWithPopup, 
-  signInWithRedirect, // Added fallback
+  signInWithRedirect,
   GoogleAuthProvider, 
   ConfirmationResult 
 } from "firebase/auth";
@@ -128,7 +128,6 @@ const Login: React.FC = () => {
         msg = 'Domain not authorized in Firebase Console.';
       }
       
-      // SHOW RAW ERROR FOR DEBUGGING
       const debugMsg = `${msg} (${error.code || 'Unknown Error'})`;
       setErrorMsg(debugMsg);
       addToast(debugMsg, 'error');
@@ -186,18 +185,17 @@ const Login: React.FC = () => {
       if (errorCode === 'auth/unauthorized-domain') msg = 'Domain not authorized (Add localhost to Firebase).';
       if (errorCode === 'auth/operation-not-supported-in-this-environment') msg = 'Popup not supported on Android.';
       
-      // Attempt Fallback if Popup is blocked/unsupported
+      // Attempt Fallback
       if (errorCode === 'auth/operation-not-supported-in-this-environment' || errorCode === 'auth/popup-blocked') {
           try {
              addToast('Popup blocked. Trying redirect...', 'info');
              await signInWithRedirect(auth, new GoogleAuthProvider());
-             return; // Redirecting...
+             return; 
           } catch (redirectError: any) {
              msg = `Redirect failed: ${redirectError.code}`;
           }
       }
 
-      // DISPLAY RAW ERROR CODE ON SCREEN
       const fullError = `Error: ${msg} [${errorCode}]`;
       setErrorMsg(fullError);
       addToast(fullError, 'error');
@@ -248,7 +246,6 @@ const Login: React.FC = () => {
                 <p>Analyze the full spectrum of the narrative.</p>
             </div>
             
-            {/* GLOBAL ERROR DISPLAY FOR AUTH FAILURES */}
             {errorMsg && (
                 <div style={{ 
                     background: 'rgba(255, 50, 50, 0.15)', 

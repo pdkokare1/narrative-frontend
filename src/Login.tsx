@@ -4,13 +4,11 @@ import {
   RecaptchaVerifier, 
   signInWithPhoneNumber, 
   signInWithPopup, 
-  signInWithRedirect,
   GoogleAuthProvider, 
   ConfirmationResult 
 } from "firebase/auth";
 import { auth } from './firebaseConfig';
 import { useNavigate } from 'react-router-dom';
-import { Capacitor } from '@capacitor/core'; 
 
 // UI Components
 import Card from './components/ui/Card';
@@ -28,20 +26,10 @@ const GHOST_CARDS = [
   { category: "SCIENCE", title: "Mars Mission: Phase 2 Funding Secured", color: "linear-gradient(135deg, #667EEA 0%, #764BA2 100%)" },
 ];
 
-const COUNTRY_CODES = [
-  { code: '+1', label: 'US/CA (+1)' },
-  { code: '+91', label: 'India (+91)' },
-  { code: '+44', label: 'UK (+44)' },
-  { code: '+61', label: 'Aus (+61)' },
-  { code: '+81', label: 'Japan (+81)' },
-  { code: '+49', label: 'Germany (+49)' },
-  { code: '+33', label: 'France (+33)' },
-  { code: '+86', label: 'China (+86)' },
-];
-
 const Login: React.FC = () => {
+  // 1. Fixed Default to India (+91)
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [countryCode, setCountryCode] = useState('+1');
+  const [countryCode] = useState('+91'); 
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'PHONE' | 'OTP'>('PHONE');
   const [loading, setLoading] = useState(false);
@@ -168,17 +156,8 @@ const Login: React.FC = () => {
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-
-      // DETECT PLATFORM: If Native (Android/iOS), use Redirect instead of Popup
-      if (Capacitor.isNativePlatform()) {
-          console.log("📱 Native Platform Detected: Using Redirect Method");
-          await signInWithRedirect(auth, provider);
-          // Redirect happens here, page will reload on success
-          return; 
-      } else {
-          console.log("💻 Web Platform Detected: Using Popup Method");
-          await signInWithPopup(auth, provider);
-      }
+      
+      await signInWithPopup(auth, provider);
       
       console.log("✅ Google Sign-In Success");
       addToast('Successfully signed in with Google.', 'success');
@@ -193,6 +172,11 @@ const Login: React.FC = () => {
       if (errorCode === 'auth/popup-closed-by-user') msg = 'Sign-in cancelled.';
       if (errorCode === 'auth/unauthorized-domain') msg = 'Domain not authorized (Add localhost to Firebase).';
       if (errorCode === 'auth/operation-not-supported-in-this-environment') msg = 'Popup not supported on Android.';
+      
+      // 2. Added SHA-1 Hint for Unknown Errors
+      if (errorCode === 'unknown' || (error.message && error.message.includes('internal-error'))) {
+          msg = 'Setup Error: SHA-1 Fingerprint missing in Firebase Console?';
+      }
 
       const fullError = `Error: ${msg} [${errorCode}]`;
       setErrorMsg(fullError);
@@ -263,32 +247,26 @@ const Login: React.FC = () => {
                 <div className="login-step fade-in">
                     <div className="input-group" style={{ display: 'flex', gap: '8px' }}>
                         
-                        <select 
-                          className="login-country-select"
-                          value={countryCode}
-                          onChange={(e) => setCountryCode(e.target.value)}
-                          style={{
+                        {/* 3. Static Country Box (Hidden Dropdown) */}
+                        <div style={{
                             background: 'rgba(255, 255, 255, 0.05)',
                             border: '1px solid rgba(255, 255, 255, 0.1)',
                             borderRadius: '8px',
-                            color: 'white',
-                            padding: '0 8px',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            padding: '0 16px',
                             height: '50px',
-                            cursor: 'pointer',
-                            outline: 'none',
-                            fontSize: '0.9rem'
-                          }}
-                        >
-                          {COUNTRY_CODES.map((c) => (
-                            <option key={c.code} value={c.code} style={{ color: 'black' }}>
-                              {c.label}
-                            </option>
-                          ))}
-                        </select>
+                            display: 'flex',
+                            alignItems: 'center',
+                            fontSize: '0.9rem',
+                            userSelect: 'none',
+                            fontWeight: 600
+                        }}>
+                          🇮🇳 +91
+                        </div>
 
                         <Input 
                             type="tel" 
-                            placeholder="123 456 7890" 
+                            placeholder="98765 43210" 
                             value={phoneNumber}
                             onChange={(e) => setPhoneNumber(e.target.value)}
                             className="login-input-large"

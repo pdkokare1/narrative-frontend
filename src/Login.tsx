@@ -10,7 +10,7 @@ import {
 } from "firebase/auth";
 import { auth } from './firebaseConfig';
 import { useNavigate } from 'react-router-dom';
-import { Capacitor } from '@capacitor/core'; // IMPORT CAPACITOR UTILS
+import { Capacitor } from '@capacitor/core'; 
 
 // UI Components
 import Card from './components/ui/Card';
@@ -169,11 +169,12 @@ const Login: React.FC = () => {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
 
-      // DETECT PLATFORM: If Native, skip Popup and go straight to Redirect
+      // DETECT PLATFORM: If Native (Android/iOS), use Redirect instead of Popup
       if (Capacitor.isNativePlatform()) {
           console.log("📱 Native Platform Detected: Using Redirect Method");
           await signInWithRedirect(auth, provider);
-          return; // Redirecting...
+          // Redirect happens here, page will reload on success
+          return; 
       } else {
           console.log("💻 Web Platform Detected: Using Popup Method");
           await signInWithPopup(auth, provider);

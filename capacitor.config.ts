@@ -5,7 +5,8 @@ const config: CapacitorConfig = {
   appName: 'The Gamut',
   webDir: 'build',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    cleartext: true // ALLOWS HTTP REQUESTS (Crucial for API calls on Android)
   },
   plugins: {
     SplashScreen: {

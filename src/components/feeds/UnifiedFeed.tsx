@@ -16,9 +16,10 @@ import './UnifiedFeed.css';
 import { useFeedQuery } from '../../hooks/useFeedQuery';
 import FeedItemRenderer from './FeedItemRenderer';
 import { useAuth } from '../../context/AuthContext'; 
+import { API_URL } from '../../services/axiosInstance'; // Import URL for debug
 
 interface UnifiedFeedProps {
-  mode: 'latest' | 'infocus'; // UPDATED: Removed 'balanced'
+  mode: 'latest' | 'infocus'; 
   filters?: IFilters; 
   onFilterChange?: (filters: IFilters) => void;
   onAnalyze: (article: IArticle) => void;
@@ -92,10 +93,12 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
       topic: activeTopic
   }), [filters, activeTopic]);
 
+  // Capture specific error from hook
   const { 
       feedItems, status, isRefreshing, refresh, loadMoreRef, showNewPill, 
-      isFetchingNextPage, hasNextPage 
-  } = useFeedQuery(mode, effectiveFilters);
+      isFetchingNextPage, hasNextPage,
+      error // Assumes useFeedQuery returns 'error' object if status === 'error'
+  } = useFeedQuery(mode, effectiveFilters) as any; // Cast to any to access 'error' if not in type def yet
 
   const { startRadio, playSingle, stop, currentArticle, updateContextQueue, updateVisibleArticle, isPlaying } = useRadio();
   const { handleShare } = useShare(); 
@@ -112,7 +115,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   const articlesMap = useMemo(() => {
       const map = new Map();
-      feedItems.forEach(i => { if(i.type === 'Article') map.set(i._id, i); });
+      feedItems.forEach((i: any) => { if(i.type === 'Article') map.set(i._id, i); });
       return map;
   }, [feedItems]);
 
@@ -120,7 +123,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
   useActivityTracker(trackerVisibleId, articlesMap);
 
   const playableArticles = useMemo(() => {
-    return feedItems.filter(item => item.type !== 'Narrative') as IArticle[];
+    return feedItems.filter((item: any) => item.type !== 'Narrative') as IArticle[];
   }, [feedItems]);
 
   const contentSignature = useMemo(() => {
@@ -234,21 +237,36 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             {status === 'pending' && !isRefreshing ? (
                  <> {[...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) } </>
             ) : status === 'error' ? (
-                <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
-                    <p>Unable to load feed.</p>
+                // --- DEBUG ERROR STATE ---
+                <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)', padding: '20px' }}>
+                    <p style={{ color: '#ff6b6b', fontWeight: 'bold' }}>Unable to load feed.</p>
+                    <div style={{ 
+                        fontSize: '0.75rem', 
+                        fontFamily: 'monospace', 
+                        background: '#2a2a2a', 
+                        padding: '10px', 
+                        borderRadius: '4px',
+                        margin: '10px 0',
+                        color: '#eee',
+                        wordBreak: 'break-all'
+                    }}>
+                        Error: {error?.message || 'Unknown Error'}<br/>
+                        Status: {error?.status || 'N/A'}<br/>
+                        URL: {API_URL}
+                    </div>
                     <button onClick={handleRefresh} className="btn-secondary" style={{ marginTop: '10px' }}>Retry</button>
                 </div>
             ) : feedItems.length === 0 && !isRefreshing ? (
                 <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)' }}>
                     <h3>No articles found</h3>
                     <p>{activeTopic ? `No stories found for #${activeTopic}` : "Try refreshing or checking back later."}</p>
+                    <div style={{ fontSize: '0.7rem', opacity: 0.5, marginTop: '10px' }}>Connected to: {API_URL}</div>
                     <button onClick={handleRefresh} className="btn-secondary" style={{ marginTop: '15px' }}>Force Refresh</button>
                 </div>
             ) : (
                 <>
-                    {feedItems.map((item, index) => (
+                    {feedItems.map((item: any, index: number) => (
                         <React.Fragment key={item._id}>
-                             {/* AD SLOT (Every 7 items) */}
                              {index > 0 && index % 7 === 0 && (
                                 <NativeAdUnit 
                                     slotId="1234567890" 

@@ -1,9 +1,9 @@
 // src/firebaseConfig.ts
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getAnalytics } from "firebase/analytics";
-import { initializeAppCheck, ReCaptchaV3Provider, onTokenChanged } from "firebase/app-check";
-import { getMessaging } from "firebase/messaging";
+import { getAuth, Auth } from "firebase/auth";
+import { getAnalytics, Analytics } from "firebase/analytics";
+import { initializeAppCheck, ReCaptchaV3Provider, onTokenChanged, AppCheck } from "firebase/app-check";
+import { getMessaging, Messaging } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
@@ -15,29 +15,45 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_MEASUREMENT_ID 
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Explicitly define types to allow export even if init fails
+let app: any;
+let auth: Auth;
+let analytics: Analytics | undefined;
+let messaging: Messaging | undefined;
+let appCheck: AppCheck | undefined;
 
-// Initialize Analytics
-if (typeof window !== 'undefined') {
-  getAnalytics(app);
-}
-
-// Initialize Messaging
-let messaging: any;
+// --- SAFE INITIALIZATION ---
 try {
-  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-    messaging = getMessaging(app);
-  }
-} catch (err) {
-  console.warn("Firebase Messaging failed to initialize:", err);
+    // Check for critical keys to avoid hard crashes inside SDK
+    if (!firebaseConfig.apiKey) {
+        throw new Error("Missing VITE_API_KEY. Check your .env file or build configuration.");
+    }
+
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+
+    // Initialize Analytics
+    if (typeof window !== 'undefined') {
+        analytics = getAnalytics(app);
+    }
+
+    // Initialize Messaging
+    try {
+        if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+            messaging = getMessaging(app);
+        }
+    } catch (err) {
+        console.warn("Firebase Messaging failed to initialize:", err);
+    }
+
+} catch (error) {
+    console.error("🔥 CRITICAL: Firebase Initialization Failed.", error);
+    // We do NOT re-throw, so the app can still bundle and render the Error Boundary or Login
 }
 
 // App Check Logic
-// RESTORED: This is required for Google Login and Backend requests to pass security checks.
-let appCheck: any;
 export const appCheckReady = new Promise<void>((resolve) => {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && app) {
     const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
     if (siteKey) {
       try {
@@ -47,7 +63,6 @@ export const appCheckReady = new Promise<void>((resolve) => {
           isTokenAutoRefreshEnabled: true 
         });
         
-        // Wait for the first token to ensure backend requests don't fail immediately
         const unsubscribe = onTokenChanged(appCheck, (token: any) => {
           if (token) {
             console.log("App Check token received.");
@@ -57,7 +72,6 @@ export const appCheckReady = new Promise<void>((resolve) => {
         });
       } catch (e) {
         console.warn("App Check initialization failed:", e);
-        // Resolve anyway so the app doesn't hang, even if requests might fail later
         resolve();
       }
     } else {
@@ -69,5 +83,5 @@ export const appCheckReady = new Promise<void>((resolve) => {
   }
 });
 
-export const auth = getAuth(app);
-export { appCheck, messaging };
+// Export 'auth' (might be undefined if crash occurred, handled in consumers)
+export { auth, app, appCheck, messaging, analytics };

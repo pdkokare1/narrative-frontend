@@ -4,6 +4,7 @@ import {
   RecaptchaVerifier, 
   signInWithPhoneNumber, 
   signInWithPopup, 
+  signInWithRedirect, // Added fallback
   GoogleAuthProvider, 
   ConfirmationResult 
 } from "firebase/auth";
@@ -127,8 +128,10 @@ const Login: React.FC = () => {
         msg = 'Domain not authorized in Firebase Console.';
       }
       
-      setErrorMsg(msg);
-      addToast(msg, 'error');
+      // SHOW RAW ERROR FOR DEBUGGING
+      const debugMsg = `${msg} (${error.code || 'Unknown Error'})`;
+      setErrorMsg(debugMsg);
+      addToast(debugMsg, 'error');
 
       if (error.code === 'auth/internal-error') {
          if (window.recaptchaVerifier) {
@@ -158,14 +161,13 @@ const Login: React.FC = () => {
   };
 
   const handleGoogleLogin = async () => {
-    console.log("👉 Google Login Clicked!"); // DIAGNOSTIC LOG
+    console.log("👉 Google Login Clicked!"); 
     setErrorMsg(null);
     setLoading(true);
     
     try {
       console.log("👉 Attempting signInWithPopup..."); 
       const provider = new GoogleAuthProvider();
-      // Force prompt to ensure we don't get stuck in a silent redirect loop
       provider.setCustomParameters({ prompt: 'select_account' });
       
       await signInWithPopup(auth, provider);
@@ -177,13 +179,28 @@ const Login: React.FC = () => {
       console.error("❌ Google Auth Error:", error);
       
       let msg = 'Google sign-in failed.';
-      if (error.code === 'auth/popup-blocked') msg = 'Popup blocked. Please check browser settings.';
-      if (error.code === 'auth/popup-closed-by-user') msg = 'Sign-in cancelled.';
-      if (error.code === 'auth/unauthorized-domain') msg = 'Domain not authorized in Firebase Console.';
-      if (error.code === 'auth/operation-not-supported-in-this-environment') msg = 'Google Sign-In not supported in this view.';
+      const errorCode = error.code || 'unknown';
       
-      setErrorMsg(msg);
-      addToast(msg, 'error');
+      if (errorCode === 'auth/popup-blocked') msg = 'Popup blocked.';
+      if (errorCode === 'auth/popup-closed-by-user') msg = 'Sign-in cancelled.';
+      if (errorCode === 'auth/unauthorized-domain') msg = 'Domain not authorized (Add localhost to Firebase).';
+      if (errorCode === 'auth/operation-not-supported-in-this-environment') msg = 'Popup not supported on Android.';
+      
+      // Attempt Fallback if Popup is blocked/unsupported
+      if (errorCode === 'auth/operation-not-supported-in-this-environment' || errorCode === 'auth/popup-blocked') {
+          try {
+             addToast('Popup blocked. Trying redirect...', 'info');
+             await signInWithRedirect(auth, new GoogleAuthProvider());
+             return; // Redirecting...
+          } catch (redirectError: any) {
+             msg = `Redirect failed: ${redirectError.code}`;
+          }
+      }
+
+      // DISPLAY RAW ERROR CODE ON SCREEN
+      const fullError = `Error: ${msg} [${errorCode}]`;
+      setErrorMsg(fullError);
+      addToast(fullError, 'error');
     } finally {
       setLoading(false);
     }
@@ -230,6 +247,22 @@ const Login: React.FC = () => {
                 <h1>The Gamut</h1>
                 <p>Analyze the full spectrum of the narrative.</p>
             </div>
+            
+            {/* GLOBAL ERROR DISPLAY FOR AUTH FAILURES */}
+            {errorMsg && (
+                <div style={{ 
+                    background: 'rgba(255, 50, 50, 0.15)', 
+                    border: '1px solid #ff6b6b', 
+                    borderRadius: '8px', 
+                    padding: '10px', 
+                    marginBottom: '16px',
+                    color: '#ff9b9b', 
+                    fontSize: '0.85rem', 
+                    textAlign: 'center' 
+                }}>
+                    {errorMsg}
+                </div>
+            )}
 
             {step === 'PHONE' && (
                 <div className="login-step fade-in">
@@ -268,12 +301,6 @@ const Login: React.FC = () => {
                         />
                     </div>
 
-                    {errorMsg && (
-                        <div style={{ color: '#ff6b6b', fontSize: '0.85rem', marginTop: '8px', textAlign: 'center' }}>
-                            {errorMsg}
-                        </div>
-                    )}
-
                     <Button 
                         variant="primary" 
                         onClick={handleSendCode} 
@@ -298,12 +325,6 @@ const Login: React.FC = () => {
                             maxLength={6}
                         />
                     </div>
-                    
-                    {errorMsg && (
-                        <div style={{ color: '#ff6b6b', fontSize: '0.85rem', marginTop: '8px', textAlign: 'center' }}>
-                            {errorMsg}
-                        </div>
-                    )}
 
                     <Button 
                         variant="primary" 
@@ -330,7 +351,7 @@ const Login: React.FC = () => {
             </div>
 
             <div className="social-row">
-                <button className="social-btn google" onClick={handleGoogleLogin}>
+                <button className="social-btn google" onClick={handleGoogleLogin} disabled={loading}>
                     <svg viewBox="0 0 24 24" width="24" height="24"><path fill="#fff" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
                 </button>
                 

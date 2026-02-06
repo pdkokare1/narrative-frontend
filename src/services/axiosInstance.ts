@@ -1,3 +1,4 @@
+// src/services/axiosInstance.ts
 import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { auth, appCheck } from '../firebaseConfig';
 import { getToken } from "firebase/app-check";
@@ -7,30 +8,32 @@ export const API_URL = import.meta.env.VITE_API_URL || 'https://api.thegamut.in/
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 10000, // <--- NEW: Timeout after 10 seconds to prevent infinite hanging
+  timeout: 10000, 
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Flag to prevent infinite retry loops
 interface CustomRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
   _retryCount?: number;
 }
 
-// Utility to pause execution (Backoff)
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // --- REQUEST INTERCEPTOR ---
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    const user = auth.currentUser;
-    if (user) {
+    // SAFETY CHECK: Ensure auth initialized successfully
+    if (auth && auth.currentUser) {
       // 1. Add Auth Token
-      const token = await user.getIdToken();
-      if (config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
+      try {
+          const token = await auth.currentUser.getIdToken();
+          if (config.headers) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
+      } catch (e) {
+          console.warn("Failed to get ID token", e);
       }
       
       // 2. Add App Check Token
@@ -56,7 +59,6 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomRequestConfig;
     
-    // Initialize retry count
     originalRequest._retryCount = originalRequest._retryCount || 0;
 
     // --- CASE 1: 401 Unauthorized (Token Expired) ---
@@ -64,10 +66,10 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       
       try {
-        const user = auth.currentUser;
-        if (user) {
+        // SAFETY CHECK: Ensure auth exists
+        if (auth && auth.currentUser) {
             console.log("🔄 Session expired. Refreshing token...");
-            const newToken = await user.getIdToken(true);
+            const newToken = await auth.currentUser.getIdToken(true);
             
             if (originalRequest.headers) {
                 originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -77,11 +79,9 @@ api.interceptors.response.use(
       } catch (refreshError: any) {
         console.error("Token refresh failed:", refreshError);
         
-        // CRITICAL FIX: Only logout if it's NOT a network error
-        // Firebase throws 'auth/network-request-failed' if offline. We shouldn't logout then.
         if (refreshError?.code !== 'auth/network-request-failed') {
             try {
-                await auth.signOut();
+                if (auth) await auth.signOut();
             } catch (e) { /* ignore */ }
             window.location.href = '/login';
         }
@@ -90,17 +90,16 @@ api.interceptors.response.use(
       }
     }
 
-    // --- CASE 2: 429 (Too Many Requests) or 503 (Server Busy) ---
+    // --- CASE 2: 429/503 (Rate Limit/Busy) ---
     if ((error.response?.status === 429 || error.response?.status === 503) && originalRequest._retryCount < 3) {
         originalRequest._retryCount += 1;
-        const delay = originalRequest._retryCount * 1000; // 1s, 2s, 3s
+        const delay = originalRequest._retryCount * 1000; 
         console.log(`⚠️ Rate Limited/Busy. Retrying in ${delay}ms... (Attempt ${originalRequest._retryCount})`);
         
         await wait(delay);
         return api(originalRequest);
     }
 
-    // Clean Error Handling for UI
     const message = (error.response?.data as any)?.message || (error.response?.data as any)?.error || error.message;
     const cleanError: any = new Error(message);
     cleanError.status = error.response?.status;

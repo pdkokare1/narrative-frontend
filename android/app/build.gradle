@@ -41,13 +41,14 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
 
-    // --- FIREBASE SDKs ---
-    implementation platform('com.google.firebase:firebase-bom:34.8.0')
-    implementation 'com.google.firebase:firebase-analytics'
-    implementation 'com.google.firebase:firebase-auth' 
+    // --- FIREBASE SDKs REMOVED TO FIX CRASH ---
+    // User is using JS SDK for Auth, so Native Auth is not required and causing config crashes.
+    // implementation platform('com.google.firebase:firebase-bom:34.8.0')
+    // implementation 'com.google.firebase:firebase-analytics'
+    // implementation 'com.google.firebase:firebase-auth' 
 }
 
 apply from: 'capacitor.build.gradle'
 
-// REPLACEMENT: Force the plugin to apply. If google-services.json is missing/empty, THIS WILL FAIL THE BUILD.
-apply plugin: 'com.google.gms.google-services'
+// DISABLED: Google Services Plugin (Source of crash)
+// apply plugin: 'com.google.gms.google-services'

@@ -29,7 +29,7 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # --- NEW STEP: INJECT SECRETS INTO .ENV ---
+      # --- 1. INJECT REACT SECRETS (.env) ---
       - name: Create .env file
         run: |
           echo "VITE_API_KEY=${{ secrets.VITE_API_KEY }}" >> .env
@@ -40,6 +40,12 @@ jobs:
           echo "VITE_APP_ID=${{ secrets.VITE_APP_ID }}" >> .env
           echo "VITE_MEASUREMENT_ID=${{ secrets.VITE_MEASUREMENT_ID }}" >> .env
           echo "VITE_RECAPTCHA_SITE_KEY=${{ secrets.VITE_RECAPTCHA_SITE_KEY }}" >> .env
+
+      # --- 2. INJECT ANDROID SECRETS (google-services.json) ---
+      - name: Create google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
 
       - name: Build Project
         run: npm run build

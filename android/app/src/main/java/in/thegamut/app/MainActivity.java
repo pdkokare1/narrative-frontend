@@ -9,7 +9,8 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         // 2. Initialize the Splash Screen (MUST be before super.onCreate)
-        SplashScreen.installSplashScreen(this);
+        // TEMPORARILY DISABLED: To debug "Instant Crash" issues.
+        // SplashScreen.installSplashScreen(this);
         
         super.onCreate(savedInstanceState);
     }

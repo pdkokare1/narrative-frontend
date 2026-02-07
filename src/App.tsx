@@ -150,15 +150,16 @@ function AppRoutes() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RadioProvider>
-          <ToastProvider>
-            <ErrorBoundary>
-               <AppRoutes />
-            </ErrorBoundary>
-          </ToastProvider>
-        </RadioProvider>
-      </AuthProvider>
+      {/* ERROR BOUNDARY MOVED TO TOP LEVEL to catch Auth/Init failures */}
+      <ErrorBoundary>
+        <AuthProvider>
+          <RadioProvider>
+            <ToastProvider>
+                 <AppRoutes />
+            </ToastProvider>
+          </RadioProvider>
+        </AuthProvider>
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }

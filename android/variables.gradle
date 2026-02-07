@@ -1,7 +1,7 @@
 ext {
     minSdkVersion = 22
-    compileSdkVersion = 33
-    targetSdkVersion = 33
+    compileSdkVersion = 34 // CHANGED: Was 33, now 34 (Required for Firebase Auth)
+    targetSdkVersion = 34  // CHANGED: Was 33, now 34 (To match compileSdk)
     androidxActivityVersion = '1.7.0'
     androidxAppCompatVersion = '1.6.1'
     androidxCoordinatorLayoutVersion = '1.2.0'

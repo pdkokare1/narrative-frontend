@@ -22,6 +22,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    // CRITICAL FIX: Ensure Java 17 compatibility for Capacitor 5/6 and Android 14
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
 }
 
 repositories {
@@ -40,15 +45,15 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
-
-    // --- FIREBASE SDKs REMOVED TO FIX CRASH ---
-    // User is using JS SDK for Auth, so Native Auth is not required and causing config crashes.
-    // implementation platform('com.google.firebase:firebase-bom:34.8.0')
-    // implementation 'com.google.firebase:firebase-analytics'
-    // implementation 'com.google.firebase:firebase-auth' 
 }
 
 apply from: 'capacitor.build.gradle'
 
-// DISABLED: Google Services Plugin (Source of crash)
-// apply plugin: 'com.google.gms.google-services'
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

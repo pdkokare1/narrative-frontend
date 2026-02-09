@@ -5,9 +5,14 @@ const config: CapacitorConfig = {
   appName: 'The Gamut',
   webDir: 'build',
   server: {
+    url: 'https://www.thegamut.in', // 👈 This tells the app to load your live site
     androidScheme: 'https',
     cleartext: true,
-    allowNavigation: ['*'] 
+    allowNavigation: [
+      'thegamut.in',
+      'www.thegamut.in',
+      '*.thegamut.in'
+    ]
   },
   plugins: {
     SplashScreen: {

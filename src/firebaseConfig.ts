@@ -1,9 +1,10 @@
 // src/firebaseConfig.ts
 import { initializeApp } from "firebase/app";
-import { getAuth, Auth } from "firebase/auth";
+import { getAuth, Auth, indexedDBLocalPersistence, initializeAuth } from "firebase/auth";
 import { getAnalytics, Analytics } from "firebase/analytics";
 import { initializeAppCheck, ReCaptchaV3Provider, onTokenChanged, AppCheck } from "firebase/app-check";
 import { getMessaging, Messaging } from "firebase/messaging";
+import { Capacitor } from "@capacitor/core";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
@@ -30,7 +31,15 @@ try {
     }
 
     app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
+
+    // FIX: Use IndexedDB persistence on Mobile to prevent session loss
+    if (Capacitor.isNativePlatform()) {
+        auth = initializeAuth(app, {
+            persistence: indexedDBLocalPersistence
+        });
+    } else {
+        auth = getAuth(app);
+    }
 
     // Initialize Analytics
     if (typeof window !== 'undefined') {
@@ -48,7 +57,6 @@ try {
 
 } catch (error) {
     console.error("🔥 CRITICAL: Firebase Initialization Failed.", error);
-    // We do NOT re-throw, so the app can still bundle and render the Error Boundary or Login
 }
 
 // App Check Logic

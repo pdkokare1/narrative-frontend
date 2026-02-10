@@ -5,8 +5,11 @@ import {
   signInWithPhoneNumber, 
   signInWithPopup, 
   GoogleAuthProvider, 
-  ConfirmationResult 
+  ConfirmationResult,
+  signInWithCredential 
 } from "firebase/auth";
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication'; // Native Plugin
+import { Capacitor } from '@capacitor/core';
 import { auth } from './firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 
@@ -154,14 +157,31 @@ const Login: React.FC = () => {
     setLoading(true);
     
     try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      
-      await signInWithPopup(auth, provider);
+      // 1. NATIVE MODE (Capacitor)
+      if (Capacitor.isNativePlatform()) {
+          console.log("📱 Native Platform detected. Using Capacitor Plugin.");
+          
+          // A. Perform Native Sign-In (No Redirects)
+          const result = await FirebaseAuthentication.signInWithGoogle();
+          
+          // B. Create Credential from ID Token
+          const credential = GoogleAuthProvider.credential(result.credential?.idToken);
+          
+          // C. Sign In to Firebase JS SDK (Updates AuthContext)
+          await signInWithCredential(auth, credential);
+          
+      } else {
+          // 2. WEB/PWA MODE
+          console.log("💻 Web Platform detected. Using Popup.");
+          const provider = new GoogleAuthProvider();
+          provider.setCustomParameters({ prompt: 'select_account' });
+          await signInWithPopup(auth, provider);
+      }
       
       console.log("✅ Google Sign-In Success");
       addToast('Successfully signed in with Google.', 'success');
       navigate('/');
+
     } catch (error: any) {
       console.error("❌ Google Auth Error:", error);
       
@@ -173,7 +193,7 @@ const Login: React.FC = () => {
       if (errorCode === 'auth/unauthorized-domain') msg = 'Domain not authorized (Add localhost to Firebase).';
       if (errorCode === 'auth/operation-not-supported-in-this-environment') msg = 'Popup not supported on Android.';
       
-      // 2. Added SHA-1 Hint for Unknown Errors
+      // Added SHA-1 Hint for Unknown Errors
       if (errorCode === 'unknown' || (error.message && error.message.includes('internal-error'))) {
           msg = 'Setup Error: SHA-1 Fingerprint missing in Firebase Console?';
       }

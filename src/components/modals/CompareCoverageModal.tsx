@@ -41,6 +41,7 @@ import 'chartjs-adapter-date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { getCoverageAnalysis } from '../../services/articleService'; // Ensure named import
 import { format } from 'date-fns';
+import { Browser } from '@capacitor/browser'; // NEW: Import Browser plugin
 
 // Register ChartJS components
 ChartJS.register(
@@ -206,7 +207,11 @@ const CompareCoverageModal: React.FC<CompareCoverageModalProps> = ({
             <ListItem
               alignItems="flex-start"
               secondaryAction={
-                <IconButton edge="end" href={article.url} target="_blank">
+                // UPDATED: Use Browser.open instead of href
+                <IconButton 
+                  edge="end" 
+                  onClick={() => Browser.open({ url: article.url })}
+                >
                   <LaunchIcon />
                 </IconButton>
               }

@@ -7,6 +7,7 @@ import { IArticle } from '../types';
 import useHaptic from '../hooks/useHaptic'; 
 import useSmartResume from '../hooks/useSmartResume'; 
 import InlineSmartBrief from './InlineSmartBrief'; 
+import { Browser } from '@capacitor/browser'; // NEW: Import Browser plugin
 
 // --- UI Components ---
 import Button from './ui/Button';
@@ -285,9 +286,10 @@ const ArticleCard = memo(function ArticleCard({
                 {/* 4. Read Source (Replacing Compare Coverage) */}
                 <Button 
                     variant="icon" 
-                    onClick={(e) => { 
+                    onClick={async (e) => { 
                         preventBubble(e); 
-                        handleInteraction(() => window.open(article.url, '_blank')); 
+                        // UPDATED: Use In-App Browser
+                        handleInteraction(() => Browser.open({ url: article.url })); 
                     }}
                     title="Read Source"
                     aria-label="Read original article"
@@ -298,13 +300,14 @@ const ArticleCard = memo(function ArticleCard({
                 {/* 5. Smart Brief Text Button */}
                 <Button 
                     variant="text"
-                    onClick={(e) => { 
+                    onClick={async (e) => { 
                         preventBubble(e); 
                         handleInteraction(() => {
                            if (isHardNews) {
                                setShowBrief(!showBrief);
                            } else {
-                               onRead(article);
+                               // UPDATED: Use In-App Browser for non-analysis articles
+                               Browser.open({ url: article.url });
                            }
                         }); 
                     }}

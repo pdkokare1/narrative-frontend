@@ -1,0 +1,40 @@
+{
+  "appId": "in.thegamut.app",
+  "appName": "The Gamut",
+  "webDir": "build",
+  "server": {
+    "url": "https://www.thegamut.in",
+    "androidScheme": "https",
+    "cleartext": true,
+    "allowNavigation": [
+      "thegamut.in",
+      "www.thegamut.in",
+      "*.thegamut.in"
+    ]
+  },
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": false,
+      "providers": [
+        "google.com",
+        "phone"
+      ]
+    },
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#121212",
+      "showSpinner": false,
+      "androidSplashResourceName": "splash",
+      "iosSplashResourceName": "Default-568h@2x~iphone"
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#121212"
+    },
+    "Keyboard": {
+      "resize": "body",
+      "style": "dark",
+      "resizeOnFullScreen": true
+    }
+  }
+}

@@ -4,4 +4,9 @@
     <string name="title_activity_main">The Gamut</string>
     <string name="package_name">in.thegamut.app</string>
     <string name="custom_url_scheme">in.thegamut.app</string>
+    
+    <string-array name="capacitor_firebase_authentication_providers">
+        <item>google.com</item>
+        <item>phone</item>
+    </string-array>
 </resources>

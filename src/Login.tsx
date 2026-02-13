@@ -193,14 +193,12 @@ const Login: React.FC = () => {
       if (errorCode === 'auth/unauthorized-domain') msg = 'Domain not authorized (Add localhost to Firebase).';
       if (errorCode === 'auth/operation-not-supported-in-this-environment') msg = 'Popup not supported on Android.';
       
-      // Added SHA-1 Hint for Unknown Errors
-      if (errorCode === 'unknown' || (error.message && error.message.includes('internal-error'))) {
-          msg = 'Setup Error: SHA-1 Fingerprint missing in Firebase Console?';
-      }
-
-      const fullError = `Error: ${msg} [${errorCode}]`;
+      // CRITICAL UPDATE: We removed the "SHA-1 Missing" hint here.
+      // Now we display the RAW error so we can debug.
+      const fullError = `NATIVE ERROR: ${error.message} (Code: ${errorCode})`;
+      
       setErrorMsg(fullError);
-      addToast(fullError, 'error');
+      addToast(`Login Failed: ${errorCode}`, 'error');
     } finally {
       setLoading(false);
     }
@@ -257,7 +255,8 @@ const Login: React.FC = () => {
                     marginBottom: '16px',
                     color: '#ff9b9b', 
                     fontSize: '0.85rem', 
-                    textAlign: 'center' 
+                    textAlign: 'center',
+                    wordBreak: 'break-word' // Ensure long error codes don't break layout
                 }}>
                     {errorMsg}
                 </div>

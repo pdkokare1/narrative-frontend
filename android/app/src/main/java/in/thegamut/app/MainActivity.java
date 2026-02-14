@@ -3,12 +3,16 @@ package in.thegamut.app;
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
 import androidx.core.splashscreen.SplashScreen;
+// 1. IMPORT THE PLUGIN
+import io.capawesome.capacitorjs.plugins.firebase.authentication.FirebaseAuthenticationPlugin;
 
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        // Fix: Re-enable Splash Screen to prevent launch issues
         SplashScreen.installSplashScreen(this);
+        
+        // 2. REGISTER THE PLUGIN (This stops the crash)
+        registerPlugin(FirebaseAuthenticationPlugin.class);
         
         super.onCreate(savedInstanceState);
     }

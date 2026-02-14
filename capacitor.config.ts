@@ -4,17 +4,15 @@ const config: CapacitorConfig = {
   appId: 'in.thegamut.app',
   appName: 'The Gamut',
   webDir: 'build',
-  server: {
-    url: 'https://www.thegamut.in', // 👈 This tells the app to load your live site
-    androidScheme: 'https',
-    cleartext: true,
-    allowNavigation: [
-      'thegamut.in',
-      'www.thegamut.in',
-      '*.thegamut.in'
-    ]
-  },
+  // FIX 1: We REMOVED the "server" block so it loads your local code, not the live site.
+  // server: { ... }  <-- Deleted this
+
   plugins: {
+    // FIX 2: Added the missing Google setup
+    FirebaseAuthentication: {
+      skipNativeAuth: false,
+      providers: ["google.com", "phone"]
+    },
     SplashScreen: {
       launchShowDuration: 2000,
       backgroundColor: "#121212",

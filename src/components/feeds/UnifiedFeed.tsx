@@ -25,11 +25,13 @@ interface UnifiedFeedProps {
   onAnalyze: (article: IArticle) => void;
   onCompare: (article: IArticle) => void;
   onOpenNarrative: (narrative: INarrative) => void; 
-  savedArticleIds: Set<string>;
+  savedArticleIds: SavedArticleIds;
   onToggleSave: (article: IArticle) => void;
   showTooltip: (text: string, e: React.MouseEvent) => void;
   scrollToTopRef?: React.RefObject<HTMLDivElement>;
 }
+
+type SavedArticleIds = Set<string>;
 
 const FeedHeader: React.FC<{ 
   mode: string; 

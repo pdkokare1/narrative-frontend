@@ -295,11 +295,9 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
                         </React.Fragment>
                     ))}
 
-                    {mode === 'latest' && (
-                        <div className="load-more-container" ref={loadMoreRef}>
-                            {isFetchingNextPage ? ( <div className="spinner-small" /> ) : hasNextPage ? ( <span style={{ opacity: 0.5, fontSize: '0.8rem' }}>Loading more...</span> ) : ( <div className="end-message">You're all caught up</div> )}
-                        </div>
-                    )}
+                    <div className="load-more-container" ref={loadMoreRef}>
+                        {isFetchingNextPage ? ( <div className="spinner-small" /> ) : hasNextPage ? ( <span style={{ opacity: 0.5, fontSize: '0.8rem' }}>Loading more...</span> ) : ( <div className="end-message">You're all caught up</div> )}
+                    </div>
                     <div style={{ height: '80px', flexShrink: 0, scrollSnapAlign: 'none' }} />
                 </>
             )}

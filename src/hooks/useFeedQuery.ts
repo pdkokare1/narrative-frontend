@@ -1,6 +1,6 @@
 // src/hooks/useFeedQuery.ts
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import apiClient from '../services/axiosInstance';
 import { IArticle, INarrative, IFilters } from '../types';
 
@@ -125,23 +125,22 @@ export const useFeedQuery = (mode: FeedMode, filters: IFilters) => {
     return () => clearInterval(interval);
   }, [mode, filters, data]);
 
-  // --- 4. Load More Observer ---
-  const loadMoreRef = useRef<HTMLDivElement>(null);
+  // --- 4. Load More Observer (Callback Ref) ---
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
-  useEffect(() => {
-    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return;
+  const loadMoreRef = useCallback((node: HTMLDivElement | null) => {
+    if (isFetchingNextPage) return; // Don't observe if already loading
+    if (observerRef.current) observerRef.current.disconnect();
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          fetchNextPage();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(loadMoreRef.current);
-    return () => observer.disconnect();
+    if (node && hasNextPage) {
+        observerRef.current = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                fetchNextPage();
+            }
+        }, { threshold: 0.1 });
+        
+        observerRef.current.observe(node);
+    }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // --- 5. Helper: Flatten Data ---

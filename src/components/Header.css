@@ -7,10 +7,10 @@
   right: 0;
   
   /* --- FIX: Safe Area for iPhone Notch --- */
+  /* This pushes the content down below the battery/status bar */
   padding-top: env(safe-area-inset-top); 
   
   /* Increase height to accommodate the new padding */
-  /* Desktop Base: 48px */
   height: calc(48px + env(safe-area-inset-top)); 
   /* -------------------------------------- */
   
@@ -402,7 +402,8 @@
     transform: translateY(-50%);
     margin-top: calc(env(safe-area-inset-top) / 2); 
     
-    width: calc(100vw - 110px);
+    /* UPDATED: Reduced width to prevent overlap with logo */
+    width: calc(100vw - 200px);
     z-index: 10;
     background: var(--bg-elevated);
     box-shadow: var(--shadow-md);

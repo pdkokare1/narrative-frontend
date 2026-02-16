@@ -124,7 +124,8 @@ function AppRoutes() {
         </Route>
 
         {/* Main Layout handles both Public (Feed) and Private (Dashboard) routes internal logic */}
-        <Route path="/*" element={<MainLayout profile={null} />} />
+        {/* UPDATED: Removed invalid profile prop; MainLayout now self-fetches */}
+        <Route path="/*" element={<MainLayout />} />
       </Routes>
 
       {/* --- Global Modals --- */}

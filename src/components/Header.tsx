@@ -202,9 +202,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
         )}
 
         {/* 5. Theme Toggle */}
-        {!isNative && (
-           <button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '🌙' : '☀️'}</button>
-        )}
+        {/* UPDATED: Allowed on Native Mobile too */}
+        <button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '🌙' : '☀️'}</button>
       </div>
 
       <LoginModal 

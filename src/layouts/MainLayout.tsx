@@ -43,13 +43,15 @@ const RequireAuth = ({ children }: { children: JSX.Element }) => {
     return children;
 };
 
-interface MainLayoutProps {
-  profile: IUserProfile | null; 
-}
+// UPDATED: Removed profile prop since we fetch it from context
+interface MainLayoutProps {}
 
-export default function MainLayout({ profile }: MainLayoutProps) {
+export default function MainLayout() {
   const isMobileView = useIsMobile();
   
+  // UPDATED: Get profile directly from Auth Context to fix "Guest" issue
+  const { profile } = useAuth();
+
   // --- NEW: PWA Logic ---
   const { isInstallable, triggerInstall } = usePWAInstall();
   const { addToast } = useToast();
@@ -237,7 +239,6 @@ export default function MainLayout({ profile }: MainLayoutProps) {
 
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
 
-      {/* UPDATED: Removed inline style override. Spacing is now handled by App.css */}
       <div className="main-container">
         <Suspense fallback={<PageLoader />}>
           <Routes>

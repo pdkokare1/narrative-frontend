@@ -8,7 +8,7 @@ import '../DashboardPages.css';
 import useIsMobile from '../hooks/useIsMobile';
 import useArticleSave from '../hooks/useArticleSave';
 import usePWAInstall from '../hooks/usePWAInstall'; 
-import { useActivityTracker } from '../hooks/useActivityTracker'; // NEW: Import Tracker
+import { useActivityTracker } from '../hooks/useActivityTracker'; 
 import * as api from '../services/api';
 
 import Header from '../components/Header';
@@ -34,7 +34,7 @@ const Legal = lazy(() => import('../pages/Legal'));
 const CompareCoverageModal = lazy(() => import('../components/modals/CompareCoverageModal'));
 const DetailedAnalysisModal = lazy(() => import('../components/modals/DetailedAnalysisModal'));
 const FilterModal = lazy(() => import('../components/modals/FilterModal'));
-const PalateCleanserModal = lazy(() => import('../components/modals/PalateCleanserModal')); // NEW: Lazy load intervention
+const PalateCleanserModal = lazy(() => import('../components/modals/PalateCleanserModal')); 
 
 // Protected Route Wrapper for inner routes
 const RequireAuth = ({ children }: { children: JSX.Element }) => {
@@ -53,7 +53,6 @@ export default function MainLayout({ profile }: MainLayoutProps) {
   // --- NEW: PWA Logic ---
   const { isInstallable, triggerInstall } = usePWAInstall();
   const { addToast } = useToast();
-  // State to ensure we only show the popup once per session
   const [installToastShown, setInstallToastShown] = useState(false);
 
   // --- THEME & FONT STATE ---
@@ -88,7 +87,6 @@ export default function MainLayout({ profile }: MainLayoutProps) {
   const { savedArticleIds, handleToggleSave } = useArticleSave(profile?.savedArticles || []);
 
   // --- NEW: Global Tracker Integration ---
-  // We define the handler here so we can control UI (Modals) from the layout
   const handleTrackerTrigger = useCallback((command: string) => {
       if (command === 'trigger_palate_cleanser') {
           setShowPalateCleanser(true);
@@ -101,7 +99,6 @@ export default function MainLayout({ profile }: MainLayoutProps) {
   }, []);
 
   // Initialize Global Session Tracker
-  // We pass 'feed' as default type for the main layout context
   useActivityTracker(undefined, 'feed', handleTrackerTrigger, handleFlowChange);
 
   // --- NEW: Scroll Progress Logic (Direct DOM) ---
@@ -116,7 +113,6 @@ export default function MainLayout({ profile }: MainLayoutProps) {
         
         if (docHeight > 0) {
             const scrollPercent = (scrollTop / docHeight) * 100;
-            // Direct style manipulation avoids re-renders
             progressBarRef.current.style.width = `${scrollPercent}%`;
         }
     };
@@ -129,16 +125,12 @@ export default function MainLayout({ profile }: MainLayoutProps) {
 
   // NEW: PWA Install Pop-Up Logic
   useEffect(() => {
-    // Wait a moment after load to be polite
     const timer = setTimeout(() => {
-      // Don't show if already shown, or if not mobile
       if (installToastShown || !isMobileView) return;
 
-      // Check if app is already running in "Standalone" (App Mode)
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
       if (isStandalone) return;
 
-      // 1. ANDROID / DESKTOP (If browser says it's installable)
       if (isInstallable) {
         addToast('Install The Gamut for a better experience', 'info', {
           label: 'Install App',
@@ -149,13 +141,12 @@ export default function MainLayout({ profile }: MainLayoutProps) {
         });
         setInstallToastShown(true);
       } 
-      // 2. iOS (If on iPhone but not installed)
       else if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
          addToast('To install: Tap Share button below → Add to Home Screen', 'info');
          setInstallToastShown(true);
       }
 
-    }, 3000); // 3-second delay so it doesn't pop up instantly
+    }, 3000); 
 
     return () => clearTimeout(timer);
   }, [isInstallable, isMobileView, installToastShown, addToast, triggerInstall]);
@@ -246,11 +237,8 @@ export default function MainLayout({ profile }: MainLayoutProps) {
 
       <CustomTooltip visible={tooltip.visible} text={tooltip.text} x={tooltip.x} y={tooltip.y} />
 
-      {/* UPDATED: Added paddingTop (for Header + Notch) and paddingBottom (for Nav + HomeBar) */}
-      <div className="main-container" style={{
-         paddingTop: 'calc(20px + var(--sat))',  // 20px buffer + safe area
-         paddingBottom: 'calc(60px + var(--sab))' // Nav height + safe area
-      }}>
+      {/* UPDATED: Removed inline style override. Spacing is now handled by App.css */}
+      <div className="main-container">
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* PUBLIC ROUTES */}

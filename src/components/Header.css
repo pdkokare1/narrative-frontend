@@ -7,10 +7,10 @@
   right: 0;
   
   /* --- FIX: Safe Area for iPhone Notch --- */
-  /* This pushes the content down below the battery/status bar */
   padding-top: env(safe-area-inset-top); 
   
   /* Increase height to accommodate the new padding */
+  /* Desktop Base: 48px */
   height: calc(48px + env(safe-area-inset-top)); 
   /* -------------------------------------- */
   
@@ -48,7 +48,7 @@
 }
 
 .logo-text {
-  font-family: var(--font-logo); /* CHANGED: Keep logo beautiful */
+  font-family: var(--font-logo); 
   font-size: 20px; 
   font-weight: 700;
   color: var(--text-primary);
@@ -369,8 +369,7 @@
 /* Mobile */
 @media (max-width: 768px) {
   .header {
-    /* Height adjusts automatically via calculation now, but we can enforce a min-height if needed */
-    /* Original was 40px content + padding. Now it's calc(40px + safe-area). */
+    /* Base height for mobile: 40px + safe area */
     height: calc(40px + env(safe-area-inset-top)); 
     padding-left: 15px;
     padding-right: 15px;

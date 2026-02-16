@@ -109,12 +109,15 @@ export const useFeedQuery = (mode: FeedMode, filters: IFilters) => {
         // Simple check: Is there a newer article than our first one?
         try {
             const firstItem = data?.pages[0]?.items[0];
+            // Ensure first item exists and has a timestamp
             if (!firstItem || !('publishedAt' in firstItem)) return;
 
             const latestRes = await apiClient.get('/articles', { params: { limit: 1, ...filters } });
             const serverLatest = latestRes.data.data[0];
 
-            if (serverLatest && serverLatest._id !== firstItem._id) {
+            // UPDATED: Check strictly if the server's latest is NEWER in time than what we see.
+            // This prevents "Smart Feed" shuffling or old "Featured" stories from triggering the pill.
+            if (serverLatest && new Date(serverLatest.publishedAt) > new Date(firstItem.publishedAt)) {
                 setShowNewPill(true);
             }
         } catch (err) {

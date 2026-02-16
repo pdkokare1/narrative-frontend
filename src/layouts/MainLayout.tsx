@@ -159,6 +159,7 @@ export default function MainLayout() {
     if (savedTheme) {
       setTheme(savedTheme);
     } else {
+      // Default to System Preference (but don't save it yet)
       const userPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       setTheme(userPrefersDark ? 'dark' : 'light');
     }
@@ -171,13 +172,17 @@ export default function MainLayout() {
 
   useEffect(() => {
       document.body.className = `${theme}-mode font-${fontSize}`;
-      localStorage.setItem('theme', theme);
+      // UPDATED: Do NOT save theme here. Only save on manual toggle.
+      // This allows the app to respect system changes until the user makes a choice.
       localStorage.setItem('fontSize', fontSize);
   }, [theme, fontSize]);
 
   // --- HANDLERS ---
   const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    // UPDATED: Explicitly save preference ONLY when user clicks toggle
+    localStorage.setItem('theme', newTheme);
   };
 
   const handleFilterChange = (newFilters: IFilters) => {

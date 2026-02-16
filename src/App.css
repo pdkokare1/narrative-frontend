@@ -22,7 +22,8 @@ body {
   overscroll-behavior-y: none;
   
   /* --- MOBILE SAFE AREA SUPPORT --- */
-  padding-top: env(safe-area-inset-top);
+  /* UPDATED: Removed padding-top here. The Fixed Header handles the visual safe area, 
+     and .main-container handles the layout spacing. Keeping it here caused double-spacing or layout conflicts. */
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
@@ -71,8 +72,11 @@ a:hover {
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
-  /* Adjust for Safe Area + Header Height */
-  padding-top: 48px; 
+  
+  /* UPDATED: Matches Desktop Header Height (48px + Safe Area) 
+     This ensures content starts exactly below the fixed header. */
+  padding-top: calc(48px + env(safe-area-inset-top)); 
+  
   min-height: 100vh;
 }
 
@@ -197,8 +201,8 @@ a:hover {
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
   .main-container {
-    /* Slightly taller top padding on mobile to account for safe area if needed */
-    padding-top: 40px; 
+    /* UPDATED: Match Mobile Header Height (40px + Safe Area) */
+    padding-top: calc(40px + env(safe-area-inset-top)); 
     height: 100vh;
     overflow: hidden;
   }
@@ -206,7 +210,9 @@ a:hover {
   .content {
     /* UPDATED: Removed horizontal padding (0) to allow full-width feed */
     padding: 0 0 70px 0; 
-    height: calc(100vh - 40px); 
+    /* UPDATED: Calculate exact remaining height. 
+       100vh - (Header Height) */
+    height: calc(100vh - (40px + env(safe-area-inset-top))); 
     overflow-y: auto; 
     overflow-x: hidden;
     /* Prevent pull-to-refresh here specifically */
@@ -217,7 +223,8 @@ a:hover {
   
   .article-card-wrapper {
     scroll-snap-align: start; 
-    height: calc(100vh - 40px); 
+    /* UPDATED: Dynamic height calc for card wrappers to match viewport */
+    height: calc(100vh - (40px + env(safe-area-inset-top))); 
     width: 100%;
     display: flex; 
     flex-direction: column; 

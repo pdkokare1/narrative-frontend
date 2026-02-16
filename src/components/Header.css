@@ -319,8 +319,11 @@
     display: flex;
     align-items: center;
     justify-content: center; /* Center content */
-    font-size: 11px;
-    font-weight: 500;
+    
+    /* UPDATED: Matches Date Display Font */
+    font-size: 13px; 
+    font-weight: 600; 
+    
     color: var(--text-secondary);
     background: transparent;
     border: 1px solid var(--border-color);
@@ -332,6 +335,15 @@
     
     position: relative;
     cursor: pointer;
+  }
+
+  /* NEW: Fix alignment of name and arrow */
+  .header-user-clickable-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 6px; 
   }
 
   .header-username-desktop {

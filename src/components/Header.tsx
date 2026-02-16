@@ -117,13 +117,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   };
 
   return (
-    // UPDATED: Added paddingTop using --sat variable to handle notch/status bar area
-    <header className="header" style={{ 
-      paddingTop: 'var(--sat)', 
-      height: 'auto', 
-      minHeight: 'calc(60px + var(--sat))',
-      boxSizing: 'border-box'
-    }}>
+    // UPDATED: Removed inline styles to allow CSS to control safe area layout
+    <header className="header">
       <div className="header-left">
         <div className="logo-container">
           <Link to="/" style={{ textDecoration: 'none' }}>

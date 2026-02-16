@@ -22,8 +22,6 @@ body {
   overscroll-behavior-y: none;
   
   /* --- MOBILE SAFE AREA SUPPORT --- */
-  /* UPDATED: Removed padding-top here. The Fixed Header handles the visual safe area, 
-     and .main-container handles the layout spacing. Keeping it here caused double-spacing or layout conflicts. */
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);

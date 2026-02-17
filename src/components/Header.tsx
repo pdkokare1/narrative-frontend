@@ -42,7 +42,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   const searchRef = useRef<HTMLDivElement>(null); 
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // NEW: Refs for precise measurement
+  // Refs for precise measurement
   const logoRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   
@@ -76,7 +76,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  // NEW: "Smart Width" Calculation using LayoutEffect to prevent overlap
+  // Smart Width Calculation
   useLayoutEffect(() => {
     const calculateWidth = () => {
         // 1. Reset if closed or if on Desktop (allow CSS to handle desktop)
@@ -95,10 +95,9 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
             // So its visual right edge is at: WrapperRight - 50
             const searchVisualRightEdge = wrapperRect.right - 50;
             
-            const spacingBuffer = 30; // Increased buffer for safety
+            const spacingBuffer = 30; // Buffer
             
             // 3. Calculate Max Width
-            // Width = (Visual Right Edge) - (Logo Right Edge) - Buffer
             const maxAvailableWidth = searchVisualRightEdge - logoRightEdge - spacingBuffer;
             
             // 4. Apply Width
@@ -114,7 +113,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // NEW: Log Search Intent
       const sessionId = sessionStorage.getItem('current_analytics_session_id');
       if (sessionId) {
           api.logSearch(searchQuery.trim(), sessionId).catch(console.error);
@@ -159,15 +157,9 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   };
 
   return (
-    // UPDATED: Added paddingTop using --sat variable to handle notch/status bar area
-    <header className="header" style={{ 
-      paddingTop: 'var(--sat)', 
-      height: 'auto', 
-      minHeight: 'calc(60px + var(--sat))',
-      boxSizing: 'border-box'
-    }}>
+    // UPDATED: Removed inline styles. CSS class 'header' now controls height (48px) and safe area.
+    <header className="header">
       <div className="header-left">
-        {/* NEW: Attached logoRef here for measurement */}
         <div className="logo-container" ref={logoRef}>
           <Link to="/" style={{ textDecoration: 'none' }}>
             <h1 className="logo-text">The Gamut</h1>
@@ -177,13 +169,11 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
 
       <div className="header-right">
         {/* 1. Search */}
-        {/* NEW: Attached wrapperRef here for measurement */}
         <div ref={wrapperRef} className="search-bar-wrapper">
           <div ref={searchRef} style={{ display: 'flex', alignItems: 'center' }}>
             <form 
                 onSubmit={handleSearchSubmit} 
                 className={`search-form ${isSearchOpen ? 'open' : ''}`}
-                // NEW: Apply calculated width dynamically
                 style={searchBarWidth ? { width: searchBarWidth } : {}}
             >
                 <input ref={inputRef} type="text" className="search-input" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
@@ -258,7 +248,6 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
         )}
 
         {/* 5. Theme Toggle */}
-        {/* UPDATED: Allowed on Native Mobile too by removing check */}
         <button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '🌙' : '☀️'}</button>
       </div>
 

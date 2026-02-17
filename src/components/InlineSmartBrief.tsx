@@ -27,10 +27,8 @@ const InlineSmartBrief: React.FC<InlineSmartBriefProps> = ({ articleId }) => {
   }, []);
 
   const fetchBrief = async () => {
-    // If guest, we might strictly skip fetching, but to show "loading" or allow "retry" later, we can fetch.
-    // However, to save tokens/API calls, you might want to block it. 
-    // For now, we fetch so the data is ready if they login, but we hide it.
-    
+    // We still fetch even if guest to ensure data readiness or to show "loading" state appropriately.
+    // In a stricter optimization, we could skip this for guests.
     setLoading(true);
     setError(null);
 
@@ -79,12 +77,13 @@ const InlineSmartBrief: React.FC<InlineSmartBriefProps> = ({ articleId }) => {
   }
 
   // LOCKED STATE (Rendered if Guest)
+  // Added "inline-mode" class to fix sizing/centering issues
   const LockedTease = (
-    <div className="briefing-locked-section" style={{ marginTop: '5px' }}>
+    <div className="briefing-locked-section inline-mode">
         <div className="briefing-lock-overlay">
             <button className="lock-message-btn" onClick={() => navigate('/login')}>
-                <LockIcon size={14} />
-                <span>Login to Unlock Key Takeaways</span>
+                <LockIcon size={12} /> {/* Slightly smaller icon for inline */}
+                <span>Login to Unlock</span>
             </button>
         </div>
         <div className="briefing-blur-content">
@@ -92,7 +91,7 @@ const InlineSmartBrief: React.FC<InlineSmartBriefProps> = ({ articleId }) => {
             <ul className="inline-brief-list">
                 <li>Analysis of the primary economic factors...</li>
                 <li>Key stakeholders disagreement on the timeline...</li>
-                <li>Long-term impact projections based on current data...</li>
+                <li>Long-term impact projections based on data...</li>
             </ul>
         </div>
     </div>
@@ -113,7 +112,7 @@ const InlineSmartBrief: React.FC<InlineSmartBriefProps> = ({ articleId }) => {
             ))}
         </ul>
       ) : (
-          // IF GUEST: HIDE REAL POINTS, SHOW LOCK
+          // IF GUEST: HIDE REAL POINTS, SHOW COMPACT LOCK
           LockedTease
       )}
     </div>

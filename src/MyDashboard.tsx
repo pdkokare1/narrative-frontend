@@ -10,7 +10,6 @@ import {
   BarChart2,
   Share2,
   Award,
-  Snowflake, 
   Zap,       
   Brain,
   Wind,      
@@ -21,7 +20,7 @@ import {
   CheckCircle, 
   Circle,
   Settings,
-  AlertTriangle // ADDED for warnings
+  AlertTriangle 
 } from 'lucide-react';
 import './MyDashboard.css';
 import DashboardSkeleton from './components/ui/DashboardSkeleton';
@@ -58,7 +57,6 @@ interface DailyStat {
   goalsMet: boolean;
 }
 
-// UPDATED: Matched with backend UserStats model
 interface UserStats {
   userId: string;
   totalTimeSpent: number;
@@ -68,12 +66,11 @@ interface UserStats {
   longestStreak: number;
   streakFreezes?: number;
   focusScoreAvg?: number;
-  deepFocusMinutes?: number; 
   engagementScore: number;
   
   readingStyle?: 'skimmer' | 'deep_reader' | 'balanced' | 'learner';
   diversityScore?: number; 
-  suggestPalateCleanser?: boolean; // NEW: Doomscrolling Flag
+  suggestPalateCleanser?: boolean; 
   peakLearningTime?: number; 
   leanExposure?: {
     Left: number;
@@ -88,7 +85,6 @@ interface UserStats {
     goalsMet: boolean;
   };
   recentDailyHistory?: DailyStat[];
-  
   quests?: IQuest[];
 }
 
@@ -151,7 +147,6 @@ const MyDashboard: React.FC = () => {
   }
 
   // --- Helper Functions ---
-
   const formatTime = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
     const mins = Math.floor(seconds / 60);
@@ -161,74 +156,39 @@ const MyDashboard: React.FC = () => {
     return `${hrs}h ${remainingMins}m`;
   };
 
-  const getFocusLabel = (score: number) => {
-    if (score >= 90) return { label: 'Deep Focus', color: 'text-green-400' };
-    if (score >= 70) return { label: 'Attentive', color: 'text-blue-400' };
-    if (score >= 50) return { label: 'Casual', color: 'text-yellow-400' };
-    return { label: 'Distracted', color: 'text-orange-400' };
-  };
-
-  const focusData = getFocusLabel(stats?.focusScoreAvg || 100);
-
-  // Persona Logic
+  // --- Persona Logic (Updated to use Gold/Neutral icons) ---
   const getPersonaDetails = (style: string = 'balanced') => {
     switch(style) {
       case 'skimmer': 
-        return { label: 'The Scanner', desc: 'Fast & efficient.', icon: <Wind size={20} className="text-cyan-400" /> };
+        return { label: 'The Scanner', desc: 'Fast & efficient.', icon: <Wind size={24} /> };
       case 'deep_reader': 
-        return { label: 'Deep Diver', desc: 'Thorough & focused.', icon: <Anchor size={20} className="text-indigo-400" /> };
+        return { label: 'Deep Diver', desc: 'Thorough & focused.', icon: <Anchor size={24} /> };
       case 'learner': 
-        return { label: 'The Scholar', desc: 'Curious & steady.', icon: <BookOpen size={20} className="text-emerald-400" /> };
+        return { label: 'The Scholar', desc: 'Curious & steady.', icon: <BookOpen size={24} /> };
       default: 
-        return { label: 'Balanced', desc: 'Adaptive reader.', icon: <Scale size={20} className="text-violet-400" /> };
+        return { label: 'Balanced', desc: 'Adaptive reader.', icon: <Scale size={24} /> };
     }
   };
-
   const persona = getPersonaDetails(stats?.readingStyle);
 
-  // --- NEW: Narrative Health Logic ---
+  // --- Health Logic (Uses CSS variables where possible via style props or classes) ---
   const calculateHealth = () => {
-     // 1. Base Score = (Diversity + Focus) / 2
-     const diversity = stats?.diversityScore || 50;
-     const focus = stats?.focusScoreAvg || 75;
-     
-     let score = (diversity + focus) / 2;
-
-     // 2. Penalty for Doomscrolling
-     if (stats?.suggestPalateCleanser) {
-        score -= 15;
-     }
-
+     let score = ((stats?.diversityScore || 50) + (stats?.focusScoreAvg || 75)) / 2;
+     if (stats?.suggestPalateCleanser) score -= 15;
      score = Math.max(0, Math.min(100, Math.round(score)));
 
-     // 3. Status
+     // Determine Status Color
+     let statusColor = 'var(--accent-primary)'; // Default Gold
      let label = 'Balanced';
-     let color = 'bg-blue-500';
-     let textColor = 'text-blue-400';
 
-     if (score >= 85) {
-         label = 'Optimal';
-         color = 'bg-emerald-500';
-         textColor = 'text-emerald-400';
-     } else if (score >= 60) {
-         label = 'Healthy';
-         color = 'bg-blue-500';
-         textColor = 'text-blue-400';
-     } else if (score >= 40) {
-         label = 'Unbalanced';
-         color = 'bg-yellow-500';
-         textColor = 'text-yellow-400';
-     } else {
-         label = 'Critical';
-         color = 'bg-red-500';
-         textColor = 'text-red-400';
-     }
+     if (score >= 85) { label = 'Optimal'; statusColor = 'var(--color-success)'; } 
+     else if (score >= 60) { label = 'Healthy'; statusColor = 'var(--color-info)'; }
+     else if (score >= 40) { label = 'Unbalanced'; statusColor = 'var(--accent-primary)'; }
+     else { label = 'Critical'; statusColor = 'var(--color-error)'; }
 
-     return { score, label, color, textColor };
+     return { score, label, statusColor };
   };
-
   const health = calculateHealth();
-  // -----------------------------------
 
   // Golden Hour
   const formatGoldenHour = (hour: number) => {
@@ -238,7 +198,7 @@ const MyDashboard: React.FC = () => {
     return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   };
 
-  // --- Chart Configuration ---
+  // --- Chart Configuration (UPDATED TO GOLD THEME) ---
   const chartData = {
     labels: stats?.recentDailyHistory?.map(d => {
       const date = new Date(d.date);
@@ -248,14 +208,15 @@ const MyDashboard: React.FC = () => {
       {
         label: 'Minutes Read',
         data: stats?.recentDailyHistory?.map(d => Math.round(d.timeSpent / 60)) || [],
-        borderColor: '#60A5FA', // Blue-400
-        backgroundColor: 'rgba(96, 165, 250, 0.1)',
+        // The Gold Standard
+        borderColor: '#D4AF37', 
+        backgroundColor: 'rgba(212, 175, 55, 0.1)', 
         tension: 0.4,
         fill: true,
-        pointBackgroundColor: '#2563EB',
-        pointBorderColor: '#fff',
+        pointBackgroundColor: '#D4AF37',
+        pointBorderColor: '#141414', // bg-card color
         pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: '#2563EB',
+        pointHoverBorderColor: '#D4AF37',
       }
     ]
   };
@@ -266,10 +227,10 @@ const MyDashboard: React.FC = () => {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#1E293B',
-        titleColor: '#E2E8F0',
-        bodyColor: '#94A3B8',
-        borderColor: '#334155',
+        backgroundColor: '#141414', // bg-card
+        titleColor: '#D4AF37', // accent-primary
+        bodyColor: '#EDEDED', // text-primary
+        borderColor: 'rgba(255,255,255,0.1)',
         borderWidth: 1,
         padding: 10,
         displayColors: false,
@@ -277,17 +238,17 @@ const MyDashboard: React.FC = () => {
     },
     scales: {
       y: {
-        grid: { color: '#334155', drawBorder: false },
-        ticks: { color: '#94A3B8', font: { size: 10 } }
+        grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
+        ticks: { color: '#A1A1A1', font: { size: 10 } }
       },
       x: {
         grid: { display: false },
-        ticks: { color: '#94A3B8', font: { size: 10 } }
+        ticks: { color: '#A1A1A1', font: { size: 10 } }
       }
     }
   };
 
-  // Calculate Lean Percentages
+  // Lean Percentages
   const totalLean = (stats?.leanExposure?.Left || 0) + (stats?.leanExposure?.Center || 0) + (stats?.leanExposure?.Right || 0) || 1;
   const pctLeft = Math.round(((stats?.leanExposure?.Left || 0) / totalLean) * 100);
   const pctCenter = Math.round(((stats?.leanExposure?.Center || 0) / totalLean) * 100);
@@ -299,16 +260,20 @@ const MyDashboard: React.FC = () => {
       {/* 1. Header */}
       <header className="mb-8 flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+          <h1 className="text-3xl font-bold" style={{ 
+              fontFamily: 'var(--font-heading)', 
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.03em'
+          }}>
             My Narrative
           </h1>
-          <p className="text-slate-400 mt-1">
+          <p style={{ color: 'var(--text-tertiary)' }} className="mt-1">
             Overview of your reading journey.
           </p>
         </div>
         <div className="hidden md:block">
-           <div className="px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs text-slate-400 font-mono">
-              Last updated: Just now
+           <div className="dashboard-badge badge-gold">
+              Beta Access
            </div>
         </div>
       </header>
@@ -316,14 +281,14 @@ const MyDashboard: React.FC = () => {
       {/* 2. Bento Grid Layout */}
       <div className="dashboard-bento-grid">
 
-        {/* --- ROW 1: KEY METRICS (All 3 columns wide = 4 items in a row) --- */}
+        {/* --- ROW 1: KEY METRICS --- */}
         
         {/* Streak */}
         <div className="bento-card col-span-3">
-          <Flame className="card-bg-icon text-orange-500" size={80} />
+          <Flame className="card-bg-icon" size={80} />
           <div className="card-header">
-            <Flame size={16} className="text-orange-500" />
-            <span className="card-title text-orange-400">Streak</span>
+            <Flame size={18} style={{ color: 'var(--accent-primary)' }} />
+            <span className="card-title">Streak</span>
           </div>
           <div className="mt-auto">
              <div className="flex items-baseline gap-2">
@@ -336,10 +301,10 @@ const MyDashboard: React.FC = () => {
 
         {/* Time Read */}
         <div className="bento-card col-span-3">
-          <Clock className="card-bg-icon text-blue-500" size={80} />
+          <Clock className="card-bg-icon" size={80} />
           <div className="card-header">
-            <Clock size={16} className="text-blue-500" />
-            <span className="card-title text-blue-400">Time Read</span>
+            <Clock size={18} style={{ color: 'var(--accent-primary)' }} />
+            <span className="card-title">Time Read</span>
           </div>
           <div className="mt-auto">
              <div className="stat-value-large">{formatTime(stats?.totalTimeSpent || 0)}</div>
@@ -347,12 +312,12 @@ const MyDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Articles */}
+        {/* Stories */}
         <div className="bento-card col-span-3">
-          <BookOpen className="card-bg-icon text-purple-500" size={80} />
+          <BookOpen className="card-bg-icon" size={80} />
           <div className="card-header">
-            <BookOpen size={16} className="text-purple-500" />
-            <span className="card-title text-purple-400">Stories</span>
+            <BookOpen size={18} style={{ color: 'var(--accent-primary)' }} />
+            <span className="card-title">Stories</span>
           </div>
           <div className="mt-auto">
              <div className="stat-value-large">{stats?.articlesReadCount || 0}</div>
@@ -362,31 +327,33 @@ const MyDashboard: React.FC = () => {
 
         {/* Focus Score */}
         <div className="bento-card col-span-3">
-          <Zap className="card-bg-icon text-yellow-500" size={80} />
+          <Zap className="card-bg-icon" size={80} />
           <div className="card-header">
-            <Zap size={16} className="text-yellow-500" />
-            <span className="card-title text-yellow-400">Focus</span>
+            <Zap size={18} style={{ color: 'var(--accent-primary)' }} />
+            <span className="card-title">Focus</span>
           </div>
           <div className="mt-auto">
              <div className="flex items-baseline gap-2">
                 <div className="stat-value-large">{stats?.focusScoreAvg || 100}</div>
                 <span className="text-sm text-slate-500">/ 100</span>
              </div>
-             <p className={`stat-subtext font-medium ${focusData.color}`}>{focusData.label}</p>
+             <p className="stat-subtext" style={{ color: 'var(--text-secondary)' }}>
+                Average attention span
+             </p>
           </div>
         </div>
 
 
         {/* --- ROW 2: ACTIVITY & QUESTS --- */}
 
-        {/* Chart (Takes 8 columns - 2/3 width) */}
+        {/* Chart (Takes 8 columns) */}
         <div className="bento-card col-span-8">
            <div className="flex justify-between items-start mb-4">
               <div className="card-header mb-0">
-                <BarChart2 size={16} className="text-slate-400" />
+                <BarChart2 size={18} style={{ color: 'var(--text-tertiary)' }} />
                 <span className="card-title">Activity Monitor</span>
               </div>
-              <div className="text-xs font-mono text-slate-500">Last 30 Days</div>
+              <div className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>Last 30 Days</div>
            </div>
            
            <div className="chart-wrapper">
@@ -400,24 +367,29 @@ const MyDashboard: React.FC = () => {
            </div>
         </div>
 
-        {/* Daily Goals & Quests (Takes 4 columns - 1/3 width) */}
+        {/* Daily Goals & Quests (Takes 4 columns) */}
         <div className="bento-card col-span-4 flex flex-col gap-6">
            
            {/* Daily Goal Section */}
            <div>
               <div className="card-header justify-between">
                 <div className="flex items-center gap-2">
-                   <Target size={16} className="text-green-400" />
-                   <span className="card-title text-green-400">Daily Goal</span>
+                   <Target size={18} style={{ color: 'var(--color-success)' }} />
+                   <span className="card-title" style={{ color: 'var(--color-success)' }}>Daily Goal</span>
                 </div>
-                <span className="text-[10px] font-bold bg-slate-800 px-2 py-0.5 rounded text-slate-400">
+                <span className="dashboard-badge" style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}>
                    {Math.round((stats?.dailyStats?.timeSpent || 0) / 60)} / 15m
                 </span>
               </div>
+              
               <div className="progress-track">
                   <div 
-                    className={`progress-fill ${stats?.dailyStats?.goalsMet ? 'bg-green-500' : 'bg-blue-500'}`}
-                    style={{ width: `${Math.min(100, ((stats?.dailyStats?.timeSpent || 0) / 900) * 100)}%` }}
+                    className="progress-fill"
+                    style={{ 
+                        width: `${Math.min(100, ((stats?.dailyStats?.timeSpent || 0) / 900) * 100)}%`,
+                        // Use Success Green if met, otherwise Gold
+                        background: stats?.dailyStats?.goalsMet ? 'var(--color-success)' : 'var(--accent-primary)'
+                    }}
                   />
               </div>
            </div>
@@ -425,27 +397,24 @@ const MyDashboard: React.FC = () => {
            {/* Quests List */}
            <div className="flex-grow">
               <div className="card-header">
-                <Award size={16} className="text-yellow-400" />
-                <span className="card-title text-yellow-400">Quests</span>
+                <Award size={18} style={{ color: 'var(--accent-primary)' }} />
+                <span className="card-title">Quests</span>
               </div>
               
               <div className="flex flex-col gap-2">
                  {stats?.quests && stats.quests.length > 0 ? stats.quests.map(quest => (
                     <div key={quest.id} className="quest-item">
-                       <div className={quest.isCompleted ? 'text-green-400' : 'text-slate-500'}>
+                       <div style={{ color: quest.isCompleted ? 'var(--color-success)' : 'var(--text-tertiary)' }}>
                           {quest.isCompleted ? <CheckCircle size={16} /> : <Circle size={16} />}
                        </div>
                        <div className="flex-1 min-w-0">
-                          <p className={`text-xs truncate ${quest.isCompleted ? 'text-slate-500 line-through' : 'text-slate-300'}`}>
+                          <p className={`quest-desc ${quest.isCompleted ? 'completed' : ''}`}>
                              {quest.description}
                           </p>
                        </div>
-                       <div className="text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded">
-                          XP
-                       </div>
                     </div>
                  )) : (
-                   <p className="text-xs text-slate-500 italic">No active quests.</p>
+                   <p className="text-xs italic" style={{ color: 'var(--text-tertiary)' }}>No active quests.</p>
                  )}
               </div>
            </div>
@@ -456,9 +425,9 @@ const MyDashboard: React.FC = () => {
 
         {/* Persona (4 Cols) */}
         <div className="bento-card col-span-4">
-           <Activity className="card-bg-icon text-slate-600" size={100} />
+           <Activity className="card-bg-icon" size={100} />
            <div className="card-header">
-              <Activity size={16} className="text-slate-400" />
+              <Activity size={18} style={{ color: 'var(--text-tertiary)' }} />
               <span className="card-title">Reading Persona</span>
            </div>
            
@@ -467,22 +436,22 @@ const MyDashboard: React.FC = () => {
                  {persona.icon}
               </div>
               <div>
-                 <h4 className="text-lg font-bold text-white">{persona.label}</h4>
-                 <p className="text-xs text-slate-400">{persona.desc}</p>
+                 <h4 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{persona.label}</h4>
+                 <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{persona.desc}</p>
               </div>
            </div>
         </div>
 
-        {/* NEW: Cognitive Health (Replaces Media Diet) (4 Cols) */}
-        <div className="bento-card col-span-4 relative overflow-hidden group">
-           <Brain className="card-bg-icon text-pink-500/50 group-hover:text-pink-500/20 transition-all duration-500" size={120} />
+        {/* Cognitive Health (4 Cols) */}
+        <div className="bento-card col-span-4">
+           <Brain className="card-bg-icon" size={120} />
            
            <div className="card-header justify-between relative z-10">
               <div className="flex items-center gap-2">
-                 <Brain size={16} className="text-pink-400" />
-                 <span className="card-title text-pink-400">Cognitive Health</span>
+                 <Brain size={18} style={{ color: health.statusColor }} />
+                 <span className="card-title" style={{ color: health.statusColor }}>Cognitive Health</span>
               </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${health.color} text-white`}>
+              <span className="dashboard-badge" style={{ background: health.statusColor, color: 'white' }}>
                 {health.label}
               </span>
            </div>
@@ -490,13 +459,13 @@ const MyDashboard: React.FC = () => {
            <div className="mt-2 relative z-10">
               <div className="flex items-end justify-between mb-3">
                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-white">{health.score}</span>
-                    <span className="text-xs text-slate-400">/ 100</span>
+                    <span className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>{health.score}</span>
+                    <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>/ 100</span>
                  </div>
                  {/* Warning for Doomscrolling */}
                  {stats?.suggestPalateCleanser && (
-                     <div className="flex items-center gap-1.5 text-[10px] font-bold text-orange-400 bg-orange-500/10 px-2 py-1 rounded-full animate-pulse border border-orange-500/20">
-                        <AlertTriangle size={10} />
+                     <div className="flex items-center gap-1.5 text-[10px] font-bold" style={{ color: 'var(--color-error)' }}>
+                        <AlertTriangle size={12} />
                         <span>High Load</span>
                      </div>
                  )}
@@ -504,15 +473,15 @@ const MyDashboard: React.FC = () => {
               
               {/* Diversity Bar Integration */}
               <div className="space-y-1">
-                 <div className="flex justify-between text-[10px] text-slate-400 font-mono uppercase tracking-wider">
+                 <div className="flex justify-between text-[10px] font-mono uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
                     <span>L</span>
                     <span>Diversity Mix</span>
                     <span>R</span>
                  </div>
-                 <div className="flex h-2 w-full rounded-full overflow-hidden bg-slate-800 border border-slate-700">
-                    <div style={{ width: `${pctLeft}%` }} className="h-full bg-blue-500/80 transition-all duration-700" />
-                    <div style={{ width: `${pctCenter}%` }} className="h-full bg-slate-500/80 transition-all duration-700" />
-                    <div style={{ width: `${pctRight}%` }} className="h-full bg-red-500/80 transition-all duration-700" />
+                 <div className="flex h-2 w-full rounded-full overflow-hidden" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-color)' }}>
+                    <div style={{ width: `${pctLeft}%`, background: 'var(--color-lean-left)' }} />
+                    <div style={{ width: `${pctCenter}%`, background: 'var(--color-lean-center)' }} />
+                    <div style={{ width: `${pctRight}%`, background: 'var(--color-lean-right)' }} />
                  </div>
               </div>
            </div>
@@ -520,14 +489,14 @@ const MyDashboard: React.FC = () => {
 
         {/* Golden Hour (4 Cols) */}
         <div className="bento-card col-span-4">
-           <Sun className="card-bg-icon text-yellow-600" size={100} />
+           <Sun className="card-bg-icon" size={100} />
            <div className="card-header">
-              <Sun size={16} className="text-yellow-400" />
-              <span className="card-title text-yellow-400">Peak Time</span>
+              <Sun size={18} style={{ color: 'var(--accent-primary)' }} />
+              <span className="card-title">Peak Time</span>
            </div>
            
            <div className="mt-auto">
-              <div className="text-3xl font-bold text-white">
+              <div className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
                  {stats?.peakLearningTime !== undefined ? formatGoldenHour(stats.peakLearningTime) : '--:--'}
               </div>
               <p className="stat-subtext">Your optimal reading window</p>

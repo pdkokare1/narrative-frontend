@@ -97,7 +97,7 @@
   position: relative;
   z-index: 10;
   width: 100%;
-  /* UPDATED: Significantly Reduced Width for Sleekness */
+  /* Significantly Reduced Width for Sleekness */
   max-width: 380px; 
   padding: 20px;
 }
@@ -125,18 +125,18 @@
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  /* UPDATED: Less padding to make card tighter */
+  /* Less padding to make card tighter */
   padding: 24px !important; 
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 1.5rem; /* Reduced from 2rem */
+  margin-bottom: 1.5rem; 
 }
 
 .login-header h1 {
   font-family: 'Playfair Display', serif; 
-  font-size: 2.2rem; /* UPDATED: Reduced from 2.8rem */
+  font-size: 2.2rem; 
   margin: 0;
   letter-spacing: -1px;
   background: linear-gradient(to right, #fff, #aaa);
@@ -145,7 +145,7 @@
 }
 
 .login-header p {
-  font-size: 0.85rem; /* Reduced from 0.95rem */
+  font-size: 0.85rem; 
   color: rgba(255, 255, 255, 0.6);
   margin-top: 0.25rem;
 }
@@ -154,26 +154,26 @@
 .login-step {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem; /* Reduced gap */
+  gap: 1.2rem; 
 }
 
 .input-group {
   position: relative;
 }
 
-/* UPDATED: Ensure the wrapper div takes full width */
+/* Ensure the wrapper div takes full width */
 .login-input-large {
   width: 100%;
 }
 
 .login-input-large input {
-  /* UPDATED: Drastically reduced sizing to fix "tall clunky" look */
+  /* Drastically reduced sizing to fix "tall clunky" look */
   font-size: 1rem !important; 
   padding: 12px 16px !important; 
   background: rgba(0, 0, 0, 0.3) !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
   
-  /* UPDATED: Force Centering of Text & Box Width */
+  /* Force Centering of Text & Box Width */
   text-align: center !important; 
   width: 100%;
   
@@ -187,12 +187,31 @@
 
 .login-btn-wide {
   width: 100%;
-  /* UPDATED: Reduced button padding to match input */
   padding: 12px !important; 
-  font-size: 0.95rem !important;
-  letter-spacing: 1px;
+  
+  /* UPDATED: Smaller Font Size */
+  font-size: 0.85rem !important;
+  
+  letter-spacing: 1.5px; /* Increased slightly for elegance */
   text-transform: uppercase;
   font-weight: 600;
+  
+  /* Ensure smooth transition for hover */
+  transition: all 0.3s ease !important;
+}
+
+/* UPDATED: Custom Hover Effect (Monochrome) */
+.login-btn-wide:hover {
+  background: #fff !important;
+  color: #000 !important;
+  border-color: #fff !important;
+  transform: translateY(-1px);
+}
+
+.login-btn-wide:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .text-link-button {
@@ -214,7 +233,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 1.5rem 0 1.2rem 0; /* Reduced margins */
+  margin: 1.5rem 0 1.2rem 0; 
   position: relative;
 }
 
@@ -242,11 +261,11 @@
 .social-row {
   display: flex;
   justify-content: center;
-  gap: 16px; /* Reduced gap */
+  gap: 16px; 
 }
 
 .social-btn {
-  width: 48px; /* UPDATED: Slightly smaller buttons */
+  width: 48px; 
   height: 48px;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.2);

@@ -27,6 +27,10 @@ const InlineSmartBrief: React.FC<InlineSmartBriefProps> = ({ articleId }) => {
   }, []);
 
   const fetchBrief = async () => {
+    // If guest, we might strictly skip fetching, but to show "loading" or allow "retry" later, we can fetch.
+    // However, to save tokens/API calls, you might want to block it. 
+    // For now, we fetch so the data is ready if they login, but we hide it.
+    
     setLoading(true);
     setError(null);
 
@@ -74,40 +78,44 @@ const InlineSmartBrief: React.FC<InlineSmartBriefProps> = ({ articleId }) => {
     );
   }
 
-  // MOCKED LOCKED CONTENT FOR GUEST TEASE
+  // LOCKED STATE (Rendered if Guest)
   const LockedTease = (
-    <div className="briefing-locked-section" style={{ marginTop: '15px' }}>
+    <div className="briefing-locked-section" style={{ marginTop: '5px' }}>
         <div className="briefing-lock-overlay">
             <button className="lock-message-btn" onClick={() => navigate('/login')}>
                 <LockIcon size={14} />
-                <span>Login to Unlock Analysis</span>
+                <span>Login to Unlock Key Takeaways</span>
             </button>
         </div>
         <div className="briefing-blur-content">
-            <h4>Points of Conflict</h4>
-            <ul>
-                <li>Disagreement regarding the economic impact...</li>
-                <li>Multiple sources cite different timelines...</li>
+            {/* Fake Content for Blur Effect */}
+            <ul className="inline-brief-list">
+                <li>Analysis of the primary economic factors...</li>
+                <li>Key stakeholders disagreement on the timeline...</li>
+                <li>Long-term impact projections based on current data...</li>
             </ul>
         </div>
     </div>
   );
 
-  if (points.length === 0 && !loading) {
+  if (points.length === 0 && !loading && !isGuest) {
     return <div className="inline-brief-empty">No briefing available.</div>;
   }
 
   return (
     <div className="inline-brief-container">
       <h4 className="inline-brief-title">Key Takeaways</h4>
-      <ul className="inline-brief-list">
-        {points.map((point, index) => (
-          <li key={index}>{point}</li>
-        ))}
-      </ul>
-
-      {/* Render Locked Section for Guests */}
-      {isGuest && LockedTease}
+      
+      {!isGuest ? (
+        <ul className="inline-brief-list">
+            {points.map((point, index) => (
+            <li key={index}>{point}</li>
+            ))}
+        </ul>
+      ) : (
+          // IF GUEST: HIDE REAL POINTS, SHOW LOCK
+          LockedTease
+      )}
     </div>
   );
 };

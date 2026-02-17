@@ -9,6 +9,7 @@
   min-height: 100vh;
   box-sizing: border-box;
   animation: fadeIn 0.5s ease-out;
+  color: var(--text-primary);
 }
 
 @keyframes fadeIn {
@@ -17,7 +18,6 @@
 }
 
 /* ==================== BENTO GRID SYSTEM ==================== */
-/* A unified 12-column grid for precise control */
 .dashboard-bento-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
@@ -26,92 +26,99 @@
 }
 
 /* --- Responsive Spans --- */
-
-/* Mobile: Everything is full width (12 cols) */
 .col-span-12, .col-span-8, .col-span-6, .col-span-4, .col-span-3 {
   grid-column: span 12;
 }
 
-/* Tablet (768px+): Allow for 2-column splits */
 @media (min-width: 768px) {
-  .col-span-6 { grid-column: span 6; } /* Half width */
-  .col-span-4 { grid-column: span 6; } /* Thirds become halves on tablet */
-  .col-span-3 { grid-column: span 6; } /* Quarters become halves on tablet */
-  .col-span-8 { grid-column: span 12; } /* Large charts stay full on tablet */
+  .col-span-6 { grid-column: span 6; }
+  .col-span-4 { grid-column: span 6; }
+  .col-span-3 { grid-column: span 6; }
+  .col-span-8 { grid-column: span 12; }
 }
 
-/* Desktop (1024px+): Full 12-column layout active */
 @media (min-width: 1024px) {
   .col-span-12 { grid-column: span 12; }
-  .col-span-8  { grid-column: span 8; }  /* 2/3 width */
-  .col-span-6  { grid-column: span 6; }  /* 1/2 width */
-  .col-span-4  { grid-column: span 4; }  /* 1/3 width */
-  .col-span-3  { grid-column: span 3; }  /* 1/4 width */
+  .col-span-8  { grid-column: span 8; }
+  .col-span-6  { grid-column: span 6; }
+  .col-span-4  { grid-column: span 4; }
+  .col-span-3  { grid-column: span 3; }
 }
 
 /* ==================== CARD STYLES ==================== */
 .bento-card {
-  background: #1e293b; /* Slate-800 equivalent */
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  border-radius: 16px;
-  padding: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg); /* Matches ArticleCard */
+  padding: 24px;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
-  transition: all 0.2s ease;
-  height: 100%; /* Stretch to fill grid cell */
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  height: 100%;
+  box-shadow: var(--shadow-sm);
 }
 
 .bento-card:hover {
-  border-color: rgba(96, 165, 250, 0.3); /* Blue highlight */
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: var(--accent-primary);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
 }
 
-/* Background icon decoration */
+/* Background icon decoration - Subtle & Classy */
 .card-bg-icon {
   position: absolute;
   top: -10px;
   right: -10px;
-  opacity: 0.05;
+  opacity: 0.03; /* Very subtle */
   transform: rotate(15deg);
   pointer-events: none;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.3s ease;
+  color: var(--text-primary); /* Default to text color, overridden by specific styles */
 }
 
 .bento-card:hover .card-bg-icon {
-  opacity: 0.1;
+  opacity: 0.08;
+  color: var(--accent-primary);
 }
 
 /* ==================== TYPOGRAPHY & ELEMENTS ==================== */
 .card-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .card-title {
+  font-family: var(--font-heading);
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #94a3b8; /* Slate-400 */
+  letter-spacing: 0.08em;
+  color: var(--text-secondary); /* Elegant muted title */
+  transition: color 0.2s;
+}
+
+.bento-card:hover .card-title {
+  color: var(--accent-primary);
 }
 
 .stat-value-large {
-  font-size: 2rem;
-  font-weight: 800;
-  color: white;
+  font-family: var(--font-heading);
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 .stat-subtext {
-  font-size: 0.75rem;
-  color: #64748b; /* Slate-500 */
-  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  margin-top: 6px;
+  font-weight: 500;
 }
 
 /* ==================== SPECIFIC COMPONENT TWEAKS ==================== */
@@ -131,14 +138,16 @@
 }
 
 .dna-icon-box {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: rgba(30, 41, 59, 0.5);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  color: var(--accent-primary);
 }
 
 /* Quest Items */
@@ -147,47 +156,78 @@
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: rgba(15, 23, 42, 0.3);
+  background: var(--bg-elevated);
   border-radius: 12px;
   margin-bottom: 8px;
-  border: 1px solid transparent;
+  border: 1px solid var(--border-color);
+  transition: border-color 0.2s;
 }
 
 .quest-item:last-child { margin-bottom: 0; }
-.quest-item:hover { border-color: rgba(255, 255, 255, 0.05); }
+.quest-item:hover { border-color: var(--accent-primary); }
+
+.quest-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+.quest-desc.completed {
+    text-decoration: line-through;
+    color: var(--text-tertiary);
+}
 
 /* Progress Bar (Global) */
 .progress-track {
   width: 100%;
   height: 6px;
-  background: rgba(51, 65, 85, 0.5);
+  background: var(--bg-elevated);
   border-radius: 10px;
   overflow: hidden;
+  margin-top: 10px;
 }
 
 .progress-fill {
   height: 100%;
   border-radius: 10px;
   transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--accent-primary); /* Gold Fill */
 }
 
 /* Footer Buttons */
 .action-btn {
-  background: #1e293b;
-  color: #cbd5e1;
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  padding: 12px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 16px;
   border-radius: 12px;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
+  font-family: var(--font-heading);
 }
 
 .action-btn:hover {
-  background: #334155;
-  color: white;
+  background: var(--bg-card);
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+}
+
+/* Tags & Badges */
+.dashboard-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.05em;
+}
+
+.badge-gold {
+    background: var(--accent-dim);
+    color: var(--accent-primary);
+    border: 1px solid var(--accent-primary);
 }

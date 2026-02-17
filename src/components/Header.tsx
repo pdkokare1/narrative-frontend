@@ -28,7 +28,10 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<FeedItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false); 
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  
+  // NEW: State for dynamic search bar width on mobile
+  const [searchBarWidth, setSearchBarWidth] = useState<string | undefined>(undefined);
 
   const { isPlaying, isPaused, startRadio, resume, pause, currentArticle, contextQueue, contextLabel } = useRadio();
   const { addToast } = useToast();
@@ -38,6 +41,9 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   const dropdownRef = useRef<HTMLDivElement>(null); 
   const searchRef = useRef<HTMLDivElement>(null); 
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // NEW: Ref to measure Logo position
+  const logoRef = useRef<HTMLDivElement>(null);
   
   const navigate = useNavigate();
   const isNative = Capacitor.isNativePlatform();
@@ -68,6 +74,41 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
     }, 300);
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
+
+  // NEW: Smart Width Calculation Effect
+  useEffect(() => {
+    const calculateWidth = () => {
+        // 1. Reset if closed or if on Desktop (allow CSS to handle desktop)
+        if (!isSearchOpen || window.innerWidth > 768) {
+            setSearchBarWidth(undefined);
+            return;
+        }
+
+        // 2. Measure Logo Position to prevent overlap
+        if (logoRef.current) {
+            const logoRect = logoRef.current.getBoundingClientRect();
+            const logoRightEdge = logoRect.right;
+            
+            // Constants derived from Header.css mobile styles:
+            // .search-form.open { right: 50px }
+            const searchRightPosition = 50; 
+            const spacingBuffer = 20; // "Some spacing" requested
+            
+            // 3. Calculate Available Width
+            // Screen Width - (Search Right Margin) - (Logo End Position) - Buffer
+            const screenWidth = window.innerWidth;
+            const maxAvailableWidth = screenWidth - searchRightPosition - logoRightEdge - spacingBuffer;
+            
+            // 4. Apply Width (ensure it doesn't go negative)
+            setSearchBarWidth(`${Math.max(0, maxAvailableWidth)}px`);
+        }
+    };
+
+    calculateWidth();
+    // Re-calculate on resize/rotate
+    window.addEventListener('resize', calculateWidth);
+    return () => window.removeEventListener('resize', calculateWidth);
+  }, [isSearchOpen]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,10 +158,16 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   };
 
   return (
-    // UPDATED: Removed inline styles to allow CSS to control safe area layout
-    <header className="header">
+    // UPDATED: Added paddingTop using --sat variable to handle notch/status bar area
+    <header className="header" style={{ 
+      paddingTop: 'var(--sat)', 
+      height: 'auto', 
+      minHeight: 'calc(60px + var(--sat))',
+      boxSizing: 'border-box'
+    }}>
       <div className="header-left">
-        <div className="logo-container">
+        {/* NEW: Attached logoRef here for measurement */}
+        <div className="logo-container" ref={logoRef}>
           <Link to="/" style={{ textDecoration: 'none' }}>
             <h1 className="logo-text">The Gamut</h1>
           </Link>
@@ -130,7 +177,12 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
       <div className="header-right">
         {/* 1. Search */}
         <div ref={searchRef} className="search-bar-wrapper">
-          <form onSubmit={handleSearchSubmit} className={`search-form ${isSearchOpen ? 'open' : ''}`}>
+          <form 
+            onSubmit={handleSearchSubmit} 
+            className={`search-form ${isSearchOpen ? 'open' : ''}`}
+            // NEW: Apply calculated width dynamically
+            style={searchBarWidth ? { width: searchBarWidth } : {}}
+          >
             <input ref={inputRef} type="text" className="search-input" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </form>
           <button onClick={() => setIsSearchOpen(!isSearchOpen)} className="search-toggle-btn" title="Search">
@@ -202,8 +254,9 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
         )}
 
         {/* 5. Theme Toggle */}
-        {/* UPDATED: Allowed on Native Mobile too */}
-        <button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '🌙' : '☀️'}</button>
+        {!isNative && (
+           <button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '🌙' : '☀️'}</button>
+        )}
       </div>
 
       <LoginModal 

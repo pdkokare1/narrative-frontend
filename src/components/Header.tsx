@@ -1,5 +1,5 @@
 // src/components/Header.tsx
-import React, { useState, useRef, useEffect } from 'react'; 
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react'; 
 import { Link, useNavigate } from 'react-router-dom'; 
 import * as api from '../services/api';
 import { useRadio } from '../context/RadioContext';
@@ -42,8 +42,9 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   const searchRef = useRef<HTMLDivElement>(null); 
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // NEW: Ref to measure Logo position
+  // NEW: Refs for precise measurement
   const logoRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   
   const navigate = useNavigate();
   const isNative = Capacitor.isNativePlatform();
@@ -75,8 +76,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  // NEW: Smart Width Calculation Effect
-  useEffect(() => {
+  // NEW: "Smart Width" Calculation using LayoutEffect to prevent overlap
+  useLayoutEffect(() => {
     const calculateWidth = () => {
         // 1. Reset if closed or if on Desktop (allow CSS to handle desktop)
         if (!isSearchOpen || window.innerWidth > 768) {
@@ -84,28 +85,28 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
             return;
         }
 
-        // 2. Measure Logo Position to prevent overlap
-        if (logoRef.current) {
+        // 2. Measure Positions
+        if (logoRef.current && wrapperRef.current) {
             const logoRect = logoRef.current.getBoundingClientRect();
+            const wrapperRect = wrapperRef.current.getBoundingClientRect();
+            
             const logoRightEdge = logoRect.right;
+            // The search bar CSS is "right: 50px" relative to this wrapper
+            // So its visual right edge is at: WrapperRight - 50
+            const searchVisualRightEdge = wrapperRect.right - 50;
             
-            // Constants derived from Header.css mobile styles:
-            // .search-form.open { right: 50px }
-            const searchRightPosition = 50; 
-            const spacingBuffer = 20; // "Some spacing" requested
+            const spacingBuffer = 30; // Increased buffer for safety
             
-            // 3. Calculate Available Width
-            // Screen Width - (Search Right Margin) - (Logo End Position) - Buffer
-            const screenWidth = window.innerWidth;
-            const maxAvailableWidth = screenWidth - searchRightPosition - logoRightEdge - spacingBuffer;
+            // 3. Calculate Max Width
+            // Width = (Visual Right Edge) - (Logo Right Edge) - Buffer
+            const maxAvailableWidth = searchVisualRightEdge - logoRightEdge - spacingBuffer;
             
-            // 4. Apply Width (ensure it doesn't go negative)
+            // 4. Apply Width
             setSearchBarWidth(`${Math.max(0, maxAvailableWidth)}px`);
         }
     };
 
     calculateWidth();
-    // Re-calculate on resize/rotate
     window.addEventListener('resize', calculateWidth);
     return () => window.removeEventListener('resize', calculateWidth);
   }, [isSearchOpen]);
@@ -176,18 +177,21 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
 
       <div className="header-right">
         {/* 1. Search */}
-        <div ref={searchRef} className="search-bar-wrapper">
-          <form 
-            onSubmit={handleSearchSubmit} 
-            className={`search-form ${isSearchOpen ? 'open' : ''}`}
-            // NEW: Apply calculated width dynamically
-            style={searchBarWidth ? { width: searchBarWidth } : {}}
-          >
-            <input ref={inputRef} type="text" className="search-input" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-          </form>
-          <button onClick={() => setIsSearchOpen(!isSearchOpen)} className="search-toggle-btn" title="Search">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          </button>
+        {/* NEW: Attached wrapperRef here for measurement */}
+        <div ref={wrapperRef} className="search-bar-wrapper">
+          <div ref={searchRef} style={{ display: 'flex', alignItems: 'center' }}>
+            <form 
+                onSubmit={handleSearchSubmit} 
+                className={`search-form ${isSearchOpen ? 'open' : ''}`}
+                // NEW: Apply calculated width dynamically
+                style={searchBarWidth ? { width: searchBarWidth } : {}}
+            >
+                <input ref={inputRef} type="text" className="search-input" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            </form>
+            <button onClick={() => setIsSearchOpen(!isSearchOpen)} className="search-toggle-btn" title="Search">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
+          </div>
           
           {suggestions.length > 0 && isSearchOpen && (
               <div className="live-search-dropdown">
@@ -254,9 +258,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
         )}
 
         {/* 5. Theme Toggle */}
-        {!isNative && (
-           <button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '🌙' : '☀️'}</button>
-        )}
+        {/* UPDATED: Allowed on Native Mobile too by removing check */}
+        <button className="theme-toggle" onClick={toggleTheme}>{theme === 'dark' ? '🌙' : '☀️'}</button>
       </div>
 
       <LoginModal 

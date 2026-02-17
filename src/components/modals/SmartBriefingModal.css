@@ -240,11 +240,11 @@
     right: 0;
     bottom: 0;
     
-    /* FLEX CENTERING IS CRITICAL HERE */
+    /* Center Content */
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; 
+    justify-content: center;
     z-index: 10;
     
     /* PRESERVED: Darker gradient */
@@ -254,7 +254,7 @@
 .lock-message-btn {
     display: flex;
     align-items: center;
-    justify-content: center; /* Added for inner text centering */
+    justify-content: center;
     gap: 8px;
     background: var(--bg-elevated);
     border: 1px solid var(--border-color);
@@ -263,7 +263,10 @@
     color: var(--text-primary);
     font-weight: 600;
     font-size: 0.9rem;
-    line-height: 1.2; /* Reset line height for centering */
+    
+    /* FIXED: Ensures text is vertically centered inside button */
+    line-height: 1; 
+    
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     transition: transform 0.2s, background 0.2s;
@@ -276,19 +279,21 @@
 }
 
 /* --- INLINE MODE OVERRIDES --- */
-/* Used for InlineSmartBrief to prevent overflow and centering issues */
 .briefing-locked-section.inline-mode {
-    min-height: auto; /* Let content dictate height */
+    min-height: auto;
+    /* FIXED: Symmetric margins ensure visual centering between header and divider */
     margin-top: 8px;
+    margin-bottom: 8px; 
     border-radius: 8px;
 }
 
 .briefing-locked-section.inline-mode .lock-message-btn {
-    padding: 6px 14px; /* Smaller compact button */
+    /* FIXED: Reduced and balanced padding for smaller space */
+    padding: 8px 14px; 
     font-size: 0.8rem;
     gap: 6px;
 }
 
 .briefing-locked-section.inline-mode .briefing-blur-content {
-    padding: 8px 4px; /* Tighter padding for inline */
+    padding: 8px 4px;
 }

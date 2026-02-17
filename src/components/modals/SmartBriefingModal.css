@@ -218,7 +218,11 @@
     position: relative;
     overflow: hidden;
     margin-top: 20px;
-    padding: 10px 0;
+    
+    /* ADDED: Matching NarrativeModal Structure */
+    min-height: 150px;
+    border-radius: 12px;
+    padding: 0; /* Remove padding so blur goes to edge */
 }
 
 .briefing-blur-content {
@@ -226,6 +230,8 @@
     user-select: none;
     opacity: 0.6;
     pointer-events: none;
+    /* Added padding inside content so text isn't cut off by border-radius */
+    padding: 10px; 
 }
 
 .briefing-lock-overlay {
@@ -239,7 +245,8 @@
     align-items: center;
     justify-content: center;
     z-index: 10;
-    /* Gradient fade at the bottom for smooth cutoff */
+    
+    /* PRESERVED: The darker gradient you preferred */
     background: linear-gradient(to bottom, rgba(0,0,0,0) 20%, var(--bg-card) 95%);
 }
 

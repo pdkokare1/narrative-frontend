@@ -28,7 +28,6 @@ const InlineSmartBrief: React.FC<InlineSmartBriefProps> = ({ articleId }) => {
 
   const fetchBrief = async () => {
     // We still fetch even if guest to ensure data readiness or to show "loading" state appropriately.
-    // In a stricter optimization, we could skip this for guests.
     setLoading(true);
     setError(null);
 

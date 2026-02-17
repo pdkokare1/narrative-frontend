@@ -267,13 +267,13 @@ const Login: React.FC = () => {
                     <div className="input-group" style={{ display: 'flex', gap: '8px' }}>
                         
                         {/* UPDATED: Input takes full width with placeholder centered by CSS */}
+                        {/* Removed flex: 1 as wrapper is now 100% width via CSS */}
                         <Input 
                             type="tel" 
                             placeholder="Phone Number (+91)" 
                             value={phoneNumber}
                             onChange={(e) => setPhoneNumber(e.target.value)}
                             className="login-input-large"
-                            style={{ flex: 1 }}
                         />
                     </div>
 

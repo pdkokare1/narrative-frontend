@@ -5,7 +5,7 @@ import {
   signInWithPhoneNumber, 
   signInWithPopup, 
   GoogleAuthProvider, 
-  ConfirmationResult,
+  ConfirmationResult, 
   signInWithCredential 
 } from "firebase/auth";
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication'; // Native Plugin
@@ -266,8 +266,7 @@ const Login: React.FC = () => {
                 <div className="login-step fade-in">
                     <div className="input-group" style={{ display: 'flex', gap: '8px' }}>
                         
-                        {/* UPDATED: Removed Country Code UI per request */}
-                        {/* Input now takes full width */}
+                        {/* UPDATED: Input takes full width with placeholder centered by CSS */}
                         <Input 
                             type="tel" 
                             placeholder="Phone Number (+91)" 
@@ -333,8 +332,9 @@ const Login: React.FC = () => {
                 </button>
                 
                 <button className="social-btn apple" onClick={handleApplePlaceholder}>
-                    <svg viewBox="0 0 384 512" width="22" height="22" fill="white">
-                      <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 46.9 104.3 80.9 102.6 30.6-1.5 42.8-19.8 85.3-19.8 41.7 0 53.3 19.8 84.5 19.8 40 0 56.4-42.9 83.2-100.3-52.1-23.7-73.4-64-73.6-88.3zm-31.4-123c3.4-5.2 7.5-16.3 7.5-28.4 0-20.5-13-37-33.6-37-4.2 0-11.3 3.1-15.3 5.5-9.4 6-17.8 15.4-20 25-3.2 16.7 10.1 36 29.8 36 6.3 0 16.1-3.6 24.2-7.5 4.6-2.2 6.8-3 7.4-3.6z"/>
+                    {/* UPDATED: New Apple SVG Icon */}
+                    <svg viewBox="0 0 50 50" width="24" height="24" fill="white">
+                      <path d="M 44.527344 34.75 C 43.449219 37.144531 42.929688 38.214844 41.542969 40.328125 C 39.601563 43.28125 36.863281 46.96875 33.480469 46.992188 C 30.46875 47.019531 29.691406 45.027344 25.601563 45.0625 C 21.515625 45.082031 20.664063 47.03125 17.648438 47 C 14.261719 46.96875 11.671875 43.648438 9.730469 40.699219 C 4.300781 32.429688 3.726563 22.734375 7.082031 17.578125 C 9.457031 13.921875 13.210938 11.773438 16.738281 11.773438 C 20.332031 11.773438 22.589844 13.746094 25.558594 13.746094 C 28.441406 13.746094 30.195313 11.769531 34.351563 11.769531 C 37.492188 11.769531 40.8125 13.480469 43.1875 16.433594 C 35.421875 20.691406 36.683594 31.78125 44.527344 34.75 Z M 31.195313 8.46875 C 32.707031 6.527344 33.855469 3.789063 33.4375 1 C 30.972656 1.167969 28.089844 2.742188 26.40625 4.78125 C 24.878906 6.640625 23.613281 9.398438 24.105469 12.066406 C 26.796875 12.152344 29.582031 10.546875 31.195313 8.46875 Z"/>
                     </svg>
                 </button>
             </div>

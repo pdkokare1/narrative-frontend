@@ -167,7 +167,11 @@
   padding: 12px 16px !important; 
   background: rgba(0, 0, 0, 0.3) !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
-  text-align: center;
+  
+  /* UPDATED: Force Centering of Text */
+  text-align: center !important; 
+  width: 100%;
+  
   letter-spacing: 1px;
 }
 

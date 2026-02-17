@@ -284,7 +284,8 @@ const Login: React.FC = () => {
                         className="login-btn-wide"
                         style={{ marginTop: '16px' }}
                     >
-                        {loading ? 'Processing...' : 'Get Access Code'}
+                        {/* UPDATED: Changed Button Text */}
+                        {loading ? 'Processing...' : 'Get One Time Password'}
                     </Button>
                 </div>
             )}

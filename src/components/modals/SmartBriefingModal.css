@@ -219,10 +219,10 @@
     overflow: hidden;
     margin-top: 20px;
     
-    /* ADDED: Matching NarrativeModal Structure */
+    /* Matching NarrativeModal Structure (Default) */
     min-height: 150px;
     border-radius: 12px;
-    padding: 0; /* Remove padding so blur goes to edge */
+    padding: 0;
 }
 
 .briefing-blur-content {
@@ -230,7 +230,6 @@
     user-select: none;
     opacity: 0.6;
     pointer-events: none;
-    /* Added padding inside content so text isn't cut off by border-radius */
     padding: 10px; 
 }
 
@@ -246,7 +245,7 @@
     justify-content: center;
     z-index: 10;
     
-    /* PRESERVED: The darker gradient you preferred */
+    /* PRESERVED: Darker gradient */
     background: linear-gradient(to bottom, rgba(0,0,0,0) 20%, var(--bg-card) 95%);
 }
 
@@ -270,4 +269,22 @@
     transform: scale(1.02);
     background: var(--surface-paper);
     border-color: var(--accent-primary);
+}
+
+/* --- INLINE MODE OVERRIDES --- */
+/* Used for InlineSmartBrief to prevent overflow and centering issues */
+.briefing-locked-section.inline-mode {
+    min-height: auto; /* Let content dictate height */
+    margin-top: 8px;
+    border-radius: 8px;
+}
+
+.briefing-locked-section.inline-mode .lock-message-btn {
+    padding: 6px 14px; /* Smaller compact button */
+    font-size: 0.8rem;
+    gap: 6px;
+}
+
+.briefing-locked-section.inline-mode .briefing-blur-content {
+    padding: 8px 4px; /* Tighter padding for inline */
 }

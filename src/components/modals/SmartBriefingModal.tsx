@@ -119,16 +119,17 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
   // If no deep data is returned from API yet, we can show placeholders to indicate what they are missing
   const lockedContentPlaceholder = (
     <div className="briefing-points">
-      <h4>Agreed Upon Facts</h4>
+      <h4>Key Takeaways</h4>
       <ul>
-        <li>Both sides acknowledge the economic impact of the recent policy changes.</li>
-        <li>International observers have confirmed the initial timeline of events.</li>
+         <li>Detailed breakdown of the primary conflict...</li>
+         <li>Analysis of the economic impact on the region...</li>
+         <li>Timeline of events leading up to this moment...</li>
       </ul>
       <br />
       <h4>Points of Conflict</h4>
       <ul>
-        <li>Disagreement persists regarding the long-term viability of the proposed solution.</li>
-        <li>Opposition leaders argue the data used for the decision was incomplete.</li>
+        <li>Disagreement persists regarding the long-term viability...</li>
+        <li>Opposition leaders argue the data used was incomplete...</li>
       </ul>
     </div>
   );
@@ -184,35 +185,22 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
               {/* SUMMARY IS ALWAYS VISIBLE */}
               <p className="briefing-summary">{data.content}</p>
               
-              {/* KEY POINTS (Always Visible if available) */}
-              {data.keyPoints && data.keyPoints.length > 0 && (
-                <div className="briefing-points">
-                  <h4>Key Takeaways</h4>
-                  <ul>
-                    {data.keyPoints.map((point, index) => (
-                      <li key={index}>{point}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* LOCKED SECTIONS: Agreed Upon, Conflict, Timeline */}
-              {isGuest ? (
-                 <div className="briefing-locked-section">
-                    <div className="briefing-lock-overlay">
-                        <button className="lock-message-btn" onClick={handleLoginRedirect}>
-                            <LockIcon size={16} />
-                            <span>Login to Unlock Full Analysis</span>
-                        </button>
-                    </div>
-                    {/* Blurred Background Content */}
-                    <div className="briefing-blur-content">
-                        {lockedContentPlaceholder}
-                    </div>
-                 </div>
-              ) : (
-                 // LOGGED IN VIEW
+              {/* LOGGED IN CONTENT (Key Points + Deep Analysis) */}
+              {!isGuest ? (
                  <>
+                    {/* KEY POINTS */}
+                    {data.keyPoints && data.keyPoints.length > 0 && (
+                        <div className="briefing-points">
+                        <h4>Key Takeaways</h4>
+                        <ul>
+                            {data.keyPoints.map((point, index) => (
+                            <li key={index}>{point}</li>
+                            ))}
+                        </ul>
+                        </div>
+                    )}
+
+                    {/* DEEP ANALYSIS */}
                     {data.agreedUpon && data.agreedUpon.length > 0 && (
                         <div className="briefing-points" style={{ marginTop: '20px' }}>
                             <h4>Agreed Upon</h4>
@@ -232,6 +220,20 @@ const SmartBriefingModal: React.FC<SmartBriefingModalProps> = ({
                         </div>
                     )}
                  </>
+              ) : (
+                 /* GUEST VIEW - LOCKED OVERLAY */
+                 <div className="briefing-locked-section">
+                    <div className="briefing-lock-overlay">
+                        <button className="lock-message-btn" onClick={handleLoginRedirect}>
+                            <LockIcon size={16} />
+                            <span>Login to Unlock Key Points & Analysis</span>
+                        </button>
+                    </div>
+                    {/* Blurred Background Content */}
+                    <div className="briefing-blur-content">
+                        {lockedContentPlaceholder}
+                    </div>
+                 </div>
               )}
               
               <div className="briefing-footer">

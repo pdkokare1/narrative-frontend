@@ -83,12 +83,14 @@ const InlineSmartBrief: React.FC<InlineSmartBriefProps> = ({ articleId }) => {
         <div className="briefing-lock-overlay">
             <button className="lock-message-btn" onClick={() => navigate('/login')}>
                 <LockIcon size={12} /> {/* Slightly smaller icon for inline */}
-                <span>Login to Unlock</span>
+                {/* FIXED: Updated Text */}
+                <span>Login to view Smart Briefs</span>
             </button>
         </div>
         <div className="briefing-blur-content">
             {/* Fake Content for Blur Effect */}
-            <ul className="inline-brief-list">
+            {/* FIXED: Removed default margins to ensure perfect vertical centering of the overlay */}
+            <ul className="inline-brief-list" style={{ marginTop: 0, marginBottom: 0 }}>
                 <li>Analysis of the primary economic factors...</li>
                 <li>Key stakeholders disagreement on the timeline...</li>
                 <li>Long-term impact projections based on data...</li>

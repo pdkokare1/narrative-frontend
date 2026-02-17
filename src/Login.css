@@ -161,6 +161,11 @@
   position: relative;
 }
 
+/* UPDATED: Ensure the wrapper div takes full width */
+.login-input-large {
+  width: 100%;
+}
+
 .login-input-large input {
   /* UPDATED: Drastically reduced sizing to fix "tall clunky" look */
   font-size: 1rem !important; 
@@ -168,7 +173,7 @@
   background: rgba(0, 0, 0, 0.3) !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
   
-  /* UPDATED: Force Centering of Text */
+  /* UPDATED: Force Centering of Text & Box Width */
   text-align: center !important; 
   width: 100%;
   

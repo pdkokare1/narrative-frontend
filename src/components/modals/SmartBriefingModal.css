@@ -239,10 +239,12 @@
     left: 0;
     right: 0;
     bottom: 0;
+    
+    /* FLEX CENTERING IS CRITICAL HERE */
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: center; 
     z-index: 10;
     
     /* PRESERVED: Darker gradient */
@@ -252,6 +254,7 @@
 .lock-message-btn {
     display: flex;
     align-items: center;
+    justify-content: center; /* Added for inner text centering */
     gap: 8px;
     background: var(--bg-elevated);
     border: 1px solid var(--border-color);
@@ -260,6 +263,7 @@
     color: var(--text-primary);
     font-weight: 600;
     font-size: 0.9rem;
+    line-height: 1.2; /* Reset line height for centering */
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     transition: transform 0.2s, background 0.2s;

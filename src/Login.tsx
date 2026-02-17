@@ -266,26 +266,11 @@ const Login: React.FC = () => {
                 <div className="login-step fade-in">
                     <div className="input-group" style={{ display: 'flex', gap: '8px' }}>
                         
-                        {/* 3. Static Country Box (Hidden Dropdown) */}
-                        <div style={{
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: '8px',
-                            color: 'rgba(255, 255, 255, 0.7)',
-                            padding: '0 16px',
-                            height: '50px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            fontSize: '0.9rem',
-                            userSelect: 'none',
-                            fontWeight: 600
-                        }}>
-                          🇮🇳 +91
-                        </div>
-
+                        {/* UPDATED: Removed Country Code UI per request */}
+                        {/* Input now takes full width */}
                         <Input 
                             type="tel" 
-                            placeholder="98765 43210" 
+                            placeholder="Phone Number (+91)" 
                             value={phoneNumber}
                             onChange={(e) => setPhoneNumber(e.target.value)}
                             className="login-input-large"

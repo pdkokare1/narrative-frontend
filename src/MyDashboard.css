@@ -305,3 +305,11 @@
   border-radius: 4px;
   background: rgba(212, 175, 55, 0.05);
 }
+
+/* --- MOBILE ADJUSTMENTS --- */
+@media (max-width: 768px) {
+  /* Fix for content hidden behind bottom dock */
+  .dashboard-container {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+  }
+}

@@ -114,5 +114,7 @@
   .settings-container {
     padding: 10px 0;
     justify-content: flex-start;
+    /* Fix for content hidden behind bottom dock */
+    padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
   }
 }

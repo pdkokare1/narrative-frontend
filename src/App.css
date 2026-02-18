@@ -45,7 +45,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .app {
-  min-height: 100vh;
+  min-height: 100vh; /* Fallback */
+  min-height: 100dvh; /* Dynamic height for mobile browsers */
   display: flex;
   flex-direction: column;
 }
@@ -199,30 +200,42 @@ a:hover {
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
   .main-container {
-    /* UPDATED: Match Mobile Header Height (40px + Safe Area) */
+    /* UPDATED: Match Mobile Header Height */
     padding-top: calc(40px + env(safe-area-inset-top)); 
-    height: 100vh;
-    overflow: hidden;
+    height: 100vh; /* Fallback */
+    height: 100dvh; /* Dynamic Height */
+    overflow: hidden; /* Lock the container so children scroll */
   }
   
-  .content {
-    /* UPDATED: Removed horizontal padding (0) to allow full-width feed */
-    padding: 0 0 70px 0; 
-    /* UPDATED: Calculate exact remaining height. 
-       100vh - (Header Height) */
-    height: calc(100vh - (40px + env(safe-area-inset-top))); 
+  /* UPDATED: Unified Scroll Logic 
+     Applies to the main .content wrapper AND the .dashboard-container
+     to ensure both are independently scrollable within the fixed shell.
+  */
+  .content,
+  .dashboard-container {
+    /* Exact remaining height calculation */
+    height: calc(100dvh - (40px + env(safe-area-inset-top))); 
     overflow-y: auto; 
     overflow-x: hidden;
-    /* Prevent pull-to-refresh here specifically */
-    overscroll-behavior-y: none;
+    overscroll-behavior-y: contain; /* Prevent bounce propagation */
+    -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+  }
+  
+  /* NewsFeed/Content Specifics */
+  .content {
+    padding: 0 0 70px 0; 
+  }
+  
+  /* Dashboard/Profile Specifics - Ensure bottom nav clearance */
+  .dashboard-container {
+    padding-bottom: 100px !important; 
   }
   
   .articles-grid { display: block; }
   
   .article-card-wrapper {
     scroll-snap-align: start; 
-    /* UPDATED: Dynamic height calc for card wrappers to match viewport */
-    height: calc(100vh - (40px + env(safe-area-inset-top))); 
+    height: calc(100dvh - (40px + env(safe-area-inset-top))); 
     width: 100%;
     display: flex; 
     flex-direction: column; 

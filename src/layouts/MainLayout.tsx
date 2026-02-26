@@ -12,6 +12,7 @@ import { useActivityTracker } from '../hooks/useActivityTracker';
 import * as api from '../services/api';
 
 import Header from '../components/Header';
+import FloatingActionMenu from '../components/ui/FloatingActionMenu'; // NEW: Imported the expanding FAB
 import NewsFeed from '../components/NewsFeed';
 import GlobalPlayerBar from '../components/GlobalPlayerBar';
 import BottomNav from '../components/ui/BottomNav';
@@ -227,12 +228,15 @@ export default function MainLayout() {
         className="scroll-progress-bar" 
       />
 
-      <Header 
-        theme={theme} 
-        toggleTheme={toggleTheme} 
-        username={profile?.username || 'Guest'} 
-        currentFilters={filters}
-      />
+      {/* UPDATED: Only show original Header on Desktop */}
+      {!isMobileView && (
+        <Header 
+          theme={theme} 
+          toggleTheme={toggleTheme} 
+          username={profile?.username || 'Guest'} 
+          currentFilters={filters}
+        />
+      )}
       
       {/* NEW: Zen Mode Visual Indicator */}
       {zenMode && (
@@ -340,6 +344,16 @@ export default function MainLayout() {
         onOpenFilters={() => setShowFilterModal(true)} 
       />
       
+      {/* NEW: Expanding FAB only visible on Mobile */}
+      {isMobileView && (
+          <FloatingActionMenu 
+             theme={theme}
+             toggleTheme={toggleTheme}
+             filters={filters}
+             onFilterChange={handleFilterChange}
+          />
+      )}
+
       <GlobalPlayerBar />
     </div>
   );

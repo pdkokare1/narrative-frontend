@@ -40,11 +40,13 @@ const FeedHeader: React.FC<{
   vibrate: () => void; 
   activeTopic?: string | null; 
   onClearTopic?: () => void;
-}> = React.memo(({ mode, filters, onFilterChange, vibrate, activeTopic, onClearTopic }) => {
+  isMobile: boolean; // NEW PROP ADDED
+}> = React.memo(({ mode, filters, onFilterChange, vibrate, activeTopic, onClearTopic, isMobile }) => {
   return (
     <div className="feed-header-sticky">
         <div style={{ flex: 1, overflow: 'hidden' }}>
-            {mode === 'latest' && onFilterChange && !activeTopic && (
+            {/* ONLY render Category Pills here if NOT on Mobile */}
+            {mode === 'latest' && onFilterChange && !activeTopic && !isMobile && (
                 <CategoryPills 
                   categories={["All", "Technology", "Business", "Science", "Health", "Entertainment", "Sports", "World", "Politics"]}
                   selectedCategory={filters.category || 'All'} 
@@ -103,7 +105,7 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
 
   const { startRadio, playSingle, stop, currentArticle, updateContextQueue, updateVisibleArticle, isPlaying } = useRadio();
   const { handleShare } = useShare(); 
-  const isMobile = useIsMobile(); 
+  const isMobile = useIsMobile(); // We already have this hook here
   const vibrate = useHaptic(); 
   const { isGuest } = useAuth(); 
 
@@ -232,13 +234,13 @@ const UnifiedFeed: React.FC<UnifiedFeedProps> = ({
             vibrate={vibrate} 
             activeTopic={activeTopic}
             onClearTopic={() => handleTopicClick(activeTopic!)}
+            isMobile={isMobile} 
         />
 
         <div className={`articles-grid ${isMobile ? 'mobile-stack' : ''}`} ref={scrollToTopRef}>
             {status === 'pending' && !isRefreshing ? (
                  <> {[...Array(6)].map((_, i) => ( <div className="article-card-wrapper" key={i}><SkeletonCard /></div> )) } </>
             ) : status === 'error' ? (
-                // --- DEBUG ERROR STATE ---
                 <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-tertiary)', padding: '20px' }}>
                     <p style={{ color: '#ff6b6b', fontWeight: 'bold' }}>Unable to load feed.</p>
                     <div style={{ 

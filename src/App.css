@@ -72,7 +72,7 @@ a:hover {
   width: 100%;
   margin: 0 auto;
   
-  /* UPDATED: Matches Desktop Header Height (48px + Safe Area) 
+  /* Matches Desktop Header Height (48px + Safe Area) 
      This ensures content starts exactly below the fixed header. */
   padding-top: calc(48px + env(safe-area-inset-top)); 
   
@@ -200,8 +200,8 @@ a:hover {
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
   .main-container {
-    /* UPDATED: Match Mobile Header Height */
-    padding-top: calc(40px + env(safe-area-inset-top)); 
+    /* UPDATED: Removed the 40px header space padding */
+    padding-top: env(safe-area-inset-top); 
     height: 100vh; /* Fallback */
     height: 100dvh; /* Dynamic Height */
     overflow: hidden; /* Lock the container so children scroll */
@@ -213,8 +213,8 @@ a:hover {
   */
   .content,
   .dashboard-container {
-    /* Exact remaining height calculation */
-    height: calc(100dvh - (40px + env(safe-area-inset-top))); 
+    /* UPDATED: Removed 40px subtraction here too */
+    height: calc(100dvh - env(safe-area-inset-top)); 
     overflow-y: auto; 
     overflow-x: hidden;
     overscroll-behavior-y: contain; /* Prevent bounce propagation */
@@ -235,7 +235,8 @@ a:hover {
   
   .article-card-wrapper {
     scroll-snap-align: start; 
-    height: calc(100dvh - (40px + env(safe-area-inset-top))); 
+    /* UPDATED: Removed 40px subtraction */
+    height: calc(100dvh - env(safe-area-inset-top)); 
     width: 100%;
     display: flex; 
     flex-direction: column; 

@@ -3,7 +3,7 @@
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.7);
-  z-index: 998;
+  z-index: 1998; /* UPDATED: Beats BottomNav's 1500 */
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
@@ -18,7 +18,7 @@
   position: fixed;
   bottom: calc(80px + var(--sab, 0px)); /* Safe distance above BottomNav */
   right: 20px;
-  z-index: 999;
+  z-index: 1999; /* UPDATED */
 }
 
 .fab-main-btn {
@@ -34,7 +34,7 @@
   justify-content: center;
   cursor: pointer;
   position: relative;
-  z-index: 1000;
+  z-index: 2000; /* UPDATED */
   transition: transform 0.2s ease, background 0.3s ease;
 }
 

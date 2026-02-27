@@ -161,8 +161,11 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
         .fab-search-form {
           width: 100%; height: 100%; display: flex; align-items: center;
         }
+        
         .fab-search-input {
-          flex: 1; background: transparent; border: none; outline: none;
+          flex: 1; 
+          min-width: 0; /* THE MAGIC FIX: Allows the input to shrink so it doesn't push the button out of bounds */
+          background: transparent; border: none; outline: none;
           color: var(--text-primary, #fff); padding: 0 10px;
           font-size: 16px; 
         }
@@ -170,10 +173,11 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
           color: var(--text-tertiary, #888);
         }
         
-        /* UPDATED: Added a hard margin-right to forcefully push the button away from the right curve */
         .fab-search-submit {
+          flex-shrink: 0; /* Prevents the button from being squished */
           background: none; border: none; color: var(--accent-primary, #007bff);
-          padding: 0 10px; margin-right: 12px; font-weight: 700; cursor: pointer; font-size: 14px;
+          padding: 0 20px 0 10px; /* Strong right padding to clear the curve */
+          font-weight: 700; cursor: pointer; font-size: 14px;
         }
       `}</style>
 

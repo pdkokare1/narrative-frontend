@@ -59,9 +59,14 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
      setIsOpen(false);
   };
 
+  // NEW: Navigate to Emergency Resources
+  const handleSOSClick = () => {
+      setIsOpen(false);
+      navigate('/emergency-resources');
+  };
+
   return (
     <>
-      {/* INJECTED CSS: Refined sizing, spacing, and search transition */}
       <style>{`
         .fab-overlay {
           position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -75,14 +80,12 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
 
         .fab-container {
           position: fixed;
-          /* UPDATED: Sits right above the 50px BottomNav with safe area support */
           bottom: calc(65px + env(safe-area-inset-bottom, 0px)); 
           right: 20px;  
           z-index: 9999; 
         }
 
         .fab-main-btn {
-          /* UPDATED: Smaller, sleeker 50px size */
           width: 50px; height: 50px; border-radius: 50%;
           background: var(--accent-primary, #007bff);
           color: var(--bg-primary, #fff);
@@ -94,7 +97,6 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
         
         .fab-main-btn:active { transform: scale(0.95); }
         .fab-icon { width: 24px; height: 24px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        /* UPDATED: Rotates 135deg to make a perfect 'X' */
         .fab-icon.open { transform: rotate(135deg); }
 
         .fab-item {
@@ -108,18 +110,25 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
         }
         .fab-container.open .fab-item { opacity: 1; pointer-events: auto; }
 
-        /* UPDATED: Smaller pop-out buttons to match the 50px main button */
-        .fab-vertical, .fab-diagonal {
+        /* Secondary Button Sizes */
+        .fab-vertical, .fab-vertical-2, .fab-diagonal {
           width: 42px; height: 42px; border-radius: 50%;
           cursor: pointer; font-size: 1.1rem;
         }
         
+        /* 1st Vertical (Theme) */
         .fab-vertical { top: 4px; left: 4px; }
         .fab-container.open .fab-vertical { transform: translateY(-60px); }
 
+        /* ADDED: 2nd Vertical (SOS) */
+        .fab-vertical-2 { top: 4px; left: 4px; color: #ff4b4b; font-weight: 800; font-size: 14px; letter-spacing: 0.5px; }
+        .fab-container.open .fab-vertical-2 { transform: translateY(-110px); }
+
+        /* Diagonal (Search) */
         .fab-diagonal { top: 4px; left: 4px; }
         .fab-container.open .fab-diagonal { transform: translate(-50px, -50px); }
 
+        /* Horizontal Track (Categories/Input) */
         .fab-horizontal {
           top: 4px; right: 60px; height: 42px; border-radius: 21px;
           padding: 0 8px; width: calc(100vw - 100px); max-width: 350px;
@@ -148,22 +157,23 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
           font-weight: 700 !important;
         }
 
-        /* NEW: Search Input Styles */
+        /* Search Input Styles */
         .fab-search-form {
           width: 100%; height: 100%; display: flex; align-items: center;
         }
         .fab-search-input {
           flex: 1; background: transparent; border: none; outline: none;
           color: var(--text-primary, #fff); padding: 0 10px;
-          /* 16px font size is required to stop iOS Safari from auto-zooming */
           font-size: 16px; 
         }
         .fab-search-input::placeholder {
           color: var(--text-tertiary, #888);
         }
+        
+        /* UPDATED: Added extra right padding to push GO text away from the curve */
         .fab-search-submit {
           background: none; border: none; color: var(--accent-primary, #007bff);
-          padding: 0 10px; font-weight: 700; cursor: pointer; font-size: 14px;
+          padding: 0 16px 0 10px; font-weight: 700; cursor: pointer; font-size: 14px;
         }
       `}</style>
 
@@ -212,14 +222,22 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
             </svg>
          </button>
 
-         {/* Vertical: Theme Toggle */}
+         {/* NEW Vertical 2: SOS Emergency Toggle */}
+         <button 
+            className="fab-item fab-vertical-2" 
+            onClick={handleSOSClick} 
+            aria-label="Emergency Contacts"
+         >
+            SOS
+         </button>
+
+         {/* Vertical 1: Theme Toggle */}
          <button className="fab-item fab-vertical" onClick={toggleTheme} aria-label="Toggle Theme">
             {theme === 'dark' ? '☀️' : '🌙'}
          </button>
 
          {/* Main Anchor Button */}
          <button className="fab-main-btn" onClick={toggleMenu}>
-            {/* UPDATED: Premium, minimalist Plus icon */}
             <svg className={`fab-icon ${isOpen ? 'open' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                <line x1="12" y1="5" x2="12" y2="19"></line>
                <line x1="5" y1="12" x2="19" y2="12"></line>

@@ -23,6 +23,12 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentFilters, onOpenFilters }) 
   const handleRadioClick = async (e: React.MouseEvent) => {
     e.preventDefault(); 
     vibrate(); 
+
+    // --- FEATURE PAUSED: Premium "Studio Upgrade" Toast ---
+    addToast('🎙️ We are currently upgrading the Gamut Radio studio. A richer, personalized audio experience is dropping soon.', 'info');
+    return; // Stops execution here so no audio logic runs
+
+    /* --- ORIGINAL LOGIC COMMENTED OUT FOR SAFEKEEPING ---
     if (loading) return;
 
     if (isPlaying || (isPaused && currentArticle)) {
@@ -55,6 +61,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentFilters, onOpenFilters }) 
     } finally {
         setLoading(false);
     }
+    ----------------------------------------------------- */
   };
 
   const iconProps = { width: 22, height: 22, fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as "round", strokeLinejoin: "round" as "round" };

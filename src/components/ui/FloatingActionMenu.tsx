@@ -170,10 +170,10 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
           color: var(--text-tertiary, #888);
         }
         
-        /* UPDATED: Put GO button back on the right, but added heavy 24px right padding to clear the curve */
+        /* UPDATED: Added a hard margin-right to forcefully push the button away from the right curve */
         .fab-search-submit {
           background: none; border: none; color: var(--accent-primary, #007bff);
-          padding: 0 24px 0 10px; font-weight: 700; cursor: pointer; font-size: 14px;
+          padding: 0 10px; margin-right: 12px; font-weight: 700; cursor: pointer; font-size: 14px;
         }
       `}</style>
 
@@ -198,7 +198,6 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                {/* UPDATED: GO button is back on the right side */}
                 <button type="submit" className="fab-search-submit">GO</button>
               </form>
             ) : (

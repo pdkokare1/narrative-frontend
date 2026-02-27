@@ -59,7 +59,7 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
      setIsOpen(false);
   };
 
-  // NEW: Navigate to Emergency Resources
+  // Navigate to Emergency Resources
   const handleSOSClick = () => {
       setIsOpen(false);
       navigate('/emergency-resources');
@@ -120,7 +120,7 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
         .fab-vertical { top: 4px; left: 4px; }
         .fab-container.open .fab-vertical { transform: translateY(-60px); }
 
-        /* ADDED: 2nd Vertical (SOS) */
+        /* 2nd Vertical (SOS) */
         .fab-vertical-2 { top: 4px; left: 4px; color: #ff4b4b; font-weight: 800; font-size: 14px; letter-spacing: 0.5px; }
         .fab-container.open .fab-vertical-2 { transform: translateY(-110px); }
 
@@ -170,10 +170,10 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
           color: var(--text-tertiary, #888);
         }
         
-        /* UPDATED: Added extra right padding to push GO text away from the curve */
+        /* UPDATED: Put GO button back on the right, but added heavy 24px right padding to clear the curve */
         .fab-search-submit {
           background: none; border: none; color: var(--accent-primary, #007bff);
-          padding: 0 16px 0 10px; font-weight: 700; cursor: pointer; font-size: 14px;
+          padding: 0 24px 0 10px; font-weight: 700; cursor: pointer; font-size: 14px;
         }
       `}</style>
 
@@ -198,6 +198,7 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
+                {/* UPDATED: GO button is back on the right side */}
                 <button type="submit" className="fab-search-submit">GO</button>
               </form>
             ) : (
@@ -222,7 +223,7 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
             </svg>
          </button>
 
-         {/* NEW Vertical 2: SOS Emergency Toggle */}
+         {/* Vertical 2: SOS Emergency Toggle */}
          <button 
             className="fab-item fab-vertical-2" 
             onClick={handleSOSClick} 

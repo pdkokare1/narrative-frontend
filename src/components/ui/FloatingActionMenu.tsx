@@ -40,9 +40,11 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
       <style>{`
         .fab-overlay {
           position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(0, 0, 0, 0.7);
+          background: rgba(0, 0, 0, 0.8); /* Darkened slightly for better contrast */
+          backdrop-filter: blur(8px); /* ADDED: Prominent glassmorphism blur */
+          -webkit-backdrop-filter: blur(8px); /* For iOS/Safari support */
           z-index: 9998; opacity: 0; pointer-events: none;
-          transition: opacity 0.3s ease;
+          transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
         }
         .fab-overlay.open { opacity: 1; pointer-events: auto; }
 
@@ -102,6 +104,22 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
           height: 100%; align-items: center; margin: 0; box-shadow: none;
         }
         .fab-horizontal .category-pills-container::-webkit-scrollbar { display: none; }
+
+        /* ADDED: Strip backgrounds from pills in the FAB track */
+        .fab-horizontal .pill {
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+          color: var(--text-secondary, #ccc) !important;
+          padding: 8px 12px !important;
+          font-weight: 500 !important;
+        }
+
+        /* ADDED: Highlight the active category using accent color instead of a background box */
+        .fab-horizontal .pill.active {
+          color: var(--accent-primary, #007bff) !important;
+          font-weight: 700 !important;
+        }
       `}</style>
 
       {/* 1. Dark Screen Overlay */}

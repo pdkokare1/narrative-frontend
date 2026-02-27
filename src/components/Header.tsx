@@ -30,7 +30,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   const [isSearching, setIsSearching] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   
-  // NEW: State for dynamic search bar width on mobile
+  // State for dynamic search bar width on mobile
   const [searchBarWidth, setSearchBarWidth] = useState<string | undefined>(undefined);
 
   const { isPlaying, isPaused, startRadio, resume, pause, currentArticle, contextQueue, contextLabel } = useRadio();
@@ -91,10 +91,7 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
             const wrapperRect = wrapperRef.current.getBoundingClientRect();
             
             const logoRightEdge = logoRect.right;
-            // The search bar CSS is "right: 50px" relative to this wrapper
-            // So its visual right edge is at: WrapperRight - 50
             const searchVisualRightEdge = wrapperRect.right - 50;
-            
             const spacingBuffer = 30; // Buffer
             
             // 3. Calculate Max Width
@@ -132,6 +129,11 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
         return;
     }
 
+    // --- FEATURE PAUSED: Premium "Studio Upgrade" Toast ---
+    addToast('🎙️ We are currently upgrading the Gamut Radio studio. A richer, personalized audio experience is dropping soon.', 'info');
+    return; // Stops execution here so no audio logic runs
+
+    /* --- ORIGINAL LOGIC COMMENTED OUT FOR SAFEKEEPING ---
     if (radioLoading) return;
     if (isPlaying) { pause(); return; }
     if (isPaused && currentArticle) { resume(); return; }
@@ -154,10 +156,10 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
         else addToast('No news available for radio.', 'error');
     } catch (err) { addToast('Could not start radio.', 'error'); } 
     finally { setRadioLoading(false); }
+    ----------------------------------------------------- */
   };
 
   return (
-    // UPDATED: Removed inline styles. CSS class 'header' now controls height (48px) and safe area.
     <header className="header">
       <div className="header-left">
         <div className="logo-container" ref={logoRef}>

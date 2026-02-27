@@ -1,5 +1,5 @@
 // src/components/ui/FloatingActionMenu.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CategoryPills from './CategoryPills';
 import { IFilters } from '../../types';
@@ -20,13 +20,38 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
   onFilterChange 
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+
+  // Reset search mode whenever the menu is closed
+  useEffect(() => {
+    if (!isOpen) {
+      setTimeout(() => {
+        setIsSearchMode(false);
+        setSearchQuery('');
+      }, 300); // Wait for close animation to finish
+    }
+  }, [isOpen]);
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
-  const handleSearchClick = () => {
-     setIsOpen(false);
-     navigate('/search');
+  const handleSearchIconClick = () => {
+     setIsSearchMode(true);
+     // Slight delay to ensure the input renders before we force focus to open the keypad
+     setTimeout(() => {
+       searchInputRef.current?.focus();
+     }, 100);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+     e.preventDefault();
+     if (searchQuery.trim()) {
+       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+       setIsOpen(false);
+     }
   };
 
   const handleCategorySelect = (cat: string) => {
@@ -36,13 +61,13 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
 
   return (
     <>
-      {/* INJECTED CSS: Guarantees styling without relying on external files */}
+      {/* INJECTED CSS: Refined sizing, spacing, and search transition */}
       <style>{`
         .fab-overlay {
           position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(0, 0, 0, 0.8); /* Darkened slightly for better contrast */
-          backdrop-filter: blur(8px); /* ADDED: Prominent glassmorphism blur */
-          -webkit-backdrop-filter: blur(8px); /* For iOS/Safari support */
+          background: rgba(0, 0, 0, 0.8);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
           z-index: 9998; opacity: 0; pointer-events: none;
           transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
         }
@@ -50,13 +75,15 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
 
         .fab-container {
           position: fixed;
-          bottom: 90px; /* Safely above the BottomNav */
-          right: 20px;  /* Locked to the right side */
-          z-index: 9999; /* Highest layer */
+          /* UPDATED: Sits right above the 50px BottomNav with safe area support */
+          bottom: calc(65px + env(safe-area-inset-bottom, 0px)); 
+          right: 20px;  
+          z-index: 9999; 
         }
 
         .fab-main-btn {
-          width: 56px; height: 56px; border-radius: 50%;
+          /* UPDATED: Smaller, sleeker 50px size */
+          width: 50px; height: 50px; border-radius: 50%;
           background: var(--accent-primary, #007bff);
           color: var(--bg-primary, #fff);
           border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
@@ -66,8 +93,9 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
         }
         
         .fab-main-btn:active { transform: scale(0.95); }
-        .fab-icon { width: 26px; height: 26px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .fab-icon.open { transform: rotate(90deg) scale(1.1); }
+        .fab-icon { width: 24px; height: 24px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        /* UPDATED: Rotates 135deg to make a perfect 'X' */
+        .fab-icon.open { transform: rotate(135deg); }
 
         .fab-item {
           position: absolute; background: var(--bg-elevated, #222);
@@ -80,20 +108,21 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
         }
         .fab-container.open .fab-item { opacity: 1; pointer-events: auto; }
 
+        /* UPDATED: Smaller pop-out buttons to match the 50px main button */
         .fab-vertical, .fab-diagonal {
-          width: 46px; height: 46px; border-radius: 50%;
-          cursor: pointer; font-size: 1.2rem;
+          width: 42px; height: 42px; border-radius: 50%;
+          cursor: pointer; font-size: 1.1rem;
         }
         
-        .fab-vertical { top: 5px; left: 5px; }
-        .fab-container.open .fab-vertical { transform: translateY(-70px); }
+        .fab-vertical { top: 4px; left: 4px; }
+        .fab-container.open .fab-vertical { transform: translateY(-60px); }
 
-        .fab-diagonal { top: 5px; left: 5px; }
-        .fab-container.open .fab-diagonal { transform: translate(-60px, -60px); }
+        .fab-diagonal { top: 4px; left: 4px; }
+        .fab-container.open .fab-diagonal { transform: translate(-50px, -50px); }
 
         .fab-horizontal {
-          top: 5px; right: 66px; height: 46px; border-radius: 23px;
-          padding: 0 8px; width: calc(100vw - 110px); max-width: 350px;
+          top: 4px; right: 60px; height: 42px; border-radius: 21px;
+          padding: 0 8px; width: calc(100vw - 100px); max-width: 350px;
           transform: translateX(30px); transition: all 0.3s ease;
           overflow: hidden;
         }
@@ -105,7 +134,6 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
         }
         .fab-horizontal .category-pills-container::-webkit-scrollbar { display: none; }
 
-        /* ADDED: Strip backgrounds from pills in the FAB track */
         .fab-horizontal .pill {
           background: transparent !important;
           border: none !important;
@@ -115,10 +143,27 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
           font-weight: 500 !important;
         }
 
-        /* ADDED: Highlight the active category using accent color instead of a background box */
         .fab-horizontal .pill.active {
           color: var(--accent-primary, #007bff) !important;
           font-weight: 700 !important;
+        }
+
+        /* NEW: Search Input Styles */
+        .fab-search-form {
+          width: 100%; height: 100%; display: flex; align-items: center;
+        }
+        .fab-search-input {
+          flex: 1; background: transparent; border: none; outline: none;
+          color: var(--text-primary, #fff); padding: 0 10px;
+          /* 16px font size is required to stop iOS Safari from auto-zooming */
+          font-size: 16px; 
+        }
+        .fab-search-input::placeholder {
+          color: var(--text-tertiary, #888);
+        }
+        .fab-search-submit {
+          background: none; border: none; color: var(--accent-primary, #007bff);
+          padding: 0 10px; font-weight: 700; cursor: pointer; font-size: 14px;
         }
       `}</style>
 
@@ -131,18 +176,37 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
       {/* 2. FAB Container & Elements */}
       <div className={`fab-container ${isOpen ? 'open' : ''}`}>
          
-         {/* Horizontal: Scrollable Category Track */}
+         {/* Horizontal: Scrollable Category Track OR Search Bar */}
          <div className="fab-item fab-horizontal">
-            <CategoryPills 
-              categories={CATEGORIES}
-              selectedCategory={filters.category || 'All'}
-              onSelectCategory={handleCategorySelect}
-            />
+            {isSearchMode ? (
+              <form onSubmit={handleSearchSubmit} className="fab-search-form">
+                <input 
+                  ref={searchInputRef}
+                  type="text" 
+                  className="fab-search-input"
+                  placeholder="Search articles..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <button type="submit" className="fab-search-submit">GO</button>
+              </form>
+            ) : (
+              <CategoryPills 
+                categories={CATEGORIES}
+                selectedCategory={filters.category || 'All'}
+                onSelectCategory={handleCategorySelect}
+              />
+            )}
          </div>
 
-         {/* Diagonal: Search Button */}
-         <button className="fab-item fab-diagonal" onClick={handleSearchClick} aria-label="Search">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+         {/* Diagonal: Search Button (Trigger) */}
+         <button 
+            className="fab-item fab-diagonal" 
+            onClick={handleSearchIconClick} 
+            aria-label="Search"
+            style={{ color: isSearchMode ? 'var(--accent-primary)' : 'inherit' }}
+         >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
@@ -155,10 +219,10 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
 
          {/* Main Anchor Button */}
          <button className="fab-main-btn" onClick={toggleMenu}>
+            {/* UPDATED: Premium, minimalist Plus icon */}
             <svg className={`fab-icon ${isOpen ? 'open' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-               <line x1="3" y1="12" x2="21" y2="12"></line>
-               <line x1="3" y1="6" x2="21" y2="6"></line>
-               <line x1="3" y1="18" x2="21" y2="18"></line>
+               <line x1="12" y1="5" x2="12" y2="19"></line>
+               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
          </button>
       </div>

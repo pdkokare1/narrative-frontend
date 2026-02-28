@@ -1,5 +1,6 @@
 // src/components/modals/ComingSoonModal.tsx
 import React from 'react';
+import ReactDOM from 'react-dom'; // NEW: Imported ReactDOM for portaling
 
 interface ComingSoonModalProps {
   isOpen: boolean;
@@ -9,7 +10,8 @@ interface ComingSoonModalProps {
 const ComingSoonModal: React.FC<ComingSoonModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
-  return (
+  // We wrap the entire visual component in a variable
+  const modalContent = (
     <>
       <style>{`
         .coming-soon-overlay {
@@ -65,6 +67,9 @@ const ComingSoonModal: React.FC<ComingSoonModalProps> = ({ isOpen, onClose }) =>
       </div>
     </>
   );
+
+  // NEW: Teleport the modal to the body, escaping all parent CSS limitations
+  return ReactDOM.createPortal(modalContent, document.body);
 };
 
 export default ComingSoonModal;

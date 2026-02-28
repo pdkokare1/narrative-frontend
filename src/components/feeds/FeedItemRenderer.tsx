@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import ArticleCard from '../ArticleCard';
 import NarrativeCard from '../NarrativeCard';
 import { IArticle, INarrative } from '../../types';
+import { useToast } from '../../context/ToastContext'; // NEW: Imported Toast
 
 interface FeedItemRendererProps {
   item: IArticle | INarrative;
@@ -16,7 +17,6 @@ interface FeedItemRendererProps {
   currentArticleId?: string;
   playSingle: (article: IArticle) => void;
   stop: () => void;
-  // NEW: Optional prop to handle impressions explicitly from parent
   onImpression?: (item: IArticle | INarrative) => void; 
 }
 
@@ -34,19 +34,18 @@ const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({
   stop,
   onImpression
 }) => {
+  const { addToast } = useToast(); // NEW: Hook initialized
 
   // --- Refs for Impression Tracking ---
   const containerRef = useRef<HTMLDivElement>(null);
   const hasRecordedImpression = useRef(false);
 
   // --- Type Guard ---
-  // Safely distinguishes between Article and Narrative based on the backend 'type' field
   const isNarrative = (item: IArticle | INarrative): item is INarrative => {
     return (item as any).type === 'Narrative';
   };
 
   // --- Impression Tracking Logic ---
-  // Detects when the item is 50% visible in the viewport
   useEffect(() => {
     const element = containerRef.current;
     if (!element || hasRecordedImpression.current) return;
@@ -55,18 +54,13 @@ const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-            // Mark as recorded so we don't spam events
             hasRecordedImpression.current = true;
             
-            // 1. Trigger Prop if provided
             if (onImpression) {
               onImpression(item);
             }
 
-            // 2. Dispatch Global Custom Event
-            // This allows the global ActivityTracker to pick it up without 
-            // needing to pass props through every intermediate component.
-            const safeCategory = item.category || 'General'; // Safety fallback
+            const safeCategory = item.category || 'General'; 
             
             const event = new CustomEvent('narrative-impression', {
               detail: {
@@ -78,13 +72,12 @@ const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({
             });
             window.dispatchEvent(event);
 
-            // Cleanup observer once recorded
             observer.disconnect();
           }
         });
       },
       { 
-        threshold: 0.5, // Trigger when 50% of the item is visible
+        threshold: 0.5, 
       }
     );
 
@@ -119,7 +112,6 @@ const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({
   }
 
   // --- Render Article ---
-  // Cast is safe here due to the guard above
   const article = item as IArticle;
   const isCurrent = currentArticleId === article._id;
   const isSaved = savedArticleIds.has(article._id);
@@ -142,7 +134,13 @@ const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({
         isSaved={isSaved}
         onToggleSave={onToggleSave}
         isPlaying={isCurrent} 
-        onPlay={() => playSingle(article)}
+        
+        /* FEATURE PAUSED: Replaced playSingle with Toast Intercept */
+        onPlay={() => {
+           addToast('Article narration is getting a major upgrade alongside the Gamut Radio studio. Stay tuned.', 'info');
+           // playSingle(article); // ORIGINAL LOGIC PRESERVED FOR LATER
+        }}
+        
         onStop={stop}
       />
     </div>

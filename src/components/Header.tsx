@@ -9,6 +9,7 @@ import './Header.css';
 import { IArticle, INarrative, IFilters, FeedItem } from '../types';
 import { Capacitor } from '@capacitor/core'; 
 import LoginModal from './modals/LoginModal'; 
+import ComingSoonModal from './modals/ComingSoonModal'; // NEW
 
 interface HeaderProps {
   theme: string;
@@ -28,7 +29,9 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<FeedItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showComingSoon, setShowComingSoon] = useState(false); // NEW STATE
   
   // State for dynamic search bar width on mobile
   const [searchBarWidth, setSearchBarWidth] = useState<string | undefined>(undefined);
@@ -79,25 +82,21 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
   // Smart Width Calculation
   useLayoutEffect(() => {
     const calculateWidth = () => {
-        // 1. Reset if closed or if on Desktop (allow CSS to handle desktop)
         if (!isSearchOpen || window.innerWidth > 768) {
             setSearchBarWidth(undefined);
             return;
         }
 
-        // 2. Measure Positions
         if (logoRef.current && wrapperRef.current) {
             const logoRect = logoRef.current.getBoundingClientRect();
             const wrapperRect = wrapperRef.current.getBoundingClientRect();
             
             const logoRightEdge = logoRect.right;
             const searchVisualRightEdge = wrapperRect.right - 50;
-            const spacingBuffer = 30; // Buffer
+            const spacingBuffer = 30; 
             
-            // 3. Calculate Max Width
             const maxAvailableWidth = searchVisualRightEdge - logoRightEdge - spacingBuffer;
             
-            // 4. Apply Width
             setSearchBarWidth(`${Math.max(0, maxAvailableWidth)}px`);
         }
     };
@@ -129,8 +128,8 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
         return;
     }
 
-    // --- FEATURE PAUSED: Premium "Studio Upgrade" Toast ---
-    addToast('🎙️ We are currently upgrading the Gamut Radio studio. A richer, personalized audio experience is dropping soon.', 'info');
+    // --- FEATURE PAUSED: Trigger the Hype Modal ---
+    setShowComingSoon(true);
     return; // Stops execution here so no audio logic runs
 
     /* --- ORIGINAL LOGIC COMMENTED OUT FOR SAFEKEEPING ---
@@ -258,6 +257,9 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme, username, currentFi
         onClose={() => setShowLoginModal(false)}
         message="Gamut Radio is exclusive to members. Login to listen to your news."
       />
+      
+      {/* Render the new modal for Desktop */}
+      <ComingSoonModal isOpen={showComingSoon} onClose={() => setShowComingSoon(false)} />
     </header>
   );
 };

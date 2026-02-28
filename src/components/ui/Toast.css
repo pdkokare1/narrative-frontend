@@ -1,5 +1,19 @@
 /* src/components/ui/Toast.css */
 
+/* ADDED: Container to properly position toasts above all other UI layers */
+.toast-container {
+  position: fixed;
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px)); /* Safely above BottomNav */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000; /* Highest priority to beat modals and FABs */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none; /* Lets you click through the invisible wrapper to the feed behind it */
+  width: 100%;
+}
+
 .ui-toast {
   display: flex;
   align-items: center;
@@ -18,7 +32,7 @@
   border-radius: 50px; /* Pill Shape */
   margin-top: 10px;
   animation: slideInToast var(--transition-bounce);
-  pointer-events: auto;
+  pointer-events: auto; /* Re-enables clicking on the actual toast itself */
   color: var(--text-primary);
 }
 

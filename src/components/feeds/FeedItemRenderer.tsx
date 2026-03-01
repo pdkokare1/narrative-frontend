@@ -1,9 +1,9 @@
 // src/components/feeds/FeedItemRenderer.tsx
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ArticleCard from '../ArticleCard';
 import NarrativeCard from '../NarrativeCard';
+import ComingSoonModal from '../modals/ComingSoonModal'; // NEW: Imported reusable modal
 import { IArticle, INarrative } from '../../types';
-import { useToast } from '../../context/ToastContext'; // NEW: Imported Toast
 
 interface FeedItemRendererProps {
   item: IArticle | INarrative;
@@ -34,7 +34,8 @@ const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({
   stop,
   onImpression
 }) => {
-  const { addToast } = useToast(); // NEW: Hook initialized
+  // NEW: State to manage the play button's modal intercept
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // --- Refs for Impression Tracking ---
   const containerRef = useRef<HTMLDivElement>(null);
@@ -135,13 +136,21 @@ const FeedItemRenderer: React.FC<FeedItemRendererProps> = ({
         onToggleSave={onToggleSave}
         isPlaying={isCurrent} 
         
-        /* FEATURE PAUSED: Replaced playSingle with Toast Intercept */
+        /* FEATURE PAUSED: Replaced direct play logic with our Modal intercept */
         onPlay={() => {
-           addToast('Article narration is getting a major upgrade alongside the Gamut Radio studio. Stay tuned.', 'info');
+           setShowUpgradeModal(true);
            // playSingle(article); // ORIGINAL LOGIC PRESERVED FOR LATER
         }}
         
         onStop={stop}
+      />
+
+      {/* NEW: Render the specific article narration modal */}
+      <ComingSoonModal 
+        isOpen={showUpgradeModal} 
+        onClose={() => setShowUpgradeModal(false)}
+        title="Audio Upgrade"
+        message="Article narration is getting a major upgrade alongside the Gamut Radio studio. Stay tuned."
       />
     </div>
   );

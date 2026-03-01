@@ -1,16 +1,36 @@
 // src/components/modals/ComingSoonModal.tsx
-import React from 'react';
-import ReactDOM from 'react-dom'; // NEW: Imported ReactDOM for portaling
+import React, { useEffect } from 'react';
+import ReactDOM from 'react-dom';
 
 interface ComingSoonModalProps {
   isOpen: boolean;
   onClose: () => void;
+  title?: string;
+  message?: string;
 }
 
-const ComingSoonModal: React.FC<ComingSoonModalProps> = ({ isOpen, onClose }) => {
+const ComingSoonModal: React.FC<ComingSoonModalProps> = ({ 
+  isOpen, 
+  onClose,
+  // Default values keep the BottomNav and Header working perfectly without changes
+  title = "Studio Upgrade",
+  message = "We are currently upgrading the Gamut Radio studio. A richer, personalized audio experience is dropping soon."
+}) => {
+  
+  // NEW: Auto-close timer logic
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 4000); // Closes automatically after 4 seconds
+      
+      // Cleanup the timer if the user manually closes it early
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
-  // We wrap the entire visual component in a variable
   const modalContent = (
     <>
       <style>{`
@@ -56,10 +76,8 @@ const ComingSoonModal: React.FC<ComingSoonModalProps> = ({ isOpen, onClose }) =>
       
       <div className="coming-soon-overlay" onClick={onClose}>
         <div className="coming-soon-content" onClick={e => e.stopPropagation()}>
-          <h2 className="coming-soon-title">Studio Upgrade</h2>
-          <p className="coming-soon-text">
-            We are currently upgrading the Gamut Radio studio. A richer, personalized audio experience is dropping soon.
-          </p>
+          <h2 className="coming-soon-title">{title}</h2>
+          <p className="coming-soon-text">{message}</p>
           <button className="coming-soon-btn" onClick={onClose}>
             Got it
           </button>
@@ -68,7 +86,6 @@ const ComingSoonModal: React.FC<ComingSoonModalProps> = ({ isOpen, onClose }) =>
     </>
   );
 
-  // NEW: Teleport the modal to the body, escaping all parent CSS limitations
   return ReactDOM.createPortal(modalContent, document.body);
 };
 

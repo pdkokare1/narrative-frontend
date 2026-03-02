@@ -140,6 +140,7 @@
         min-height: 0; 
         
         /* UPDATED: Increased side padding from 12px to 24px for wider gutters on mobile */
+        /* Note: Top and bottom padding are explicitly 0 here to maintain 100% height calculations */
         padding: 0 24px; 
         
         /* UPDATED: Fix for Horizontal Shift - Lock width and hide overflow */
@@ -159,14 +160,12 @@
         /* UPDATED: Changed from 100% to auto so flex can dictate height */
         height: auto; 
         
-        /* Bottom padding for Nav + Spacing */
-        padding-bottom: 80px; 
-        
-        /* REMOVED: padding-top: 4px; which offset the snap point */
+        /* DELETED: padding-bottom: 80px; which was shrinking the 100% height calculation */
     }
 
     .feed-article-wrapper {
         /* STRICT FULL HEIGHT: Matches the scroll container height exactly */
+        flex: 0 0 100%; /* FORCE exact height of container, preventing shrink */
         height: 100%;
         min-height: 100%;
         width: 100%;
@@ -186,10 +185,12 @@
 
     /* Loading Skeletons */
     .article-card-wrapper {
+        flex: 0 0 100%; /* Added constraint lock here too */
         height: 100%;
         scroll-snap-align: start;
         scroll-snap-stop: always;
         padding: 8px 0; /* Match feed-article-wrapper */
+        box-sizing: border-box; /* Prevent padding from expanding height */
         display: flex;
         flex-direction: column;
         justify-content: center;

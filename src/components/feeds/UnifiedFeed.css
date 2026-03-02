@@ -114,9 +114,14 @@
 
 /* --- Mobile Specific Layout (TikTok/Reel Snap) --- */
 @media (max-width: 768px) {
-    /* STRICT CONTAINER: Fit to viewport minus Header (approx 60px) */
+    /* STRICT CONTAINER: Fit to viewport dynamically via flex */
     .feed-page-container {
-        height: calc(100dvh - 60px); 
+        /* UPDATED: Replaced inaccurate calc() with flex properties */
+        height: 100%; 
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
         overflow: hidden; /* Prevent Body Scroll */
     }
 
@@ -129,6 +134,10 @@
     .articles-grid {
         display: flex;
         flex-direction: column;
+        
+        /* UPDATED: Added Flex 1 to automatically fill remaining vertical space */
+        flex: 1; 
+        min-height: 0; 
         
         /* UPDATED: Increased side padding from 12px to 24px for wider gutters on mobile */
         padding: 0 24px; 
@@ -146,13 +155,14 @@
         /* Ensure this element handles the scroll */
         overflow-y: scroll;
         overscroll-behavior-y: contain;
-        height: 100%;
+        
+        /* UPDATED: Changed from 100% to auto so flex can dictate height */
+        height: auto; 
         
         /* Bottom padding for Nav + Spacing */
         padding-bottom: 80px; 
         
-        /* Add slight top spacer for mobile scroll feel */
-        padding-top: 4px; 
+        /* REMOVED: padding-top: 4px; which offset the snap point */
     }
 
     .feed-article-wrapper {
@@ -169,8 +179,8 @@
         flex-direction: column;
         justify-content: center;
         
-        /* UPDATED: Reduced vertical padding to maximize card height */
-        padding: 6px 0; 
+        /* UPDATED: Padding maintains visual gap without messing up the 100% snap height math */
+        padding: 8px 0; 
         box-sizing: border-box;
     }
 
@@ -179,7 +189,7 @@
         height: 100%;
         scroll-snap-align: start;
         scroll-snap-stop: always;
-        padding: 6px 0; /* Match feed-article-wrapper */
+        padding: 8px 0; /* Match feed-article-wrapper */
         display: flex;
         flex-direction: column;
         justify-content: center;

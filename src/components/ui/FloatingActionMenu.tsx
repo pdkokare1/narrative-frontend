@@ -1,6 +1,7 @@
 // src/components/ui/FloatingActionMenu.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+// NEW: Imported useSearchParams for URL-driven state
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import CategoryPills from './CategoryPills';
 import { IFilters } from '../../types';
 
@@ -9,6 +10,8 @@ interface FloatingActionMenuProps {
   toggleTheme: () => void;
   filters: IFilters;
   onFilterChange: (filters: IFilters) => void;
+  // NEW: Added this prop to trigger the advanced filter modal from the FAB
+  onOpenFilters: () => void; 
 }
 
 const CATEGORIES = ["All", "Technology", "Business", "Science", "Health", "Entertainment", "Sports", "World", "Politics"];
@@ -17,9 +20,24 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
   theme, 
   toggleTheme, 
   filters, 
-  onFilterChange 
+  onFilterChange,
+  onOpenFilters
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  // OLD CODE (Preserved for your review):
+  // const [isOpen, setIsOpen] = useState(false);
+  
+  // NEW CODE: URL-Driven State
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isOpen = searchParams.get('fab') === 'open';
+
+  const setIsOpen = (open: boolean) => {
+     if (open) {
+        setSearchParams((prev) => { prev.set('fab', 'open'); return prev; });
+     } else {
+        setSearchParams((prev) => { prev.delete('fab'); return prev; });
+     }
+  };
+
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -128,6 +146,19 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
         .fab-diagonal { top: 4px; left: 4px; }
         .fab-container.open .fab-diagonal { transform: translate(-50px, -50px); }
 
+        /* NEW NAV Radial Placements */
+        .fab-nav-filter { top: 4px; left: 4px; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; }
+        .fab-container.open .fab-nav-filter { transform: translateY(-160px); }
+
+        .fab-nav-home { top: 4px; left: 4px; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; }
+        .fab-container.open .fab-nav-home { transform: translate(-80px, -135px); }
+
+        .fab-nav-saved { top: 4px; left: 4px; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; }
+        .fab-container.open .fab-nav-saved { transform: translate(-125px, -90px); }
+
+        .fab-nav-profile { top: 4px; left: 4px; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; }
+        .fab-container.open .fab-nav-profile { transform: translate(-145px, -35px); }
+
         /* Horizontal Track (Categories/Input) */
         .fab-horizontal {
           top: 4px; right: 60px; height: 42px; border-radius: 21px;
@@ -164,7 +195,7 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
         
         .fab-search-input {
           flex: 1; 
-          min-width: 0; /* THE MAGIC FIX: Allows the input to shrink so it doesn't push the button out of bounds */
+          min-width: 0; 
           background: transparent; border: none; outline: none;
           color: var(--text-primary, #fff); padding: 0 10px;
           font-size: 16px; 
@@ -174,9 +205,9 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
         }
         
         .fab-search-submit {
-          flex-shrink: 0; /* Prevents the button from being squished */
+          flex-shrink: 0; 
           background: none; border: none; color: var(--accent-primary, #007bff);
-          padding: 0 20px 0 10px; /* Strong right padding to clear the curve */
+          padding: 0 20px 0 10px; 
           font-weight: 700; cursor: pointer; font-size: 14px;
         }
       `}</style>
@@ -212,6 +243,25 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
               />
             )}
          </div>
+
+         {/* --- NEW NAV RADIAL BUTTONS --- */}
+         <button className="fab-item fab-nav-profile" onClick={() => { setIsOpen(false); navigate('/my-dashboard'); }} aria-label="Profile">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+         </button>
+         
+         <button className="fab-item fab-nav-saved" onClick={() => { setIsOpen(false); navigate('/saved-articles'); }} aria-label="Saved">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+         </button>
+         
+         <button className="fab-item fab-nav-home" onClick={() => { setIsOpen(false); navigate('/'); }} aria-label="Home">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+         </button>
+
+         {/* Filter Modal Trigger */}
+         <button className="fab-item fab-nav-filter" onClick={() => { setIsOpen(false); onOpenFilters(); }} aria-label="Filters">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+         </button>
+
 
          {/* Diagonal: Search Button (Trigger) */}
          <button 

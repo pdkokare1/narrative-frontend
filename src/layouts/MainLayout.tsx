@@ -339,10 +339,12 @@ export default function MainLayout() {
         )}
       </Suspense>
 
-      <BottomNav 
-        currentFilters={filters} 
-        onOpenFilters={() => setShowFilterModal(true)} 
-      />
+      {/* OLD CODE (Preserved for your review): 
+        <BottomNav 
+          currentFilters={filters} 
+          onOpenFilters={() => setShowFilterModal(true)} 
+        />
+      */}
       
       {/* NEW: Expanding FAB only visible on Mobile */}
       {isMobileView && (
@@ -351,6 +353,7 @@ export default function MainLayout() {
              toggleTheme={toggleTheme}
              filters={filters}
              onFilterChange={handleFilterChange}
+             onOpenFilters={() => setShowFilterModal(true)} 
           />
       )}
 

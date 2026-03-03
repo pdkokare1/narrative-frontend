@@ -208,7 +208,7 @@ a:hover {
     /* UPDATED: Removed the 40px header space padding */
     padding-top: env(safe-area-inset-top); 
     height: 100vh; /* Fallback */
-    height: 100dvh; /* Dynamic Height */
+    height: calc(100dvh - env(safe-area-inset-bottom)); /* Dynamic Height minus bottom inset */
     overflow: hidden; /* Lock the container so children scroll */
   }
   
@@ -218,8 +218,8 @@ a:hover {
   */
   .content,
   .dashboard-container {
-    /* UPDATED: Removed 40px subtraction here too */
-    height: calc(100dvh - env(safe-area-inset-top)); 
+    /* UPDATED: Strict deduction of top and bottom safe areas */
+    height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); 
     overflow-y: auto; 
     overflow-x: hidden;
     overscroll-behavior-y: contain; /* Prevent bounce propagation */
@@ -240,8 +240,8 @@ a:hover {
   
   .article-card-wrapper {
     scroll-snap-align: start; 
-    /* UPDATED: Removed 40px subtraction */
-    height: calc(100dvh - env(safe-area-inset-top)); 
+    /* UPDATED: Strict deduction of top and bottom safe areas */
+    height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); 
     width: 100%;
     display: flex; 
     flex-direction: column; 

@@ -178,8 +178,8 @@
         flex-direction: column;
         justify-content: center;
         
-        /* UPDATED: Padding maintains visual gap without messing up the 100% snap height math */
-        padding: 8px 0; 
+        /* UPDATED: Padding maintains visual gap and pushes content above mobile browser chrome/FAB */
+        padding: 8px 0 90px 0; 
         box-sizing: border-box;
     }
 
@@ -189,7 +189,7 @@
         height: 100%;
         scroll-snap-align: start;
         scroll-snap-stop: always;
-        padding: 8px 0; /* Match feed-article-wrapper */
+        padding: 8px 0 90px 0; /* Match feed-article-wrapper */
         box-sizing: border-box; /* Prevent padding from expanding height */
         display: flex;
         flex-direction: column;

@@ -114,6 +114,7 @@ export interface INarrative {
   // The "Meta" Content
   masterHeadline: string;
   executiveSummary: string; 
+  imageUrl?: string; // NEW: Added to support thumbnail images from latest cluster article
   
   // Stats
   sourceCount: number;

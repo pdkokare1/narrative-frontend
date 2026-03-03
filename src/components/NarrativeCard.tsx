@@ -14,6 +14,8 @@ const NarrativeCard: React.FC<NarrativeCardProps> = memo(({ data, onClick }) => 
   // 1. Safety & Data Prep
   const summaryText = data.executiveSummary || "No summary available.";
   const fallbackImg = getFallbackImage(data.category);
+  // NEW: Use the narrative image if available, otherwise use fallback
+  const displayImg = data.imageUrl || fallbackImg; 
   const displayDate = data.lastUpdated ? new Date(data.lastUpdated).toLocaleDateString() : '';
 
   // 2. Interaction Helper
@@ -36,10 +38,10 @@ const NarrativeCard: React.FC<NarrativeCardProps> = memo(({ data, onClick }) => 
         </div>
         
         {/* --- IMAGE --- */}
-        {/* Uses fallback image to maintain same height/layout as ArticleCard */}
+        {/* Uses specific narrative image or fallback to maintain same height/layout as ArticleCard */}
         <div className="article-image">
           <img 
-            src={fallbackImg}
+            src={displayImg}
             alt={data.category}
             loading="lazy" 
           />
